@@ -1,0 +1,11 @@
+{
+  "rules": {
+    "progress": {
+      ".read": "auth != null && auth.token.email == '管理者のメールをここに'",
+      "$user": {
+        ".write": "(newData.exists() && newData.hasChildren(['n','t','s']) && newData.child('n').isString() && newData.child('n').val().length <= 40 && newData.child('t').isNumber()) || (auth != null && auth.token.email == '管理者のメールをここに')",
+        ".validate": "newData.hasChildren(['n','t','s'])"
+      }
+    }
+  }
+}

@@ -30,6 +30,7 @@
       const name = (raw || '').trim();
       if (!name) return '名前を入力してください';
       if ((await sha256(name)) === ADMIN_HASH) { ls.set('kenshu.user', ADMIN); try { sessionStorage.setItem('kenshu.akey', name); } catch {} return ''; }
+      if (/^admin/i.test(name)) return 'この名前は使えません';
       if (name.length > 20) return '20文字までです';
       if (/^[@]/.test(name)) return '先頭に @ は使えません';
       // 初めての人で、以前の保存データがあれば引き継ぐ
@@ -86,20 +87,31 @@
   }
   U.consumePending = () => { let c = null; try { c = sessionStorage.getItem('kenshu.pending'); sessionStorage.removeItem('kenshu.pending'); } catch {} if (!c) return false; try { importCode(c); return true; } catch { return false; } };
 
-  /* ---- 自動送信（Google スプレッドシート） ---- */
-  let timer = 0, lastSent = 0;
+  /* ---- 自動送信（Firebase Realtime Database・REST） ---- */
+  const FB = CFG.firebase && CFG.firebase.databaseURL && CFG.firebase.apiKey ? CFG.firebase : null;
+  const DB = FB ? FB.databaseURL.replace(/\/$/, '') : '';
+  const fbKey = (n) => encodeURIComponent(n).replace(/\./g, '%2E');
+  let timer = 0, lastSent = 0, tok = null;
   async function push() {
-    if (!CFG.syncUrl || !store.user() || U.isAdmin()) return false;
+    if (!FB || !store.user() || U.isAdmin()) return false;
     const d = store.read();
-    try { await fetch(CFG.syncUrl, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ n: store.user(), t: d._last || Date.now(), s: d.seen || {} }) }); lastSent = Date.now(); return true; } catch { return false; }
+    try { const r = await fetch(`${DB}/progress/${fbKey(store.user())}.json`, { method: 'PUT', body: JSON.stringify({ n: store.user(), t: d._last || Date.now(), s: d.seen || {} }) }); if (r.ok) lastSent = Date.now(); return r.ok; } catch { return false; }
   }
-  store.after = () => { if (!CFG.syncUrl) return; clearTimeout(timer); timer = setTimeout(push, 2500); };
+  store.after = () => { if (!FB) return; clearTimeout(timer); timer = setTimeout(push, 2000); };
+  const token = () => { try { tok = tok || JSON.parse(sessionStorage.getItem('kenshu.fbtok')); } catch {} return tok && tok.exp > Date.now() ? tok.t : null; };
+  async function adminSignIn(email, pass) {
+    const r = await fetch('https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=' + FB.apiKey, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password: pass, returnSecureToken: true }) });
+    const j = await r.json(); if (!r.ok) throw new Error('auth');
+    tok = { t: j.idToken, exp: Date.now() + (+j.expiresIn - 60) * 1000 }; try { sessionStorage.setItem('kenshu.fbtok', JSON.stringify(tok)); } catch {}
+  }
   async function cloud() {
-    if (!CFG.syncUrl) return null;
-    let key = ''; try { key = sessionStorage.getItem('kenshu.akey') || ''; } catch {}
-    const r = await fetch(CFG.syncUrl + (CFG.syncUrl.includes('?') ? '&' : '?') + 'key=' + encodeURIComponent(key), { redirect: 'follow' });
-    const j = await r.json(); if (j.error) throw new Error(j.error); return j.users || [];
+    if (!FB) return null;
+    const t = token(); if (!t) throw new Error('login');
+    const r = await fetch(`${DB}/progress.json?auth=${t}`);
+    if (r.status === 401 || r.status === 403) { tok = null; throw new Error('login'); }
+    const j = await r.json(); return Object.values(j || {}).filter((x) => x && x.n);
   }
+  async function cloudDel(nick) { const t = token(); if (!FB || !t) return; try { await fetch(`${DB}/progress${nick ? '/' + fbKey(nick) : ''}.json?auth=${t}`, { method: 'DELETE' }); } catch {} }
   function myCode() {
     const d = store.read();
     return enc({ n: store.user(), t: d._last || Date.now(), s: d.seen || {} });
@@ -109,7 +121,7 @@
   };
 
   function sendModal() {
-    if (CFG.syncUrl) {
+    if (FB) {
       const st = h('p', { class: 'u-err', style: { color: 'var(--ok)' } }, lastSent ? '送りました' : '');
       modal({ title: '進捗は自動で先生に届きます', icon: 'send', narrow: true, content: () => h('div', { class: 'col' },
         h('p', 'ページを進めると、少し後に自動で送られます。何もしなくて大丈夫です。'), st,
@@ -142,11 +154,69 @@
   /* ---------- 右上のユーザーボタン ---------- */
   function chip() {
     if (!store.user()) return null;
-    return h('button', { class: 'btn ghost u-chip', title: 'ユーザー', onclick: () => {
-      const m = modal({ title: U.isAdmin() ? '管理者' : store.user(), icon: U.isAdmin() ? 'shield-check' : 'user', narrow: true, content: () => h('div', { class: 'col' },
-        U.isAdmin() ? h('a', { class: 'btn primary', href: '#/admin', onclick: () => m.close() }, icon('layout-dashboard'), '進捗の管理画面') : h('button', { class: 'btn primary', onclick: () => { m.close(); sendModal(); } }, icon('send'), '進捗を先生に送る'),
+    if (!U.isAdmin()) return h('a', { class: 'btn ghost u-chip', href: '#/me', title: 'わたしの記録' }, icon('trophy'), h('span', { class: 'lbl' }, ' ' + store.user()));
+    return h('button', { class: 'btn ghost u-chip', title: '管理者', onclick: () => {
+      const m = modal({ title: '管理者', icon: 'shield-check', narrow: true, content: () => h('div', { class: 'col' },
+        h('a', { class: 'btn primary', href: '#/admin', onclick: () => m.close() }, icon('layout-dashboard'), '進捗の管理画面'),
         h('button', { class: 'btn ghost', onclick: () => { U.logout(); location.hash = '#/'; location.reload(); } }, icon('log-out'), 'ログアウト')) });
-    } }, icon(U.isAdmin() ? 'shield-check' : 'user'), h('span', { class: 'lbl' }, ' ' + U.label()));
+    } }, icon('shield-check'), h('span', { class: 'lbl' }, ' 管理者'));
+  }
+
+  /* ---------- わたしの記録（本人用） ---------- */
+  const TRK = { basic: ['HTML・CUI・Git', 'var(--basic)', 'terminal'], ts: ['TypeScript', 'var(--ts)', 'braces'], vue: ['Vue.js', 'var(--vue)', 'layout-template'], team: ['チーム開発', 'var(--team)', 'users'], extra: ['プラスα', 'var(--violet)', 'sparkles'] };
+  const LEVELS = [[0, 'スタート', 'sprout'], [10, '見習い', 'flame'], [30, 'ルーキー', 'rocket'], [60, 'ベテラン', 'award'], [90, 'マスター', 'crown']];
+  function meView() {
+    const d = store.read(), seen = d.seen || {};
+    const L = Object.values(K.lessons).map((l) => ({ l, done: Math.min(l.scenes.length, new Set(seen[l.id] || []).size) }));
+    const tot = L.reduce((n, x) => n + x.l.scenes.length, 0), done = L.reduce((n, x) => n + x.done, 0);
+    const mainL = L.filter((x) => x.l.track !== 'extra');
+    const pct = Math.round((done / (tot || 1)) * 100);
+    const lv = [...LEVELS].reverse().find((x) => pct >= x[0]) || LEVELS[0];
+    const full = (x) => x.done >= x.l.scenes.length;
+    const lessonsDone = L.filter(full).length;
+    const extraDone = L.filter((x) => x.l.track === 'extra').reduce((n, x) => n + x.done, 0);
+    const trackFull = (t) => { const a = L.filter((x) => x.l.track === t); return a.length && a.every(full); };
+    const BADGES = [
+      ['footprints', 'はじめの一歩', done >= 1], ['book-open', '10シーン', done >= 10], ['library', '50シーン', done >= 50], ['flag', '折り返し', pct >= 50], ['trophy', '全クリア', pct >= 100],
+      ['terminal', 'HTML・CUI・Git 制覇', trackFull('basic')], ['braces', 'TypeScript 制覇', trackFull('ts')], ['layout-template', 'Vue.js 制覇', trackFull('vue')], ['users', 'チーム開発 制覇', trackFull('team')],
+      ['compass', '探検家', extraDone >= 3], ['sparkles', 'プラスα 10', extraDone >= 10]];
+    const got = BADGES.filter((b) => b[2]).length;
+
+    const ring = (p, big) => { const r = 52, c = 2 * Math.PI * r; const NS = 'http://www.w3.org/2000/svg', s = document.createElementNS(NS, 'svg'); s.setAttribute('viewBox', '0 0 120 120'); s.setAttribute('class', 'me-ring' + (big ? ' big' : ''));
+      s.innerHTML = `<circle cx="60" cy="60" r="${r}" class="bg"/><circle cx="60" cy="60" r="${r}" class="fg" style="stroke-dasharray:${c};stroke-dashoffset:${c * (1 - p)}"/>`; return s; };
+
+    const hero = h('section', { class: 'me-hero' },
+      h('div', { class: 'me-ringbox' }, ring(pct / 100, true), h('div', { class: 'me-pct' }, h('b', pct), h('small', '%'))),
+      h('div', { class: 'me-who' },
+        h('div', { class: 'me-lv' }, icon(lv[2]), lv[1]),
+        h('h1', store.user()),
+        h('div', { class: 'me-stats' },
+          h('div', null, icon('check-circle-2'), h('b', done), h('small', '/ ' + tot + ' シーン')),
+          h('div', null, icon('flag'), h('b', lessonsDone), h('small', '/ ' + L.length + ' レッスン')),
+          h('div', null, icon('medal'), h('b', got), h('small', '/ ' + BADGES.length + ' バッジ'))),
+        h('div', { class: 'me-next' }, LEVELS.find((x) => x[0] > pct) ? [icon('arrow-up-right'), `次のレベル「${LEVELS.find((x) => x[0] > pct)[1]}」まで あと ${LEVELS.find((x) => x[0] > pct)[0] - pct}%`] : [icon('crown'), '最高レベル！'])));
+
+    // ロードマップ（フローチャート）
+    const road = h('section', { class: 'me-road' }, h('h2', icon('route'), 'ロードマップ'),
+      ['basic', 'ts', 'vue', 'team', 'extra'].map((t) => {
+        const A = L.filter((x) => x.l.track === t); if (!A.length) return null;
+        const td = A.reduce((n, x) => n + x.done, 0), tt = A.reduce((n, x) => n + x.l.scenes.length, 0), fin = trackFull(t);
+        return h('div', { class: 'rm-row' + (t === 'extra' ? ' x' : ''), style: { '--c': TRK[t][1] } },
+          h('div', { class: 'rm-head' }, icon(TRK[t][2]), h('b', TRK[t][0]), h('div', { class: 'u-bar' }, h('i', { style: { width: Math.round((td / tt) * 100) + '%' } })), h('small', Math.round((td / tt) * 100) + '%')),
+          h('div', { class: 'rm-flow' },
+            h('span', { class: 'rm-flag' }, icon('flag')),
+            A.map((x) => { const st = full(x) ? 'done' : x.done ? 'part' : 'todo';
+              return h('a', { class: 'rm-node ' + st, href: '#/lesson/' + x.l.id, title: x.l.title + ' ' + x.done + '/' + x.l.scenes.length },
+                h('span', { class: 'rm-c' }, st === 'done' ? icon('check') : h('span', { class: 'rm-e' }, x.l.emoji || '•'), st === 'part' ? ring(x.done / x.l.scenes.length) : null),
+                h('small', x.l.title)); }),
+            h('span', { class: 'rm-flag goal' + (fin ? ' on' : '') }, icon('trophy'))));
+      }));
+
+    const badges = h('section', { class: 'me-badges' }, h('h2', icon('medal'), 'バッジ'),
+      h('div', { class: 'bd-grid' }, BADGES.map(([ic, name, ok]) => h('div', { class: 'bd' + (ok ? ' on' : '') }, h('span', { class: 'bd-i' }, icon(ok ? ic : 'lock')), h('small', name)))));
+
+    return h('div', { class: 'me' }, hero, road, badges,
+      h('div', { class: 'row', style: { justifyContent: 'center', marginTop: '10px' } }, h('button', { class: 'btn ghost', onclick: () => { U.logout(); location.hash = '#/'; location.reload(); } }, icon('log-out'), 'ログアウト')));
   }
 
   /* ---------- 管理画面 ---------- */
@@ -174,6 +244,15 @@
       h('div', { class: 'row' }, h('button', { class: 'btn primary', onclick: () => { m.close(); yes(); } }, label || 'はい'), h('button', { class: 'btn ghost', onclick: () => m.close() }, 'やめる'))) });
   }
 
+  function loginBox(after) {
+    const em = h('input', { class: 'u-input', type: 'email', placeholder: '管理者メール（Firebase）', autocomplete: 'username' });
+    const pw = h('input', { class: 'u-input', type: 'password', placeholder: 'パスワード', autocomplete: 'current-password' });
+    const er = h('div', { class: 'u-err' });
+    const go = async () => { try { await adminSignIn(em.value.trim(), pw.value); er.textContent = ''; after(); } catch { er.textContent = 'ログインできませんでした'; } };
+    pw.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
+    return h('div', { class: 'u-cloudlogin' }, h('b', icon('cloud'), 'クラウドの進捗を見る'), em, pw, h('button', { class: 'btn primary', onclick: go }, 'つなぐ'), er);
+  }
+
   function adminView() {
     const wrap = h('div', { class: 'u-admin' });
     const draw = () => {
@@ -187,11 +266,12 @@
           h('div', null, h('b', active), h('span', '1時間以内に動いた人'))),
         h('div', { class: 'row u-tools' },
           h('button', { class: 'btn ghost', onclick: load }, icon('refresh-cw'), '更新'),
-          CFG.syncUrl ? h('span', { class: 'u-err', style: { color: cloudMsg === 'OK' ? 'var(--ok)' : 'var(--bad)', alignSelf: 'center' } }, cloudMsg === 'OK' ? '● クラウド接続OK' : cloudMsg) : null,
+          FB ? h('span', { class: 'u-err', style: { color: cloudMsg === 'OK' ? 'var(--ok)' : 'var(--bad)', alignSelf: 'center' } }, cloudMsg === 'OK' ? '● クラウド接続OK' : cloudMsg) : null,
           h('button', { class: 'btn ghost', onclick: () => importModal(draw) }, icon('download'), 'リンクを取り込む'),
           h('button', { class: 'btn ghost', onclick: () => download('kenshu-progress.csv', '﻿' + ['ニックネーム,進捗%,完了シーン,最終操作,元'].concat(R.map((r) => `"${r.nick}",${r.pct},${r.done},${r.last ? new Date(r.last).toISOString() : ''},${r.src === 'import' ? '取込' : 'この端末'}`)).join('\n'), 'text/csv') }, icon('file-spreadsheet'), 'CSV'),
           h('button', { class: 'btn ghost', onclick: () => download('kenshu-backup.json', JSON.stringify({ users: Object.fromEntries(R.map((r) => [r.nick, r.data])) }, null, 1), 'application/json') }, icon('save'), 'JSON バックアップ'),
-          h('button', { class: 'btn ghost danger', onclick: () => confirmModal('全員の進捗を消します。元に戻せません。', () => { U.list().forEach((n) => ls.del(PREFIX + n)); saveImported({}); draw(); }, '全員を消す') }, icon('trash-2'), '全員リセット')),
+          h('button', { class: 'btn ghost danger', onclick: () => confirmModal('全員の進捗を消します。元に戻せません。', () => { U.list().forEach((n) => ls.del(PREFIX + n)); saveImported({}); cloudDel('').then(load); }, '全員を消す') }, icon('trash-2'), '全員リセット')),
+        FB && cloudMsg !== 'OK' ? loginBox(load) : null,
         R.length ? h('div', { class: 'u-table' }, R.map((r) => h('div', { class: 'u-row' },
           h('div', { class: 'u-name' }, icon('user'), h('b', r.nick), r.src === 'import' ? h('small', '取込') : r.src === 'cloud' ? h('small', 'クラウド') : null),
           h('div', { class: 'u-prog' }, h('div', { class: 'u-bar' }, h('i', { style: { width: r.pct + '%' } })), h('b', r.pct + '%')),
@@ -199,13 +279,13 @@
           h('small', { class: 'u-last' }, ago(r.last)),
           h('div', { class: 'row' },
             h('button', { class: 'btn ghost', title: '詳細', onclick: () => detailModal(r) }, icon('eye')),
-            h('button', { class: 'btn ghost', title: 'この人の進捗をリセット', onclick: () => confirmModal(r.nick + ' の進捗を消します。', () => { ls.del(PREFIX + r.nick); const i = imported(); delete i[r.nick]; saveImported(i); draw(); }, '消す') }, icon('rotate-ccw'))))))
+            h('button', { class: 'btn ghost', title: 'この人の進捗をリセット', onclick: () => confirmModal(r.nick + ' の進捗を消します。', () => { ls.del(PREFIX + r.nick); const i = imported(); delete i[r.nick]; saveImported(i); cloudDel(r.nick).then(load); }, '消す') }, icon('rotate-ccw'))))))
           : h('p', { class: 'u-empty' }, 'まだ誰もいません。生徒がニックネームを入れて学び始めると、ここに出ます。他の端末の人は、送られてきたリンクを開くと取り込まれます。'));
     };
-    const load = async () => { if (!CFG.syncUrl) return draw(); try { cloudRows = await cloud(); cloudMsg = 'OK'; } catch (e) { cloudMsg = e.message === 'key' ? 'パスワードが合いません（Apps Script の KEY を確認）' : '接続できません'; } draw(); };
+    const load = async () => { if (!FB) return draw(); try { cloudRows = await cloud(); cloudMsg = 'OK'; } catch (e) { cloudMsg = e.message === 'login' ? 'クラウドにログインしてください' : '接続できません'; } draw(); };
     draw(); load();
     return wrap;
   }
 
-  K.users.views = { loginView, adminView, chip, sendModal };
+  K.users.views = { loginView, adminView, chip, meView };
 })();

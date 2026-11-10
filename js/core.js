@@ -424,7 +424,7 @@ declare function Boolean(v:any):boolean;
   /* ---------- mini illustrations (for why-cards, hints) ---------- */
   // spec: {k:'flow'|'code'|'vs'|'stack'|'chips'|'big'|'meter', ...}; items may be 'icon|label' strings or {i,t,c,s}
   function miniItem(x) {
-    if (typeof x === 'string') { const [a, b] = x.includes('|') ? x.split('|') : [null, x]; return { i: a, t: b }; }
+    if (typeof x === 'string') { const [a, b, kk] = x.includes('|') ? x.split('|') : [null, x]; return { i: a, t: b, key: kk }; }
     return x;
   }
   function mini(spec) {
@@ -433,7 +433,7 @@ declare function Boolean(v:any):boolean;
     const wrap = h('div', { class: 'mini mini-' + k });
     const node = (x, idx) => {
       x = miniItem(x);
-      return h('div', { class: 'mn ' + (x.c || ''), style: { '--d': idx * 0.12 + 's' } }, x.i ? icon(x.i) : null, h('b', { html: x.t || '' }), x.s ? h('small', { html: x.s }) : null);
+      return h('div', { class: 'mn ' + (x.c || ''), 'data-key': x.key || null, style: { '--d': idx * 0.12 + 's' } }, x.i ? icon(x.i) : null, h('b', { html: x.t || '' }), x.s ? h('small', { html: x.s }) : null);
     };
     if (k === 'flow') {
       const row = h('div', { class: 'mf' });
@@ -443,15 +443,18 @@ declare function Boolean(v:any):boolean;
       if (spec.loop) wrap.append(h('div', { class: 'mloop' }, icon('corner-down-left'), spec.loop === true ? '繰り返す' : spec.loop));
     } else if (k === 'code') {
       const pre = code(spec.text, spec.lang || 'ts');
-      if (spec.err) pre.setHi(spec.err, 'err'); else if (spec.ok) pre.setHi(spec.ok, 'on');
+      const er = spec.err || spec.del, on = spec.ok || spec.add || spec.idea;
+      if (er) pre.setHi([].concat(er), 'err'); if (on) pre.setHi([].concat(on), 'on');
+      Object.entries(spec.keys || {}).forEach(([ln, kk]) => { const el = pre.lines[ln - 1]; if (el) el.dataset.key = kk; });
+      if (spec.file) wrap.append(h('div', { class: 'mtab' }, icon(/\.(vue|html|css|ts|js|json|sh)$/.test(spec.file) ? 'file-code' : 'terminal'), spec.file));
       wrap.append(pre);
     } else if (k === 'vs') {
-      const box = (x, cls) => { x = miniItem(x); return h('div', { class: 'mv ' + cls }, h('span', { class: 'mvb' }, icon(cls === 'bad' ? 'x' : 'check')), x.i ? icon(x.i) : null, h('b', { html: x.t }), x.s ? h('small', { html: x.s }) : null); };
+      const box = (x, cls) => { x = miniItem(x); return h('div', { class: 'mv ' + cls, 'data-key': x.key || null }, h('span', { class: 'mvb' }, icon(cls === 'bad' ? 'x' : 'check')), x.i ? icon(x.i) : null, h('b', { html: x.t }), x.s ? h('small', { html: x.s }) : null); };
       wrap.append(box(spec.a, 'bad'), h('span', { class: 'ma' }, icon('arrow-right')), box(spec.b, 'ok'));
     } else if (k === 'stack') {
       wrap.append(...(spec.items || []).map((x, i) => { x = miniItem(x); return h('div', { class: 'ms', style: { '--r': ((i * 37) % 7 - 3) + 'deg', '--d': i * 0.1 + 's' } }, x.i ? icon(x.i) : null, x.t); }));
     } else if (k === 'chips') {
-      wrap.append(...(spec.items || []).map((x, i) => { x = miniItem(x); return h('span', { class: 'mc ' + (x.c || ''), style: { '--d': i * 0.08 + 's' } }, x.i ? icon(x.i) : null, x.t); }));
+      wrap.append(...(spec.items || []).map((x, i) => { x = miniItem(x); return h('span', { class: 'mc ' + (x.c || ''), 'data-key': x.key || null, style: { '--d': i * 0.08 + 's' } }, x.i ? icon(x.i) : null, x.t); }));
     } else if (k === 'big') {
       wrap.append(h('div', { class: 'mbig' }, icon(spec.i || 'sparkles'), h('b', { html: spec.t || '' })));
     } else if (k === 'meter') {

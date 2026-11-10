@@ -185,7 +185,7 @@
     scenes: [
       {
         t: 'ブレスト・ウォール', tag: 'BRAINSTORM', lead: 'まず数を出そう。<b>否定しない</b>。付箋は<b>ドラッグ</b>で動かせる。❤️で投票もできる。',
-        why: {pv: {"k": "flow", "items": [{"i": "message-square", "t": "最初の案", "c": "bad"}, {"i": "x", "t": "「無理」と評価", "c": "bad"}, {"i": "ban", "t": "他の案が止まる", "c": "bad"}]}, iv: {"k": "flow", "items": ["expand|広げる（否定しない）", "filter|絞る（基準で選ぶ）"]}, av: {"k": "chips", "items": ["sticky-note|1人1枚 同時に", "heart|投票"]}, "problem": "最初に出た案に引っぱられて、他の案が出てこない", "idea": "まず数を出す。選ぶのはそのあと。出している間は否定しない。", "answer": "1枚1案の付箋を全員で同時に書く → ❤️で投票", "when": [["アイデアを増やす", "広げる（否定しない）"], ["絞り込む", "絞る（基準を決めて投票）"]]},
+        why: {pv: {"k": "code", "file": "meeting.log", "lang": "txt", "text": "10:00 A: まず案を出して\n10:01 B: ログイン機能？\n10:02 C: それ無理じゃない？\n10:03 （みんな黙る）", "err": [3, 4], "keys": {"3": "veto"}}, iv: {"k": "code", "file": "rules.md", "lang": "txt", "text": "1. 数を出す（質より量）\n2. 否定しない\n3. 人の案に乗っかる\n4. 選ぶのは最後", "idea": [2], "keys": {"2": "veto"}}, av: {"k": "code", "file": "wall.md", "lang": "txt", "text": "付箋 12枚（否定ゼロ）\n検索を速く       ♥♥♥\n通知をまとめる   ♥\nダークモード     ♥♥", "ok": [1], "keys": {"1": "veto"}}, problem: "最初の案に引っぱられて止まる", idea: "数を出す。否定は禁止", answer: "付箋を同時に書く → ❤️で投票", "when": [["アイデアを増やす", "広げる（否定しない）"], ["絞り込む", "絞る（基準を決めて投票）"]]},
         answer: { html: '<p style="color:var(--mute);font-size:.875rem;margin-bottom:.6em">例：付箋の出し方</p><ul><li><b>困りごと</b>：勉強が続かない／ToDo がたまる／質問しづらい</li><li><b>アイデア</b>：学習ログ／タイマー／ごほうびバッジ／チームの進捗ボード</li><li>ポイント：「無理」と言わない。まず数を出して、あとで ❤️ で選ぶ。</li></ul>' },
         render(el, ctx) {
           let notes = store.get('tt.idea.notes', null);
@@ -235,7 +235,7 @@
       },
       {
         t: 'アイデアキャンバス', tag: 'CANVAS', lead: '4つの箱を埋めると<b>企画カード</b>ができる。右のカードは、そのまま発表に使える。',
-        why: {pv: {"k": "flow", "items": [{"i": "lightbulb", "t": "良さそうな案", "c": "bad"}, {"i": "circle-help", "t": "誰の困りごと？", "c": "bad"}, {"i": "map", "t": "作って迷子", "c": "bad"}]}, iv: {"k": "flow", "items": ["user|誰の", "triangle-alert|どんな困りごと", "circle-check|どう解く"]}, av: {"k": "chips", "items": ["Who", "Problem", "Solution", "Features"]}, "problem": "良さそうな案でも「誰の何の困りごとか」が曖昧で、作り始めて迷子になる", "idea": "作る前に「誰の・何の困りごとを・どう解くか」を1枚に書く。", "answer": "4つの箱（Who / Problem / Solution / Features）", "when": [["Problem が書けない", "まだ作らず、調べ直す"], ["機能が多すぎる", "最小の1機能に絞る"]]},
+        why: {pv: {"k": "code", "file": "idea.md", "lang": "txt", "text": "案: すごい検索アプリ\n誰の？     → ？\n困りごと   → ？\n機能       → 20個", "err": [2, 3], "keys": {"2": "who"}}, iv: {"k": "code", "file": "canvas.md", "lang": "txt", "text": "Who      → 新入社員\nProblem  → 資料が探せない\nSolution → 横断検索\nFeatures → 最小の1つ", "idea": [1, 2], "keys": {"1": "who"}}, av: {"k": "chips", "items": [{"i": "user", "t": "Who", "key": "who"}, {"i": "triangle-alert", "t": "Problem"}, {"i": "circle-check", "t": "Solution"}, {"i": "list", "t": "Features"}]}, problem: "誰の困りごとか曖昧で迷子", idea: "作る前に1枚に書く", answer: "Who / Problem / Solution / Features", "when": [["Problem が書けない", "まだ作らず、調べ直す"], ["機能が多すぎる", "最小の1機能に絞る"]]},
         answer: { html: '<p style="color:var(--mute);font-size:.875rem;margin-bottom:.6em">例：学習トラッカー</p><ul><li><b>Who（誰の）</b>：新入社員（プログラミング初心者）</li><li><b>Problem（困りごと）</b>：学んだことが続かない・見えない</li><li><b>Solution（解決）</b>：毎日の学習を記録して、成長をグラフで見せる</li><li><b>Features（機能）</b>：ログ入力 / グラフ表示 / 連続日数バッジ</li></ul>' },
         render(el) {
           const d = Object.assign({ name: '学習トラッカー', who: '新入社員', problem: '学んだことが続かない・見えない', sol: '毎日の学習を記録して成長を見える化', feat: 'ログ入力\nグラフ表示\n連続日数バッジ' }, store.get('tt.idea.canvas', {}));
@@ -258,7 +258,7 @@
       },
       {
         t: '30秒ピッチ', tag: 'PITCH', lead: 'ピッチは<b>4つのパート</b>だけでいい。「次へ」で流れを見て、3分タイマーで練習しよう。',
-        why: {pv: {"k": "flow", "items": [{"i": "mic", "t": "長い説明", "c": "bad"}, {"i": "circle-help", "t": "「で、何が言いたいの？」", "c": "bad"}]}, iv: {"k": "flow", "items": ["ear|聞き手の頭の順序に", "list-ordered|話す順番を合わせる"]}, av: {"k": "chips", "items": ["課題 8秒", "解決 8秒", "デモ 10秒", "学び 4秒"]}, "problem": "説明が長くて「で、何が言いたいの？」と思われる", "idea": "聞く人が知りたい順に話す。困りごと → 解決 → デモ → 学び。", "answer": "4つのパートで30秒（課題・解決・デモ・学び）", "when": [["時間が短い", "課題と解決だけ残す"], ["技術が主役", "学びを厚く"]]},
+        why: {pv: {"k": "code", "file": "speech.txt", "lang": "txt", "text": "0:00 背景から説明します…\n0:20 技術構成は…\n0:50 えーと、デモが…\n1:30 （時間切れ）", "err": [2, 3, 4], "keys": {"4": "time"}}, iv: {"k": "code", "file": "pitch.md", "lang": "txt", "text": "課題   8秒 困っている人\n解決   8秒 こう直す\nデモ  10秒 動かして見せる\n学び   4秒 次に活かす\n合計  30秒", "idea": [5], "keys": {"5": "time"}}, av: {"k": "chips", "items": [{"t": "課題 8秒"}, {"t": "解決 8秒"}, {"t": "デモ 10秒"}, {"t": "学び 4秒"}, {"i": "timer", "t": "= 30秒", "key": "time"}]}, problem: "長くて「結局なに？」になる", idea: "聞く人が知りたい順に話す", answer: "課題・解決・デモ・学びで30秒", "when": [["時間が短い", "課題と解決だけ残す"], ["技術が主役", "学びを厚く"]]},
         answer: { html: '<p style="color:var(--mute);font-size:.875rem;margin-bottom:.6em">例：学習トラッカー（30秒）</p><ul><li><b>課題（8秒）</b>：新入社員は、学んだことが続かなくて困っています。</li><li><b>解決（8秒）</b>：そこで、毎日の学習を記録して成長が見えるアプリを作りました。</li><li><b>デモ（10秒）</b>：ここで入力すると、グラフが伸びます。</li><li><b>学び（4秒）</b>：TypeScript の型が、いちばん助けになりました。</li></ul>' },
         render(el, ctx) {
           const P = [['課題', 8, 'var(--pink)', '❗', '「〇〇な人は、△△で困っています。」'], ['解決', 8, 'var(--ts)', '💡', '「そこで□□というアプリを作りました。」'], ['デモ', 10, 'var(--vue)', '🎬', '「実際に動かしてみます。ここを押すと…」'], ['学び', 4, 'var(--team)', '🌱', '「TypeScriptの型が一番助けになりました。」']];
@@ -306,7 +306,7 @@
     scenes: [
       {
         t: 'カンバンボード', tag: 'KANBAN', lead: 'タスクを<b>ドラッグ</b>して Todo → Doing → Done へ動かそう。チームの今の状況が、ひと目で分かる。',
-        why: {pv: {"k": "flow", "items": [{"i": "users", "t": "見えない", "c": "bad"}, {"i": "copy", "t": "かぶる", "c": "bad"}, {"i": "triangle-alert", "t": "止まる", "c": "bad"}]}, iv: {"k": "flow", "items": ["eye|見える化", "gauge|同時進行を絞る"]}, av: {"k": "flow", "items": ["list|Todo", "loader|Doing", "check|Done"]}, "problem": "誰が何をやっているか見えず、作業がかぶる。止まっていても気づけない", "idea": "作業を板に貼って見えるようにする。同時にやる数は少なくする。", "answer": "Todo / Doing / Done のボード", "when": [["Doing が3つ以上", "まず1つ完了させる"], ["詰まった", "Doing に置いたまま相談"]]},
+        why: {pv: {"k": "code", "file": "chat", "lang": "txt", "text": "A: 誰かログインやってる？\nB: あ、私もやってた…\nC: （止まっていて言えない）", "err": [2, 3], "keys": {"3": "doing"}}, iv: {"k": "code", "file": "board.md", "lang": "txt", "text": "Todo : 検索  通知\nDoing: ログイン(Ami) ← 1人1つ\nDone : 画面レイアウト", "idea": [2], "keys": {"2": "doing"}}, av: {"k": "flow", "items": ["list|Todo 2", "loader|Doing 1|doing", "check|Done 1"]}, problem: "誰が何をやっているか見えない", idea: "板に貼る。同時にやるのは1つ", answer: "Todo / Doing / Done のボード", "when": [["Doing が3つ以上", "まず1つ完了させる"], ["詰まった", "Doing に置いたまま相談"]]},
         answer: { html: '<p style="color:var(--mute);font-size:.875rem;margin-bottom:.6em">例：いい感じの板</p><ul><li><b>Todo</b>：README を書く／デザインを整える</li><li><b>Doing</b>：ref でカウンターを作る（<b>1〜2枚まで</b>）</li><li><b>Done</b>：画面のワイヤーフレーム</li></ul><p>ポイント：Doing を増やしすぎない。1枚終わってから次を引く。</p>' },
         render(el) {
           let tasks = store.get('tt.dev.tasks', [{ id: uid(), t: '画面のワイヤーフレーム', s: 'done' }, { id: uid(), t: 'ref でカウンターを作る', s: 'doing' }, { id: uid(), t: 'コンポーネントを分割', s: 'todo' }, { id: uid(), t: 'README を書く', s: 'todo' }]);
@@ -351,7 +351,7 @@
       },
       {
         t: '1日の流れ と Git', tag: 'FLOW', lead: '開発の基本の流れ。<b>branch → commit → push → PR</b>。「次へ」で1ステップずつ見よう。右上の <b>今日の習慣</b> アイコンにチェックリストがある。',
-        why: {pv: {"k": "flow", "items": [{"i": "file-pen", "t": "main を直接", "c": "bad"}, {"i": "x", "t": "壊れた", "c": "bad"}, {"i": "search", "t": "誰が？", "c": "bad"}]}, iv: {"k": "flow", "items": ["git-branch|枝で分ける", "save|小さく保存", "git-pull-request|見てから合流"]}, av: {"k": "code", "lang": "sh", "text": "git switch -c feature/x\ngit commit\ngit push", "ok": [1, 2, 3]}, "problem": "main を直接書き換えて壊す。いつ誰が何を変えたか追えない", "idea": "main とは別の枝で作業する。小さく保存して、見てもらってから main に入れる。", "answer": "branch → commit → push → PR → merge", "when": [["新しい作業", "必ず新しい branch"], ["commit", "小さく・意味のある単位"], ["迷う変更", "PR で相談"]]},
+        why: {pv: {"k": "code", "file": "terminal", "lang": "sh", "text": "$ git switch main\n$ vim app.ts   # main を直接\n$ git push\n# → 壊れた。誰の変更？", "err": [2, 3, 4], "keys": {"2": "branch"}}, iv: {"k": "code", "file": "graph", "lang": "txt", "text": "main    ●────●────●────●\n         \\         /\nfeature   ●──●──●", "idea": [3], "keys": {"3": "branch"}}, av: {"k": "code", "file": "terminal", "lang": "sh", "text": "git switch -c feature/login\ngit commit -m \"ログイン画面\"\ngit push -u origin feature/login", "ok": [1, 2, 3], "keys": {"1": "branch"}}, problem: "main を直接直して壊した", idea: "枝で作業して、見てから合流", answer: "branch → commit → push → PR", "when": [["新しい作業", "必ず新しい branch"], ["commit", "小さく・意味のある単位"], ["迷う変更", "PR で相談"]]},
         answer: { code: '# 朝：最新にして、作業用の枝を作る\ngit switch main && git pull\ngit switch -c feature/login\n\n# 作業のあと：小さく保存\ngit add .\ngit commit -m "ログイン画面を追加"\n\n# 夕方：送って、見てもらう\ngit push -u origin feature/login\n# → GitHub で Pull Request を作る', lang: 'sh', file: 'terminal' },
         ref: [{ title: '今日の習慣', icon: 'list-checks', node: () => checklist('tt.dev.daily', [['☀️', '朝会：今日やることを共有', null, { hint: ['今日やることを、チームに1分で話す。'], answer: '例：「今日は、ログイン画面を作ります」' }], ['🌿', 'ブランチを切ってから作業', null, { hint: ['main では作業しない。作業用の枝を作る。'], answer: { code: 'git switch -c feature/login', lang: 'sh', file: 'terminal' } }], ['💾', 'こまめに commit', null, { hint: ['区切りのいいところで、小さく保存する。'], answer: { code: 'git add .\ngit commit -m "ログイン画面を追加"', lang: 'sh', file: 'terminal' } }], ['🙌', '夕会：進捗と困りごとを共有', null, { hint: ['進んだことと、困っていることを話す。'], answer: '例：「画面は完成。バリデーションで困っています」' }], ['📝', 'PR の説明に「何を・なぜ・どう確かめたか」を書く', null, { opt: 1, hint: ['PR を見る人は、何も知らない。3つの見出しで説明しよう。', '「何を」「なぜ」「どう確かめたか」の順に書く。'], answer: { code: '## 何を\nログイン画面を追加した\n\n## なぜ\nユーザーがログインできるようにするため\n\n## どう確かめたか\nnpm run dev で、入力→ログインできることを確認', lang: 'text' } }]]) }],
         render(el) {
@@ -373,7 +373,7 @@
       },
       {
         t: '詰まったら？', tag: 'DEBUG', lead: '質問に答えて進もう。次にやることが見つかる。',
-        why: {pv: {"k": "flow", "items": [{"i": "clock", "t": "何時間も悩む", "c": "bad"}, {"i": "message-circle-question", "t": "「動きません」だけ", "c": "bad"}]}, iv: {"k": "flow", "items": ["split|切り分ける", "timer|10分で相談"]}, av: {"k": "chips", "items": ["やったこと", "期待した結果", "実際の結果"]}, "problem": "1人で何時間も悩む。質問が「動きません」だけで伝わらない", "idea": "どこまで動くかを確かめる。10分悩んだら相談する。", "answer": "質問ツリーで原因を絞る。「やったこと・期待・実際」で相談する。", "when": [["10分悩んだ", "声をかける"], ["エラー文がある", "そのまま検索 / AI に"], ["値がおかしい", "console.log で遡る"]]},
+        why: {pv: {"k": "code", "file": "slack", "lang": "txt", "text": "[14:00] 動きません\n[14:05] （返事なし）\n…\n[17:30] まだ動きません", "err": [1, 4], "keys": {"1": "ask"}}, iv: {"k": "code", "file": "question.md", "lang": "txt", "text": "やったこと: npm run dev\n期待      : 画面が出る\n実際      : 白い画面 + エラー\n10分悩んだら声をかける", "idea": [4], "keys": {"4": "ask"}}, av: {"k": "chips", "items": [{"i": "timer", "t": "10分で相談", "key": "ask"}, "check|やったこと", "check|期待", "check|実際"]}, problem: "「動きません」だけで伝わらない", idea: "10分悩んだら、型で相談", answer: "やったこと・期待・実際", "when": [["10分悩んだ", "声をかける"], ["エラー文がある", "そのまま検索 / AI に"], ["値がおかしい", "console.log で遡る"]]},
         render(el) {
           const box = h('div', { class: 'tt-tree', style: { '--c': 'var(--team)' } });
           let path = [];
@@ -408,7 +408,7 @@
     scenes: [
       {
         t: '資料の構成', tag: 'SLIDES', lead: '1枚で伝えることは1つ。この6枚を目安にそろえよう。',
-        why: {pv: {"k": "flow", "items": [{"i": "files", "t": "情報を詰め込む", "c": "bad"}, {"i": "circle-help", "t": "何が大事？", "c": "bad"}]}, iv: {"k": "flow", "items": ["target|持ち帰る1文を決める", "layout-template|1枚1メッセージ"]}, av: {"k": "big", "i": "layout-template", "t": "1枚 = 1メッセージ"}, "problem": "情報を詰め込みすぎて、何が一番大事か伝わらない", "idea": "1枚で伝えることは1つだけ。持ち帰ってほしい1文を先に決める。", "answer": "6枚の構成テンプレート", "when": [["伝えたいことが多い", "1つに絞り、残りはデモで"], ["技術の説明が長い", "図1枚にまとめる"]]},
+        why: {pv: {"k": "code", "file": "slides.md", "lang": "txt", "text": "slide 1: 背景/技術/機能/日程\nslide 2: 機能/画面/API/テスト\nslide 3: （文字がぎっしり）", "err": [1, 2, 3], "keys": {"1": "one"}}, iv: {"k": "code", "file": "slide.md", "lang": "txt", "text": "# 検索が3秒で終わる\n ・図 1枚\n ・デモ", "idea": [1], "keys": {"1": "one"}}, av: {"k": "code", "file": "outline.md", "lang": "txt", "text": "1枚 = 1メッセージ\n1課題 2解決 3デモ\n4しくみ 5学び 6次へ", "ok": [1], "keys": {"1": "one"}}, problem: "詰め込みで、何が大事か不明", idea: "1枚に1メッセージだけ", answer: "6枚の構成テンプレート", "when": [["伝えたいことが多い", "1つに絞り、残りはデモで"], ["技術の説明が長い", "図1枚にまとめる"]]},
         answer: { html: '<p style="color:var(--mute);font-size:.875rem;margin-bottom:.6em">例：6枚の中身</p><ul><li><b>タイトル</b>：学習トラッカー／チーム A／3人</li><li><b>課題</b>：学んだことが続かない・見えない</li><li><b>解決策</b>：毎日の記録を、グラフで見せるアプリ（画面のスクショ）</li><li><b>デモ</b>：①入力 ②グラフが伸びる ③バッジがもらえる</li><li><b>技術と工夫</b>：TypeScript の型でバグを減らした／Vue で部品に分けた</li><li><b>学びと今後</b>：型が助けになった。次は通知機能を作りたい</li></ul>' },
         render(el) {
           el.append(checklist('tt.prep.slides', [['1️⃣', 'タイトル', 'アプリ名・チーム名・メンバー', { hint: ['アプリの名前と、チーム名、メンバーの名前を1枚にまとめる。'], answer: '例：学習トラッカー／チーム A／3人' }], ['2️⃣', '課題', '誰がどんなことに困っている？', { hint: ['「誰が」「何に困っているか」を1文で書く。'], answer: '例：新入社員は、学んだことが続かず困っている。' }], ['3️⃣', '解決策', 'アプリの一言説明とスクショ', { hint: ['アプリを一言で。画面のスクショを1枚のせる。'], answer: '例：毎日の記録を、グラフで見せるアプリ。' }], ['4️⃣', 'デモ', '見せる流れを3ステップに絞る', { hint: ['見せる流れを、3ステップに絞る。'], answer: '例：①入力 ②グラフが伸びる ③バッジがもらえる' }], ['5️⃣', '技術と工夫', 'TypeScript / Vue でやったこと', { hint: ['使った技術と、工夫したところを1〜2個。'], answer: '例：TypeScript の型でバグを減らした／Vue で部品に分けた' }], ['6️⃣', '学びと今後', 'ふりかえり・次にやりたいこと', { hint: ['やってみて分かったことと、次にやりたいこと。'], answer: '例：型が助けになった。次は通知機能を作りたい。' }], ['❓', '聞き手の質問を2つ予想して、答えを用意する', null, { opt: 1, hint: ['聞く人なら、何が気になる？ 「なぜ？」「次は？」を考えてみる。', '技術の選び方と、これから足したい機能は、よく聞かれる。'], answer: '例：「なぜ Vue を選んだ？」→「画面を部品に分けやすいから」／「次に何を足す？」→「通知機能」' }]], 'var(--team)'));
@@ -416,7 +416,7 @@
       },
       {
         t: 'リハーサル・タイマー', tag: 'REHEARSAL', lead: 'スタートすると、パートごとの時間が順に塗られる。3分に収まるか試そう。',
-        why: {pv: {"k": "flow", "items": [{"i": "timer", "t": "時間オーバー", "c": "bad"}, {"i": "shuffle", "t": "手順を忘れる", "c": "bad"}]}, iv: {"k": "flow", "items": ["chart-pie|時間を配分", "mic|声に出す", "gauge|実測して直す"]}, av: {"k": "meter", "items": [{"t": "課題", "v": 0.25, "c": "hi"}, {"t": "解決", "v": 0.25, "c": ""}, {"t": "デモ", "v": 0.33, "c": "ok"}, {"t": "学び", "v": 0.12, "c": ""}]}, "problem": "本番で時間オーバー。デモで焦って手順を忘れる", "idea": "パートごとに時間を決める。声に出して計って、直す。", "answer": "パートごとの持ち時間タイマー", "when": [["時間オーバー", "デモの見せ場を絞る"], ["時間が余る", "学びを厚くする"]]},
+        why: {pv: {"k": "code", "file": "rehearsal.log", "lang": "txt", "text": "課題  3:10 （予定 1:15）\n解決  2:20 （予定 1:15）\nデモ  焦って手順を忘れる\n合計  7:50 / 5:00 → 超過", "err": [1, 2, 4], "keys": {"4": "time"}}, iv: {"k": "code", "file": "plan.md", "lang": "txt", "text": "課題 1:15 / 解決 1:15\nデモ 1:40 / 学び 0:30\n合計 5:00 ← 声に出して計る", "idea": [3], "keys": {"3": "time"}}, av: {"k": "code", "file": "result", "lang": "txt", "text": "課題 1:12 ✓\n解決 1:18 ✓\nデモ 1:35 ✓\n学び 0:32 ✓  合計 4:37", "ok": [4], "keys": {"4": "time"}}, problem: "本番で時間オーバー", idea: "持ち時間を決め、声に出して計る", answer: "パートごとの持ち時間タイマー", "when": [["時間オーバー", "デモの見せ場を絞る"], ["時間が余る", "学びを厚くする"]]},
         render(el, ctx) {
           const S = [['導入・課題', 30, 'var(--pink)'], ['解決策', 45, 'var(--ts)'], ['デモ', 75, 'var(--vue)'], ['まとめ', 30, 'var(--team)']];
           const total = S.reduce((a, s) => a + s[1], 0);
@@ -443,7 +443,7 @@
       },
       {
         t: '本番前チェック', tag: 'DEMO DAY', lead: '当日に慌てないために。ひとつずつ確認してチェック。',
-        why: {pv: {"k": "flow", "items": [{"i": "monitor-off", "t": "映らない", "c": "bad"}, {"i": "wifi-off", "t": "ネット切れ", "c": "bad"}, {"i": "bug", "t": "動かない", "c": "bad"}]}, iv: {"k": "flow", "items": ["list-checks|失敗を先に洗い出す", "shield-check|潰しておく"]}, av: {"k": "chips", "items": ["check|画面共有", "check|ネット", "check|録画バックアップ"]}, "problem": "当日、画面が映らない・デモが動かない・ネットが落ちる", "idea": "起こりそうな失敗を先に書き出す。チェックして、前もって防ぐ。", "answer": "本番前チェックリスト + バックアップ", "when": [["ネットが不安", "録画動画を用意"], ["ライブデモが不安", "スクショ・動画で代替"]]},
+        why: {pv: {"k": "code", "file": "当日", "lang": "sh", "text": "$ 画面共有 …（映らない）\n$ wifi: 接続できません\n$ npm run dev → Error\n# 本番直前に気づく", "err": [1, 2, 3], "keys": {"4": "check"}}, iv: {"k": "code", "file": "risks.md", "lang": "txt", "text": "[ ] 画面共有できる？\n[ ] ネットが落ちたら？\n[ ] デモが動かなかったら？\n→ 前日までに全部つぶす", "idea": [4], "keys": {"4": "check"}}, av: {"k": "chips", "items": ["check|画面共有", "check|ネット → 録画で代替", "check|デモ → スクショ", {"i": "list-checks", "t": "前日までに完了", "key": "check"}]}, problem: "当日に映らない・動かない", idea: "失敗を先に書き出して潰す", answer: "本番前チェックリスト + 予備", "when": [["ネットが不安", "録画動画を用意"], ["ライブデモが不安", "スクショ・動画で代替"]]},
         answer: { html: '<p style="color:var(--mute);font-size:.875rem;margin-bottom:.6em">例：準備のしかた</p><ul><li>ネット：会場の Wi-Fi が不安なので、スマホのテザリングも用意</li><li>画面：<code>npm run dev</code> を先に起動しておき、タブは3つだけ</li><li>バックアップ：デモの画面録画（30秒）とスクショ3枚をデスクトップに置く</li><li>担当：話す人・操作する人・時間を見る人を決める</li></ul>' },
         render(el) {
           el.append(checklist('tt.prep.demoday', [['🌐', 'ネット接続・画面共有を確認', null, { hint: ['会場の Wi-Fi は動く？ 画面共有を先に試しておこう。'], answer: 'スマホのテザリングも用意しておく。' }], ['🖥️', 'アプリが起動する（npm run dev）', null, { hint: ['発表の前に、先に起動しておこう。', '不要なタブと通知は切る。文字は ⌘＋ で大きくする。'], answer: { code: 'npm run dev', lang: 'sh', file: 'terminal' } }], ['🛟', 'デモが失敗した時のスクショ／動画を用意', null, { hint: ['止まった時のための「予備」を作っておく。'], answer: 'デモの画面録画（30秒）と、スクショ3枚をデスクトップに置く。' }], ['🎤', '話す順番と担当を決めた', null, { hint: ['話す人・操作する人・時間を見る人を決めよう。'], answer: '例：話す＝A さん／操作＝B さん／時間＝C さん' }], ['⏱️', '本番どおりに通しで練習して、3分に収まった', null, { opt: 1, hint: ['タイマーを使って、話す・操作するを、本番と同じ順番でやってみる。', '3分を超えたら、デモの見せ場を1つ減らす。'], answer: '例：1回目 3分40秒 → デモを1つ減らす → 2回目 2分55秒' }]], 'var(--pink)'));
@@ -464,7 +464,7 @@
     scenes: [
       {
         t: '発表順ルーレット', tag: 'DRAW', lead: 'チーム名を入れて<b>抽選</b>しよう。発表の順番が決まる。',
-        why: {pv: {"k": "flow", "items": [{"i": "users", "t": "順番で揉める", "c": "bad"}, {"i": "message-square", "t": "「最後は嫌」", "c": "bad"}]}, iv: {"k": "flow", "items": ["scale|公平なルール", "dices|ランダム"]}, av: {"k": "big", "i": "dices", "t": "抽選で決める"}, "problem": "発表順で揉める。「最後は嫌」という空気が生まれる", "idea": "順番はくじで決める。話し合わなくて済む。", "answer": "くじ引き（ランダム抽選）", "when": [["順番に理由が無い", "抽選"], ["デモの相性がある", "事前に調整"]]},
+        why: {pv: {"k": "code", "file": "chat", "lang": "txt", "text": "A: 最初は嫌です\nB: 私も最後は…\nC: じゃんけん？\n→ 5分たっても決まらない", "err": [1, 2, 4], "keys": {"4": "draw"}}, iv: {"k": "code", "file": "draw.ts", "lang": "ts", "text": "const teams = ['A', 'B', 'C', 'D']\nconst order = shuffle(teams)\n// 全員、同じ確率", "idea": [2], "keys": {"2": "draw"}}, av: {"k": "code", "file": "result", "lang": "ts", "text": "order = ['C', 'A', 'D', 'B']\n// 5秒で決定。文句なし", "ok": [1], "keys": {"1": "draw"}}, problem: "発表順で揉める", idea: "順番はくじで決める", answer: "ランダム抽選で一発決定", "when": [["順番に理由が無い", "抽選"], ["デモの相性がある", "事前に調整"]]},
         render(el, ctx) {
           let teams = store.get('tt.demo.teams', []), order = store.get('tt.demo.order', []);
           const slot = h('div', { class: 'tt-slot' }, '🎲');
@@ -500,7 +500,7 @@
       },
       {
         t: '発表タイマー', tag: 'LIVE', lead: '大きなタイマーで持ち時間を見せる。「次のチーム」で進める。',
-        why: {pv: {"k": "flow", "items": [{"i": "clock", "t": "持ち時間がバラバラ", "c": "bad"}, {"i": "triangle-alert", "t": "進行が崩れる", "c": "bad"}]}, iv: {"k": "flow", "items": ["eye|時間を見える化", "shield|守る仕組み"]}, av: {"k": "big", "i": "timer", "t": "大きなタイマー"}, "problem": "持ち時間がバラバラで、進行が崩れる", "idea": "残り時間を全員に見せる。みんなで時間を守れる。", "answer": "大きなタイマー + 次のチームへ", "when": [["残り少ない", "話をまとめに入る"], ["時間切れ", "続きは質疑で"]]},
+        why: {pv: {"k": "code", "file": "進行メモ", "lang": "txt", "text": "持ち時間: A 5分  B 3分  C 8分\nA: 気づいたら 9分\n次の人: 「まだ終わらない？」", "err": [2, 3], "keys": {"2": "left"}}, iv: {"k": "code", "file": "timer.ts", "lang": "ts", "text": "const left = end - Date.now()\nif (left < 30_000) warn()\nif (left <= 0) next()", "idea": [1, 2], "keys": {"1": "left"}}, av: {"k": "code", "file": "画面", "lang": "txt", "text": " 04:12  ■■■■■■□□□□\n 残り30秒で色が変わる\n → 0 になったら次のチーム", "ok": [1], "keys": {"1": "left"}}, problem: "持ち時間がバラバラで崩れる", idea: "残り時間を全員に見せる", answer: "大きなタイマー + 次のチームへ", "when": [["残り少ない", "話をまとめに入る"], ["時間切れ", "続きは質疑で"]]},
         render(el, ctx) {
           const order = store.get('tt.demo.order', []);
           const names = order.length ? order : ['Team A', 'Team B', 'Team C'];
@@ -516,7 +516,7 @@
       },
       {
         t: 'フィードバック', tag: 'VOTE', lead: '4つの観点を⭐で評価しよう。平均がすぐ変わる。最後に結果発表。',
-        why: {pv: {"k": "flow", "items": [{"i": "message-square", "t": "「良かったです」", "c": "bad"}, {"i": "circle-help", "t": "次に何を直す？", "c": "bad"}]}, iv: {"k": "flow", "items": ["layout-grid|観点を分ける", "message-square-text|理由を一言"]}, av: {"k": "chips", "items": ["アイデア ★", "技術 ★", "デザイン ★", "発表 ★"]}, "problem": "「良かったです」だけで終わり、次に活かせない", "idea": "4つの観点ごとに点を付ける。理由も一言そえる。", "answer": "4つの軸で星評価 + コメント", "when": [["良かった点", "具体的に理由を書く"], ["改善点", "次の提案とセットで"]]},
+        why: {pv: {"k": "code", "file": "comments.txt", "lang": "txt", "text": "A: 良かったです！\nB: 面白かった\nC: 良かったです\n→ 次に何を直す？ 不明", "err": [1, 2, 3], "keys": {"4": "axis"}}, iv: {"k": "code", "file": "feedback.md", "lang": "txt", "text": "idea   ★★★★ 課題が具体的\ntech   ★★★  DB設計が丁寧\ndesign ★★★★★ 配色が見やすい\ntalk   ★★★★ 30秒に収まった", "idea": [1], "keys": {"1": "axis"}}, av: {"k": "chips", "items": [{"i": "lightbulb", "t": "アイデア ★", "key": "axis"}, "code|技術 ★", "palette|デザイン ★", "mic|発表 ★"]}, problem: "「良かった」だけで次に活かせない", idea: "観点ごとに星と理由を書く", answer: "4つの軸で星評価 + コメント", "when": [["良かった点", "具体的に理由を書く"], ["改善点", "次の提案とセットで"]]},
         render(el) {
           const teams = (store.get('tt.demo.order', []).length ? store.get('tt.demo.order', []) : store.get('tt.demo.teams', []));
           const names = teams.length ? teams : ['Team A', 'Team B', 'Team C'];
@@ -561,7 +561,7 @@
     scenes: [
       {
         t: '質問ボード', tag: 'Q&A', lead: '気軽に質問しよう。<b>👍</b>は「私も知りたい」。答えが出たら✓を付ける。',
-        why: {pv: {"k": "flow", "items": [{"i": "message-circle", "t": "同じ質問が何度も", "c": "bad"}, {"i": "eye-off", "t": "聞けない人もいる", "c": "bad"}]}, iv: {"k": "flow", "items": ["book-open|みんなの財産", "heart|「私も」を見える化"]}, av: {"k": "chips", "items": ["plus|投稿", "thumbs-up|投票", "check|回答済み"]}, "problem": "同じ質問が何度も出る。恥ずかしくて聞けない人もいる", "idea": "質問を1か所に集める。👍で「私も知りたい」を伝える。", "answer": "質問ボード（投稿・投票・回答済み）", "when": [["同じ質問がある", "👍を押す"], ["新しい疑問", "投稿する"]]},
+        why: {pv: {"k": "code", "file": "chat", "lang": "txt", "text": "10:00 A: useState って何？\n10:20 B: useState って何ですか\n10:40 C: （聞けず固まる）", "err": [1, 2, 3], "keys": {"2": "vote"}}, iv: {"k": "code", "file": "board", "lang": "txt", "text": "Q1 useState って何？   +3\nQ2 v-model って？      +1\n   ↑「私も」で投票する", "idea": [1], "keys": {"1": "vote"}}, av: {"k": "chips", "items": [{"i": "plus", "t": "投稿"}, {"i": "thumbs-up", "t": "+1 私も", "key": "vote"}, {"i": "check", "t": "回答済み"}]}, problem: "同じ質問が何度も出る", idea: "1か所に集めて +1 で知らせる", answer: "投稿・投票・回答済み", "when": [["同じ質問がある", "👍を押す"], ["新しい疑問", "投稿する"]]},
         render(el) {
           let qs = store.get('tt.qa.q', [{ id: uid(), q: 'ref と reactive はどう使い分けますか？', v: 3, done: false }, { id: uid(), q: 'interface と type の違いは？', v: 2, done: true }]);
           let filter = 'all';
@@ -583,7 +583,7 @@
       },
       {
         t: 'よくある質問', tag: 'FAQ', lead: 'つまずきやすいポイントをまとめました。タップで開きます。',
-        why: {pv: {"k": "flow", "items": [{"i": "clock", "t": "同じつまずきで時間が溶ける", "c": "bad"}]}, iv: {"k": "flow", "items": ["book|先回りして知る"]}, av: {"k": "big", "i": "circle-help", "t": "FAQ を先に見る"}, "problem": "同じつまずきで毎回時間が溶ける", "idea": "よくあるつまずきを、先に知っておく。", "answer": "FAQ（よくある質問）を先に読む", "when": [["まず", "FAQ を見る"], ["載っていない", "質問ボードへ"]]},
+        why: {pv: {"k": "code", "file": "terminal", "lang": "sh", "text": "$ npm run dev\nError: Cannot find module 'vue'\n# 30分調べた… 前の人も同じ", "err": [2, 3], "keys": {"2": "faq"}}, iv: {"k": "code", "file": "FAQ.md", "lang": "txt", "text": "Q. Cannot find module 'vue'\nA. npm install を忘れた\nQ. ポートが使用中\nA. 別のターミナルを閉じる", "idea": [1, 2], "keys": {"1": "faq"}}, av: {"k": "code", "file": "FAQ を検索", "lang": "txt", "text": "\"Cannot find module\"\n→ npm install → 30秒で解決", "ok": [1, 2], "keys": {"1": "faq"}}, problem: "同じつまずきで時間が溶ける", idea: "よくある原因を先に知る", answer: "FAQ を先に検索する", "when": [["まず", "FAQ を見る"], ["載っていない", "質問ボードへ"]]},
         render(el) {
           el.append(h('div', null, FAQ.map(([q, a]) => {
             const acc = h('div', { class: 'tt-acc' }, h('button', { onclick: () => acc.classList.toggle('open') }, q), h('div', { class: 'bd' }, h('div', h('p', { html: a }))));

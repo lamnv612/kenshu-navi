@@ -239,24 +239,26 @@
     const NS = 'http://www.w3.org/2000/svg';
     const svg = document.createElementNS(NS, 'svg'); svg.setAttribute('class', 'why-svg');
     const layer = h('div', { class: 'why-links' }, svg);
-    const defs = [['l1', 'なぜ？'], ['l2', 'だから'], ['l3', 'こう直る']];
+    const defs = [['l1', 'なぜ？'], ['l1b', ''], ['l2', 'だから'], ['l2b', ''], ['l3', 'こう直る']];
     const paths = {}, notes = {};
     defs.forEach(([k, t]) => {
-      const g = document.createElementNS(NS, 'g'); g.setAttribute('class', 'lk ' + k);
-      [0, 1].forEach((j) => { const p = document.createElementNS(NS, 'path'); p.setAttribute('pathLength', '1'); p.setAttribute('class', j ? 'sk' : 'mn'); g.append(p); (paths[k] ||= []).push(p); });
+      const g = document.createElementNS(NS, 'g'); g.setAttribute('class', 'lk ' + k.replace('b', ''));
+      [0, 1].forEach((j) => { const p = document.createElementNS(NS, 'path'); p.setAttribute('pathLength', '1'); p.setAttribute('class', j ? 'sk' : 'pm'); g.append(p); (paths[k] ||= []).push(p); });
       svg.append(g);
-      notes[k] = h('span', { class: 'why-note ' + k }, t); layer.append(notes[k]);
+      if (t) { notes[k] = h('span', { class: 'why-note ' + k }, t); layer.append(notes[k]); }
     });
     flow.append(layer);
     const pos = (el) => { let x = 0, y = 0, n = el; while (n && n !== flow) { x += n.offsetLeft; y += n.offsetTop; n = n.offsetParent; } return { x, y, w: el.offsetWidth, h: el.offsetHeight }; };
-    const mid = (card, sel) => { const t = card.querySelector(sel) || card.querySelector('.why-v'); if (!t || !t.offsetHeight) return pos(card).y + pos(card).h / 2; const q = pos(t); return Math.max(pos(card).y + 40, Math.min(pos(card).y + pos(card).h - 24, q.y + q.h / 2)); };
+    const midY = (el, card) => { const q = pos(el), c = pos(card); return Math.max(c.y + 36, Math.min(c.y + c.h - 20, q.y + q.h / 2)); };
+    const fallbackY = (card, sel) => { const t = card.querySelector(sel) || card.querySelector('.why-v'); return t && t.offsetHeight ? midY(t, card) : pos(card).y + pos(card).h / 2; };
     const j = (n, a) => Math.sin(n * 12.9898) * a;
     const f = (n) => Math.round(n * 10) / 10;
+    const keysOf = (card) => { const m = {}; card.querySelectorAll('[data-key]').forEach((e) => { (m[e.dataset.key] ||= e); }); return m; };
     function curve(k, x1, y1, x2, y2, vertical, seed) {
       const d = (a, b, c, e, g, hh, i, l) => `M${f(a)},${f(b)} C${f(c)},${f(e)} ${f(g)},${f(hh)} ${f(i)},${f(l)}`;
       const head = vertical
         ? (jx) => ` M${f(x2 - 8 + jx)},${f(y2 - 12)} L${f(x2)},${f(y2)} L${f(x2 + 8 + jx)},${f(y2 - 11)}`
-        : (jx) => ` M${f(x2 - 12)},${f(y2 - 8 + jx)} L${f(x2)},${f(y2)} L${f(x2 - 11)},${f(y2 + 8 + jx)}`;
+        : (jx) => ` M${f(x2 - 15)},${f(y2 - 10 + jx)} L${f(x2)},${f(y2)} L${f(x2 - 14)},${f(y2 + 10 + jx)}`;
       [0, 1].forEach((i) => {
         const w = i ? 1 : 0, a = 5 + w * 4;
         let dd;
@@ -265,32 +267,54 @@
         paths[k][i].setAttribute('d', dd + head(j(seed + 3 + w, 2)));
       });
     }
+    const clear = (k) => paths[k].forEach((p) => p.setAttribute('d', ''));
     function draw() {
-      const vis = cards.filter((c) => c.offsetParent !== null || getComputedStyle(c).display !== 'none');
       if (cards.length < 2 || !cards[0].offsetWidth) return;
       svg.setAttribute('width', flow.offsetWidth); svg.setAttribute('height', flow.offsetHeight);
       const A = pos(cards[0]), B = pos(cards[1]), C = cards[2] ? pos(cards[2]) : null;
       const horiz = B.x > A.x + A.w - 4;
       layer.classList.toggle('vert', !horiz);
-      const place = (k, x, y) => { notes[k].style.left = f(x) + 'px'; notes[k].style.top = f(y) + 'px'; };
-      if (horiz) {
-        const ya = mid(cards[0], '.ln.err'), yb = mid(cards[1], '.why-v');
-        curve('l1', A.x + A.w + 2, ya, B.x - 3, yb, false, 1); place('l1', (A.x + A.w + B.x) / 2, (ya + yb) / 2 - 18);
-        if (C) { const yc = mid(cards[2], '.ln.on'); curve('l2', B.x + B.w + 2, yb, C.x - 3, yc, false, 4); place('l2', (B.x + B.w + C.x) / 2, (yb + yc) / 2 - 18);
-          const top = A.y, x1 = A.x + A.w * 0.5, x2 = C.x + C.w * 0.5, up = top - 46;
-          const dd = (w) => `M${f(x1)},${f(top - 2)} C${f(x1 + j(7 + w, 8))},${f(up)} ${f(x2 + j(8 + w, 8))},${f(up + j(9 + w, 4))} ${f(x2)},${f(top - 3)} M${f(x2 - 8)},${f(top - 14)} L${f(x2)},${f(top - 3)} L${f(x2 + 8 + j(5 + w, 2))},${f(top - 13)}`;
-          paths.l3[0].setAttribute('d', dd(0)); paths.l3[1].setAttribute('d', dd(1)); place('l3', (x1 + x2) / 2, up + 4); }
-      } else {
-        const x1 = A.x + A.w * 0.5, ay = A.y + A.h;
-        curve('l1', x1, ay + 1, B.x + B.w * 0.5, B.y - 3, true, 1); place('l1', (x1 + B.x + B.w * 0.5) / 2 + 30, (ay + B.y) / 2 - 10);
-        if (C) { curve('l2', B.x + B.w * 0.5, B.y + B.h + 1, C.x + C.w * 0.5, C.y - 3, true, 4); place('l2', B.x + B.w * 0.5 + 30, (B.y + B.h + C.y) / 2 - 10); }
-        paths.l3.forEach((p) => p.setAttribute('d', ''));
+      const place = (k, x, y) => { if (notes[k]) { notes[k].style.left = f(x) + 'px'; notes[k].style.top = f(y) + 'px'; } };
+      const ka = keysOf(cards[0]), kb = keysOf(cards[1]), kc = cards[2] ? keysOf(cards[2]) : {};
+      const ab = Object.keys(ka).filter((k) => kb[k]).slice(0, 2), bc = Object.keys(kb).filter((k) => kc[k]).slice(0, 2);
+      const hasKeys = ab.length || bc.length;
+      ['l1', 'l1b', 'l2', 'l2b', 'l3'].forEach(clear);
+      const pair = (names, from, to, F, T, fc, tc, slot, seed) => {
+        names.forEach((k, n) => {
+          const e1 = from[k], e2 = to[k], key = slot + (n ? 'b' : '');
+          if (horiz) {
+            const q1 = pos(e1), q2 = pos(e2), y1 = q1.y + q1.h / 2, y2 = q2.y + q2.h / 2, x1 = q1.x + q1.w + 3, x2 = q2.x - 5;
+            curve(key, x1, y1, x2, y2, false, seed + n * 3);
+            if (!n) place(slot, (F.x + F.w + T.x) / 2, (y1 + y2) / 2 - 20);
+          } else {
+            const x1 = pos(e1).x + pos(e1).w / 2, x2 = pos(e2).x + pos(e2).w / 2;
+            curve(key, Math.min(F.x + F.w - 14, Math.max(F.x + 14, x1)), F.y + F.h + 1, Math.min(T.x + T.w - 14, Math.max(T.x + 14, x2)), T.y - 3, true, seed + n * 3);
+            if (!n) place(slot, (x1 + x2) / 2 + 30, (F.y + F.h + T.y) / 2 - 10);
+          }
+        });
+      };
+      if (hasKeys) {
+        pair(ab, ka, kb, A, B, cards[0], cards[1], 'l1', 1);
+        if (C) pair(bc, kb, kc, B, C, cards[1], cards[2], 'l2', 4);
+      }
+      if (!ab.length) { // fallback anchors
+        if (horiz) { const ya = fallbackY(cards[0], '.ln.err'), yb = fallbackY(cards[1], '.why-v'); curve('l1', A.x + A.w + 2, ya, B.x - 3, yb, false, 1); place('l1', (A.x + A.w + B.x) / 2, (ya + yb) / 2 - 18); }
+        else { const x1 = A.x + A.w * 0.5; curve('l1', x1, A.y + A.h + 1, B.x + B.w * 0.5, B.y - 3, true, 1); place('l1', x1 + 30, (A.y + A.h + B.y) / 2 - 10); }
+      }
+      if (C && !bc.length) {
+        if (horiz) { const yb = fallbackY(cards[1], '.why-v'), yc = fallbackY(cards[2], '.ln.on'); curve('l2', B.x + B.w + 2, yb, C.x - 3, yc, false, 4); place('l2', (B.x + B.w + C.x) / 2, (yb + yc) / 2 - 18); }
+        else { curve('l2', B.x + B.w * 0.5, B.y + B.h + 1, C.x + C.w * 0.5, C.y - 3, true, 4); place('l2', B.x + B.w * 0.5 + 30, (B.y + B.h + C.y) / 2 - 10); }
+      }
+      if (horiz && C) {
+        const top = A.y, x1 = A.x + A.w * 0.5, x2 = C.x + C.w * 0.5, up = top - 46;
+        const dd = (w) => `M${f(x1)},${f(top - 2)} C${f(x1 + j(7 + w, 8))},${f(up)} ${f(x2 + j(8 + w, 8))},${f(up + j(9 + w, 4))} ${f(x2)},${f(top - 3)} M${f(x2 - 8)},${f(top - 14)} L${f(x2)},${f(top - 3)} L${f(x2 + 8 + j(5 + w, 2))},${f(top - 13)}`;
+        paths.l3[0].setAttribute('d', dd(0)); paths.l3[1].setAttribute('d', dd(1)); place('l3', (x1 + x2) / 2, up + 4);
       }
     }
     let t = 0; const redraw = () => { cancelAnimationFrame(t); t = requestAnimationFrame(draw); };
     if (window.ResizeObserver) new ResizeObserver(redraw).observe(flow);
     window.addEventListener('resize', redraw);
-    return { draw: redraw, set(on, anim) { layer.classList.toggle('instant', !anim); layer.classList.toggle('on', !!on); redraw(); setTimeout(redraw, 700); } };
+    return { draw: redraw, set(on, anim) { layer.classList.toggle('instant', !anim); layer.classList.toggle('on', !!on); flow.classList.toggle('linked', !!on); redraw(); setTimeout(redraw, 700); } };
   }
 
   function lessonView(id, idx) {
@@ -462,13 +486,14 @@
       if (pm) { try { sessionStorage.setItem('kenshu.pending', pm[1]); } catch {} location.hash = '#/'; return; }
       if (K.users.isAdmin() && K.users.consumePending()) { location.hash = '#/admin'; return; }
       if (!K.users.current()) { current = K.users.views.loginView(() => { location.hash = '#/'; render(); }); app.append(current); document.title = 'ニックネーム | 研修ナビ'; return; }
-      const toAdmin = location.hash === '#/admin';
+      const toAdmin = location.hash === '#/admin', toMe = location.hash === '#/me';
       if (toAdmin && !K.users.isAdmin()) { location.hash = '#/'; return; }
-      current = toAdmin ? h('div', null, topbar(h('div', { class: 'crumb' }, h('a', { href: '#/', class: 'btn ghost' }, K.W.icon('arrow-left'), h('span', { class: 'lbl' }, '時間割')), h('b', { class: 'crumb-t' }, '進捗の管理画面'))), h('main', { class: 'home' }, K.users.views.adminView()))
+      current = toMe ? h('div', null, topbar(h('div', { class: 'crumb' }, h('a', { href: '#/', class: 'btn ghost' }, K.W.icon('arrow-left'), h('span', { class: 'lbl' }, '時間割')), h('b', { class: 'crumb-t' }, 'わたしの記録'))), h('main', { class: 'home' }, K.users.views.meView()))
+        : toAdmin ? h('div', null, topbar(h('div', { class: 'crumb' }, h('a', { href: '#/', class: 'btn ghost' }, K.W.icon('arrow-left'), h('span', { class: 'lbl' }, '時間割')), h('b', { class: 'crumb-t' }, '進捗の管理画面'))), h('main', { class: 'home' }, K.users.views.adminView()))
         : m ? lessonView(m[1], m[2] || 0) : home(toExtras);
       app.append(current);
       const LL = m && K.lessons[m[1]];
-      document.title = toAdmin ? '管理画面 | 研修ナビ' : LL ? ((LL.scenes[+(m[2] || 0)] || {}).t ? LL.scenes[+(m[2] || 0)].t + ' ・ ' : '') + LL.title + ' | 研修ナビ' : toExtras ? '補足トピック | 研修ナビ' : '研修ナビ — プログラミング研修';
+      document.title = toMe ? 'わたしの記録 | 研修ナビ' : toAdmin ? '管理画面 | 研修ナビ' : LL ? ((LL.scenes[+(m[2] || 0)] || {}).t ? LL.scenes[+(m[2] || 0)].t + ' ・ ' : '') + LL.title + ' | 研修ナビ' : toExtras ? '補足トピック | 研修ナビ' : '研修ナビ — プログラミング研修';
       window.scrollTo(0, 0);
     };
     if (current && !document.hidden && document.startViewTransition && !matchMedia('(prefers-reduced-motion: reduce)').matches) document.startViewTransition(swap);

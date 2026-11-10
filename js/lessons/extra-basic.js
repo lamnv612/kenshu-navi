@@ -135,7 +135,7 @@
     scenes: [
       {
         t: '困った：手作業の限界', tag: 'PROBLEM', lead: '「ログに <b>ERROR</b> は何行ある？」目で数える？ コマンドで数える？ <b>レース</b>で比べてみよう。',
-        why: { pv: {"k": "flow", "items": [{"i": "search", "t": "40000行を目で探す", "c": "bad"}, {"i": "clock", "t": "何時間も", "c": "bad"}]}, iv: {"k": "flow", "items": ["terminal|命令を書く", "cpu|機械に任せる"]}, av: {"k": "code", "lang": "sh", "text": "grep -c ERROR app.log", "ok": [1]}, problem: 'ログが増えるほど、目で探す・数えるのが現実的でなくなる', idea: '何度もやる作業は、命令にして機械にやらせる。', answer: 'ターミナルのコマンド（grep・パイプ・リダイレクト）', when: [['1回きり・数行', '目で見ても OK'], ['何度もやる・行数が多い', 'コマンドにする'], ['毎日やる', 'スクリプトにして自動化']] },
+        why: {pv: {"k": "code", "file": "app.log", "lang": "txt", "text": "10:00:01 INFO  start\n10:00:02 ERROR timeout\n…（40000 行）\nERROR は何件？ → 目で数える", "err": [3, 4], "keys": {"4": "cmd"}}, iv: {"k": "code", "file": "比べる", "lang": "txt", "text": "手作業: 数時間\n命令  : grep -c ERROR app.log\n結果  : 0.1秒で 128", "idea": [2], "keys": {"2": "cmd"}}, av: {"k": "code", "file": "terminal", "lang": "sh", "text": "$ grep -c ERROR app.log\n128", "ok": [1], "keys": {"1": "cmd"}}, problem: "ログが増えると目で探せない", idea: "何度もやる作業は命令にする", answer: "コマンドで一瞬。grep・パイプ・>", when: [['1回きり・数行', '目で見ても OK'], ['何度もやる・行数が多い', 'コマンドにする'], ['毎日やる', 'スクリプトにして自動化']]},
         hint: '<code>grep -c</code> の <b>c</b> は count（数える）。条件に合う行の数だけを返す。行数が増えても、書く命令は同じ。',
         render(el, ctx) {
           const N = 40, ERR = new Set([3, 9, 14, 22, 31, 37]);
@@ -182,7 +182,7 @@
       },
       {
         t: 'キーボード便利技', tag: 'SHORTCUT', lead: 'カードを押すと、ターミナルでキー操作が再生される。',
-        why: {pv: {"k": "flow", "items": [{"i": "keyboard", "t": "長い命令を打つ", "c": "bad"}, {"i": "x", "t": "打ち間違い", "c": "bad"}, {"i": "rotate-ccw", "t": "また最初から", "c": "bad"}]}, iv: {"k": "flow", "items": ["history|呼び出す", "move-horizontal|移動する", "undo-2|やり直す"], "cap": "打たずに 呼ぶ・動く・戻す"}, av: {"k": "chips", "items": ["↑ 履歴", "Tab 補完", "Ctrl+R 検索", "Ctrl+A / E 行頭・行末"]}, "problem": "長いコマンドを毎回ぜんぶ打ち直す。矢印キーを連打して履歴を探す", "idea": "打つ回数を減らす。「呼ぶ・動く・戻す」で済ませる。", "answer": "↑ 履歴 / Tab 補完 / Ctrl+R 履歴検索 / Ctrl+A・E 行頭行末", "when": [["直前のコマンドをもう一度", "↑ か <code>!!</code>"], ["昔打ったコマンドを探す", "Ctrl+R で検索"], ["長いパス名", "Tab 補完"]]},
+        why: {pv: {"k": "code", "file": "terminal", "lang": "sh", "text": "$ cd ~/projects/kenshu/src/compo\n$ cd ~/projects/kenshu/src/compo\n# 打ち間違い → 最初から", "err": [1, 2, 3], "keys": {"3": "keys"}}, iv: {"k": "code", "file": "keys", "lang": "txt", "text": "↑      前のコマンド\nTab    名前を補完\nCtrl+R 履歴を検索\nCtrl+A 行頭へ / Ctrl+E 行末へ", "idea": [2], "keys": {"2": "keys"}}, av: {"k": "chips", "items": ["arrow-up|↑ 履歴", "corner-down-right|Tab 補完|keys", "search|Ctrl+R", "move-horizontal|Ctrl+A / E"]}, problem: "長いコマンドを毎回打ち直す", idea: "打たずに、呼ぶ・動く・戻す", answer: "↑ 履歴 / Tab 補完 / Ctrl+R", "when": [["直前のコマンドをもう一度", "↑ か <code>!!</code>"], ["昔打ったコマンドを探す", "Ctrl+R で検索"], ["長いパス名", "Tab 補完"]]},
         render(el, ctx) {
           const term = termBox();
           const cards = h('div', { class: 'xb-cuts' }, SHORTCUTS.map(([k, d, c, fr]) => {
@@ -196,7 +196,7 @@
       },
       {
         t: 'パイプ ( | )：コマンドをつなぐ', tag: 'PIPE', lead: '左のコマンドの<b>出力</b>が、右のコマンドの<b>入力</b>になる。「次へ」で、データが変わる様子を1つずつ見よう。',
-        why: {pv: {"k": "flow", "items": [{"i": "file-text", "t": "fruits.txt"}, {"i": "circle-help", "t": "一番多いのは？", "c": "warn"}], "cap": "専用コマンドは無い"}, iv: {"k": "flow", "items": ["package|小さな部品", "link|つなぐ", "target|目的を作る"]}, av: {"k": "code", "lang": "sh", "text": "cat fruits.txt\n  | sort | uniq -c\n  | sort -rn | head -2", "ok": [1]}, "problem": "「一番多い果物は？」を知りたい。でも専用コマンドは無い", "idea": "小さなコマンドを順につなぐ。前の出力が、次の入力になる。", "answer": "<code>|</code> パイプで cat → sort → uniq → head をつなぐ", "when": [["結果をさらに加工したい", "| でつなぐ"], ["結果を残したい", "> でファイルへ"], ["1つのコマンドで足りる", "パイプ不要"]]},
+        why: {pv: {"k": "code", "file": "terminal", "lang": "sh", "text": "$ cat fruits.txt\napple banana apple cherry…\n# 一番多いのは？ 専用コマンドなし", "err": [3], "keys": {"3": "pipe"}}, iv: {"k": "code", "file": "パイプ", "lang": "sh", "text": "cat fruits.txt   → 全部出す\n | sort          → 並べる\n | uniq -c       → 数える\n | head -1       → 1位だけ", "idea": [2, 3, 4], "keys": {"2": "pipe"}}, av: {"k": "code", "file": "terminal", "lang": "sh", "text": "$ sort fruits.txt | uniq -c |\n  sort -rn | head -1\n      3 apple", "ok": [1, 2], "keys": {"1": "pipe"}}, problem: "一番多い果物を知りたい", idea: "前の出力が、次の入力になる", answer: "<code>|</code> で小さな命令をつなぐ", "when": [["結果をさらに加工したい", "| でつなぐ"], ["結果を残したい", "> でファイルへ"], ["1つのコマンドで足りる", "パイプ不要"]]},
         render(el) {
           const DATA = ['cherry', 'apple', 'banana', 'cherry', 'banana', 'cherry'];
           const st = [
@@ -229,7 +229,7 @@
       },
       {
         t: 'リダイレクト と grep', tag: '> >> grep', lead: '結果を<b>ファイルに保存</b>する。ファイルから<b>探す</b>。ボタンを押して違いを見よう。',
-        why: {pv: {"k": "flow", "items": [{"i": "monitor", "t": "画面に出る", "c": "bad"}, {"i": "eraser", "t": "流れて消える", "c": "bad"}, {"i": "search", "t": "目で探す", "c": "bad"}], "cap": "ログが増えるほど無理"}, iv: {"k": "flow", "items": ["arrow-right-from-line|出力の行き先を変える", "filter|条件で絞る"]}, av: {"k": "code", "lang": "sh", "text": "echo hi > a.txt\ngrep -i error app.log\nls x 2> err.log", "ok": [1, 2, 3]}, "problem": "画面に出た結果は消える。大量のログから必要な1行を目で探すのは無理", "idea": "結果を画面ではなくファイルに送る。必要な行だけ取り出す。", "answer": "<code>&gt;</code> <code>&gt;&gt;</code> <code>2&gt;</code> と <code>grep</code>", "when": [["前の内容は要らない", "> で上書き"], ["記録を足していく", ">> で追記"], ["エラーだけ残す", "2> error.log"], ["特定の文字を含む行だけ", "grep"]]},
+        why: {pv: {"k": "code", "file": "terminal", "lang": "sh", "text": "$ ls -l\n（画面に出て、流れて消える）\n$ cat app.log\n（1万行… エラーはどこ？）", "err": [2, 4], "keys": {"4": "redir"}}, iv: {"k": "code", "file": "記号", "lang": "txt", "text": ">   上書きで保存\n>>  追記で保存\n2>  エラーだけ保存\ngrep  条件に合う行だけ", "idea": [1], "keys": {"1": "redir"}}, av: {"k": "code", "file": "terminal", "lang": "sh", "text": "$ ls -l > files.txt\n$ grep -i error app.log\nERROR timeout", "ok": [1, 2], "keys": {"1": "redir"}}, problem: "結果は画面で消え、探せない", idea: "ファイルに送り、絞り込む", answer: "<code>&gt;</code> <code>&gt;&gt;</code> <code>2&gt;</code> と grep", "when": [["前の内容は要らない", "> で上書き"], ["記録を足していく", ">> で追記"], ["エラーだけ残す", "2> error.log"], ["特定の文字を含む行だけ", "grep"]]},
         render(el) {
           /* redirect */
           let out = [], err = [];
@@ -284,7 +284,7 @@
       },
       {
         t: 'oh-my-zsh：短縮 alias', tag: 'alias', lead: '長いコマンドは<b>短い名前</b>で呼べる。押して、打つ文字数の差を見よう。',
-        why: {pv: {"k": "code", "lang": "sh", "text": "git status\ngit status\ngit status\n…", "err": [1, 2, 3], "cap": "1日に何十回も"}, iv: {"k": "flow", "items": ["repeat|何度もやる", "tag|短い名前を付ける"]}, av: {"k": "code", "lang": "sh", "text": "alias gst='git status'\ngst", "ok": [1, 2]}, "problem": "<code>git status</code> を1日に何十回も打つ", "idea": "何度も打つコマンドに、短いあだ名を付ける。", "answer": "alias（oh-my-zsh の git プラグインで100個超）", "when": [["毎日使う長いコマンド", "alias にする"], ["たまにしか使わない", "alias 不要（覚える負担が増える）"], ["引数や分岐が必要", "関数・スクリプトにする"]]},
+        why: {pv: {"k": "code", "file": "terminal", "lang": "sh", "text": "$ git status\n$ git status\n$ git checkout main\n$ git status   # 1日に何十回", "err": [1, 2, 4], "keys": {"1": "alias"}}, iv: {"k": "code", "file": "~/.zshrc", "lang": "sh", "text": "# ~/.zshrc\nalias gst='git status'\nalias gco='git checkout'", "idea": [2], "keys": {"2": "alias"}}, av: {"k": "code", "file": "terminal", "lang": "sh", "text": "$ gst        # = git status\n$ gco main   # = git checkout", "ok": [1, 2], "keys": {"1": "alias"}}, problem: "同じ長い命令を毎日何十回も", idea: "短いあだ名を付ける", answer: "alias（oh-my-zsh で100個超）", "when": [["毎日使う長いコマンド", "alias にする"], ["たまにしか使わない", "alias 不要（覚える負担が増える）"], ["引数や分岐が必要", "関数・スクリプトにする"]]},
         ref: [{ title: 'oh-my-zsh のインストール', icon: 'terminal', node: () => code('# oh-my-zsh のインストール\nsh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"\n\n# ~/.zshrc\nplugins=(git)', 'sh', { file: 'terminal', color: 'var(--basic)' }) }],
         hint: 'git プラグインを有効にすると、<b>100 個以上の alias</b> が使えるようになる。まずは <code>gst</code>（git status）と <code>gco</code>（git checkout）から。',
         render(el) {
@@ -498,7 +498,7 @@
     scenes: [
       {
         t: 'Emmet：略語を Tab で展開', tag: 'Emmet', lead: '短い<b>略語</b>を打って <b>Tab</b> を押すと、HTML が一瞬でできる。略語を変えて試そう。',
-        why: {pv: {"k": "code", "lang": "html", "text": "<ul>\n  <li></li>\n  <li></li>\n  <li></li>\n</ul>", "err": [2, 3, 4], "cap": "閉じタグも全部手打ち"}, iv: {"k": "flow", "items": ["pen-line|略語を書く", "sparkles|機械が展開", "pencil|人は中身だけ"]}, av: {"k": "code", "lang": "html", "text": "ul>li*3", "ok": [1], "cap": "Tab で展開"}, "problem": "<code>&lt;ul&gt;&lt;li&gt;…</code> を毎回ぜんぶ手で打つ。閉じタグの打ち忘れも起きる", "idea": "決まった形は機械に書かせる。人は中身だけ書く。", "answer": "Emmet：略語 + Tab（<code>ul&gt;li*3</code>）", "when": [["タグの入れ子・繰り返し", "Emmet"], ["自分用の決まり文句", "ユーザースニペット"], ["ロジックのひな形", "AI 補完"]]},
+        why: {pv: {"k": "code", "file": "index.html", "lang": "html", "text": "<ul>\n  <li></li>\n  <li></li>\n  <li></li>\n</ul>", "err": [2, 3, 4], "keys": {"2": "abbr"}}, iv: {"k": "code", "file": "Emmet", "lang": "txt", "text": "ul>li*3   [Tab]\n ul  = <ul></ul>\n >   = 中に入れる\n *3  = 3回くり返す", "idea": [1], "keys": {"1": "abbr"}}, av: {"k": "code", "file": "index.html", "lang": "html", "text": "ul>li*3   ⇥ Tab\n<ul>\n  <li></li> … ×3\n</ul>", "ok": [1], "keys": {"1": "abbr"}}, problem: "タグを毎回ぜんぶ手で打つ", idea: "決まった形は機械に書かせる", answer: "Emmet：略語 + Tab", "when": [["タグの入れ子・繰り返し", "Emmet"], ["自分用の決まり文句", "ユーザースニペット"], ["ロジックのひな形", "AI 補完"]]},
         render(el) {
           const ex = ['ul>li*3', 'div.card>h2+p', 'ul>li.item$*3', 'table>tr*2>td*3', 'nav>a{ホーム}+a{概要}', '!'];
           const inp = h('input', { class: 'xb-in', value: ex[0], spellcheck: 'false', 'aria-label': 'Emmet 略語' });
@@ -529,7 +529,7 @@
       },
       {
         t: 'マルチカーソル & ショートカット', tag: 'Cmd+D', lead: '同じ単語を<b>一度に</b>書き換える。「次へ」で操作を追おう。ショートカット一覧は、タイトル横の <b>キーボードのアイコン</b>。',
-        why: {pv: {"k": "code", "lang": "ts", "text": "const price = 100\nconst tax = price * 0.1\nconst total = price + tax", "err": [2, 3], "cap": "1つずつ直すと見落とす"}, iv: {"k": "flow", "items": ["mouse-pointer-click|同じ操作は", "layers|まとめて", "keyboard|キーで"]}, av: {"k": "big", "i": "text-cursor-input", "t": "⌘ D で カーソルを増やす"}, "problem": "変数名を変えたい。4か所を1つずつ直すと見落とす", "idea": "同じ直しは、一度にまとめてやる。", "answer": "⌘D でマルチカーソル、ショートカットを覚える", "when": [["同じ単語を数か所だけ", "⌘D（マルチカーソル）"], ["プロジェクト全体の名前変更", "F2 リネーム（参照も追従）"], ["行の移動・複製", "⌥↑↓ / ⌥⇧↓"]]},
+        why: {pv: {"k": "code", "file": "price.ts", "lang": "ts", "text": "const price = 100\nconst tax = price * 0.1\nconst total = price + tax\n// price → cost（3か所）", "err": [1, 2, 3], "keys": {"4": "multi"}}, iv: {"k": "code", "file": "⌘D", "lang": "txt", "text": "⌘D   次の同じ単語を選ぶ\n⌘D   さらに次を選ぶ\n→ カーソル3つで同時に入力", "idea": [3], "keys": {"3": "multi"}}, av: {"k": "code", "file": "price.ts", "lang": "ts", "text": "const cost = 100\nconst tax = cost * 0.1\nconst total = cost + tax", "ok": [1, 2, 3], "keys": {"1": "multi"}}, problem: "1つずつ直すと見落とす", idea: "同じ直しは、一度にまとめて", answer: "⌘D でカーソルを増やす", "when": [["同じ単語を数か所だけ", "⌘D（マルチカーソル）"], ["プロジェクト全体の名前変更", "F2 リネーム（参照も追従）"], ["行の移動・複製", "⌥↑↓ / ⌥⇧↓"]]},
         ref: [{ title: 'ショートカット一覧', icon: 'keyboard', node: () => vscKeys() }],
         render(el) {
           const L = ['const price = 100', 'const tax = price * 0.1', 'const total = price + tax', 'console.log(price, total)'];
@@ -558,7 +558,7 @@
       },
       {
         t: '保存するだけで整う', tag: 'Prettier', lead: '<kbd>⌘</kbd><kbd>S</kbd> で保存すると、コードが<b>自動で整う</b>。<b>Live Server</b> がブラウザも更新する。',
-        why: {pv: {"k": "code", "lang": "ts", "text": "const  a='x'\nfunction f( ){\nreturn 1}", "err": [1, 2, 3], "cap": "人ごとにバラバラ"}, iv: {"k": "flow", "items": ["save|保存", "sparkles|ツールが整える", "git-pull-request|レビューは中身だけ"]}, av: {"k": "code", "lang": "json", "text": "\"editor.formatOnSave\": true", "ok": [1]}, "problem": "メンバーごとに書式が違い、レビューが「見た目の指摘」だらけ", "idea": "見た目のルールはツールに任せる。保存するだけで揃う。", "answer": "Prettier + formatOnSave（設定ファイルをリポジトリで共有）", "when": [["見た目の統一", "Prettier"], ["バグの予防（未使用変数など）", "ESLint"], ["ブラウザ確認の手間", "Live Server"]]},
+        why: {pv: {"k": "code", "file": "app.ts", "lang": "ts", "text": "const  a='x'\nfunction f( ){\nreturn 1}", "err": [1, 2, 3], "keys": {"2": "fmt"}}, iv: {"k": "code", "file": ".vscode/settings.json", "lang": "json", "text": "{\n  \"editor.formatOnSave\": true\n}", "idea": [2], "keys": {"2": "fmt"}}, av: {"k": "code", "file": "app.ts", "lang": "ts", "text": "const a = 'x'\nfunction f() {\n  return 1\n}", "ok": [1, 2, 3, 4], "keys": {"2": "fmt"}}, problem: "書式がバラバラでレビューが荒れる", idea: "見た目はツールに任せる", answer: "Prettier + formatOnSave", "when": [["見た目の統一", "Prettier"], ["バグの予防（未使用変数など）", "ESLint"], ["ブラウザ確認の手間", "Live Server"]]},
         ref: [{ title: '設定ファイル（コピペ用）', icon: 'file-cog', node: () => { const p = code('// .vscode/settings.json\n{\n  "editor.defaultFormatter": "esbenp.prettier-vscode",\n  "editor.formatOnSave": true\n}\n\n// .prettierrc\n{ "semi": false, "singleQuote": true }', 'ts', { color: 'var(--pink)' }); p.setHi([4]); return p; } }],
         render(el) {
           const messy = "const  name='太郎'\nfunction greet( ){\nconsole.log( \"Hello, \"+name )}\ngreet( )";
@@ -607,7 +607,7 @@
     scenes: [
       {
         t: 'Elements：その場で書き換える', tag: 'F12', lead: '右の<b>DevTools</b>で要素を選び、☑ を外したり値を変えたりしてみよう。左のページがすぐ変わる。リロードで元に戻る。',
-        why: {pv: {"k": "flow", "items": ["pencil|CSS を直す", "save|保存", "refresh-cw|リロード", "eye|確認"], "loop": "何度も繰り返す"}, iv: {"k": "flow", "items": ["eye|見る", "wrench|その場で直す", "flask-conical|試す"]}, av: {"k": "big", "i": "inspect", "t": "F12 → Elements"}, "problem": "「なんかズレてる」。CSS を直して保存してリロード…を何度も繰り返す", "idea": "想像しない。ブラウザの中身を見て、その場で直して試す。", "answer": "Elements パネル：選択 → スタイル編集 → 即反映", "when": [["見た目の原因を探す", "Elements"], ["エラーを見る", "Console"], ["画像・API が来ない", "Network"], ["スマホ表示の確認", "Device mode"]]},
+        why: {pv: {"k": "code", "file": "style.css", "lang": "css", "text": ".card { margin: 8px }  /* 保存 */\n→ リロード → まだズレてる\n.card { margin: 12px } /* 保存 */\n→ リロード → また違う", "err": [2, 4], "keys": {"4": "live"}}, iv: {"k": "code", "file": "DevTools › Elements", "lang": "txt", "text": "<div class=\"card\">  ← 選ぶ\nStyles\n  margin: 8px → 12px  ← 編集\n→ 画面がすぐ変わる", "idea": [3], "keys": {"3": "live"}}, av: {"k": "code", "file": "F12", "lang": "txt", "text": "F12 → Elements\n選ぶ → 直す → 即反映", "ok": [2], "keys": {"2": "live"}}, problem: "直して保存してリロードの繰り返し", idea: "ブラウザの中で直して試す", answer: "Elements：選択 → 編集 → 即反映", "when": [["見た目の原因を探す", "Elements"], ["エラーを見る", "Console"], ["画像・API が来ない", "Network"], ["スマホ表示の確認", "Device mode"]]},
         hint: 'DevTools の開き方：ページ上で右クリック →「検証」／ <kbd>F12</kbd> ／ <kbd>⌘</kbd><kbd>⌥</kbd><kbd>I</kbd>',
         render(el) {
           const page = miniPage(); const pg = page.querySelector('.pg');
@@ -647,7 +647,7 @@
       },
       {
         t: 'Console と Network', tag: 'DEBUG', lead: 'エラーは <b>Console</b>、通信は <b>Network</b> で見る。タブを切り替えて、例や行を押してみよう。',
-        why: {pv: {"k": "big", "i": "circle-help", "t": "動かない… 原因は？"}, iv: {"k": "flow", "items": ["clipboard-list|ブラウザが記録", "search|証拠を見る", "wrench|直す"]}, av: {"k": "chips", "items": ["terminal|Console：エラーと値", "network|Network：通信の成否"]}, "problem": "画面が動かない・画像が出ない。コードを眺めても原因が分からない", "idea": "起きたことは、ブラウザが記録している。まずそれを見る。", "answer": "Console（エラーと値）と Network（通信の成否）", "when": [["赤いエラー文", "Console"], ["404 / 500 / 遅い", "Network"], ["変数の中身を確認", "console.log か debugger"]]},
+        why: {pv: {"k": "code", "file": "ブラウザ", "lang": "txt", "text": "（画面が真っ白）\n（画像が出ない）\nコードを眺める … 原因不明", "err": [1, 2, 3], "keys": {"1": "log", "2": "net"}}, iv: {"k": "code", "file": "DevTools", "lang": "txt", "text": "Console: Uncaught TypeError\nNetwork: GET /img/a.png 404\n→ 証拠はもう記録されている", "idea": [1, 2], "keys": {"1": "log", "2": "net"}}, av: {"k": "chips", "items": [{"i": "terminal", "t": "Console：エラー", "key": "log"}, {"i": "network", "t": "Network：404", "key": "net"}]}, problem: "原因が分からず眺めるだけ", idea: "起きたことは記録されている", answer: "Console（エラー）と Network（通信）", "when": [["赤いエラー文", "Console"], ["404 / 500 / 遅い", "Network"], ["変数の中身を確認", "console.log か debugger"]]},
         hint: 'Console に書いた命令は、このページの <b>DOM を直接</b>書き換える（リロードで元に戻る）。',
         render(el, ctx) {
           const page = miniPage(); const pg = page.querySelector('.pg');
@@ -681,7 +681,7 @@
       },
       {
         t: 'Device mode：スマホで見る', tag: 'RESPONSIVE', lead: '<kbd>⌘</kbd><kbd>⇧</kbd><kbd>M</kbd> でスマホ表示にできる。幅を切り替えて、レイアウトの変化を見よう。右のクイズで「どのパネル？」を試そう。',
-        why: {pv: {"k": "flow", "items": [{"i": "monitor", "t": "PC では綺麗", "c": "bad"}, {"i": "smartphone", "t": "スマホで崩れる", "c": "bad"}]}, iv: {"k": "flow", "items": ["ruler|幅を変える", "eye|見え方を確かめる"]}, av: {"k": "big", "i": "smartphone", "t": "⌘⇧M で端末を切り替え"}, "problem": "PC では綺麗なのに、スマホで見ると崩れていた（実機が手元に無い）", "idea": "画面の幅を変えて見え方を確かめる。実機が無くてもできる。", "answer": "Device mode（⌘⇧M）で幅・端末を切り替え", "when": [["レイアウトの崩れ確認", "Device mode"], ["タッチ操作・実際の速度", "実機で最終確認"]]},
+        why: {pv: {"k": "code", "file": "hero.css", "lang": "css", "text": ".hero { width: 1200px }\n/* PC では綺麗 */\n/* スマホ: 横にはみ出す */", "err": [1, 3], "keys": {"3": "dev"}}, iv: {"k": "code", "file": "DevTools", "lang": "txt", "text": "⌘⇧M で Device mode\n幅 375 × 812  (iPhone)\n幅 768         (タブレット)", "idea": [2], "keys": {"2": "dev"}}, av: {"k": "chips", "items": [{"i": "smartphone", "t": "375px", "key": "dev"}, {"i": "tablet", "t": "768px"}, {"i": "monitor", "t": "1280px"}]}, problem: "PC では綺麗でスマホで崩れる", idea: "画面の幅を変えて確かめる", answer: "Device mode（⌘⇧M）で切り替え", "when": [["レイアウトの崩れ確認", "Device mode"], ["タッチ操作・実際の速度", "実機で最終確認"]]},
         render(el) {
           const dev = h('div', { class: 'xb-dev', style: { width: '100%' } }, h('div', { class: 'pg' }, h('nav', h('span', 'MyApp'), h('span', { class: 'l' }, h('span', 'ホーム'), h('span', '概要'), h('span', '連絡')), h('span', { class: 'm' }, '☰')), h('div', { class: 'gd' }, ['A', 'B', 'C', 'D', 'E', 'F'].map((x) => h('div', x)))));
           const width = h('b', { style: { fontFamily: 'var(--mono)' } }, '100%');
@@ -755,7 +755,7 @@
     scenes: [
       {
         t: 'Block · Element · Modifier', tag: 'BEM', lead: '<b>ブロック__エレメント--モディファイア</b>。クラス名にカーソルを乗せると、カードの該当部分が光る。',
-        why: {pv: {"k": "code", "lang": "css", "text": ".box { }\n.title { }\n.red { }", "err": [1, 2, 3], "cap": "どこの？ 何の？"}, iv: {"k": "flow", "items": ["box|部品", "puzzle|中身", "sliders-horizontal|状態"], "cap": "block / __element / --modifier"}, av: {"k": "code", "lang": "css", "text": ".card__title--large { }", "ok": [1]}, "problem": "クラス名が <code>.box</code> <code>.title</code> <code>.red</code>。どこで効いているか分からない", "idea": "クラス名に「どの部品の、どの部分か」を入れる。名前を見るだけで分かる。", "answer": "BEM：<code>block__element--modifier</code>", "when": [["独立した部品", "Block（.card）"], ["部品の中の一部", "Element（.card__title）"], ["色・サイズ・状態の違い", "Modifier（.card--large）"]]},
+        why: {pv: {"k": "code", "file": "style.css", "lang": "css", "text": ".box { }\n.title { }\n.red { }", "err": [1, 2, 3], "keys": {"3": "bem"}}, iv: {"k": "code", "file": "BEM", "lang": "css", "text": ".card           /* block */\n.card__title    /* element */\n.card--large    /* modifier */", "idea": [2], "keys": {"2": "bem"}}, av: {"k": "code", "file": "style.css", "lang": "css", "text": ".card__title--large { }", "ok": [1], "keys": {"1": "bem"}}, problem: "名前から、どこの何か分からない", idea: "部品・中身・状態を名前に入れる", answer: "<code>block__element--modifier</code>", "when": [["独立した部品", "Block（.card）"], ["部品の中の一部", "Element（.card__title）"], ["色・サイズ・状態の違い", "Modifier（.card--large）"]]},
         hint: '<b>block</b>（部品）＋ <b>__element</b>（部品の中身）＋ <b>--modifier</b>（見た目・状態の違い）。ハイフンとアンダースコアの数で役割が決まる。',
         render(el) {
           const COL = { b: 'var(--ts)', e: 'var(--basic)', m: 'var(--pink)' };
@@ -784,7 +784,7 @@
       },
       {
         t: '置き場所を変えても崩れない', tag: 'WHY', lead: '子孫セレクタ（<code>.main .box</code>）だと、HTML の場所を変えたとたんに崩れる。切り替えて、「サイドバーへ移動」を押してみよう。',
-        why: {pv: {"k": "code", "lang": "css", "text": ".main .title { color: red }", "err": [1], "cap": "main の外に出すと効かない"}, iv: {"k": "flow", "items": ["tag|自分に付ける", "move|どこでも同じ"]}, av: {"k": "code", "lang": "css", "text": ".card__title { color: red }", "ok": [1]}, "problem": "HTML の位置を変えたら、スタイルが当たらず崩れた（子孫セレクタに頼っている）", "idea": "スタイルは、その要素のクラスに付ける。置く場所が変わっても効く。", "answer": "1つのクラスに1つの役目。BEM のクラス名で書く。", "when": [["部品を再利用したい", "BEM のクラス"], ["親の文脈で変えたい", "Modifier か専用クラス"]]},
+        why: {pv: {"k": "code", "file": "style.css", "lang": "css", "text": ".main .title { color: red }\n/* HTML を .side に移すと */\n/* .main の外 → 効かない */", "err": [1, 3], "keys": {"1": "cls"}}, iv: {"k": "code", "file": "style.css", "lang": "css", "text": "/* 場所に頼らない */\n.card__title { color: red }", "idea": [2], "keys": {"2": "cls"}}, av: {"k": "code", "file": "style.css", "lang": "css", "text": "<h2 class=\"card__title\">\n.card__title { color: red }", "ok": [1, 2], "keys": {"2": "cls"}}, problem: "HTML を動かしたら崩れた", idea: "スタイルは要素のクラスに付ける", answer: "1クラス1役目（BEM の名前）", "when": [["部品を再利用したい", "BEM のクラス"], ["親の文脈で変えたい", "Modifier か専用クラス"]]},
         render(el) {
           const CSS = {
             messy: '.main .box { border: 2px solid #5b9dff;\n  padding: 12px; border-radius: 8px; }\n.main .box h2 { color: #1a1e3a;\n  font-size: 22px; }\n.main .box a { background: #5b9dff;\n  color: #fff; padding: 6px 14px;\n  border-radius: 6px; }',
@@ -892,7 +892,7 @@
     scenes: [
       {
         t: 'CSS 変数 var()', tag: '--custom', lead: '値を<b>1か所</b>で決めて、あちこちで使う。スライダーを動かすと、全部が一緒に変わる。',
-        why: {pv: {"k": "code", "lang": "css", "text": "a { color: #5b9dff }\nb { border: #5b9dff }\nc { fill: #5b9dff }\n…", "err": [1, 2, 3], "cap": "50か所にコピペ"}, iv: {"k": "flow", "items": ["pin|1か所で決める", "link|参照する"]}, av: {"k": "code", "lang": "css", "text": ":root { --main: #5b9dff }\na { color: var(--main) }", "ok": [1, 2]}, "problem": "ブランドカラーを変えたい。<code>#5b9dff</code> が50か所にコピペされている", "idea": "色などの値は1か所に書く。ほかの場所はそれを呼び出す。", "answer": "<code>--main: #5b9dff</code> と <code>var(--main)</code>", "when": [["色・余白・フォントの共通値", "CSS 変数"], ["JS で変えたい・ダークモード", "CSS 変数（実行時に変えられる）"], ["ループや計算が複雑", "Sass"]]},
+        why: {pv: {"k": "code", "file": "style.css", "lang": "css", "text": "a { color: #5b9dff }\nb { border: #5b9dff }\nc { fill: #5b9dff }\n/* …あと47か所 */", "err": [1, 2, 3], "keys": {"1": "var"}}, iv: {"k": "code", "file": "style.css", "lang": "css", "text": ":root { --main: #5b9dff }\n/* 1か所で決める */", "idea": [1], "keys": {"1": "var"}}, av: {"k": "code", "file": "style.css", "lang": "css", "text": "a { color: var(--main) }\nb { border: var(--main) }", "ok": [1, 2], "keys": {"1": "var"}}, problem: "同じ色が50か所にコピペ", idea: "値は1か所に書いて呼び出す", answer: "<code>--main</code> と <code>var(--main)</code>", "when": [["色・余白・フォントの共通値", "CSS 変数"], ["JS で変えたい・ダークモード", "CSS 変数（実行時に変えられる）"], ["ループや計算が複雑", "Sass"]]},
         render(el) {
           const S = { hue: 215, rad: 12, dark: false };
           const ui = h('div', { class: 'xb-ui' }, h('span', { class: 'bd' }, 'NEW'), h('h3', { style: { margin: 0 } }, 'ブランドカラーを変える'), h('div', { class: 'bx' }, '枠線も var(--brand)'), h('a', { class: 'lk' }, 'リンクも var(--brand)'), h('button', { class: 'bt' }, 'ボタン'));
@@ -912,7 +912,7 @@
       },
       {
         t: 'Sass(SCSS)：書き方 → CSS', tag: 'SASS', lead: 'ブラウザは SCSS を読めない。だから<b>CSS に変換（コンパイル）</b>して使う。左を書き換えると、右が変わる。',
-        why: {pv: {"k": "code", "lang": "css", "text": ".nav ul li a { }\n.nav ul li a:hover { }\n.nav ul li a:focus { }", "err": [1, 2, 3], "cap": "長くて同じ繰り返し"}, iv: {"k": "flow", "items": ["pen-line|書きやすく書く", "cog|変換する", "send|CSS を配る"]}, av: {"k": "code", "lang": "css", "text": ".nav { a { &:hover { } } }", "ok": [1]}, "problem": "同じ記述の繰り返しと長いセレクタ。素の CSS だけだと整理しづらい", "idea": "書きやすい書き方で書いて、最後に CSS に変換する。", "answer": "Sass：入れ子・変数・mixin → コンパイル", "when": [["入れ子や mixin で整理したい", "Sass"], ["値の共有だけ", "CSS 変数で十分"], ["ビルド環境が無い", "素の CSS"]]},
+        why: {pv: {"k": "code", "file": "style.css", "lang": "css", "text": ".nav ul li a { }\n.nav ul li a:hover { }\n.nav ul li a:focus { }", "err": [1, 2, 3], "keys": {"1": "nest"}}, iv: {"k": "code", "file": "style.scss", "lang": "scss", "text": ".nav {\n  a {\n    &:hover { }\n  }\n}", "idea": [2, 3], "keys": {"2": "nest"}}, av: {"k": "code", "file": "terminal", "lang": "sh", "text": "$ sass style.scss style.css\n.nav a { }\n.nav a:hover { }", "ok": [2, 3], "keys": {"2": "nest"}}, problem: "長いセレクタと同じ繰り返し", idea: "書きやすく書いて、CSS に変換", answer: "Sass：入れ子・変数 → コンパイル", "when": [["入れ子や mixin で整理したい", "Sass"], ["値の共有だけ", "CSS 変数で十分"], ["ビルド環境が無い", "素の CSS"]]},
         render(el) {
           const out = h('div', { class: 'grow' });
           const ed = K.W.codeEditor(SCSS.nest, 'css', run); ed.style.borderRadius = '14px'; ed.style.minHeight = '270px';
@@ -927,7 +927,7 @@
       },
       {
         t: 'レスポンシブ：幅で変わる', tag: 'RESPONSIVE', lead: '右端の<b>つまみをドラッグ</b>して幅を変えよう。幅に合わせて列の数が変わり、コードの該当行が光る。Flex と Grid も比べてみよう。',
-        why: {pv: {"k": "flow", "items": [{"i": "monitor", "t": "PC 幅で作る", "c": "bad"}, {"i": "smartphone", "t": "スマホではみ出す", "c": "bad"}]}, iv: {"k": "flow", "items": ["ruler|幅を測る", "git-branch|ルールを切り替える"]}, av: {"k": "code", "lang": "css", "text": "@media (max-width: 600px) {\n  .grid { grid-template-columns: 1fr }\n}", "ok": [2]}, "problem": "PC 幅で作ったら、スマホで横にはみ出す・文字が小さい", "idea": "画面の幅によって、使うルールを切り替える。", "answer": "<code>@media</code> と、Flex / Grid の折り返し", "when": [["1方向に並べる", "Flex"], ["行と列の格子", "Grid"], ["幅で見た目を切り替える", "メディアクエリ"]]},
+        why: {pv: {"k": "code", "file": "grid.css", "lang": "css", "text": ".grid {\n  display: flex; width: 1200px;\n}\n/* スマホ: 横にはみ出す */", "err": [2, 4], "keys": {"4": "mq"}}, iv: {"k": "code", "file": "grid.css", "lang": "css", "text": "@media (max-width: 600px) {\n  /* 600px 以下だけ適用 */\n}", "idea": [1], "keys": {"1": "mq"}}, av: {"k": "code", "file": "grid.css", "lang": "css", "text": "@media (max-width: 600px) {\n  .grid { width: auto }\n}", "ok": [1, 2], "keys": {"1": "mq"}}, problem: "PC 幅で作るとスマホではみ出す", idea: "幅によってルールを切り替える", answer: "<code>@media</code> と折り返し", "when": [["1方向に並べる", "Flex"], ["行と列の格子", "Grid"], ["幅で見た目を切り替える", "メディアクエリ"]]},
         hint: 'このデモは、<b>枠の幅</b>で切り替わる <code>@container</code> を使っている。ふつうは<b>画面の幅</b>で切り替わる <code>@media</code> を使う。書き方はほとんど同じ。',
         render(el, ctx) {
           const mk = (n) => h('div', { style: { '--c1': `hsl(${200 + n * 28} 85% 78%)` } }, 'Card ' + n);
@@ -953,7 +953,7 @@
       },
       {
         t: '動きと重なり', tag: 'transition · z-index', lead: 'カードにカーソルを乗せて動きを見よう。スライダーで CSS が変わる。右は重なり順（<b>z-index</b>）。押すと一番手前に来る。',
-        why: {pv: {"k": "flow", "items": [{"i": "zap", "t": "いきなり変わる", "c": "bad"}, {"i": "layers", "t": "前後が分からない", "c": "bad"}]}, iv: {"k": "flow", "items": ["timer|短く連続的に", "layers|順序を書く"]}, av: {"k": "code", "lang": "css", "text": ".card { transition: .3s }\n.modal { z-index: 10 }", "ok": [1, 2]}, "problem": "状態が急に変わると目が追えない。要素が他に隠れて見えない", "idea": "変化は短く滑らかに。重なりは z-index の数字で決める。", "answer": "transition / transform と z-index", "when": [["ホバーなど軽い動き", "transition"], ["複雑な連続アニメ", "animation"], ["前後関係を決める", "z-index（position を指定した要素に）"]]},
+        why: {pv: {"k": "code", "file": "style.css", "lang": "css", "text": ".card:hover { top: -4px }\n/* いきなりガクッと動く */\n.modal { }\n/* 他の要素の下に隠れる */", "err": [2, 4], "keys": {"2": "tr", "4": "z"}}, iv: {"k": "code", "file": "style.css", "lang": "css", "text": "transition: .3s  → 0.3秒で変化\nz-index: 10      → 大きいほど前", "idea": [1, 2], "keys": {"1": "tr", "2": "z"}}, av: {"k": "code", "file": "style.css", "lang": "css", "text": ".card { transition: .3s }\n.modal { z-index: 10 }", "ok": [1, 2], "keys": {"1": "tr", "2": "z"}}, problem: "急に動く・他の要素に隠れる", idea: "短く滑らかに。重なりは数字で", answer: "transition と z-index", "when": [["ホバーなど軽い動き", "transition"], ["複雑な連続アニメ", "animation"], ["前後関係を決める", "z-index（position を指定した要素に）"]]},
         render(el) {
           const S = { d: .3, s: 1.08, r: -3, ty: -8, ease: 'ease' };
           const hv = h('div', { class: 'xb-hv' }, 'ホバーしてね'); const cd = h('div');
@@ -1036,7 +1036,7 @@
     scenes: [
       {
         t: 'セマンティックHTML：読み上げ視点', tag: 'SEMANTIC', lead: '見た目が同じでも、<b>タグが違う</b>と、読み上げソフトの伝え方が変わる。「読み上げ」を押そう。',
-        why: {pv: {"k": "code", "lang": "html", "text": "<div class=\"title\">見出し</div>\n<div onclick=\"\">送信</div>", "err": [1, 2], "cap": "読み上げではただの文字"}, iv: {"k": "flow", "items": ["eye|見た目", "brain|意味", "tag|タグで伝える"]}, av: {"k": "code", "lang": "html", "text": "<h1>見出し</h1>\n<button>送信</button>", "ok": [1, 2]}, "problem": "見た目は同じでも、読み上げでは「ただの文字」。見出しやボタンと伝わらない", "idea": "見た目が同じでも、意味は別。意味はタグで伝える。", "answer": "<code>&lt;h1&gt; &lt;nav&gt; &lt;button&gt;</code> など意味のあるタグ", "when": [["押すと動作する", "button"], ["別ページへ移動", "a"], ["見出し", "h1〜h6"], ["意味の無い枠", "div / span"]]},
+        why: {pv: {"k": "code", "file": "index.html", "lang": "html", "text": "<div class=\"title\">見出し</div>\n<div onclick=\"\">送信</div>\n<!-- 読み上げ: 文字 文字 -->", "err": [1, 2], "keys": {"2": "tag"}}, iv: {"k": "code", "file": "読み上げ", "lang": "txt", "text": "div    → ただの枠（意味なし）\nh1     → 「見出し1」\nbutton → 「ボタン」Enter で押せる", "idea": [3], "keys": {"3": "tag"}}, av: {"k": "code", "file": "index.html", "lang": "html", "text": "<h1>見出し</h1>\n<button>送信</button>", "ok": [1, 2], "keys": {"2": "tag"}}, problem: "見た目は同じでも意味が伝わらない", idea: "意味はタグで伝える", answer: "<code>h1 nav button</code> など意味のあるタグ", "when": [["押すと動作する", "button"], ["別ページへ移動", "a"], ["見出し", "h1〜h6"], ["意味の無い枠", "div / span"]]},
         render(el, ctx) {
           let v = 'sem', view = 'sr', t = 0;
           const page = a11yPage(); const srBox = h('div', { class: 'xb-sr' }); const cd = h('div'); const holder = h('div');
@@ -1055,7 +1055,7 @@
       },
       {
         t: 'コントラストと色覚', tag: 'CONTRAST', lead: '色を選んで<b>コントラスト比</b>（文字と背景の明るさの差）を測る。通常の文字は 4.5 以上が目安。色の見え方の違いも試そう。',
-        why: {pv: {"k": "meter", "items": [{"t": "読みやすさ", "v": 0.2, "c": "bad"}], "cap": "薄いグレーの文字"}, iv: {"k": "flow", "items": ["ruler|数字で測る", "palette|色だけに頼らない"]}, av: {"k": "chips", "items": ["4.5:1 以上", "色 + アイコン + 文言"]}, "problem": "薄いグレーの文字が読めない。赤と緑だけで状態を分けると伝わらない人がいる", "idea": "色だけで伝えない。読みやすさは数字で確かめる。", "answer": "コントラスト比 4.5:1 以上 + 色以外の手がかり（アイコン・文言）", "when": [["通常の文字", "4.5:1 以上"], ["大きい文字", "3:1 以上"], ["状態の表示", "色 + アイコン + 文言"]]},
+        why: {pv: {"k": "code", "file": "style.css", "lang": "css", "text": ".text { color: #ccc }\n.bg   { background: #fff }\n/* コントラスト比 1.6 : 1 */", "err": [1, 3], "keys": {"3": "ratio"}}, iv: {"k": "code", "file": "チェック", "lang": "txt", "text": "文字 #767676 / 背景 #fff\n→ コントラスト比 4.5 : 1\n→ 通常の文字はここから OK", "idea": [2], "keys": {"2": "ratio"}}, av: {"k": "chips", "items": [{"i": "ruler", "t": "4.5:1 以上", "key": "ratio"}, "palette|色 + アイコン", "message-square|色 + 文言"]}, problem: "薄い文字が読めない", idea: "読みやすさは数字で確かめる", answer: "4.5:1 以上 + 色以外の手がかり", "when": [["通常の文字", "4.5:1 以上"], ["大きい文字", "3:1 以上"], ["状態の表示", "色 + アイコン + 文言"]]},
         render(el) {
           const S = { fg: '#7b86b8', bg: '#ffffff', cb: 'none' };
           const fg = h('input', { type: 'color', value: S.fg, oninput: (e) => { S.fg = e.target.value; upd(); } }), bg = h('input', { type: 'color', value: S.bg, oninput: (e) => { S.bg = e.target.value; upd(); } });
@@ -1078,7 +1078,7 @@
       },
       {
         t: 'キーボードだけで操作', tag: 'KEYBOARD', lead: '<kbd>Tab</kbd> で次へ、<kbd>Enter</kbd> で実行。<b>div で作ったボタン</b>には、Tab で止まれない。切り替えて比べよう。',
-        why: {pv: {"k": "flow", "items": [{"i": "mouse-off", "t": "マウス無し", "c": "bad"}, {"i": "x", "t": "div は届かない", "c": "bad"}]}, iv: {"k": "flow", "items": ["package-check|標準の部品は", "keyboard|最初から対応済み"]}, av: {"k": "code", "lang": "html", "text": "<button>送信</button>", "ok": [1]}, "problem": "マウスが使えない人は、div で作ったボタンを押せない", "idea": "<code>&lt;button&gt;</code> や <code>&lt;a&gt;</code> は、最初からキーで使える。自作せず、これを使う。", "answer": "button / a を使う。フォーカスが見えること", "when": [["クリックできる要素", "button / a を使う"], ["div を使うしかない", "role・tabindex・キー操作を全部自前（非推奨）"]]},
+        why: {pv: {"k": "code", "file": "index.html", "lang": "html", "text": "<div class=\"btn\" onclick=\"send()\">\n  送信\n</div>\n<!-- Tab を押しても届かない -->", "err": [1, 4], "keys": {"1": "btn"}}, iv: {"k": "code", "file": "Tab の動き", "lang": "txt", "text": "<button>  Tab で届く\n<a href>  Tab で届く\n          Enter / Space で押せる\n<div>     届かない", "idea": [1, 2], "keys": {"1": "btn"}}, av: {"k": "code", "file": "index.html", "lang": "html", "text": "<button onclick=\"send()\">\n  送信\n</button>", "ok": [1, 3], "keys": {"1": "btn"}}, problem: "マウス無しでは押せない", idea: "標準の部品は最初からキー対応", answer: "button / a を使う", "when": [["クリックできる要素", "button / a を使う"], ["div を使うしかない", "role・tabindex・キー操作を全部自前（非推奨）"]]},
         render(el) {
           let mode = 'div', idx = -1;
           const mk = () => {

@@ -717,6 +717,95 @@
     };
     Object.entries(TXT).forEach(([lid, m]) => L[lid].scenes.forEach((s) => { const t = m[s.t]; if (!t) return; if (t.lead) s.lead = t.lead; ['problem', 'idea', 'answer'].forEach((k) => { if (t[k] && s.why) s.why[k] = t[k]; }); }));
 
+    /* Q5: realistic code visuals + linked keys (same key in pv / iv / av is joined by arrows) */
+    const cd = (file, lang, text, o = {}) => Object.assign({ k: 'code', file, lang, text }, o);
+    const over = (lid, title, o) => { const s = L[lid].scenes.find((x) => x.t === title); if (!s) return; s.why = Object.assign(s.why || {}, o); };
+    over('intro', 'この研修で作るもの', {
+      problem: '何のために学ぶのか見えない', idea: '完成品から逆算して積む', answer: '最後に Web アプリを発表',
+      pv: cd('memo.txt', 'text', 'HTML? CSS? TS? Vue?\n→ で、何を作るの？\n→ 何の役に立つの？', { err: [2, 3], keys: { 2: 'goal' } }),
+      iv: cd('ゴール', 'text', '完成 = Web アプリ\n└ Vue.js    動く画面\n  └ TypeScript 安全\n    └ HTML/CSS 形', { idea: [1], keys: { 1: 'goal' } }),
+      av: cd('course.md', 'text', '1 HTML/CSS    形\n2 TypeScript  安全\n3 Vue.js       動く\n4 発表      完成', { ok: [4], keys: { 4: 'goal' } }),
+    });
+    over('intro', '学習計画表', {
+      problem: '今どこか分からず迷う', idea: '日ごとの地図を先に見る', answer: '6日間の計画表',
+      pv: cd('memo.txt', 'text', '16日 ？\n17日 ？\n19日 ？  ← 何をやる？', { err: [1, 2, 3], keys: { 3: 'plan' } }),
+      iv: cd('地図', 'text', '16日 HTML / CSS / Git\n17日 TypeScript\n19日 Vue.js\n25日 発表', { idea: [1, 2, 3, 4], keys: { 1: 'plan' } }),
+      av: cd('schedule', 'text', '16 月 HTML/CSS・CUI・Git\n17 火 TypeScript\n19 木 Vue.js\n25 月 発表', { ok: [4], keys: { 4: 'plan' } }),
+    });
+    over('intro', '講義のゴール', {
+      problem: 'いきなり難しくてイヤになる', idea: '小さな「できた」を重ねる', answer: '最後に1つ完成させる',
+      pv: cd('day1.txt', 'text', 'いきなり 型 + Vue + Git…\n→ 分からない\n→ やめたい', { err: [2, 3], keys: { 2: 'step' } }),
+      iv: cd('steps.md', 'text', '1日目 小さな「できた」\n2日目 もう1つ「できた」\n…\n最後 1つ完成', { idea: [1, 2, 4], keys: { 1: 'step' } }),
+      av: cd('goal.md', 'text', '11/25 発表\n自分のサイトを公開', { ok: [1, 2], keys: { 1: 'step' } }),
+    });
+    over('intro', '学習の進め方', {
+      problem: '読むだけだと忘れる', idea: '見る → 触る → 書く', answer: '最後の「実践」で書く',
+      pv: cd('memo.txt', 'text', '読む → 読む → 読む\n翌日 → 忘れた', { err: [2], keys: { 2: 'hands' } }),
+      iv: cd('rule.md', 'text', '見る    図で理解\n動かす  触って確認\n書く    自分のコード', { idea: [2, 3], keys: { 3: 'hands' } }),
+      av: cd('ページの流れ', 'text', '図 → 操作 → 実践\n            └ ここで書く', { ok: [1, 2], keys: { 2: 'hands' } }),
+    });
+    over('intro', '準備チェック', {
+      problem: '当日に環境がなくて遅れる', idea: '前日までにリストで確認', answer: 'コマンドが動けば準備OK',
+      pv: cd('terminal', 'text', '$ git --version\ncommand not found: git\n→ 設定で30分が消える', { err: [2, 3], keys: { 2: 'prep' } }),
+      iv: cd('checklist.md', 'text', '[x] PC\n[x] GitHub\n[x] VS Code\n[x] Slack / Zoom', { idea: [1, 2, 3, 4], keys: { 3: 'prep' } }),
+      av: cd('terminal', 'sh', '$ git --version\ngit version 2.x\n$ code --version\n1.x', { ok: [1, 2], keys: { 1: 'prep' } }),
+    });
+
+    over('html', 'HTML・CSS・JS の役割', {
+      problem: 'ぜんぶ1か所で直しにくい', idea: '役割で分ける', answer: 'HTML 形・CSS 色・JS 動き',
+      pv: cd('index.html', 'html', '<h1 style="color:red"\n    onclick="go()">Hi</h1>\n<p style="margin:8px">…</p>', { err: [1, 2, 3], keys: { 1: 'role' } }),
+      iv: cd('3つの役割', 'text', 'HTML → <h1>Hi</h1>\nCSS  → h1 { color: red }\nJS   → onclick で動く', { idea: [1, 2, 3], keys: { 1: 'role' } }),
+      av: cd('index.html', 'html', '<h1>Hi</h1>\n<link rel="stylesheet"\n      href="a.css">\n<script src="a.js"></script>', { ok: [2, 3, 4], keys: { 1: 'role' } }),
+    });
+    over('html', 'タグの解剖', {
+      problem: 'どこまでが見出しか不明', idea: 'タグで範囲をはさむ', answer: '<code>&lt;a href&gt;…&lt;/a&gt;</code>',
+      pv: cd('index.html', 'text', '私の自己紹介\n名前は Lam です。', { err: [1, 2], keys: { 1: 'tag' } }),
+      iv: cd('index.html', 'html', '<h1 class="title">\n  私の紹介\n</h1>', { idea: [1, 3], keys: { 1: 'tag' } }),
+      av: cd('index.html', 'html', '<a href="/home">Home</a>\n<img src="me.png" alt="私">', { ok: [1, 2], keys: { 1: 'tag' } }),
+    });
+    over('html', 'HTML は「木」', {
+      problem: '閉じ忘れで表示が崩れる', idea: '親の中に子が入る「木」', answer: 'ブラウザが木にして扱う',
+      pv: cd('index.html', 'html', '<ul>\n  <li>りんご\n</ul>', { err: [2], keys: { 2: 'tree' } }),
+      iv: cd('DOM ツリー', 'text', 'ul\n├ li  りんご\n├ li  みかん\n└ li  ぶどう', { idea: [2, 3, 4], keys: { 1: 'tree' } }),
+      av: cd('index.html', 'html', '<ul>\n  <li>りんご</li>\n  <li>みかん</li>\n</ul>', { ok: [2, 3], keys: { 2: 'tree' } }),
+    });
+    over('html', 'なぜ意味のあるタグ？', {
+      problem: 'どこが本文か機械に伝わらない', idea: '役割を表すタグを選ぶ', answer: 'header / nav / main',
+      pv: cd('index.html', 'html', '<div>ロゴ</div>\n<div>メニュー</div>\n<div>本文</div>', { err: [1, 2, 3], keys: { 3: 'role' } }),
+      iv: cd('役割', 'text', '<header>  ← ロゴ\n<nav>     ← メニュー\n<main>    ← 本文', { idea: [3], keys: { 3: 'role' } }),
+      av: cd('index.html', 'html', '<header>ロゴ</header>\n<nav>メニュー</nav>\n<main>本文</main>', { ok: [3], keys: { 3: 'role' } }),
+    });
+    over('html', 'ページの骨組み', {
+      problem: '置き場がページごとに違う', idea: '上・中・下の定番の形', answer: 'header → main → footer',
+      pv: cd('memo.txt', 'text', 'A: main → header → footer\nB: footer → main → header\nC: …バラバラ', { err: [1, 2, 3], keys: { 3: 'frame' } }),
+      iv: cd('index.html', 'html', '<header>…</header>\n<main>\n  <article>…</article>\n  <aside>…</aside>\n</main>\n<footer>…</footer>', { idea: [1, 2, 6], keys: { 2: 'frame' } }),
+      av: cd('index.html', 'html', '<header>…</header>\n<main>…</main>\n<footer>…</footer>', { ok: [1, 2, 3], keys: { 2: 'frame' } }),
+    });
+    over('html', 'よく使うタグ図鑑', {
+      problem: '書きたいのにタグが分からない', idea: '内容の種類でタグを選ぶ', answer: '見出し h・段落 p・リンク a',
+      pv: cd('memo.txt', 'text', '大きい文字は？ → ?\n文章は？ → ?\nリンクは？ → ?', { err: [1, 2, 3], keys: { 1: 'pick' } }),
+      iv: cd('図鑑', 'text', '見出し → h1〜h6\n段落   → p\nリンク → a\n画像   → img\nリスト → ul / ol', { idea: [1, 2, 3], keys: { 1: 'pick' } }),
+      av: cd('index.html', 'html', '<h1>見出し</h1>\n<p>文章</p>\n<a href="/">リンク</a>\n<img src="a.png" alt="写真">', { ok: [1, 2, 3, 4], keys: { 1: 'pick' } }),
+    });
+    over('html', 'リスト：ul / ol / dl', {
+      problem: '「・」を手で打つと崩れる', idea: '「リスト」と伝える', answer: 'ul / ol と li',
+      pv: cd('index.html', 'text', '・りんご\n・みかん\n・ぶどう', { err: [1, 2, 3], keys: { 1: 'list' } }),
+      iv: cd('index.html', 'html', '<ul>\n  <li>りんご</li>\n</ul>\n<!-- 「・」は自動で付く -->', { idea: [1, 2], keys: { 1: 'list' } }),
+      av: cd('index.html', 'html', '<ul>\n  <li>りんご</li>\n  <li>みかん</li>\n</ul>\n<ol><li>手順1</li></ol>', { ok: [1, 5], keys: { 1: 'list' } }),
+    });
+    over('html', 'フォーム：データを送る', {
+      problem: '入力しても届かない', idea: 'name を付けてまとめて送る', answer: 'form + input の name',
+      pv: cd('index.html', 'html', '<input type="text">\n<button>送信</button>\n<!-- 送信しても届かない -->', { err: [1, 2], keys: { 1: 'name' } }),
+      iv: cd('リクエスト', 'text', 'POST /save\n\nname=Lam&age=20', { idea: [3], keys: { 3: 'name' } }),
+      av: cd('index.html', 'html', '<form action="/save" method="POST">\n  <input name="name">\n  <button>送信</button>\n</form>', { ok: [1, 2], keys: { 2: 'name' } }),
+    });
+    over('html', '作ってみよう：企画と公開', {
+      problem: '何を作るか決まらず止まる', idea: '先に企画を書いて進める', answer: 'push して公開',
+      pv: cd('memo.txt', 'text', '何を作ろう…\nうーん…\n（30分経過）', { err: [1, 2, 3], keys: { 1: 'plan' } }),
+      iv: cd('plan.md', 'text', '名前: Lam の趣味ログ\n目的: 好きなことを紹介\n時間: 4h HTML→CSS→公開', { idea: [1, 2, 3], keys: { 1: 'plan' } }),
+      av: cd('terminal', 'sh', 'git add .\ngit commit -m "完成"\ngit push', { ok: [3], keys: { 3: 'plan' } }),
+    });
+
     const plan = L.html.scenes.find((x) => x.t === '作ってみよう：企画と公開');
     if (plan) plan.answer = { html: '<p style="color:var(--mute);font-size:.875rem;margin-bottom:.6em">企画の書き方の一例です。</p><ul style="line-height:1.9"><li><b>① サイト名</b>：Lam の趣味ログ</li><li><b>② 内容・目的</b>：好きなことを写真と文章で紹介する</li><li><b>③ 作りたい理由</b>：自分を知ってもらいたい</li><li><b>④ かかる時間</b>：4時間（HTML 1h → CSS 2h → 公開 1h）</li><li><b>⑤ デザイン</b>：青を基調にシンプルに</li><li><b>⑥ 他の人の意見</b>：写真ギャラリーがあると嬉しい</li></ul>' };
     // secondary content lives in header-icon modals (ref), not in the page body

@@ -1333,6 +1333,119 @@
     };
     Object.entries(TXT).forEach(([lid, m]) => L[lid].scenes.forEach((s) => { const t = m[s.t]; if (!t) return; if (t.lead) s.lead = t.lead; ['problem', 'idea', 'answer'].forEach((k) => { if (t[k] && s.why) s.why[k] = t[k]; }); }));
 
+    /* Q5: realistic code visuals + linked keys (same key in pv / iv / av is joined by arrows) */
+    const cd = (file, lang, text, o = {}) => Object.assign({ k: 'code', file, lang, text }, o);
+    const over = (lid, title, o) => { const s = L[lid].scenes.find((x) => x.t === title); if (!s) return; s.why = Object.assign(s.why || {}, o); };
+    over('cuivim', 'なぜターミナル？', {
+      problem: '30枚を1つずつ改名する', idea: '1行の命令で繰り返す', answer: '実行すると30枚ぜんぶ改名',
+      pv: cd('terminal', 'sh', 'mv photo1.jpg trip_photo1.jpg\nmv photo2.jpg trip_photo2.jpg\n# …あと28回', { err: [1, 2, 3], keys: { 1: 'loop' } }),
+      iv: cd('terminal', 'sh', 'for f in photo*.jpg; do\n  mv "$f" "trip_$f"\ndone', { idea: [1, 2], keys: { 1: 'loop' } }),
+      av: cd('terminal', 'sh', '$ ls\ntrip_photo1.jpg trip_photo2.jpg\n# …30枚ぜんぶ', { ok: [2, 3], keys: { 2: 'loop' } }),
+    });
+    over('cuivim', 'ターミナルを触ってみよう', {
+      problem: '今どこ？ 何がある？', idea: '1つの命令で1つのこと', answer: 'pwd・ls・cd',
+      pv: cd('terminal', 'text', '$ ???\n（今どこ？ 何がある？）\n（どう動く？）', { err: [2, 3], keys: { 1: 'cmd' } }),
+      iv: cd('terminal', 'sh', 'pwd      # いまの場所\nls       # 中身を見る\ncd docs  # 動く', { idea: [1, 2, 3], keys: { 1: 'cmd' } }),
+      av: cd('terminal', 'sh', '$ pwd\n/Users/kenshu\n$ ls\nindex.html  docs', { ok: [1, 2], keys: { 1: 'cmd' } }),
+    });
+    over('cuivim', 'Vim：3つのモード', {
+      problem: 'キーが命令になって戸惑う', idea: 'モードで役目が変わる', answer: 'i で書く・Esc で戻る・:wq',
+      pv: cd('terminal', 'text', '$ vim a.html\n[Normal] hello と押す\n→ 文字が入らず消えたり動く', { err: [2, 3], keys: { 2: 'mode' } }),
+      iv: cd('モード', 'text', 'Normal → (i)   → Insert\nInsert → (Esc) → Normal\nNormal → (:)   → Command', { idea: [1, 2, 3], keys: { 1: 'mode' } }),
+      av: cd('vim', 'text', '-- INSERT --\nhello\n:wq  ← 保存して終了', { ok: [1, 3], keys: { 1: 'mode' } }),
+    });
+    over('git', 'なぜ Git？', {
+      problem: 'どれが最新か分からない', idea: 'ファイルは1つ・履歴を積む', answer: '誰が・いつ・なぜ が残る',
+      pv: cd('フォルダ', 'text', 'report.html\nreport_v2.html\nreport_最終_本当.html', { err: [2, 3], keys: { 3: 'log' } }),
+      iv: cd('terminal', 'sh', 'git log --oneline\nc3d4e5f 誤字を修正\nb2c3d4e 画像を差し替え\na1b2c3d 見出しを追加', { idea: [2, 3, 4], keys: { 2: 'log' } }),
+      av: cd('terminal', 'text', 'commit a1b2c3d\nAuthor: Lam\nDate:   Mon 10:02\n    見出しを追加', { ok: [2, 3, 4], keys: { 1: 'log' } }),
+    });
+    over('git', '4つの場所とコマンド', {
+      problem: '作りかけまで記録されて困る', idea: '選んで(add) → 記録(commit)', answer: 'a.html だけが記録される',
+      pv: cd('作業フォルダ', 'text', 'a.html   完成\nb.html   作りかけ\n→ 全部まとめて記録？', { err: [2, 3], keys: { 2: 'stage' } }),
+      iv: cd('terminal', 'sh', 'git add a.html      # 選ぶ\ngit commit -m "見出し"\ngit push           # 共有', { idea: [1], keys: { 1: 'stage' } }),
+      av: cd('terminal', 'text', 'Changes to be committed:\n  new file: a.html\nUntracked files:\n  b.html', { ok: [1, 2], keys: { 2: 'stage' } }),
+    });
+    over('git', 'ブランチとマージ', {
+      problem: 'みんなで main を直接触る', idea: '自分の枝で作って合流', answer: 'branch → commit → merge',
+      pv: cd('履歴', 'text', 'main: A - B - C\n      ↑ みんなが直接コミット\n作りかけが全員に見える', { err: [2, 3], keys: { 1: 'branch' } }),
+      iv: cd('terminal', 'sh', 'git switch -c feature\n# feature で自由に作業\ngit switch main\ngit merge feature', { idea: [1, 4], keys: { 1: 'branch' } }),
+      av: cd('履歴', 'text', 'A - B ---- M   main\n  \\       /\n   C - D      feature', { ok: [3], keys: { 3: 'branch' } }),
+    });
+    over('git', 'コンフリクトを解決しよう', {
+      problem: '同じ行を2人が変えた', idea: '印の所だけ人が選ぶ', answer: '印を消して add → commit',
+      pv: cd('terminal', 'text', '$ git merge feature\nCONFLICT (content):\n  Merge conflict in a.html', { err: [2, 3], keys: { 2: 'mark' } }),
+      iv: cd('a.html', 'text', '<<<<<<< HEAD\n<h1>こんにちは</h1>\n=======\n<h1>ようこそ</h1>\n>>>>>>> feature', { idea: [1, 3, 5], keys: { 1: 'mark' } }),
+      av: cd('a.html', 'html', '<h1>ようこそ</h1>\n<!-- 印は全部消した -->', { ok: [1], keys: { 1: 'mark' } }),
+    });
+    over('git', 'GitHub と SSH でつなぐ', {
+      problem: 'パスワードを毎回入れる', idea: '鍵のペアで本人確認', answer: '公開鍵を GitHub に登録',
+      pv: cd('terminal', 'text', 'git push\nPassword: ********\n# 毎回入力 / 漏れたら終わり', { err: [2, 3], keys: { 2: 'key' } }),
+      iv: cd('鍵のペア', 'text', 'id_ed25519      秘密：手元だけ\nid_ed25519.pub  公開：渡してOK', { idea: [1, 2], keys: { 2: 'key' } }),
+      av: cd('terminal', 'sh', 'ssh-keygen -t ed25519\ncat ~/.ssh/id_ed25519.pub\n# → GitHub に貼る', { ok: [2, 3], keys: { 2: 'key' } }),
+    });
+
+    over('css', 'CSS の付け方 3 通り', {
+      problem: '20か所に同じ色を書いた', idea: '1か所にまとめて読み込む', answer: 'link で style.css を読む',
+      pv: cd('index.html', 'html', '<h1 style="color:blue">A</h1>\n<h1 style="color:blue">B</h1>\n<h1 style="color:blue">C</h1>\n<!-- …あと17か所 -->', { err: [1, 2, 3], keys: { 1: 'link' } }),
+      iv: cd('style.css', 'css', 'h1 {\n  color: blue;\n}', { idea: [1, 2, 3], keys: { 1: 'link' } }),
+      av: cd('index.html', 'html', '<link rel="stylesheet"\n      href="style.css">', { ok: [1, 2], keys: { 1: 'link' } }),
+    });
+    over('css', 'セレクタと強さ', {
+      problem: '同じ要素に複数ルール', idea: '細かい指定ほど強い', answer: '<code>#id</code> &gt; <code>.class</code> &gt; <code>タグ</code>',
+      pv: cd('style.css', 'css', 'p     { color: blue }\n.note { color: red }\n/* どっちが勝つ？ */', { err: [3], keys: { 3: 'spec' } }),
+      iv: cd('強さ', 'css', '#main { color: green } /*100*/\n.note { color: red }   /*10*/\np     { color: blue }  /*1*/', { idea: [1], keys: { 1: 'spec' } }),
+      av: cd('style.css', 'css', 'p     { color: blue }\n.note { color: red }\n#main { color: green } /* 勝つ */', { ok: [3], keys: { 3: 'spec' } }),
+    });
+    over('css', '文字のスタイル', {
+      problem: 'どこが大事か分からない', idea: '大きさ・太さ・行間で強弱', answer: 'font-size / weight / line-height',
+      pv: cd('style.css', 'css', 'p  { font-size: 14px; }\n/* 見出しも本文も同じ */\nh1 { font-size: 14px; }', { err: [1, 3], keys: { 3: 'type' } }),
+      iv: cd('プロパティ', 'text', 'font-size    → 大きさ\nfont-weight  → 太さ\nline-height  → 行の高さ', { idea: [1, 2, 3], keys: { 1: 'type' } }),
+      av: cd('style.css', 'css', 'h1 { font-size: 2rem;\n     font-weight: 700; }\np  { line-height: 1.7; }', { ok: [1, 2, 3], keys: { 1: 'type' } }),
+    });
+    over('css', 'ボックスモデル', {
+      problem: '余白が思う所にあかない', idea: '4層の箱：どこをいじる？', answer: 'padding は中・margin は外',
+      pv: cd('style.css', 'css', '.card {\n  margin: 24px;  /* ← ここ？ */\n}\n/* 背景が広がらない… */', { err: [2], keys: { 2: 'box' } }),
+      iv: cd('4層の箱', 'text', '┌ margin ──────────┐\n│ ┌ border ───────┐ │\n│ │ padding       │ │\n│ │  [ content ]  │ │\n│ └───────────────┘ │\n└───────────────────┘', { idea: [3], keys: { 3: 'box' } }),
+      av: cd('style.css', 'css', '.card {\n  padding: 24px; /* 中 */\n  margin: 24px;  /* 外 */\n}', { ok: [2, 3], keys: { 2: 'box' } }),
+    });
+    over('css', 'display：inline / block', {
+      problem: 'width を書いたのに効かない', idea: '要素の「性質」を変える', answer: 'display で切り替える',
+      pv: cd('style.css', 'css', 'span {\n  width: 200px; /* 効かない */\n}', { err: [2], keys: { 2: 'disp' } }),
+      iv: cd('性質', 'text', 'inline        並ぶ・幅なし\nblock         1行・幅OK\ninline-block  並ぶ・幅OK', { idea: [3], keys: { 3: 'disp' } }),
+      av: cd('style.css', 'css', 'span {\n  display: inline-block;\n  width: 200px;\n}', { ok: [2, 3], keys: { 2: 'disp' } }),
+    });
+    over('css', 'Flexbox で並べる', {
+      problem: 'float や margin でずれる', idea: '親に並べ方を書く', answer: 'display: flex',
+      pv: cd('style.css', 'css', '.box div {\n  float: left;\n  margin-left: 12px;\n}\n/* 中央にならない… */', { err: [2, 3], keys: { 2: 'flex' } }),
+      iv: cd('style.css', 'css', '.box {\n  display: flex;\n  /* 主軸 = 横 → */\n  /* 交差軸 = 縦 ↓ */\n}', { idea: [2], keys: { 2: 'flex' } }),
+      av: cd('style.css', 'css', '.box {\n  display: flex;\n  justify-content: center;\n  align-items: center;\n}', { ok: [2, 3, 4], keys: { 2: 'flex' } }),
+    });
+    over('css', 'position：重ねる・ずらす', {
+      problem: 'top / right が効かない', idea: '基準点を決めてずらす', answer: '親 relative ＋ 子 absolute',
+      pv: cd('style.css', 'css', '.badge {\n  top: 0;\n  right: 0;\n}\n/* 動かない… */', { err: [2, 3], keys: { 2: 'pos' } }),
+      iv: cd('position', 'text', 'relative  今の位置から\nabsolute  親（基準）から\nfixed     画面から\nsticky    スクロールで貼付', { idea: [2], keys: { 2: 'pos' } }),
+      av: cd('style.css', 'css', '.card  { position: relative; }\n.badge { position: absolute;\n  top: 0; right: 0; }', { ok: [1, 2, 3], keys: { 2: 'pos' } }),
+    });
+    over('css', 'fixed と sticky', {
+      problem: 'スクロールでヘッダーが消える', idea: '動き方を決める', answer: 'position: sticky',
+      pv: cd('style.css', 'css', 'header {\n  /* 何も指定なし */\n}\n/* スクロールで消える */', { err: [2, 4], keys: { 2: 'stick' } }),
+      iv: cd('position', 'text', 'static   流れのまま（消える）\nfixed    画面に固定\nsticky   途中から貼り付く', { idea: [3], keys: { 3: 'stick' } }),
+      av: cd('style.css', 'css', 'header {\n  position: sticky;\n  top: 0;\n}', { ok: [2, 3], keys: { 2: 'stick' } }),
+    });
+    over('css', 'z-index：重なり順', {
+      problem: 'ポップアップが背面に隠れる', idea: '順位の数字をつける', answer: 'position + z-index',
+      pv: cd('style.css', 'css', '.modal { z-index: 100; }\n/* 背面のまま！ */', { err: [1], keys: { 1: 'z' } }),
+      iv: cd('style.css', 'css', '.modal {\n  position: relative;\n  z-index: 100;\n}', { idea: [2, 3], keys: { 3: 'z' } }),
+      av: cd('style.css', 'css', '.header { position: sticky;\n  z-index: 10; }\n.modal  { position: fixed;\n  z-index: 100; }', { ok: [3, 4], keys: { 4: 'z' } }),
+    });
+    over('css', 'Sass（プラスα）', {
+      problem: '同じ色を30か所に書いた', idea: '変数に1回だけ書く', answer: 'Sass で CSS に変換',
+      pv: cd('style.css', 'css', 'a { color: #3b82f6 }\nb { color: #3b82f6 }\nc { color: #3b82f6 }\n/* …あと27か所 */', { err: [1, 2, 3], keys: { 1: 'var' } }),
+      iv: cd('style.scss', 'css', '$brand: #3b82f6;\n\na { color: $brand; }', { idea: [1], keys: { 1: 'var' } }),
+      av: cd('terminal', 'sh', 'sass style.scss style.css\n# → CSS ができる', { ok: [1], keys: { 1: 'var' } }),
+    });
+
 
     // secondary content lives in header-icon modals (ref), not in the page body
     const extra = (lid, title, fn) => { const s = L[lid].scenes.find((x) => x.t === title); if (!s) return; (s.ref = s.ref || []).push({ title: 'どっちを選ぶ？ クイズ', icon: 'list-checks', node: () => { const box = h('div'); fn(box); return box.firstChild || box; } }); };
