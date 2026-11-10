@@ -104,7 +104,7 @@
     const theme = document.documentElement.dataset.theme === 'light';
     return h('header', { class: 'top' },
       h('a', { class: 'logo', href: '#/' }, h('i', '研'), '研修ナビ'),
-      crumb || null, h('div', { class: 'sp' }),
+      crumb || null, h('div', { class: 'sp' }), K.users.views.chip(),
       h('button', { class: 'btn ghost', 'aria-label': 'テーマ切替', title: 'テーマ切替（プロジェクター用）', onclick: () => {
         const t = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
         document.documentElement.dataset.theme = t; store.set('theme', t);
@@ -397,10 +397,14 @@
     const swap = () => {
       current && current.cleanup && current.cleanup();
       app.replaceChildren();
-      current = m ? lessonView(m[1], m[2] || 0) : home(toExtras);
+      if (!K.users.current()) { current = K.users.views.loginView(() => { location.hash = '#/'; render(); }); app.append(current); document.title = 'ニックネーム | 研修ナビ'; return; }
+      const toAdmin = location.hash === '#/admin';
+      if (toAdmin && !K.users.isAdmin()) { location.hash = '#/'; return; }
+      current = toAdmin ? h('div', null, topbar(h('div', { class: 'crumb' }, h('a', { href: '#/', class: 'btn ghost' }, K.W.icon('arrow-left'), h('span', { class: 'lbl' }, '時間割')), h('b', { class: 'crumb-t' }, '進捗の管理画面'))), h('main', { class: 'home' }, K.users.views.adminView()))
+        : m ? lessonView(m[1], m[2] || 0) : home(toExtras);
       app.append(current);
       const LL = m && K.lessons[m[1]];
-      document.title = LL ? LL.title + ' | 研修ナビ' : toExtras ? '補足トピック | 研修ナビ' : '研修ナビ — プログラミング研修';
+      document.title = toAdmin ? '管理画面 | 研修ナビ' : LL ? ((LL.scenes[+(m[2] || 0)] || {}).t ? LL.scenes[+(m[2] || 0)].t + ' ・ ' : '') + LL.title + ' | 研修ナビ' : toExtras ? '補足トピック | 研修ナビ' : '研修ナビ — プログラミング研修';
       window.scrollTo(0, 0);
     };
     if (current && !document.hidden && document.startViewTransition && !matchMedia('(prefers-reduced-motion: reduce)').matches) document.startViewTransition(swap);

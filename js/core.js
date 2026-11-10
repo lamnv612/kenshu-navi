@@ -356,14 +356,18 @@ declare function Boolean(v:any):boolean;
   }
 
   /* ---------- persistence ---------- */
-  const KEY = 'kenshu.v1';
+  const KEY = 'kenshu.v1', UKEY = 'kenshu.user', TKEY = 'kenshu.theme';
+  const lsGet = (k) => { try { return localStorage.getItem(k); } catch { return null; } };
+  const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
   const store = {
-    read() { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch { return {}; } },
-    write(d) { try { localStorage.setItem(KEY, JSON.stringify(d)); } catch {} },
+    user() { return lsGet(UKEY) || ''; },
+    key(u) { u = u === undefined ? this.user() : u; return u ? KEY + '.u.' + u : KEY; },
+    read(u) { try { return JSON.parse(lsGet(this.key(u))) || {}; } catch { return {}; } },
+    write(d, u) { d._last = Date.now(); lsSet(this.key(u), JSON.stringify(d)); },
     seen(id, i) { const d = this.read(); (d.seen ||= {}); const a = (d.seen[id] ||= []); if (!a.includes(i)) { a.push(i); this.write(d); } },
     getSeen(id) { return (this.read().seen || {})[id] || []; },
-    get(k, def) { const v = this.read()[k]; return v === undefined ? def : v; },
-    set(k, v) { const d = this.read(); d[k] = v; this.write(d); },
+    get(k, def) { if (k === 'theme') return lsGet(TKEY) || def; const v = this.read()[k]; return v === undefined ? def : v; },
+    set(k, v) { if (k === 'theme') { lsSet(TKEY, v); return; } const d = this.read(); d[k] = v; this.write(d); },
   };
 
   /* ---------- scene helper: standard layout pieces ---------- */

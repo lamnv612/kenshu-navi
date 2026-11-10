@@ -97,6 +97,7 @@
   .tt-acc{border-radius:8px;border:1px solid var(--line);background:var(--card);margin-bottom:8px;overflow:hidden}
   .tt-acc>button{all:unset;cursor:pointer;display:flex;justify-content:space-between;width:100%;box-sizing:border-box;padding:.8em 1.1em;font-weight:800}
   .tt-acc>button::after{content:"＋";transition:.3s;color:var(--vue)}.tt-acc.open>button::after{transform:rotate(135deg)}
+  .tt-set{display:flex;align-items:center;gap:6px;color:var(--mute);font-weight:700}.tt-min{width:4.2em;padding:8px 8px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--text);font:inherit;text-align:center}
   .tt-acc .bd{display:grid;grid-template-rows:0fr;transition:grid-template-rows .35s}.tt-acc.open .bd{grid-template-rows:1fr}
   .tt-acc .bd>div{overflow:hidden}.tt-acc .bd p{padding:0 1.1em 1em;color:var(--mute)}
   @media(max-width:700px){.tt-kb,.tt-canvas{grid-template-columns:1fr}}
@@ -131,8 +132,12 @@
     function pause() { stop(); msg.textContent = '一時停止中'; }
     function reset(s) { stop(); if (s) total = s; left = total; root.classList.remove('ended'); msg.textContent = 'スタートで開始'; draw(); }
     const presets = (o.presets || []).map((m) => h('button', { class: 'btn ghost', onclick: () => reset(m * 60) }, m + '分'));
+    const cust = h('input', { class: 'tt-min', type: 'number', min: 1, max: 180, value: Math.round(total / 60), 'aria-label': '分' });
+    const setMin = () => { const v = Math.max(1, Math.min(180, parseInt(cust.value, 10) || 0)); if (!v) return; cust.value = v; reset(v * 60); };
+    cust.addEventListener('keydown', (e) => { if (e.key === 'Enter') setMin(); });
+    const custBox = h('div', { class: 'tt-set' }, cust, h('span', '分'), h('button', { class: 'btn ghost', onclick: setMin }, '設定'));
     root.append(h('div', { class: 'tt-ring' }, svg, disp), h('div', { class: 'col', style: { flex: 1, minWidth: '160px' } },
-      o.label ? h('b', o.label) : null, msg, h('div', { class: 'row' }, go, h('button', { class: 'btn ghost', onclick: () => reset() }, '⟲'), presets)));
+      o.label ? h('b', o.label) : null, msg, h('div', { class: 'row' }, go, h('button', { class: 'btn ghost', onclick: () => reset() }, '⟲'), presets, custBox)));
     draw(); cl(ctx, () => clearInterval(iv));
     root.reset = reset;
     return root;
