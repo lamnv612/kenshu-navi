@@ -47,7 +47,7 @@
     [4, 15, 17, '単体テスト\n入門 (Jest)', '', 'ts-test', 'vue', '🧪'],
     [4, 18, 18, 'Q&A', '', 'qa', 'vue', '🙋'],
     [5, 10, 11, 'アイデア発想 → 発表', 'ブレスト', 'idea', 'team', '🎯'],
-    [5, 13, 14, '開発', 'チーム開発', 'dev', 'team', '👩‍💻'],
+    [5, 13, 14, '開発', 'チーム開発', 'dev', 'team', '💻'],
     [5, 15, 16, '準備', '発表の準備', 'prep', 'team', '📝'],
     [5, 17, 18, '成果発表', 'Demo Day', 'demo', 'team', '🏆'],
   ];
@@ -105,10 +105,10 @@
     return h('header', { class: 'top' },
       h('a', { class: 'logo', href: '#/' }, h('i', '研'), '研修ナビ'),
       crumb || null, h('div', { class: 'sp' }),
-      h('button', { class: 'btn ghost', title: 'テーマ切替（プロジェクター用）', onclick: () => {
+      h('button', { class: 'btn ghost', 'aria-label': 'テーマ切替', title: 'テーマ切替（プロジェクター用）', onclick: () => {
         const t = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
         document.documentElement.dataset.theme = t; store.set('theme', t);
-      } }, theme ? '🌙' : '☀️', ' テーマ'));
+      } }, theme ? '🌙' : '☀️', h('span', { class: 'lbl' }, ' テーマ')));
   }
 
 
@@ -141,6 +141,43 @@
             h('span', { class: 'bar', style: { '--p': p } }));
         }))));
     });
+    return wrap;
+  }
+
+
+  /* ---------- phone: day-by-day agenda instead of the wide grid ---------- */
+  function agendaView(todayIdx) {
+    const wrap = h('div', { class: 'sched-m' });
+    const THEME = ['basic', 'ts', 'ts', 'vue', 'vue', 'vue'];
+    const THEME_NAME = { basic: 'HTML/CSS · CUI · Git', ts: 'TypeScript', vue: 'Vue.js' };
+    let cur = todayIdx >= 0 ? todayIdx : 0;
+    const chips = h('div', { class: 'am-days' });
+    const list = h('div', { class: 'am-list' });
+    const hh = (n) => String(n).padStart(2, '0') + ':00';
+    function draw() {
+      chips.querySelectorAll('.am-chip').forEach((c) => c.classList.toggle('on', +c.dataset.i === cur));
+      const d = DAYS[cur], tr = THEME[cur];
+      const items = CELLS.filter((c) => c[0] === cur).sort((a, b) => a[1] - b[1]);
+      list.replaceChildren(
+        h('div', { class: 'am-theme', style: { '--c': TRACKS[tr].color } }, h('b', THEME_NAME[tr]), h('small', `${d.d}日（${d.w}）`)),
+        ...items.flatMap((c, i) => {
+          const [, a, b, label, sub, id, track, em] = c;
+          const p = progressOf(id), nx = items[i + 1];
+          const row = h('a', { class: 'am-item', href: '#/lesson/' + id, style: { '--c': TRACKS[track].color, '--i': i } },
+            h('span', { class: 'am-t' }, hh(a), h('small', ((b - a + 1) * 60) + '分')),
+            h('span', { class: 'am-b' }, h('b', label.replace(/\n/g, ' ')), sub ? h('small', sub) : null,
+              extrasOf(id).length && CELLS.findIndex((x) => x[5] === id) === CELLS.indexOf(c) ? h('span', { class: 'xtra' }, K.W.icon('sparkles'), '補足 +' + extrasOf(id).length) : null),
+            h('span', { class: 'am-em' }, em), h('span', { class: 'bar', style: { '--p': p } }));
+          const out = [row];
+          if (nx && b <= 11 && nx[1] >= 13) out.push(h('div', { class: 'am-lunch' }, '昼休み 12:00'));
+          return out;
+        }));
+    }
+    DAYS.forEach((d, i) => {
+      if (i === 4) chips.append(h('span', { class: 'am-gap' }, '1週間後'));
+      chips.append(h('button', { class: 'am-chip' + (i === todayIdx ? ' today' : ''), 'data-i': i, onclick: () => { cur = i; draw(); } }, h('b', d.d), h('small', d.w)));
+    });
+    wrap.append(chips, list); draw();
     return wrap;
   }
 
@@ -185,7 +222,7 @@
             diff > 0 ? [h('b', diff), h('span', 'DAYS UNTIL 11/16 START')] : todayIdx >= 0 ? [h('b', '🔥'), h('span', '今日は研修日！')] : [h('b', '✓'), h('span', 'お疲れさま')],
             h('div', { style: { marginTop: '.6em', fontSize: '.75rem', color: 'var(--mute)' } }, `学習進捗 ${seen}/${totalScenes} シーン`))),
         h('div', { class: 'legend' }, Object.entries(TRACKS).map(([k, t]) => h('span', { class: 'chip', style: { '--c': t.color } }, '● ' + t.name))),
-        g,
+        g, agendaView(todayIdx),
         h('div', { class: 'hint' }, h('span', '👆 マスをクリックで学習ページへ'), h('span', '⌨️ ← → キーで次のステップ'), h('span', '✍️ 各ページの最後に「実践」あり'), h('button', { class: 'hint-reset', title: '進捗を消して、各ページの「困りごと→考え方→解決」を最初から表示します', onclick: () => {
         const m = K.W.modal({ title: '進捗をリセット', icon: 'rotate-ccw', narrow: true, content: () => h('div', { class: 'col' },
           h('p', '学習の進み具合（チェック・バー）を消して、最初の状態に戻します。'),
@@ -212,6 +249,7 @@
       (gl.length || practiceFor(id, '').lesson.length) ? h('div', { class: 'rail-box' }, h('div', { class: 'label' }, 'GitHub'), practiceFor(id, '').lesson.map((x) => ghChip({ label: (x.label || x.path), url: ghUrl(x.path) })), gl.map(ghChip)) : null,
       ex.length ? h('div', { class: 'rail-box' }, h('div', { class: 'label' }, '補足トピック'), ex.map((x) => h('a', { class: 'rail-x', href: '#/lesson/' + x.id }, K.W.icon('sparkles'), h('span', x.title), h('small', ((x.meta || {}).mins || 5) + '分')))) : null);
 
+    rail.append(h('button', { class: 'rail-toggle', onclick: (e) => { rail.classList.toggle('more'); e.currentTarget.classList.toggle('on'); } }, K.W.icon('chevron-down'), '関連リンク・補足'));
     const S = L.scenes[idx];
     const el = h('section', { class: 'scene' });
     const I = K.W.icon;
@@ -264,6 +302,7 @@
         if (done && !wasOn) { if (anim) { body.classList.remove('in'); void body.offsetWidth; body.classList.add('in'); } requestAnimationFrame(() => balance(el)); }
         nextTop.style.display = done ? 'none' : ''; if (story.skipBtn) story.skipBtn.style.display = done ? 'none' : '';
         nextTop.replaceChildren(labels[Math.min(n, labels.length - 1)], I('chevron-right'));
+        if (story.hook) story.hook();
       };
       story.next = () => { if (story.stage < story.max) { story.stage++; story.sync(true); } };
       story.prev = () => { if (story.stage > 0) { story.stage--; story.sync(false); } };
@@ -287,12 +326,25 @@
     requestAnimationFrame(() => balance(el));
 
     const go = (i) => (location.hash = `#/lesson/${id}/${i}`);
+    const navNext = idx < L.scenes.length - 1 ? h('button', { class: 'btn primary', onclick: () => go(idx + 1) }, '次のシーン →') : h('a', { class: 'btn primary', href: '#/' }, '🎉 時間割へ戻る');
     el.append(h('div', { class: 'nav' },
       h('button', { class: 'btn', disabled: idx === 0, onclick: () => go(idx - 1) }, '← 前へ'),
       h('span', { class: 'hint2' }, `${idx + 1} / ${L.scenes.length}　（← → キーで操作）`),
-      idx < L.scenes.length - 1 ? h('button', { class: 'btn primary', onclick: () => go(idx + 1) }, '次のシーン →') : h('a', { class: 'btn primary', href: '#/' }, '🎉 時間割へ戻る')));
+      navNext));
+    // phone: while the story is running, the bottom-right button IS the story button (it never moves)
+    if (W_) {
+      const mq = matchMedia('(max-width:760px)');
+      const original = [...navNext.childNodes].map((n) => n.cloneNode(true));
+      const labelFor = () => ['考え方を見る', '解決を見る', 'デモで確かめる'][Math.min(story.stage, 2)];
+      navNext.addEventListener('click', (e) => { if (mq.matches && story.stage < story.max) { e.preventDefault(); e.stopImmediatePropagation(); story.next(); const c = document.querySelectorAll('.scene > .why .why-c:not(.hid)'); const t = c[c.length - 1]; t && t.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } }, true);
+      story.hook = () => {
+        if (mq.matches && story.stage < story.max) { navNext.replaceChildren(labelFor(), I('chevron-right')); navNext.classList.add('story-mode'); }
+        else { navNext.replaceChildren(...original.map((n) => n.cloneNode(true))); navNext.classList.remove('story-mode'); }
+      };
+      story.hook();
+    }
 
-    root.append(topbar(h('div', { class: 'crumb' }, h('a', { href: '#/', class: 'btn ghost' }, '← 時間割'), h('b', null, L.title))),
+    root.append(topbar(h('div', { class: 'crumb' }, h('a', { href: '#/', class: 'btn ghost' }, K.W.icon('arrow-left'), h('span', { class: 'lbl' }, '時間割')), h('b', { class: 'crumb-t' }, L.title))),
       h('div', { class: 'lesson' }, rail, h('main', { class: 'main' }, el)));
     root.cleanup = () => ctx.cleanups.forEach((f) => { try { f(); } catch {} });
     root.keys = (e) => {
