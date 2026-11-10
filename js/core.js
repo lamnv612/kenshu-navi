@@ -363,7 +363,7 @@ declare function Boolean(v:any):boolean;
     user() { return lsGet(UKEY) || ''; },
     key(u) { u = u === undefined ? this.user() : u; return u ? KEY + '.u.' + u : KEY; },
     read(u) { try { return JSON.parse(lsGet(this.key(u))) || {}; } catch { return {}; } },
-    write(d, u) { d._last = Date.now(); lsSet(this.key(u), JSON.stringify(d)); },
+    write(d, u) { d._last = Date.now(); lsSet(this.key(u), JSON.stringify(d)); this.after && this.after(u); },
     seen(id, i) { const d = this.read(); (d.seen ||= {}); const a = (d.seen[id] ||= []); if (!a.includes(i)) { a.push(i); this.write(d); } },
     getSeen(id) { return (this.read().seen || {})[id] || []; },
     get(k, def) { if (k === 'theme') return lsGet(TKEY) || def; const v = this.read()[k]; return v === undefined ? def : v; },

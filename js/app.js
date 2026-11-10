@@ -233,6 +233,66 @@
   }
 
   /* ---------- lesson view ---------- */
+
+  /* ---------- 困りごと → 考え方 → 解決 をつなぐ手描き風の矢印 ---------- */
+  function linker(flow, cards) {
+    const NS = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(NS, 'svg'); svg.setAttribute('class', 'why-svg');
+    const layer = h('div', { class: 'why-links' }, svg);
+    const defs = [['l1', 'なぜ？'], ['l2', 'だから'], ['l3', 'こう直る']];
+    const paths = {}, notes = {};
+    defs.forEach(([k, t]) => {
+      const g = document.createElementNS(NS, 'g'); g.setAttribute('class', 'lk ' + k);
+      [0, 1].forEach((j) => { const p = document.createElementNS(NS, 'path'); p.setAttribute('pathLength', '1'); p.setAttribute('class', j ? 'sk' : 'mn'); g.append(p); (paths[k] ||= []).push(p); });
+      svg.append(g);
+      notes[k] = h('span', { class: 'why-note ' + k }, t); layer.append(notes[k]);
+    });
+    flow.append(layer);
+    const pos = (el) => { let x = 0, y = 0, n = el; while (n && n !== flow) { x += n.offsetLeft; y += n.offsetTop; n = n.offsetParent; } return { x, y, w: el.offsetWidth, h: el.offsetHeight }; };
+    const mid = (card, sel) => { const t = card.querySelector(sel) || card.querySelector('.why-v'); if (!t || !t.offsetHeight) return pos(card).y + pos(card).h / 2; const q = pos(t); return Math.max(pos(card).y + 40, Math.min(pos(card).y + pos(card).h - 24, q.y + q.h / 2)); };
+    const j = (n, a) => Math.sin(n * 12.9898) * a;
+    const f = (n) => Math.round(n * 10) / 10;
+    function curve(k, x1, y1, x2, y2, vertical, seed) {
+      const d = (a, b, c, e, g, hh, i, l) => `M${f(a)},${f(b)} C${f(c)},${f(e)} ${f(g)},${f(hh)} ${f(i)},${f(l)}`;
+      const head = vertical
+        ? (jx) => ` M${f(x2 - 8 + jx)},${f(y2 - 12)} L${f(x2)},${f(y2)} L${f(x2 + 8 + jx)},${f(y2 - 11)}`
+        : (jx) => ` M${f(x2 - 12)},${f(y2 - 8 + jx)} L${f(x2)},${f(y2)} L${f(x2 - 11)},${f(y2 + 8 + jx)}`;
+      [0, 1].forEach((i) => {
+        const w = i ? 1 : 0, a = 5 + w * 4;
+        let dd;
+        if (vertical) { const dy = (y2 - y1) * 0.55; dd = d(x1 + j(seed + w, 3), y1, x1 + j(seed + 1 + w, a), y1 + dy, x2 + j(seed + 2 + w, a), y2 - dy, x2, y2); }
+        else { const dx = (x2 - x1) * 0.55; dd = d(x1, y1 + j(seed + w, 3), x1 + dx, y1 + j(seed + 1 + w, a), x2 - dx, y2 + j(seed + 2 + w, a), x2, y2); }
+        paths[k][i].setAttribute('d', dd + head(j(seed + 3 + w, 2)));
+      });
+    }
+    function draw() {
+      const vis = cards.filter((c) => c.offsetParent !== null || getComputedStyle(c).display !== 'none');
+      if (cards.length < 2 || !cards[0].offsetWidth) return;
+      svg.setAttribute('width', flow.offsetWidth); svg.setAttribute('height', flow.offsetHeight);
+      const A = pos(cards[0]), B = pos(cards[1]), C = cards[2] ? pos(cards[2]) : null;
+      const horiz = B.x > A.x + A.w - 4;
+      layer.classList.toggle('vert', !horiz);
+      const place = (k, x, y) => { notes[k].style.left = f(x) + 'px'; notes[k].style.top = f(y) + 'px'; };
+      if (horiz) {
+        const ya = mid(cards[0], '.ln.err'), yb = mid(cards[1], '.why-v');
+        curve('l1', A.x + A.w + 2, ya, B.x - 3, yb, false, 1); place('l1', (A.x + A.w + B.x) / 2, (ya + yb) / 2 - 18);
+        if (C) { const yc = mid(cards[2], '.ln.on'); curve('l2', B.x + B.w + 2, yb, C.x - 3, yc, false, 4); place('l2', (B.x + B.w + C.x) / 2, (yb + yc) / 2 - 18);
+          const top = A.y, x1 = A.x + A.w * 0.5, x2 = C.x + C.w * 0.5, up = top - 46;
+          const dd = (w) => `M${f(x1)},${f(top - 2)} C${f(x1 + j(7 + w, 8))},${f(up)} ${f(x2 + j(8 + w, 8))},${f(up + j(9 + w, 4))} ${f(x2)},${f(top - 3)} M${f(x2 - 8)},${f(top - 14)} L${f(x2)},${f(top - 3)} L${f(x2 + 8 + j(5 + w, 2))},${f(top - 13)}`;
+          paths.l3[0].setAttribute('d', dd(0)); paths.l3[1].setAttribute('d', dd(1)); place('l3', (x1 + x2) / 2, up + 4); }
+      } else {
+        const x1 = A.x + A.w * 0.5, ay = A.y + A.h;
+        curve('l1', x1, ay + 1, B.x + B.w * 0.5, B.y - 3, true, 1); place('l1', (x1 + B.x + B.w * 0.5) / 2 + 30, (ay + B.y) / 2 - 10);
+        if (C) { curve('l2', B.x + B.w * 0.5, B.y + B.h + 1, C.x + C.w * 0.5, C.y - 3, true, 4); place('l2', B.x + B.w * 0.5 + 30, (B.y + B.h + C.y) / 2 - 10); }
+        paths.l3.forEach((p) => p.setAttribute('d', ''));
+      }
+    }
+    let t = 0; const redraw = () => { cancelAnimationFrame(t); t = requestAnimationFrame(draw); };
+    if (window.ResizeObserver) new ResizeObserver(redraw).observe(flow);
+    window.addEventListener('resize', redraw);
+    return { draw: redraw, set(on, anim) { layer.classList.toggle('instant', !anim); layer.classList.toggle('on', !!on); redraw(); setTimeout(redraw, 700); } };
+  }
+
   function lessonView(id, idx) {
     const L = K.lessons[id];
     if (!L) {
@@ -269,9 +329,10 @@
     const buildCards = () => {
       const col = (cls, ic, label, text, vis) => text ? h('div', { class: 'why-c ' + cls }, h('div', { class: 'why-l' }, I(ic), label), vis ? h('div', { class: 'why-v' }, K.W.mini(vis)) : null, h('p', { html: text })) : null;
       const cards = [col('p', 'triangle-alert', '困りごと', W_.problem, W_.pv), col('i', 'lightbulb', '考え方', W_.idea, W_.iv), col('a', 'circle-check', '解決 = これ', W_.answer, W_.av)].filter(Boolean);
-      const flow = h('div', { class: 'why-flow' }), ars = [];
-      cards.forEach((c, i) => { if (i) { const ar = h('span', { class: 'why-ar' }, I('chevron-right')); ars.push(ar); flow.append(ar); } flow.append(c); });
-      return { cards, ars, flow };
+      const flow = h('div', { class: 'why-flow' });
+      cards.forEach((c) => flow.append(c));
+      const links = linker(flow, cards);
+      return { cards, flow, links };
     };
     const whenRows = () => { const rows = Array.isArray(W_.when) ? W_.when : [[null, W_.when]]; return h('div', { class: 'when-list' }, rows.map(([c, u], i) => h('div', { class: 'when-row' + (c ? '' : ' solo'), style: { '--i': i } }, c ? h('div', { class: 'when-if' }, h('small', 'こんなとき'), h('span', { html: c })) : null, c ? h('span', { class: 'when-ar' }, I('arrow-right')) : null, h('div', { class: 'when-use' }, h('small', c ? 'こっち' : 'ポイント'), h('span', { html: u }))))); };
 
@@ -280,23 +341,23 @@
     const refs = [].concat(S.ref || [], S.hint ? [{ title: 'ヒント', icon: 'lightbulb', html: S.hint }] : []);
     refs.forEach((r) => tools.append(toolBtn(r.icon || 'book-open', r.title || '参考', () => K.W.modal({ title: r.title || '参考', icon: r.icon || 'book-open', content: r.node ? r.node() : r.html }))));
     if (W_ && W_.when) tools.append(toolBtn('split', '使い分けガイド', () => K.W.modal({ title: '使い分けガイド', icon: 'split', narrow: true, content: () => h('div', null, h('p', { style: { color: 'var(--mute)', fontSize: '.875rem', marginBottom: '.8em' } }, '迷ったら、条件に当てはまるほうを選ぶ。'), whenRows()) })));
-    if (W_) tools.append(toolBtn('circle-help', 'なぜ？ 困りごと → 考え方 → 解決 を見直す', () => K.W.modal({ title: S.t + ' — なぜ必要？', icon: 'circle-help', content: () => buildCards().flow })));
+    if (W_) tools.append(toolBtn('circle-help', 'なぜ？ 困りごと → 考え方 → 解決 を見直す', () => K.W.modal({ title: S.t + ' — なぜ必要？', icon: 'circle-help', content: () => { const b = buildCards(); b.links.set(true, true); return b.flow; } })));
 
     const body = h('div', { class: 'body-wrap' });
     if (W_) {
-      const { cards, ars, flow } = buildCards();
+      const { cards, flow, links } = buildCards();
       const whyEl = h('div', { class: 'why' }, flow);
-      const last = cards.length - 1;
+      const last = cards.length > 1 ? 1 : 0;
       story.max = last + 1;                                   // last+1 = collapsed + demo shown
       story.stage = window.KENSHU_SKIP_STORY ? story.max : 0;   // always start with なぜ必要？ (skip flag is for automated checks only)
       const sumEl = h('div', { class: 'why-sum' }, I('circle-check'), h('span', { html: '<b>解決</b>：' + (W_.answer || '') }),
         h('button', { onclick: () => { story.reset(); } }, I('rotate-ccw'), 'なぜ？を最初から見る'));
-      const labels = ['考え方を見る', '解決を見る', 'デモで確かめる'];
+      const labels = story.labels = last ? ['考え方を見る', 'デモで確かめる'] : ['デモで確かめる'];
       const nextTop = h('button', { class: 'btn primary story-next', onclick: () => story.next() });
       story.sync = (anim) => {
         const n = story.stage, done = n > last;
-        cards.forEach((c, i) => { const show = i <= Math.min(n, last); const was = !c.classList.contains('hid'); c.classList.toggle('hid', !show); if (show && !was && anim) { c.classList.remove('in'); void c.offsetWidth; c.classList.add('in'); } });
-        ars.forEach((a, i) => a.classList.toggle('hid', i + 1 > Math.min(n, last)));
+        cards.forEach((c, i) => { const show = i === 0 || n >= 1; const was = !c.classList.contains('hid'); c.classList.toggle('hid', !show); c.style.animationDelay = i === 1 ? '.2s' : i === 2 ? '.7s' : ''; if (show && !was && anim) { c.classList.remove('in'); void c.offsetWidth; c.classList.add('in'); } });
+        links.set(n >= 1 && !done, anim);
         whyEl.style.display = done ? 'none' : ''; sumEl.style.display = done ? '' : 'none';
         const wasOn = !body.classList.contains('collapsed');
         body.classList.toggle('collapsed', !done);
@@ -336,8 +397,8 @@
     if (W_) {
       const mq = matchMedia('(max-width:760px)');
       const original = [...navNext.childNodes].map((n) => n.cloneNode(true));
-      const labelFor = () => ['考え方を見る', '解決を見る', 'デモで確かめる'][Math.min(story.stage, 2)];
-      navNext.addEventListener('click', (e) => { if (mq.matches && story.stage < story.max) { e.preventDefault(); e.stopImmediatePropagation(); story.next(); const c = document.querySelectorAll('.scene > .why .why-c:not(.hid)'); const t = c[c.length - 1]; t && t.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } }, true);
+      const labelFor = () => story.labels[Math.min(story.stage, story.labels.length - 1)];
+      navNext.addEventListener('click', (e) => { if (mq.matches && story.stage < story.max) { e.preventDefault(); e.stopImmediatePropagation(); story.next(); const c = document.querySelectorAll('.scene > .why .why-c:not(.hid)'); const t = c[1] || c[0]; t && t.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } }, true);
       story.hook = () => {
         if (mq.matches && story.stage < story.max) { navNext.replaceChildren(labelFor(), I('chevron-right')); navNext.classList.add('story-mode'); }
         else { navNext.replaceChildren(...original.map((n) => n.cloneNode(true))); navNext.classList.remove('story-mode'); }
@@ -397,6 +458,9 @@
     const swap = () => {
       current && current.cleanup && current.cleanup();
       app.replaceChildren();
+      const pm = location.hash.match(/^#\/p\/(.+)/);
+      if (pm) { try { sessionStorage.setItem('kenshu.pending', pm[1]); } catch {} location.hash = '#/'; return; }
+      if (K.users.isAdmin() && K.users.consumePending()) { location.hash = '#/admin'; return; }
       if (!K.users.current()) { current = K.users.views.loginView(() => { location.hash = '#/'; render(); }); app.append(current); document.title = 'ニックネーム | 研修ナビ'; return; }
       const toAdmin = location.hash === '#/admin';
       if (toAdmin && !K.users.isAdmin()) { location.hash = '#/'; return; }

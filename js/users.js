@@ -18,7 +18,7 @@
     try {
       const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t));
       return [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, '0')).join('');
-    } catch { return t === 'admin@123' ? ADMIN_HASH : ''; }
+    } catch { return ''; }
   }
 
   const U = (K.users = {
@@ -29,7 +29,7 @@
     async login(raw) {
       const name = (raw || '').trim();
       if (!name) return '名前を入力してください';
-      if ((await sha256(name)) === ADMIN_HASH) { ls.set('kenshu.user', ADMIN); return ''; }
+      if ((await sha256(name)) === ADMIN_HASH) { ls.set('kenshu.user', ADMIN); try { sessionStorage.setItem('kenshu.akey', name); } catch {} return ''; }
       if (name.length > 20) return '20文字までです';
       if (/^[@]/.test(name)) return '先頭に @ は使えません';
       // 初めての人で、以前の保存データがあれば引き継ぐ
@@ -62,8 +62,10 @@
   const imported = () => { try { return JSON.parse(ls.get(IMPORT_KEY)) || {}; } catch { return {}; } };
   const saveImported = (o) => ls.set(IMPORT_KEY, JSON.stringify(o));
 
+  let cloudRows = [], cloudMsg = '';
   function rows() {
     const out = {};
+    cloudRows.forEach((p) => { const s = summaryOf({ seen: p.s, _last: p.t }); out[p.n] = { nick: p.n, src: 'cloud', ...s, data: { seen: p.s, _last: p.t } }; });
     U.list().forEach((n) => { out[n] = { nick: n, src: 'local', ...summaryOf(store.read(n)), data: store.read(n) }; });
     Object.entries(imported()).forEach(([n, p]) => {
       const s = summaryOf({ seen: p.s, _last: p.t });
@@ -73,23 +75,53 @@
   }
 
   /* ---------- 進捗コード（生徒 → 先生） ---------- */
-  const enc = (o) => btoa(unescape(encodeURIComponent(JSON.stringify(o))));
-  const dec = (t) => JSON.parse(decodeURIComponent(escape(atob(t.trim()))));
+  const enc = (o) => btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  const dec = (t) => { t = t.trim().replace(/-/g, '+').replace(/_/g, '/'); while (t.length % 4) t += '='; return JSON.parse(decodeURIComponent(escape(atob(t)))); };
+  const CFG = window.KENSHU_CONFIG || {};
+  const base = () => location.href.split('#')[0];
+  function importCode(line) {
+    const o = dec(String(line).replace(/^.*#\/p\//, '').replace(/^KENSHU1:/, ''));
+    if (!o.n || typeof o.s !== 'object') throw new Error('bad');
+    const cur = imported(); cur[String(o.n).slice(0, 40)] = { t: o.t || Date.now(), s: o.s }; saveImported(cur); return o.n;
+  }
+  U.consumePending = () => { let c = null; try { c = sessionStorage.getItem('kenshu.pending'); sessionStorage.removeItem('kenshu.pending'); } catch {} if (!c) return false; try { importCode(c); return true; } catch { return false; } };
+
+  /* ---- 自動送信（Google スプレッドシート） ---- */
+  let timer = 0, lastSent = 0;
+  async function push() {
+    if (!CFG.syncUrl || !store.user() || U.isAdmin()) return false;
+    const d = store.read();
+    try { await fetch(CFG.syncUrl, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ n: store.user(), t: d._last || Date.now(), s: d.seen || {} }) }); lastSent = Date.now(); return true; } catch { return false; }
+  }
+  store.after = () => { if (!CFG.syncUrl) return; clearTimeout(timer); timer = setTimeout(push, 2500); };
+  async function cloud() {
+    if (!CFG.syncUrl) return null;
+    let key = ''; try { key = sessionStorage.getItem('kenshu.akey') || ''; } catch {}
+    const r = await fetch(CFG.syncUrl + (CFG.syncUrl.includes('?') ? '&' : '?') + 'key=' + encodeURIComponent(key), { redirect: 'follow' });
+    const j = await r.json(); if (j.error) throw new Error(j.error); return j.users || [];
+  }
   function myCode() {
     const d = store.read();
-    return 'KENSHU1:' + enc({ n: store.user(), t: d._last || Date.now(), s: d.seen || {} });
+    return enc({ n: store.user(), t: d._last || Date.now(), s: d.seen || {} });
   }
   const copy = async (t, btn) => {
     try { await navigator.clipboard.writeText(t); btn.textContent = 'コピーしました'; } catch { btn.textContent = '選択してコピーしてください'; }
   };
 
   function sendModal() {
-    const code = myCode();
-    const ta = h('textarea', { class: 'u-code', readonly: true, rows: 4 }, code);
-    const cp = h('button', { class: 'btn primary' }, icon('copy'), 'コピー');
-    cp.onclick = () => copy(code, cp);
+    if (CFG.syncUrl) {
+      const st = h('p', { class: 'u-err', style: { color: 'var(--ok)' } }, lastSent ? '送りました' : '');
+      modal({ title: '進捗は自動で先生に届きます', icon: 'send', narrow: true, content: () => h('div', { class: 'col' },
+        h('p', 'ページを進めると、少し後に自動で送られます。何もしなくて大丈夫です。'), st,
+        h('button', { class: 'btn primary', onclick: async () => { st.textContent = (await push()) ? '送りました' : '送れませんでした'; } }, icon('send'), '今すぐ送る')) });
+      return;
+    }
+    const link = base() + '#/p/' + myCode();
+    const ta = h('textarea', { class: 'u-code', readonly: true, rows: 4 }, link);
+    const cp = h('button', { class: 'btn primary' }, icon('copy'), 'リンクをコピー');
+    cp.onclick = () => copy(link, cp);
     modal({ title: '進捗を先生に送る', icon: 'send', narrow: true, content: () => h('div', { class: 'col' },
-      h('p', '下のコードをコピーして、先生に Slack などで送ってください。進捗だけが入っています。'), ta, h('div', { class: 'row' }, cp)) });
+      h('p', 'このリンクを先生に送ってください。先生が開くと、進捗が見えます。'), ta, h('div', { class: 'row' }, cp)) });
   }
 
   /* ---------- ログイン画面 ---------- */
@@ -98,14 +130,13 @@
     const err = h('div', { class: 'u-err' });
     const go = async () => { const e = await U.login(inp.value); if (e) err.textContent = e; else done(); };
     inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
-    const known = U.list().slice(0, 6);
     return h('div', { class: 'u-login' }, h('div', { class: 'u-card' },
       h('div', { class: 'u-logo' }, h('i', '研'), '研修ナビ'),
       h('h1', 'ニックネームを入れてください'),
       h('p', '同じニックネームで入ると、続きから学べます。進捗はこの端末の中だけに保存されます。'),
       inp, err,
       h('button', { class: 'btn primary u-go', onclick: go }, '始める', icon('arrow-right')),
-      known.length ? h('div', { class: 'u-known' }, h('small', 'この端末で使われた名前'), h('div', { class: 'row' }, known.map((n) => h('button', { class: 'btn ghost', onclick: () => { inp.value = n; go(); } }, icon('user'), n)))) : null));
+      null));
   }
 
   /* ---------- 右上のユーザーボタン ---------- */
@@ -114,7 +145,7 @@
     return h('button', { class: 'btn ghost u-chip', title: 'ユーザー', onclick: () => {
       const m = modal({ title: U.isAdmin() ? '管理者' : store.user(), icon: U.isAdmin() ? 'shield-check' : 'user', narrow: true, content: () => h('div', { class: 'col' },
         U.isAdmin() ? h('a', { class: 'btn primary', href: '#/admin', onclick: () => m.close() }, icon('layout-dashboard'), '進捗の管理画面') : h('button', { class: 'btn primary', onclick: () => { m.close(); sendModal(); } }, icon('send'), '進捗を先生に送る'),
-        h('button', { class: 'btn ghost', onclick: () => { U.logout(); location.hash = '#/'; location.reload(); } }, icon('log-out'), 'ニックネームを変える（ログアウト）')) });
+        h('button', { class: 'btn ghost', onclick: () => { U.logout(); location.hash = '#/'; location.reload(); } }, icon('log-out'), 'ログアウト')) });
     } }, icon(U.isAdmin() ? 'shield-check' : 'user'), h('span', { class: 'lbl' }, ' ' + U.label()));
   }
 
@@ -129,15 +160,13 @@
       h('div', { class: 'u-per' }, r.per.map((x) => h('div', { class: 'u-per-row' }, h('span', x.title), h('div', { class: 'u-bar' }, h('i', { style: { width: Math.round((x.done / x.n) * 100) + '%' } })), h('b', `${x.done}/${x.n}`))))) });
   }
   function importModal(after) {
-    const ta = h('textarea', { class: 'u-code', rows: 6, placeholder: 'KENSHU1:… を貼り付け（複数行OK）' });
+    const ta = h('textarea', { class: 'u-code', rows: 6, placeholder: '先生に届いたリンクを貼り付け（複数OK）' });
     const msg = h('div', { class: 'u-err' });
-    modal({ title: '生徒の進捗コードを取り込む', icon: 'download', narrow: true, content: () => h('div', { class: 'col' }, ta, msg,
+    modal({ title: '生徒のリンクを取り込む', icon: 'download', narrow: true, content: () => h('div', { class: 'col' }, ta, msg,
       h('button', { class: 'btn primary', onclick: () => {
-        const cur = imported(); let ok = 0, ng = 0;
-        ta.value.split(/\n+/).map((x) => x.trim()).filter(Boolean).forEach((line) => {
-          try { const o = dec(line.replace(/^KENSHU1:/, '')); if (!o.n || typeof o.s !== 'object') throw 0; cur[String(o.n).slice(0, 40)] = { t: o.t || Date.now(), s: o.s }; ok++; } catch { ng++; }
-        });
-        saveImported(cur); msg.textContent = `${ok}件 取り込みました` + (ng ? `（読めない行 ${ng}）` : ''); after();
+        let ok = 0, ng = 0;
+        ta.value.split(/\s+/).map((x) => x.trim()).filter(Boolean).forEach((line) => { try { importCode(line); ok++; } catch { ng++; } });
+        msg.textContent = `${ok}件 取り込みました` + (ng ? `（読めない行 ${ng}）` : ''); after();
       } }, '取り込む')) });
   }
   function confirmModal(text, yes, label) {
@@ -157,22 +186,24 @@
           h('div', null, h('b', avg + '%'), h('span', '平均の進み')),
           h('div', null, h('b', active), h('span', '1時間以内に動いた人'))),
         h('div', { class: 'row u-tools' },
-          h('button', { class: 'btn ghost', onclick: draw }, icon('refresh-cw'), '更新'),
-          h('button', { class: 'btn ghost', onclick: () => importModal(draw) }, icon('download'), '進捗コードを取り込む'),
+          h('button', { class: 'btn ghost', onclick: load }, icon('refresh-cw'), '更新'),
+          CFG.syncUrl ? h('span', { class: 'u-err', style: { color: cloudMsg === 'OK' ? 'var(--ok)' : 'var(--bad)', alignSelf: 'center' } }, cloudMsg === 'OK' ? '● クラウド接続OK' : cloudMsg) : null,
+          h('button', { class: 'btn ghost', onclick: () => importModal(draw) }, icon('download'), 'リンクを取り込む'),
           h('button', { class: 'btn ghost', onclick: () => download('kenshu-progress.csv', '﻿' + ['ニックネーム,進捗%,完了シーン,最終操作,元'].concat(R.map((r) => `"${r.nick}",${r.pct},${r.done},${r.last ? new Date(r.last).toISOString() : ''},${r.src === 'import' ? '取込' : 'この端末'}`)).join('\n'), 'text/csv') }, icon('file-spreadsheet'), 'CSV'),
           h('button', { class: 'btn ghost', onclick: () => download('kenshu-backup.json', JSON.stringify({ users: Object.fromEntries(R.map((r) => [r.nick, r.data])) }, null, 1), 'application/json') }, icon('save'), 'JSON バックアップ'),
           h('button', { class: 'btn ghost danger', onclick: () => confirmModal('全員の進捗を消します。元に戻せません。', () => { U.list().forEach((n) => ls.del(PREFIX + n)); saveImported({}); draw(); }, '全員を消す') }, icon('trash-2'), '全員リセット')),
         R.length ? h('div', { class: 'u-table' }, R.map((r) => h('div', { class: 'u-row' },
-          h('div', { class: 'u-name' }, icon('user'), h('b', r.nick), r.src === 'import' ? h('small', '取込') : null),
+          h('div', { class: 'u-name' }, icon('user'), h('b', r.nick), r.src === 'import' ? h('small', '取込') : r.src === 'cloud' ? h('small', 'クラウド') : null),
           h('div', { class: 'u-prog' }, h('div', { class: 'u-bar' }, h('i', { style: { width: r.pct + '%' } })), h('b', r.pct + '%')),
           h('div', { class: 'u-cells', title: '授業ごとの進み' }, r.per.map((x) => h('i', { style: { '--p': x.done / x.n }, title: `${x.title} ${x.done}/${x.n}` }))),
           h('small', { class: 'u-last' }, ago(r.last)),
           h('div', { class: 'row' },
             h('button', { class: 'btn ghost', title: '詳細', onclick: () => detailModal(r) }, icon('eye')),
             h('button', { class: 'btn ghost', title: 'この人の進捗をリセット', onclick: () => confirmModal(r.nick + ' の進捗を消します。', () => { ls.del(PREFIX + r.nick); const i = imported(); delete i[r.nick]; saveImported(i); draw(); }, '消す') }, icon('rotate-ccw'))))))
-          : h('p', { class: 'u-empty' }, 'まだ誰もいません。生徒がニックネームを入れて学び始めると、ここに出ます。他の端末の人は「進捗コード」を送ってもらって取り込みます。'));
+          : h('p', { class: 'u-empty' }, 'まだ誰もいません。生徒がニックネームを入れて学び始めると、ここに出ます。他の端末の人は、送られてきたリンクを開くと取り込まれます。'));
     };
-    draw();
+    const load = async () => { if (!CFG.syncUrl) return draw(); try { cloudRows = await cloud(); cloudMsg = 'OK'; } catch (e) { cloudMsg = e.message === 'key' ? 'パスワードが合いません（Apps Script の KEY を確認）' : '接続できません'; } draw(); };
+    draw(); load();
     return wrap;
   }
 
