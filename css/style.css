@@ -357,7 +357,7 @@ code.i,.why code{white-space:nowrap}
 .body-wrap.in{animation:slide .55s cubic-bezier(.2,.9,.3,1) both}
 .story-bar{display:flex;margin:-4px 0 18px}
 .story-bar:empty{display:none}
-.story-next{animation:pulse 1.8s ease-in-out infinite}
+.story-next{animation:none}
 .story-next .ic{width:16px;height:16px}
 .why-when{margin:18px 0 0}
 .hint-reset{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:.4em;color:var(--mute);font-weight:700}.hint-reset:hover{color:var(--text)}.hint-reset .ic{width:14px;height:14px}
@@ -494,3 +494,5 @@ body::before{display:none!important}
 .task.opt i{border-style:dashed}
 .task.opt.ok i{background:var(--violet);border-color:var(--violet);color:#fff}
 .task.opt.ok{color:var(--violet)}
+
+.story-next,.story-next:hover,.story-next:active{animation:none!important;transform:none!important;filter:none!important}
