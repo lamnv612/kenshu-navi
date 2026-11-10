@@ -95,9 +95,13 @@
   async function push() {
     if (!FB || !store.user() || U.isAdmin()) return false;
     const d = store.read();
-    try { const r = await fetch(`${DB}/progress/${fbKey(store.user())}.json`, { method: 'PUT', body: JSON.stringify({ n: store.user(), t: d._last || Date.now(), s: d.seen || {} }) }); if (r.ok) lastSent = Date.now(); return r.ok; } catch { return false; }
+    try { const r = await fetch(`${DB}/progress/${fbKey(store.user())}.json`, { method: 'PUT', keepalive: true, body: JSON.stringify({ n: store.user(), t: d._last || Date.now(), s: d.seen || {} }) }); if (r.ok) lastSent = Date.now(); return r.ok; } catch { return false; }
   }
   store.after = () => { if (!FB) return; clearTimeout(timer); timer = setTimeout(push, 2000); };
+  if (FB) { // ページを開いた時・閉じる時にも送る（デバウンス待ちで取りこぼさない）
+    setTimeout(() => { if (store.user() && !U.isAdmin()) push(); }, 1200);
+    document.addEventListener('visibilitychange', () => { if (document.hidden && store.user() && !U.isAdmin()) push(); });
+  }
   const token = () => { try { tok = tok || JSON.parse(sessionStorage.getItem('kenshu.fbtok')); } catch {} return tok && tok.exp > Date.now() ? tok.t : null; };
   async function adminSignIn(email, pass) {
     const r = await fetch('https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=' + FB.apiKey, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password: pass, returnSecureToken: true }) });
