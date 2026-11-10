@@ -398,6 +398,8 @@
       app.replaceChildren();
       current = m ? lessonView(m[1], m[2] || 0) : home();
       app.append(current);
+      const LL = m && K.lessons[m[1]];
+      document.title = LL ? LL.title + ' | 研修ナビ' : '研修ナビ — プログラミング研修';
       if (toExtras) { const x = document.getElementById('extras'); x && x.scrollIntoView({ behavior: 'smooth' }); } else window.scrollTo(0, 0);
     };
     if (current && !document.hidden && document.startViewTransition && !matchMedia('(prefers-reduced-motion: reduce)').matches) document.startViewTransition(swap);
