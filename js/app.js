@@ -182,7 +182,7 @@
   }
 
   /* ---------- home / scheduler ---------- */
-  function home() {
+  function home(onlyExtras) {
     const now = new Date();
     const todayStr = now.toISOString().slice(0, 10);
     const first = new Date(DAYS[0].date + 'T00:00:00');
@@ -212,6 +212,8 @@
     const totalScenes = Object.values(K.lessons).reduce((n, l) => n + l.scenes.length, 0);
     const seen = Object.values(K.lessons).reduce((n, l) => n + store.getSeen(l.id).length, 0);
 
+    if (onlyExtras) return h('div', null, topbar(h('div', { class: 'crumb' }, h('a', { href: '#/', class: 'btn ghost' }, K.W.icon('arrow-left'), h('span', { class: 'lbl' }, '時間割')), h('b', { class: 'crumb-t' }, '補足トピック'))),
+      h('main', { class: 'home' }, extrasSection()));
     return h('div', null, topbar(),
       h('main', { class: 'home' },
         h('section', { class: 'hero' },
@@ -227,8 +229,7 @@
         const m = K.W.modal({ title: '進捗をリセット', icon: 'rotate-ccw', narrow: true, content: () => h('div', { class: 'col' },
           h('p', '学習の進み具合（チェック・バー）を消して、最初の状態に戻します。'),
           h('div', { class: 'row' }, h('button', { class: 'btn primary', onclick: () => { store.set('seen', {}); location.reload(); } }, 'リセットする'), h('button', { class: 'btn ghost', onclick: () => m.close() }, 'やめる'))) });
-      } }, K.W.icon('rotate-ccw'), '進捗リセット'), h('a', { href: '#/extras', class: 'hint-link' }, '✨ スライド外の補足へ ↓')),
-        extrasSection()));
+      } }, K.W.icon('rotate-ccw'), '進捗リセット'), h('a', { href: '#/extras', class: 'hint-link' }, '✨ スライド外の補足へ'))));
   }
 
   /* ---------- lesson view ---------- */
@@ -396,11 +397,11 @@
     const swap = () => {
       current && current.cleanup && current.cleanup();
       app.replaceChildren();
-      current = m ? lessonView(m[1], m[2] || 0) : home();
+      current = m ? lessonView(m[1], m[2] || 0) : home(toExtras);
       app.append(current);
       const LL = m && K.lessons[m[1]];
-      document.title = LL ? LL.title + ' | 研修ナビ' : '研修ナビ — プログラミング研修';
-      if (toExtras) { const x = document.getElementById('extras'); x && x.scrollIntoView({ behavior: 'smooth' }); } else window.scrollTo(0, 0);
+      document.title = LL ? LL.title + ' | 研修ナビ' : toExtras ? '補足トピック | 研修ナビ' : '研修ナビ — プログラミング研修';
+      window.scrollTo(0, 0);
     };
     if (current && !document.hidden && document.startViewTransition && !matchMedia('(prefers-reduced-motion: reduce)').matches) document.startViewTransition(swap);
     else swap();
