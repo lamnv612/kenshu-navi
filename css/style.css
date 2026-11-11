@@ -17,7 +17,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);line-height:
 body::before,body::after{content:"";position:fixed;z-index:-1;border-radius:50%;filter:blur(90px);opacity:.35;pointer-events:none}
 body::before{width:46vw;height:46vw;left:-12vw;top:-14vw;background:var(--ts);animation:drift 22s ease-in-out infinite alternate}
 body::after{width:42vw;height:42vw;right:-10vw;bottom:-14vw;background:var(--vue);animation:drift 26s ease-in-out infinite alternate-reverse}
-:root[data-theme=light] body::before,:root[data-theme=light] body::after{opacity:.18}
+:root:is([data-theme=light],[data-theme=spec]) body::before,:root:is([data-theme=light],[data-theme=spec]) body::after{opacity:.18}
 @keyframes drift{to{transform:translate(6vw,5vw) scale(1.15)}}
 button{font:inherit;color:inherit;cursor:pointer}
 a{color:inherit}
@@ -121,7 +121,7 @@ pre.code .ln.on{background:color-mix(in srgb,var(--c,var(--ts)) 22%,transparent)
 pre.code .ln.err{background:rgba(255,107,122,.18);border-left-color:var(--bad)}
 pre.code[data-file]::before{content:attr(data-file);display:block;font-size:.75rem;color:#8e97c4;padding:0 1.2em .5em;margin-bottom:.4em;border-bottom:1px solid rgba(255,255,255,.08);letter-spacing:.06em}
 .cm{color:#6d779f;font-style:italic}.str{color:#9be58b}.kw{color:#ff9ac1}.ty{color:#7fd8ff}.num{color:#ffc27a}.fn{color:#b6a6ff}.tag{color:#ff8f7a}.attr{color:#ffd37a}.at{color:#7fd8ff}
-:root[data-theme=light] pre.code{background:#171b3a}
+:root:is([data-theme=light],[data-theme=spec]) pre.code{background:#171b3a}
 
 /* stepper */
 .stepper{display:grid;gap:12px}
@@ -448,7 +448,7 @@ code.i,.why code{white-space:nowrap}
 .why-c{display:flex;flex-direction:column;gap:10px;padding:14px 16px 16px}
 .why-c .why-l{flex:none}
 .why-v{flex:none;height:120px;display:flex;align-items:center;justify-content:center;padding:8px;border-radius:8px;background:rgba(0,0,0,.16);overflow:hidden;margin:0}
-:root[data-theme=light] .why-v{background:rgba(30,40,100,.06)}
+:root:is([data-theme=light],[data-theme=spec]) .why-v{background:rgba(30,40,100,.06)}
 .why-v .mini{margin:0;width:100%;max-height:100%;align-content:center}
 .why-v .mini-code pre.code{width:100%}
 .why-v .mf{gap:5px}
@@ -785,3 +785,47 @@ a.btn{text-decoration:none}
 .u-cloudlogin{display:grid;grid-template-columns:auto minmax(0,1fr) minmax(0,1fr) auto;gap:10px;align-items:center;padding:12px 16px;border-radius:10px;background:var(--card);border:1px dashed var(--violet)}
 .u-cloudlogin b{display:flex;align-items:center;gap:.4em}.u-cloudlogin .u-input{font-size:var(--fs-md);padding:10px 12px}.u-cloudlogin .u-err{grid-column:1/-1;min-height:0}
 @media(max-width:760px){.u-cloudlogin{grid-template-columns:1fr}}
+
+
+/* ===== theme: spec（Apple の製品スペック図のような、白地・細い線・番号つき） ===== */
+:root[data-theme=spec]{
+  --basic:#2f9e44; --ts:#0071e3; --vue:#0a8f6a; --team:#c77700; --pink:#d6336c; --violet:#6e56cf;
+  --bg:#fbfbfd; --bg2:#f5f5f7; --card:#fff; --card2:#f5f5f7; --line:rgba(0,0,0,.14);
+  --text:#1d1d1f; --mute:#6e6e73; --code:#1d1d1f; --shadow:none; --ok:#1f9d55; --bad:#d70015;
+  --font:-apple-system,BlinkMacSystemFont,'SF Pro Display','Inter','Hiragino Sans','Hiragino Kaku Gothic ProN','Noto Sans JP',system-ui,sans-serif;
+}
+:root[data-theme=spec] body::before,:root[data-theme=spec] body::after{display:none}
+:root[data-theme=spec] body{font-weight:400}
+:root[data-theme=spec] :is(h1,h2,h3,b,strong){font-weight:600}
+:root[data-theme=spec] .top{backdrop-filter:none;background:color-mix(in srgb,var(--bg) 92%,transparent);border-bottom:1px solid var(--line)}
+:root[data-theme=spec] .logo i,:root[data-theme=spec] .u-logo i{background:var(--text);color:#fff}
+:root[data-theme=spec] :is(.btn,.card,.u-card,.im-z,.im-p,.im-det,.im-qc,.sh,.countdown,.u-row,.u-stats>div){box-shadow:none}
+:root[data-theme=spec] .u-card{border-color:var(--line)}
+:root[data-theme=spec] .btn.primary{background:var(--ts);border-color:var(--ts);color:#fff;box-shadow:none}
+:root[data-theme=spec] .hero h1{font-weight:300;letter-spacing:-.02em}
+:root[data-theme=spec] .hero h1 em{background:none;-webkit-background-clip:initial;background-clip:initial;color:var(--text);font-weight:600}
+:root[data-theme=spec] .countdown{background:transparent;border:0;border-left:1px solid var(--line);border-radius:0;text-align:left;padding:4px 0 4px 20px}
+:root[data-theme=spec] .countdown b{background:none;-webkit-background-clip:initial;background-clip:initial;color:var(--text);font-weight:200;font-size:3.4rem;letter-spacing:-.03em}
+:root[data-theme=spec] :is(.countdown span,.sh small,.rail-box .label,.am-chip small,.u-note){letter-spacing:.12em;text-transform:uppercase;font-weight:600}
+:root[data-theme=spec] .sh{background:transparent;border:0;border-bottom:1px solid var(--text);border-radius:0}
+:root[data-theme=spec] .theme{color:#fff}
+/* 地図：分解図のように 番号 → 細い引き出し線 → 点 */
+:root[data-theme=spec] .im-map{counter-reset:z;margin-bottom:44px}
+:root[data-theme=spec] .im-z{counter-increment:z;border-radius:8px;background:var(--card)}
+:root[data-theme=spec] .im-z b::before{content:counter(z,decimal-leading-zero);display:block;font:600 .68rem var(--mono);letter-spacing:.14em;color:var(--mute);margin-bottom:2px}
+:root[data-theme=spec] .im-z:not(.mine):not(.far)::after{content:"";position:absolute;left:50%;top:100%;width:1px;height:26px;background:var(--text);opacity:.55}
+:root[data-theme=spec] .im-z.mine::after,:root[data-theme=spec] .im-z.far::after{background:var(--card);color:var(--c);border:1px solid var(--c)}
+:root[data-theme=spec] .im-z.sel,:root[data-theme=spec] .im-p.sel{box-shadow:none;border-color:var(--text);background:var(--card)}
+:root[data-theme=spec] .im-z.now{box-shadow:none;border-color:var(--c);transform:translateY(-6px)}
+:root[data-theme=spec] .im-lane::after{content:"クライアント（手元）　←　リクエスト　→　サーバー（遠く）";position:absolute;left:14px;right:14px;bottom:-42px;padding-top:8px;border-top:1px solid var(--text);text-align:center;font:600 .68rem var(--font);letter-spacing:.14em;color:var(--mute)}
+:root[data-theme=spec] .im-lane{margin-bottom:36px}
+:root[data-theme=spec] .im-pkt{background:var(--text);box-shadow:none}
+/* 開発の流れ：PHASE 01 … */
+:root[data-theme=spec] .im-flow{counter-reset:p}
+:root[data-theme=spec] .im-p{counter-increment:p;border-radius:8px}
+:root[data-theme=spec] .im-p b::before{content:"PHASE " counter(p,decimal-leading-zero);display:block;font:600 .6rem var(--mono);letter-spacing:.14em;color:var(--mute);margin-bottom:2px}
+:root[data-theme=spec] .im-loop{border-width:1px;border-color:var(--text);opacity:.6}
+/* 困りごと → 考え方 → 解決 の矢印は、細くまっすぐな線に */
+:root[data-theme=spec] .why-svg path{stroke-width:1.3!important;stroke-dasharray:none;filter:none}
+:root[data-theme=spec] .im-lane{margin-bottom:52px}
+@media(max-width:760px){:root[data-theme=spec] .im-lane::after,:root[data-theme=spec] .im-z::after{display:none!important}:root[data-theme=spec] .im-map{margin-bottom:0}:root[data-theme=spec] .im-lane{margin-bottom:0}:root[data-theme=spec] .countdown{border-left:0;padding-left:0}}

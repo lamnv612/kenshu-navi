@@ -100,14 +100,15 @@
 
   /* ---------- top bar ---------- */
   function topbar(crumb) {
-    const theme = document.documentElement.dataset.theme === 'light';
+    const cur = document.documentElement.dataset.theme || 'dark';
+    const NEXT = { dark: 'light', light: 'spec', spec: 'dark' }, ICO = { dark: 'moon', light: 'sun', spec: 'ruler' }, NAME = { dark: 'ダーク', light: 'ライト', spec: 'スペック' };
     return h('header', { class: 'top' },
       h('a', { class: 'logo', href: '#/' }, h('i', '研'), '研修ナビ'),
       crumb || null, h('div', { class: 'sp' }), K.users.views.chip(),
-      h('button', { class: 'btn ghost', 'aria-label': 'テーマ切替', title: 'テーマ切替（プロジェクター用）', onclick: () => {
-        const t = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
-        document.documentElement.dataset.theme = t; store.set('theme', t);
-      } }, theme ? '🌙' : '☀️', h('span', { class: 'lbl' }, ' テーマ')));
+      h('button', { class: 'btn ghost', 'aria-label': 'テーマ切替', title: 'テーマ切替：ダーク／ライト／スペック（いま：' + NAME[cur] + '）', onclick: () => {
+        const t = NEXT[document.documentElement.dataset.theme] || 'dark';
+        document.documentElement.dataset.theme = t; store.set('theme', t); render();
+      } }, K.W.icon(ICO[cur]), h('span', { class: 'lbl' }, ' ' + NAME[cur])));
   }
 
 
