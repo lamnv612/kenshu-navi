@@ -12,11 +12,10 @@
   };
   K.TRACKS = TRACKS;
 
-  // columns: 16→2, 17→3, 18→4, 19→5, (sep 6), 24→7, 25→8
+  // columns: day1→2 … day4→5, (sep 6), day5→7, day6→8
   const DAYS = [
-    { d: 16, w: '月', col: 2, date: '2026-11-16' }, { d: 17, w: '火', col: 3, date: '2026-11-17' },
-    { d: 18, w: '水', col: 4, date: '2026-11-18' }, { d: 19, w: '木', col: 5, date: '2026-11-19' },
-    { d: 24, w: '火', col: 7, date: '2026-11-24' }, { d: 25, w: '水', col: 8, date: '2026-11-25' },
+    { d: 1, col: 2 }, { d: 2, col: 3 }, { d: 3, col: 4 },
+    { d: 4, col: 5 }, { d: 5, col: 7 }, { d: 6, col: 8 },
   ];
   // [dayIdx, fromHour, toHour, label, sub, lessonId, track, emoji]
   const CELLS = [
@@ -55,7 +54,7 @@
 
 
   /* ---------- GitHub links ---------- */
-  const GH = 'https://github.com/tpa-bengo4-2026/git_practice_repo/';
+  const GH = ((window.KENSHU_CONFIG || {}).practiceRepo || '').replace(/\/?$/, '/').replace(/^\/$/, '');  // 空なら GitHub リンクは出さない
   const ghUrl = (path) => GH + (/\.[A-Za-z0-9]+$/.test(path) ? 'blob/' : 'tree/') + (window.KENSHU_GH_REF || 'main') + '/' + encodeURI(path);
   K.ghUrl = ghUrl;
   const GH_MAP = {
@@ -79,7 +78,7 @@
   };
   function ghLinks(L) {
     const raw = L.gh ? L.gh.map((g) => (Array.isArray(g) ? g : [g.label, g.path])) : GH_MAP[L.id] || [];
-    return raw.map(([label, path]) => ({ label, url: ghUrl(path) }));
+    return GH ? raw.map(([label, path]) => ({ label, url: ghUrl(path) })) : [];
   }
   const PRACTICE = window.KENSHU_PRACTICE || [];
   const practiceFor = (id, title) => {
@@ -159,7 +158,7 @@
       const d = DAYS[cur], tr = THEME[cur];
       const items = CELLS.filter((c) => c[0] === cur).sort((a, b) => a[1] - b[1]);
       list.replaceChildren(
-        h('div', { class: 'am-theme', style: { '--c': TRACKS[tr].color } }, h('b', THEME_NAME[tr]), h('small', `${d.d}日（${d.w}）`)),
+        h('div', { class: 'am-theme', style: { '--c': TRACKS[tr].color } }, h('b', THEME_NAME[tr]), h('small', `${d.d}日目`)),
         ...items.flatMap((c, i) => {
           const [, a, b, label, sub, id, track, em] = c;
           const p = progressOf(id), nx = items[i + 1];
@@ -175,7 +174,7 @@
     }
     DAYS.forEach((d, i) => {
       if (i === 4) chips.append(h('span', { class: 'am-gap' }, '1週間後'));
-      chips.append(h('button', { class: 'am-chip' + (i === todayIdx ? ' today' : ''), 'data-i': i, onclick: () => { cur = i; draw(); } }, h('b', d.d), h('small', d.w)));
+      chips.append(h('button', { class: 'am-chip' + (i === todayIdx ? ' today' : ''), 'data-i': i, onclick: () => { cur = i; draw(); } }, h('b', d.d), h('small', '日目')));
     });
     wrap.append(chips, list); draw();
     return wrap;
@@ -183,15 +182,11 @@
 
   /* ---------- home / scheduler ---------- */
   function home(onlyExtras) {
-    const now = new Date();
-    const todayStr = now.toISOString().slice(0, 10);
-    const first = new Date(DAYS[0].date + 'T00:00:00');
-    const diff = Math.ceil((first - new Date(todayStr + 'T00:00:00')) / 864e5);
-    const todayIdx = DAYS.findIndex((d) => d.date === todayStr);
+    const todayIdx = -1;
 
     const g = h('div', { class: 'sched' });
     g.append(h('div', { class: 'sh time', style: { gridColumn: 1, gridRow: 1 } }, '時間'));
-    DAYS.forEach((d, i) => g.append(h('div', { class: 'sh' + (i === todayIdx ? ' today' : ''), style: { gridColumn: d.col, gridRow: 1 } }, h('div', d.d + '日', h('small', d.w + '曜日')))));
+    DAYS.forEach((d, i) => g.append(h('div', { class: 'sh' + (i === todayIdx ? ' today' : ''), style: { gridColumn: d.col, gridRow: 1 } }, h('div', d.d + '日目'))));
     g.append(h('div', { class: 'sep', style: { gridColumn: 6, gridRow: '1 / 12' } }, '1週間後'));
     g.append(h('div', { class: 'sh time', style: { gridColumn: 1, gridRow: 2, fontFamily: 'var(--font)' } }, 'テーマ'));
     [['basic', 2, 2], ['ts', 3, 4], ['vue', 5, 8]].forEach(([t, a, b]) => {
@@ -221,7 +216,7 @@
             h('h1', null, '手を動かして学ぶ、', h('br'), h('em', '新入社員プログラミング研修')),
             h('p', null, '下の時間割からテーマをクリック。図とアニメーションで「なぜそうなるか」を一歩ずつ確かめながら、その場でコードを書いて試せます。')),
           h('div', { class: 'countdown' },
-            diff > 0 ? [h('b', diff), h('span', 'DAYS UNTIL 11/16 START')] : todayIdx >= 0 ? [h('b', '🔥'), h('span', '今日は研修日！')] : [h('b', '✓'), h('span', 'お疲れさま')],
+            [h('b', Math.round(seen / Math.max(1, totalScenes) * 100) + '%'), h('span', 'PROGRESS')],
             h('div', { style: { marginTop: '.6em', fontSize: '.75rem', color: 'var(--mute)' } }, `学習進捗 ${seen}/${totalScenes} シーン`))),
         h('div', { class: 'legend' }, Object.entries(TRACKS).map(([k, t]) => h('span', { class: 'chip', style: { '--c': t.color } }, '● ' + t.name))),
         g, agendaView(todayIdx),
@@ -331,7 +326,7 @@
     const gl = ghLinks(L), ex = extrasOf(id);
     const rail = h('aside', { class: 'rail' }, h('h3', null, L.emoji + ' ' + L.title), h('div', { class: 'sub' }, L.sub || ''), h('ol', null, railItems),
       L.meta && L.meta.mins ? h('div', { class: 'rail-meta' }, h('span', K.W.icon('timer'), L.meta.mins + '分'), L.meta.when ? h('p', L.meta.when) : null) : null,
-      (gl.length || practiceFor(id, '').lesson.length) ? h('div', { class: 'rail-box' }, h('div', { class: 'label' }, 'GitHub'), practiceFor(id, '').lesson.map((x) => ghChip({ label: (x.label || x.path), url: ghUrl(x.path) })), gl.map(ghChip)) : null,
+      GH && (gl.length || practiceFor(id, '').lesson.length) ? h('div', { class: 'rail-box' }, h('div', { class: 'label' }, 'GitHub'), practiceFor(id, '').lesson.map((x) => ghChip({ label: (x.label || x.path), url: ghUrl(x.path) })), gl.map(ghChip)) : null,
       ex.length ? h('div', { class: 'rail-box' }, h('div', { class: 'label' }, '補足トピック'), ex.map((x) => h('a', { class: 'rail-x', href: '#/lesson/' + x.id }, K.W.icon('sparkles'), h('span', x.title), h('small', ((x.meta || {}).mins || 5) + '分')))) : null);
 
     rail.append(h('button', { class: 'rail-toggle', onclick: (e) => { rail.classList.toggle('more'); e.currentTarget.classList.toggle('on'); } }, K.W.icon('chevron-down'), '関連リンク・補足'));
@@ -360,7 +355,7 @@
     };
     const whenRows = () => { const rows = Array.isArray(W_.when) ? W_.when : [[null, W_.when]]; return h('div', { class: 'when-list' }, rows.map(([c, u], i) => h('div', { class: 'when-row' + (c ? '' : ' solo'), style: { '--i': i } }, c ? h('div', { class: 'when-if' }, h('small', 'こんなとき'), h('span', { html: c })) : null, c ? h('span', { class: 'when-ar' }, I('arrow-right')) : null, h('div', { class: 'when-use' }, h('small', c ? 'こっち' : 'ポイント'), h('span', { html: u }))))); };
 
-    if (prScene) tools.append(h('a', { class: 'tool-ico', href: ghUrl(prScene.path), target: '_blank', rel: 'noopener', 'data-tip': 'GitHub で「' + (prScene.label || '実践コード') + '」を開く' }, K.W.icon('github-mark')));
+    if (GH && prScene) tools.append(h('a', { class: 'tool-ico', href: ghUrl(prScene.path), target: '_blank', rel: 'noopener', 'data-tip': 'GitHub で「' + (prScene.label || '実践コード') + '」を開く' }, K.W.icon('github-mark')));
     if (S.answer) tools.append(toolBtn('key-round', '答えを見る（まず自分で試そう）', () => K.W.modal({ title: '答え', icon: 'key-round', content: () => { const A = S.answer; if (A.node) return A.node(); if (A.code) return h('div', null, h('p', { style: { color: 'var(--mute)', fontSize: '.875rem', marginBottom: '.8em' } }, '答えは1つとは限りません。自分のやり方と見比べてみよう。'), K.W.code(A.code, A.lang || 'ts', { file: A.file })); return A.html || ''; } })));
     const refs = [].concat(S.ref || [], S.hint ? [{ title: 'ヒント', icon: 'lightbulb', html: S.hint }] : []);
     refs.forEach((r) => tools.append(toolBtn(r.icon || 'book-open', r.title || '参考', () => K.W.modal({ title: r.title || '参考', icon: r.icon || 'book-open', content: r.node ? r.node() : r.html }))));
@@ -399,8 +394,8 @@
       el.append(whyEl, sumEl, h('div', { class: 'story-bar' }, nextTop, skipBtn));
       story.skipBtn = skipBtn;
     }
-    if (prScene && S.tag === 'PRACTICE' && pr.scene.length > 1) el.append(h('div', { class: 'row', style: { margin: '0 0 1em' } }, pr.scene.map((x) => ghChip({ label: x.label || x.path, url: ghUrl(x.path) }))));
-    if (S.gh) el.append(h('div', { class: 'row', style: { margin: '0 0 1em' } }, [].concat(S.gh).map((g) => ghChip({ label: g.label || g[0], url: ghUrl(g.path || g[1]) }))));
+    if (GH && prScene && S.tag === 'PRACTICE' && pr.scene.length > 1) el.append(h('div', { class: 'row', style: { margin: '0 0 1em' } }, pr.scene.map((x) => ghChip({ label: x.label || x.path, url: ghUrl(x.path) }))));
+    if (GH && S.gh) el.append(h('div', { class: 'row', style: { margin: '0 0 1em' } }, [].concat(S.gh).map((g) => ghChip({ label: g.label || g[0], url: ghUrl(g.path || g[1]) }))));
     el.append(body);
     const ctx = { steppers: [], cleanups: [], lesson: L, idx, story };
     K.ctx = ctx;

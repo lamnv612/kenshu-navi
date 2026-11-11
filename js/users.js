@@ -152,6 +152,7 @@
       h('p', '同じニックネームで入ると、続きから学べます。'),
       h('div', { class: 'u-steps' }, h('span', icon('user'), '名前を入れる'), h('span', icon('book-open'), '学ぶ'), h('span', icon('trophy'), '記録がたまる')),
       inp, err,
+      h('small', { class: 'u-note' }, '本名は入れないでください。ニックネームと学習の進み（見たシーン）が、先生の確認用に保存されます。'),
       h('button', { class: 'btn primary u-go', onclick: go }, '始める', icon('arrow-right')),
       null));
   }

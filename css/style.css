@@ -679,6 +679,7 @@ a.btn{text-decoration:none}
 .u-input{padding:14px 16px;border-radius:8px;border:1px solid var(--line);background:var(--code);color:#eef0ff;font:inherit;font-size:var(--fs-lg)}
 .u-input:focus,.tt-min:focus,.u-code:focus{outline:2px solid var(--violet,#8b5cf6)}
 .u-err{min-height:1.2em;color:var(--bad);font-size:var(--fs-sm);font-weight:700}
+.u-note{color:var(--mute);font-size:var(--fs-xs);line-height:1.6}
 .u-go{justify-content:center;padding:14px}
 .u-known{display:flex;flex-direction:column;gap:8px}.u-known small{color:var(--mute);font-weight:700}
 .u-code{width:100%;padding:12px;border-radius:8px;border:1px solid var(--line);background:var(--code);color:#eef0ff;font-family:var(--mono);font-size:var(--fs-xs);resize:vertical;word-break:break-all}

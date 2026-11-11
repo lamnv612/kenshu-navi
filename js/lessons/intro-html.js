@@ -113,22 +113,22 @@
   `);
 
   const DAYS = [
-    { d: '16', w: '月', c: 'var(--basic)', t: 'HTML/CSS · CUI · Git', k: [['コース紹介', 'intro'], ['CUI・Vim', 'cuivim'], ['Git', 'git'], ['HTML', 'html'], ['CSS', 'css']], m: '開発の土台。ターミナル・バージョン管理・Webの骨組みと見た目。' },
-    { d: '17', w: '火', c: 'var(--ts)', t: 'TypeScript ①', k: [['紹介', 'ts-intro'], ['基礎文法・データ型', 'ts-basic'], ['型の構文', 'ts-types'], ['クラス', 'ts-class']], m: '型で「バグを書く前に気づく」力を付ける。' },
-    { d: '18', w: '水', c: 'var(--ts)', t: 'TypeScript ②', k: [['interface・Type', 'ts-types'], ['ジェネリクス', 'ts-generics'], ['単体テスト入門', 'ts-test'], ['復習', 'review']], m: '型を設計し、テストで守る。' },
-    { d: '19', w: '木', c: 'var(--vue)', t: 'Vue.js ①', k: [['紹介', 'vue-intro'], ['環境設定', 'vue-env'], ['基礎', 'vue-basics'], ['コンポーネント', 'vue-comp']], m: '画面が「データに反応して」動く感覚をつかむ。' },
-    { d: '24', w: '火', c: 'var(--vue)', t: 'Vue.js ②', k: [['復習', 'review'], ['アイデア発想', 'idea'], ['Lifecycle・Computed・Watcher', 'vue-life'], ['Vue Router', 'vue-router'], ['単体テスト', 'ts-test'], ['Q&A', 'qa']], m: '応用機能を学び、チーム開発のテーマを決める。' },
-    { d: '25', w: '水', c: 'var(--team)', t: '開発・発表', k: [['アイデア→発表', 'idea'], ['開発', 'dev'], ['準備', 'prep'], ['成果発表', 'demo']], m: '作る → 見せる。あなたらしいWebサイトを完成させる日。' },
+    { d: '1', w: '', c: 'var(--basic)', t: 'HTML/CSS · CUI · Git', k: [['コース紹介', 'intro'], ['CUI・Vim', 'cuivim'], ['Git', 'git'], ['HTML', 'html'], ['CSS', 'css']], m: '開発の土台。ターミナル・バージョン管理・Webの骨組みと見た目。' },
+    { d: '2', w: '', c: 'var(--ts)', t: 'TypeScript ①', k: [['紹介', 'ts-intro'], ['基礎文法・データ型', 'ts-basic'], ['型の構文', 'ts-types'], ['クラス', 'ts-class']], m: '型で「バグを書く前に気づく」力を付ける。' },
+    { d: '3', w: '', c: 'var(--ts)', t: 'TypeScript ②', k: [['interface・Type', 'ts-types'], ['ジェネリクス', 'ts-generics'], ['単体テスト入門', 'ts-test'], ['復習', 'review']], m: '型を設計し、テストで守る。' },
+    { d: '4', w: '', c: 'var(--vue)', t: 'Vue.js ①', k: [['紹介', 'vue-intro'], ['環境設定', 'vue-env'], ['基礎', 'vue-basics'], ['コンポーネント', 'vue-comp']], m: '画面が「データに反応して」動く感覚をつかむ。' },
+    { d: '5', w: '', c: 'var(--vue)', t: 'Vue.js ②', k: [['復習', 'review'], ['アイデア発想', 'idea'], ['Lifecycle・Computed・Watcher', 'vue-life'], ['Vue Router', 'vue-router'], ['単体テスト', 'ts-test'], ['Q&A', 'qa']], m: '応用機能を学び、チーム開発のテーマを決める。' },
+    { d: '6', w: '', c: 'var(--team)', t: '開発・発表', k: [['アイデア→発表', 'idea'], ['開発', 'dev'], ['準備', 'prep'], ['成果発表', 'demo']], m: '作る → 見せる。あなたらしいWebサイトを完成させる日。' },
   ];
 
   function planScene(el) {
     const row = h('div', { class: 'gap-days' }), det = h('div', { class: 'gap-detail' });
-    const btns = DAYS.map((D, i) => h('button', { class: 'gap-day', style: { '--dc': D.c, animationDelay: i * 70 + 'ms' }, onclick: () => show(i) }, h('small', '11月'), h('b', D.d), h('small', D.w + '曜日'), h('span', D.t)));
+    const btns = DAYS.map((D, i) => h('button', { class: 'gap-day', style: { '--dc': D.c, animationDelay: i * 70 + 'ms' }, onclick: () => show(i) }, h('small', 'DAY'), h('b', D.d), h('span', D.t)));
     row.append(...btns);
     function show(i) {
       const D = DAYS[i]; btns.forEach((b, k) => b.classList.toggle('on', k === i));
       det.style.setProperty('--dc', D.c); det.style.animation = 'none'; void det.offsetWidth; det.style.animation = '';
-      det.replaceChildren(h('div', { style: { fontWeight: 900, fontSize: '1.25rem' } }, `11/${D.d}(${D.w})　${D.t}`), h('div', { style: { color: 'var(--mute)' } }, D.m), h('div', { class: 'row' }, D.k.map(([t, id]) => h('a', { class: 'chip', style: { '--c': D.c }, href: '#/lesson/' + id }, t + ' →'))));
+      det.replaceChildren(h('div', { style: { fontWeight: 900, fontSize: '1.25rem' } }, `${D.d}日目　${D.t}`), h('div', { style: { color: 'var(--mute)' } }, D.m), h('div', { class: 'row' }, D.k.map(([t, id]) => h('a', { class: 'chip', style: { '--c': D.c }, href: '#/lesson/' + id }, t + ' →'))));
     }
     el.append(row, det, h('p', { style: { color: 'var(--mute)', fontSize: '.875rem', marginTop: '10px' } }, '※ 進み方は人によって違って OK。日付をクリック → 各テーマへジャンプ。'));
     show(0);
@@ -143,7 +143,7 @@
     el.append(stepper({
       color: 'var(--pink)', interval: 2000,
       steps: [{ say: '<b>HTML</b>：まずは骨組み。見出しと文章だけでもサイトの第一歩。' }, { say: '<b>CSS</b>：色・角丸・影で、一気に「自分のサイト」らしく。' }, { say: '<b>TypeScript</b>：型で守られた、バグに強いコードへ。' }, { say: '<b>Vue.js</b>：ボタンを押して！ データに反応する動くUIに。' }, { say: '<b>公開！</b> 難しいことは後回し。まず基本をしっかり、で大丈夫。' }],
-      init(vis) { vis.append(h('div', { class: 'split wide-l' }, site, h('div', { class: 'col' }, lbl('身につくスキル'), chips, h('div', { class: 'card', style: { fontWeight: 800 } }, 'ゴール：11/25（水）', h('div', { style: { color: 'var(--mute)', fontWeight: 500, fontSize: '.875rem', marginTop: '.3em' } }, 'Vue.js と TypeScript を使って、簡単なサイトを作れるようになる。'))))); },
+      init(vis) { vis.append(h('div', { class: 'split wide-l' }, site, h('div', { class: 'col' }, lbl('身につくスキル'), chips, h('div', { class: 'card', style: { fontWeight: 800 } }, 'ゴール：最終日', h('div', { style: { color: 'var(--mute)', fontWeight: 500, fontSize: '.875rem', marginTop: '.3em' } }, 'Vue.js と TypeScript を使って、簡単なサイトを作れるようになる。'))))); },
       update(i) {
         [...chips.children].forEach((c, k) => (c.style.opacity = k <= i ? 1 : .3));
         site.classList.toggle('s1', i >= 0); site.classList.toggle('s2', i >= 1); site.classList.toggle('s3', i >= 2); site.classList.toggle('s5', i >= 4);
@@ -248,8 +248,8 @@
           }));
         },
       },
-      { t: '学習計画表', tag: '11/16 → 11/25', lead: '6日間の流れ。<b>日付をクリック</b>すると、その日のテーマ（→ 各ページ）が開きます。', render: planScene },
-      { t: '講義のゴール', tag: '11/25', lead: '最終日に作るのは<b>あなたらしいWEBサイト</b>。「次へ ▶」で、スキルが積み上がる様子を見よう。', render: goalScene },
+      { t: '学習計画表', tag: '6日間', lead: '6日間の流れ。<b>日付をクリック</b>すると、その日のテーマ（→ 各ページ）が開きます。', render: planScene },
+      { t: '講義のゴール', tag: '最終日', lead: '最終日に作るのは<b>あなたらしいWEBサイト</b>。「次へ ▶」で、スキルが積み上がる様子を見よう。', render: goalScene },
       {
         t: '学習の進め方', lead: '各ページは「<b>見る → 動かす → 作る</b>」の順番。図を<b>クリック</b>して理解 → 最後の「実践」で自分のコードを書いて確認します。',
         render(el) {
@@ -261,7 +261,7 @@
       {
         t: '準備チェック', lead: '研修前に必要なものを確認しましょう。タップでチェック（ブラウザに保存されます）。',
         render(el) {
-          const items = [['💻', 'パソコン', '充電器も忘れずに'], ['🐙', 'GitHub アカウント', 'tpa-bengo4-2026 の Organization に参加'], ['🧰', 'Visual Studio Code', 'テキストエディタ'], ['💬', 'Zoom / Slack', '質問はいつでも気軽に'], ['🤖', 'ChatGPT', '調べ学習の相棒']];
+          const items = [['💻', 'パソコン', '充電器も忘れずに'], ['🐙', 'GitHub アカウント', '研修用の Organization に参加'], ['🧰', 'Visual Studio Code', 'テキストエディタ'], ['💬', 'Zoom / Slack', '質問はいつでも気軽に'], ['🤖', 'ChatGPT', '調べ学習の相棒']];
           const saved = store.get('prep', {});
           const list = h('div', { class: 'col' });
           const pg = h('div', { style: { height: '10px', background: 'var(--line)', borderRadius: '6px', overflow: 'hidden', marginTop: '16px' } }, h('i', { style: { display: 'block', height: '100%', width: '0%', background: 'linear-gradient(90deg,var(--basic),var(--ts))', transition: 'width .5s' } }));
@@ -478,7 +478,7 @@
         render(el) {
           el.append(playground({
             title: 'HTML', mode: 'web',
-            solution: { 'index.html': '<!-- 自己紹介ページ（答えの一例） -->\n<h1>私の自己紹介</h1>\n<p>はじめまして！</p>\n<p>趣味はコードを書くことです。</p>\n\n<h2>好きなもの</h2>\n<ul>\n  <li>好きな色: 青</li>\n  <li>好きな食べ物: ラーメン</li>\n  <li>趣味: コード</li>\n</ul>\n\n<h2>リンク</h2>\n<a href="https://github.com/tpa-bengo4-2026/git_practice_repo">研修リポジトリ</a>\n\n<!-- 任意チャレンジ：画像と表 -->\n<img src="https://placehold.co/160x100" alt="好きな風景">\n<table border="1">\n  <tr><th>曜日</th><th>予定</th></tr>\n  <tr><td>月</td><td>HTML / CSS</td></tr>\n</table>\n' },
+            solution: { 'index.html': '<!-- 自己紹介ページ（答えの一例） -->\n<h1>私の自己紹介</h1>\n<p>はじめまして！</p>\n<p>趣味はコードを書くことです。</p>\n\n<h2>好きなもの</h2>\n<ul>\n  <li>好きな色: 青</li>\n  <li>好きな食べ物: ラーメン</li>\n  <li>趣味: コード</li>\n</ul>\n\n<h2>リンク</h2>\n<a href="https://github.com/">研修リポジトリ</a>\n\n<!-- 任意チャレンジ：画像と表 -->\n<img src="https://placehold.co/160x100" alt="好きな風景">\n<table border="1">\n  <tr><th>曜日</th><th>予定</th></tr>\n  <tr><td>月</td><td>HTML / CSS</td></tr>\n</table>\n' },
             files: [{ name: 'index.html', lang: 'html', code: '<!-- 自己紹介ページを完成させよう -->\n<h1>私の自己紹介</h1>\n<p>はじめまして！</p>\n\n<!-- ① 段落をもう1つ。趣味などを <p> と </p> ではさんで書く -->\n\n\n<h2>好きなもの</h2>\n<!-- ② リスト：<ul> の中に <li>…</li> を3つ -->\n<ul>\n\n</ul>\n\n<h2>リンク</h2>\n<!-- ③ リンク：<a href="https://…">文字</a> -->\n\n<!-- 任意チャレンジ：画像（<img>）と表（<table>）を足してみよう -->\n' }],
             tasks: (v, c) => {
               const d = c.doc && c.doc();
@@ -487,7 +487,7 @@
               return [
                 { label: '段落（<p>）が2つ以上ある', ok: q('p') >= 2, hint: ['段落は <code>&lt;p&gt;</code> と <code>&lt;/p&gt;</code> ではさんで書く。①のコメントの下に書こう。', '<code>&lt;p&gt;趣味はコードを書くことです。&lt;/p&gt;</code> のように1行書けば OK。'], answer: { code: '<p>趣味はコードを書くことです。</p>', lang: 'html', mode: 'append' } },
                 { label: 'リスト（<ul> か <ol>）に、項目（<li>）が3つ以上ある', ok: q('ul li, ol li') >= 3, hint: ['<code>&lt;ul&gt;</code> の中に、項目ごとに <code>&lt;li&gt;…&lt;/li&gt;</code> を書く。', '<code>&lt;li&gt;</code> を3行。<code>&lt;ul&gt;</code> と <code>&lt;/ul&gt;</code> の「間」に書くよ。'], answer: { code: '<ul>\n  <li>好きな色: 青</li>\n  <li>好きな食べ物: ラーメン</li>\n  <li>趣味: コード</li>\n</ul>', lang: 'html', mode: 'append' } },
-                { label: 'リンク（<a href="…">）が1つある', ok: link, hint: ['リンクは <code>&lt;a href="行き先のURL"&gt;表示する文字&lt;/a&gt;</code> の形。', '例：<code>&lt;a href="https://example.com"&gt;リンク&lt;/a&gt;</code>'], answer: { code: '<a href="https://github.com/tpa-bengo4-2026/git_practice_repo">研修リポジトリ</a>', lang: 'html', mode: 'append' } },
+                { label: 'リンク（<a href="…">）が1つある', ok: link, hint: ['リンクは <code>&lt;a href="行き先のURL"&gt;表示する文字&lt;/a&gt;</code> の形。', '例：<code>&lt;a href="https://example.com"&gt;リンク&lt;/a&gt;</code>'], answer: { code: '<a href="https://github.com/">研修リポジトリ</a>', lang: 'html', mode: 'append' } },
                 { optional: true, label: '画像（<img>、alt 付き）と、2行の表（<table>）を足す', ok: (() => { if (!d) return false; const im = [...d.querySelectorAll('img')].some((i) => (i.getAttribute('alt') || '').trim() && (i.getAttribute('src') || '').trim()); const tb = [...d.querySelectorAll('table')].some((t) => t.querySelectorAll('tr').length >= 2 && t.querySelector('tr td, tr th')); return im && tb; })(), hint: ['画像は <code>&lt;img src="画像のURL" alt="説明"&gt;</code>。alt（説明文）を必ず付ける。', '表は <code>&lt;table&gt;</code> の中に、行 <code>&lt;tr&gt;</code> を2つ。行の中は <code>&lt;th&gt;</code>（見出し）や <code>&lt;td&gt;</code>（データ）。'], answer: { code: '<img src="https://placehold.co/160x100" alt="好きな風景">\n<table border="1">\n  <tr><th>曜日</th><th>予定</th></tr>\n  <tr><td>月</td><td>HTML / CSS</td></tr>\n</table>', lang: 'html', mode: 'append' } },
               ];
             },
@@ -587,7 +587,7 @@
         '講義のゴール': {
           problem: 'いきなり難しいことから始めて<b>挫折</b>しがち',
           idea: '小さな成功を重ねて、最後に<b>1つ作り切る</b>',
-          answer: '11/25 に「あなたらしいWebサイト」を発表',
+          answer: '最終日に「あなたらしいWebサイト」を発表',
           pv: F([bad('mountain', 'いきなり難しい'), bad('x', '挫折')]),
           iv: F(['check|小さな成功', 'repeat|重ねる', 'trophy|作り切る']),
           av: BG('globe', '自分のサイトを公開'),
@@ -736,7 +736,7 @@
       problem: 'いきなり難しくてイヤになる', idea: '小さな「できた」を重ねる', answer: '最後に1つ完成させる',
       pv: cd('day1.txt', 'text', 'いきなり 型 + Vue + Git…\n→ 分からない\n→ やめたい', { err: [2, 3], keys: { 2: 'step' } }),
       iv: cd('steps.md', 'text', '1日目 小さな「できた」\n2日目 もう1つ「できた」\n…\n最後 1つ完成', { idea: [1, 2, 4], keys: { 1: 'step' } }),
-      av: cd('goal.md', 'text', '11/25 発表\n自分のサイトを公開', { ok: [1, 2], keys: { 1: 'step' } }),
+      av: cd('goal.md', 'text', '最終日 発表\n自分のサイトを公開', { ok: [1, 2], keys: { 1: 'step' } }),
     });
     over('intro', '学習の進め方', {
       problem: '読むだけだと忘れる', idea: '見る → 触る → 書く', answer: '最後の「実践」で書く',
