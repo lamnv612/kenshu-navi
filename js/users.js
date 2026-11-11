@@ -142,14 +142,15 @@
 
   /* ---------- ログイン画面 ---------- */
   function loginView(done) {
-    const inp = h('input', { class: 'u-input', type: 'text', placeholder: 'ニックネーム', maxlength: 40, autocomplete: 'off', autofocus: true });
+    const inp = h('input', { class: 'u-input', type: 'text', placeholder: 'ニックネーム', maxlength: 40, autocomplete: 'off', autocapitalize: 'off', spellcheck: 'false', enterkeyhint: 'go', 'aria-label': 'ニックネーム' });
     const err = h('div', { class: 'u-err' });
     const go = async () => { const e = await U.login(inp.value); if (e) err.textContent = e; else done(); };
     inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
     return h('div', { class: 'u-login' }, h('div', { class: 'u-card' },
       h('div', { class: 'u-logo' }, h('i', '研'), '研修ナビ'),
       h('h1', 'ニックネームを入れてください'),
-      h('p', '同じニックネームで入ると、続きから学べます。進捗はこの端末の中だけに保存されます。'),
+      h('p', '同じニックネームで入ると、続きから学べます。'),
+      h('div', { class: 'u-steps' }, h('span', icon('user'), '名前を入れる'), h('span', icon('book-open'), '学ぶ'), h('span', icon('trophy'), '記録がたまる')),
       inp, err,
       h('button', { class: 'btn primary u-go', onclick: go }, '始める', icon('arrow-right')),
       null));
