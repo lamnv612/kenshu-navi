@@ -866,3 +866,7 @@ a.btn{text-decoration:none}
 :root[data-theme=spec] .why-l{color:var(--text)}
 :root[data-theme=spec] .why-l .ic{color:var(--c,var(--ts))}
 :root[data-theme=spec] .scene>p b,:root[data-theme=spec] .lead b{background:linear-gradient(transparent 62%,rgba(184,137,30,.35) 0);color:var(--text)}
+
+.v-prev{margin:6px 14px 14px;padding:10px 14px;border-radius:8px;border:1px dashed var(--line);background:var(--card2)}
+.v-prev>small{display:block;color:var(--mute);font-size:var(--fs-xs);font-weight:800;margin-bottom:6px;letter-spacing:.06em}
+.v-prev-body{display:flex;align-items:center;gap:18px;flex-wrap:wrap}.v-prev-body span{font-weight:800;display:flex;align-items:baseline;gap:.4em}.v-prev-body em{font-style:normal;color:var(--mute);font-size:var(--fs-sm)}

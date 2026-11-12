@@ -422,7 +422,9 @@
           const nodes = [['👆 クリック', '@click', 'var(--ts)'], ['⚙️ ハンドラ', 'addOne()', 'var(--team)'], ['📦 データ', 'count++', C], ['🖼️ 再描画', '{{ count }}', 'var(--basic)']];
           const boxes = nodes.map(([a, b, c]) => vbox(a, b, c));
           const out = h('b', { style: { fontSize: '2rem', fontFamily: 'var(--mono)' } }, '0');
-          const host = h('div', { class: 'v-host card' }, h('div', { class: 'v-row', style: { gap: '24px', padding: '24px 0' } }, boxes.flatMap((b, i) => (i ? [h('span', { class: 'v-arrow' }, '➜'), b] : [b])), out));
+          const prevBtn = h('button', { class: 'btn primary', style: { '--c': C }, onclick: () => play() }, '+1');
+          const preview = h('div', { class: 'v-prev' }, h('small', null, '出力（ブラウザに出る画面）'), h('div', { class: 'v-prev-body' }, prevBtn, h('span', null, 'count ＝ ', out), h('em', null, '← ボタンを押してみよう')));
+          const host = h('div', { class: 'v-host card' }, h('div', { class: 'v-row', style: { gap: '24px', padding: '24px 0 12px' } }, boxes.flatMap((b, i) => (i ? [h('span', { class: 'v-arrow' }, '➜'), b] : [b]))), preview);
           let v = 0, busy = false;
           const cd = code('const count = ref(0)\nconst addOne = () => {\n  count.value++\n}\n\n<button @click="addOne">+1</button>\n<p>{{ count }}</p>', 'vue', { dim: true, color: C });
           const lines = [[6], [2, 3], [3], [7]];
