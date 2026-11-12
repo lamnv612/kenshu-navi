@@ -841,3 +841,28 @@ a.btn{text-decoration:none}
 :root[data-theme=spec] .rm-node.done .rm-c{box-shadow:none}
 :root[data-theme=spec] pre.code .ln.err{background:rgba(194,98,45,.22)}
 :root[data-theme=spec] .why-c.i pre.code{--c:var(--vue)}
+
+/* 設計図：色は「線・矢印・小さな印」だけ。面（背景）は白かグレーに戻す */
+:root[data-theme=spec]{--tint:var(--card2)}
+:root[data-theme=spec] :is(.chip,.cell,.st-cap,.ex-day,.ex-ico,.when-use,.why-c.p,.why-c.i,.why-c.a,.mn.bad,.mn.ok,.mn.warn,.mn.hi,.why-sum,.hint-card,.task-hint,.opt-badge,.me-lv,.rail-x,.am-item,.quiz .opt.ok,.quiz .opt.bad,.rail li.on button){background:var(--card)}
+:root[data-theme=spec] .me-hero{background:var(--card2)}
+:root[data-theme=spec] .rail-x:hover{background:var(--card2)}
+:root[data-theme=spec] .rail li.on button{background:var(--card2)}
+:root[data-theme=spec] .rail li.on .n{background:var(--card);color:var(--text);border-color:var(--c);box-shadow:none;transform:scale(1.1)}
+:root[data-theme=spec] .rail li.seen .n{background:var(--card)}
+:root[data-theme=spec] .theme{background:var(--card);color:var(--text);border:1px solid var(--line);border-top:3px solid var(--c);box-shadow:none}
+:root[data-theme=spec] .theme::after{display:none}
+:root[data-theme=spec] .cell .bar,:root[data-theme=spec] .am-item .bar{height:2px}
+:root[data-theme=spec] .am-chip.on{background:var(--text);color:#fff;box-shadow:none}
+:root[data-theme=spec] .chip{border:1px solid color-mix(in srgb,var(--c,var(--ts)) 55%,var(--line))}
+:root[data-theme=spec] .nav .btn.story-mode,:root[data-theme=spec] .btn.primary{background:var(--text)}
+:root[data-theme=spec] .mission-bar u,:root[data-theme=spec] .u-bar i{background:var(--text)}
+:root[data-theme=spec] .u-cells i{background:color-mix(in srgb,var(--text) calc(var(--p)*100%),var(--card2))}
+:root[data-theme=spec] pre.code .ln.on{background:rgba(255,255,255,.08)}
+:root[data-theme=spec] pre.code .ln.err{background:rgba(255,255,255,.08)}
+:root[data-theme=spec] .im-z.mine::after,:root[data-theme=spec] .im-z.far::after{background:var(--card)}
+:root[data-theme=spec] .im-p.sel{background:var(--card)}
+/* 色を使う場所：大事な言葉のマーカー風ハイライト */
+:root[data-theme=spec] .why-l{color:var(--text)}
+:root[data-theme=spec] .why-l .ic{color:var(--c,var(--ts))}
+:root[data-theme=spec] .scene>p b,:root[data-theme=spec] .lead b{background:linear-gradient(transparent 62%,rgba(184,137,30,.35) 0);color:var(--text)}
