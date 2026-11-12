@@ -101,11 +101,11 @@
   /* ---------- top bar ---------- */
   function topbar(crumb) {
     const cur = document.documentElement.dataset.theme || 'dark';
-    const NEXT = { dark: 'light', light: 'spec', spec: 'dark' }, ICO = { dark: 'moon', light: 'sun', spec: 'ruler' }, NAME = { dark: 'ダーク', light: 'ライト', spec: 'スペック' };
+    const NEXT = { dark: 'light', light: 'spec', spec: 'dark' }, ICO = { dark: 'moon', light: 'sun', spec: 'ruler' }, NAME = { dark: 'ダーク', light: 'ライト', spec: '設計図' };
     return h('header', { class: 'top' },
       h('a', { class: 'logo', href: '#/' }, h('i', '研'), '研修ナビ'),
       crumb || null, h('div', { class: 'sp' }), K.users.views.chip(),
-      h('button', { class: 'btn ghost', 'aria-label': 'テーマ切替', title: 'テーマ切替：ダーク／ライト／スペック（いま：' + NAME[cur] + '）', onclick: () => {
+      h('button', { class: 'btn ghost', 'aria-label': 'テーマ切替', title: 'テーマ切替：ダーク／ライト／設計図（いま：' + NAME[cur] + '）', onclick: () => {
         const t = NEXT[document.documentElement.dataset.theme] || 'dark';
         document.documentElement.dataset.theme = t; store.set('theme', t); render();
       } }, K.W.icon(ICO[cur]), h('span', { class: 'lbl' }, ' ' + NAME[cur])));

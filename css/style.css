@@ -789,9 +789,9 @@ a.btn{text-decoration:none}
 
 /* ===== theme: spec（Apple の製品スペック図のような、白地・細い線・番号つき） ===== */
 :root[data-theme=spec]{
-  --basic:#2f9e44; --ts:#0071e3; --vue:#0a8f6a; --team:#c77700; --pink:#d6336c; --violet:#6e56cf;
+  --basic:#48484a; --ts:#c2622d; --vue:#b8891e; --team:#8e8e93; --pink:#c2622d; --violet:#6e6e73;
   --bg:#fbfbfd; --bg2:#f5f5f7; --card:#fff; --card2:#f5f5f7; --line:rgba(0,0,0,.14);
-  --text:#1d1d1f; --mute:#6e6e73; --code:#1d1d1f; --shadow:none; --ok:#1f9d55; --bad:#d70015;
+  --text:#1d1d1f; --mute:#6e6e73; --code:#1d1d1f; --shadow:none; --ok:#8a6d12; --bad:#b5451b;
   --font:-apple-system,BlinkMacSystemFont,'SF Pro Display','Inter','Hiragino Sans','Hiragino Kaku Gothic ProN','Noto Sans JP',system-ui,sans-serif;
 }
 :root[data-theme=spec] body::before,:root[data-theme=spec] body::after{display:none}
@@ -801,7 +801,9 @@ a.btn{text-decoration:none}
 :root[data-theme=spec] .logo i,:root[data-theme=spec] .u-logo i{background:var(--text);color:#fff}
 :root[data-theme=spec] :is(.btn,.card,.u-card,.im-z,.im-p,.im-det,.im-qc,.sh,.countdown,.u-row,.u-stats>div){box-shadow:none}
 :root[data-theme=spec] .u-card{border-color:var(--line)}
-:root[data-theme=spec] .btn.primary{background:var(--ts);border-color:var(--ts);color:#fff;box-shadow:none}
+:root[data-theme=spec] .btn.primary{background:var(--text);border-color:var(--text);color:#fff;box-shadow:none}
+:root[data-theme=spec] .btn.primary:hover{background:var(--ts);border-color:var(--ts)}
+:root[data-theme=spec] ::selection{background:var(--ts);color:#fff}
 :root[data-theme=spec] .hero h1{font-weight:300;letter-spacing:-.02em}
 :root[data-theme=spec] .hero h1 em{background:none;-webkit-background-clip:initial;background-clip:initial;color:var(--text);font-weight:600}
 :root[data-theme=spec] .countdown{background:transparent;border:0;border-left:1px solid var(--line);border-radius:0;text-align:left;padding:4px 0 4px 20px}
@@ -829,3 +831,13 @@ a.btn{text-decoration:none}
 :root[data-theme=spec] .why-svg path{stroke-width:1.3!important;stroke-dasharray:none;filter:none}
 :root[data-theme=spec] .im-lane{margin-bottom:52px}
 @media(max-width:760px){:root[data-theme=spec] .im-lane::after,:root[data-theme=spec] .im-z::after{display:none!important}:root[data-theme=spec] .im-map{margin-bottom:0}:root[data-theme=spec] .im-lane{margin-bottom:0}:root[data-theme=spec] .countdown{border-left:0;padding-left:0}}
+:root[data-theme=spec] .cell .em,:root[data-theme=spec] .em{filter:grayscale(1)}
+:root[data-theme=spec] .cell:hover{box-shadow:none}
+:root[data-theme=spec] .logo i{box-shadow:none}
+/* 図の中の色（各レッスン固有）も、グレー＋土色に寄せる */
+:root[data-theme=spec] .st-vis{filter:grayscale(1) sepia(.28)}
+:root[data-theme=spec] .st-vis pre.code,:root[data-theme=spec] .st-vis .code{filter:none}
+:root[data-theme=spec] .rm-c{filter:grayscale(1)}
+:root[data-theme=spec] .rm-node.done .rm-c{box-shadow:none}
+:root[data-theme=spec] pre.code .ln.err{background:rgba(194,98,45,.22)}
+:root[data-theme=spec] .why-c.i pre.code{--c:var(--vue)}
