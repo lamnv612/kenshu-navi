@@ -233,49 +233,6 @@
   `);
   const ico = (n, o) => K.W.icon(n, o);
 
-  function anyScene(el) {
-    const VALS = [['42', 42], ['"hello"', 'hello'], ['true', true], ['null', null]];
-    const ACTS = [['data.toFixed(1)', 'number', (v) => v.toFixed(1)], ['data.toUpperCase()', 'string', (v) => v.toUpperCase()]];
-    let cur = 0, guard = false;
-    const mk = (title, c) => { const v = h('div', { class: 'gap-v' }), verd = h('div', { class: 'gap-verd' }), run = h('div', { class: 'gap-verd' }), acts = h('div', { class: 'gap-v' }); const pn = h('div', { class: 'gap-pn', style: { '--pc': c } }, h('h4', title), h('div', { class: 'label' }, '代入する値'), v, h('div', { class: 'label' }, '使ってみる'), acts, h('div', { class: 'label' }, 'TypeScript の判定'), verd, h('div', { class: 'label' }, '実行すると'), run); return { pn, v, verd, run, acts }; };
-    const A = mk('let data: any', 'var(--bad)'), U = mk('let data: unknown', 'var(--ok)');
-    const g = h('label', { class: 'row', style: { cursor: 'pointer', fontWeight: 800, fontSize: '.875rem' } }, h('input', { type: 'checkbox', onchange: (e) => { guard = e.target.checked; draw(); } }), 'typeof で絞り込む（if 文で守る）');
-    U.pn.insertBefore(g, U.pn.children[4]);
-    const act = (P, i) => { P.act = i; draw(); };
-    function draw() {
-      [A, U].forEach((P) => { P.v.replaceChildren(...VALS.map(([t], i) => h('button', { class: i === cur ? 'on' : '', onclick: () => { cur = i; draw(); } }, t))); P.acts.replaceChildren(...ACTS.map(([t], i) => h('button', { class: P.act === i ? 'on' : '', onclick: () => act(P, i) }, t))); });
-      const val = VALS[cur][1];
-      const go = (P, kind) => {
-        if (P.act == null) { P.verd.className = 'gap-verd'; P.verd.textContent = '← 操作を選んでね'; P.run.className = 'gap-verd'; P.run.textContent = ''; return; }
-        const [txt, ty, fn] = ACTS[P.act];
-        if (kind === 'any') { P.verd.className = 'gap-verd ok'; P.verd.textContent = '✓ エラーなし（何でも通る…）'; try { P.run.className = 'gap-verd ok'; P.run.textContent = '→ ' + fn(val); } catch (e) { P.run.className = 'gap-verd ng'; P.run.textContent = '💥 ' + e.constructor.name + ': ' + e.message; } }
-        else if (!guard) { P.verd.className = 'gap-verd ng'; P.verd.textContent = "✖ 'data' is of type 'unknown'."; P.run.className = 'gap-verd'; P.run.textContent = '（赤線 → 実行前に止められる）'; }
-        else { P.verd.className = 'gap-verd ok'; P.verd.textContent = `✓ if (typeof data === "${ty}") { ${txt} }`; P.run.className = 'gap-verd ok'; P.run.textContent = typeof val === ty ? '→ ' + fn(val) : '（型が違うので if に入らず、何も起きない＝安全）'; }
-      };
-      go(A, 'any'); go(U, 'unknown');
-    }
-    el.append(h('div', { class: 'split' }, A.pn, U.pn), h('div', { class: 'st-cap', style: { marginTop: '14px', animation: 'none' }, html: '<b>any</b> は型チェックを諦める＝バグが実行時まで隠れる。<b>unknown</b> は「何か分からない。使う前に確認してね」と守ってくれる。' }));
-    draw();
-  }
-
-  function voidNullScene(el) {
-    const mk = (name, c, src, runFn) => { const out = h('div', { class: 'gap-verd' }); const card = h('div', { class: 'gap-pn', style: { '--pc': c } }, h('h4', name), code(src, 'ts', { color: c }), h('button', { class: 'gap-act', onclick: () => { out.replaceChildren(); runFn(out); } }, '▶ 実行'), out); return card; };
-    const logs = (out, arr) => arr.forEach((t, i) => setTimeout(() => out.append(h('div', t)), i * 280));
-    const c1 = mk('void', 'var(--team)', 'function greet(name: string): void {\n  console.log(`Hello, ${name}`);\n}\nconst message = greet("みんな");\nconsole.log(message);', (o) => logs(o, ['› Hello, みんな', '› undefined  ← 戻り値なし']));
-    const c2 = mk('undefined', 'var(--ts)', 'let score: number | undefined;\nconsole.log(score);\nscore = 80;\nconsole.log(score);', (o) => logs(o, ['› undefined  ← まだ値が入っていない', '› 80']));
-    let isNull = true;
-    const nOut = h('div', { class: 'gap-verd' }), nCode = h('div'), tog = h('button', { class: 'gap-act', onclick: () => { isNull = !isNull; draw(); } });
-    const c3 = h('div', { class: 'gap-pn', style: { '--pc': 'var(--pink)' } }, h('h4', 'null'), nCode, tog, nOut);
-    function draw() {
-      tog.textContent = 'name を ' + (isNull ? '"Lam" に変える' : 'null に戻す');
-      const cd = code(`let name: string | null = ${isNull ? 'null' : '"Lam"'};\nif (name === null) {\n  console.log("名前が設定されていません。");\n} else {\n  console.log("名前は " + name + " です。");\n}`, 'ts', { dim: true, color: 'var(--pink)' });
-      cd.setHi(isNull ? [1, 2, 3] : [1, 4, 5]); nCode.replaceChildren(cd);
-      nOut.className = 'gap-verd ok'; nOut.textContent = isNull ? '› 名前が設定されていません。' : '› 名前は Lam です。';
-    }
-    el.append(h('div', { class: 'gap-3' }, c1, c2, c3), h('div', { class: 'row', style: { marginTop: '14px' } }, h('span', { class: 'chip', style: { '--c': 'var(--team)' } }, 'void = return しない'), h('span', { class: 'chip', style: { '--c': 'var(--ts)' } }, 'undefined = 未定義'), h('span', { class: 'chip', style: { '--c': 'var(--pink)' } }, 'null = 「空」とはっきり書く')));
-    draw();
-  }
-
   function readonlySceneGap(el) {
     const src = 'class Person {\n  private readonly name: string;\n  age: number;\n\n  constructor(name: string, age: number) {\n    this.name = name;     // ① 最初の代入はOK\n    this.age = age;\n  }\n\n  update(): void {\n    this.name = "他人";   // ② 後から変更 → エラー\n  }\n}';
     const pre = code(src, 'ts', { dim: true, color: 'var(--ts)' }), box = h('div', { class: 'gap-inst' }), msg = h('div');
@@ -582,236 +539,534 @@
     ],
   });
 
+  /* ================= ts-basic: ライブコードラボ（読む・書き換える・結果が出る） ================= */
+  style('tslab', `
+  .tslab{display:grid;gap:10px}
+  .tslab-story,.tslab-try{display:flex;gap:10px;align-items:flex-start;padding:.65em 1em;border-radius:8px;font-size:.875rem;line-height:1.75}
+  .tslab-story{background:color-mix(in srgb,var(--bad) 10%,var(--card));border:1px dashed color-mix(in srgb,var(--bad) 55%,transparent);font-weight:700}
+  .tslab-try{background:color-mix(in srgb,var(--ts) 10%,var(--card));border:1px solid color-mix(in srgb,var(--ts) 40%,var(--line))}
+  .tslab-story .ic,.tslab-try .ic{flex:none;margin-top:.3em;width:16px;height:16px}.tslab-story .ic{color:var(--bad)}.tslab-try .ic{color:var(--ts)}
+  .tslab-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:12px;align-items:start}
+  @media(max-width:900px){.tslab-grid{grid-template-columns:1fr}}
+  .tslab-ed{border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--code)}
+  .tslab-ed .ed{min-height:180px}
+  .tslab-ed .ed pre .ln.tslab-cur{background:color-mix(in srgb,var(--ts) 28%,transparent);box-shadow:inset 3px 0 0 var(--ts)}
+  .tslab-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:8px 10px;background:var(--card);border-top:1px solid var(--line)}
+  .tslab-bar .sp{flex:1}
+  .tslab-bar .btn{padding:.35em .9em;font-size:.8125rem}
+  .tslab-side{display:grid;gap:10px;min-width:0}
+  .tslab-box{border:1px solid var(--line);border-radius:8px;background:var(--card);overflow:hidden}
+  .tslab-box>h5{margin:0;padding:.35em .8em;font:800 .75rem var(--font);letter-spacing:.06em;color:var(--mute);background:var(--bg2);border-bottom:1px solid var(--line);display:flex;gap:.5em;align-items:center}
+  .tslab-box>h5 .ic{width:14px;height:14px}.tslab-box>h5 em{margin-left:auto;font-style:normal;font-weight:700;color:var(--mute)}
+  .tslab-box .bd2{padding:.55em .8em;font:700 .8125rem/1.7 var(--mono);display:grid;gap:5px;min-height:2.4em}
+  .tslab-ok{color:var(--ok)}
+  .tslab-err{display:grid;gap:2px;padding:.4em .6em;border-radius:6px;background:color-mix(in srgb,var(--bad) 14%,var(--code));border-left:3px solid var(--bad);color:#ffd5da;word-break:break-word}
+  .tslab-err small{color:var(--text);opacity:.8;font:700 .75rem var(--font)}
+  .tslab-tip{padding:.4em .6em;border-radius:6px;background:color-mix(in srgb,var(--team) 14%,var(--code));border-left:3px solid var(--team);color:var(--text);font:700 .75rem/1.7 var(--font)}
+  .tslab-chips{display:flex;gap:6px;flex-wrap:wrap}
+  .tslab-chip{display:inline-flex;gap:.45em;align-items:center;padding:.1em .6em;border-radius:6px;border:1px solid var(--line);background:var(--bg2);font:700 .8125rem var(--mono)}
+  .tslab-chip i{font-style:normal;color:var(--mute);font:600 .6875rem var(--font)}
+  .tslab-chip b{color:var(--ts)}.tslab-chip.w{border-color:var(--ts)}.tslab-chip.inf{border-style:dashed}
+  .tslab-vars{display:grid;grid-template-columns:auto 1fr;gap:2px 12px}
+  .tslab-vars .k{color:var(--ts)}.tslab-vars .v{color:var(--text);word-break:break-all}.tslab-vars .v.ch{color:var(--team);text-shadow:0 0 12px color-mix(in srgb,var(--team) 60%,transparent)}
+  .tslab-log{padding:.4em .6em;border-radius:6px;background:var(--code);color:#cfd5ff;white-space:pre-wrap;word-break:break-word}
+  .tslab-rerr{padding:.4em .6em;border-radius:6px;background:color-mix(in srgb,var(--bad) 22%,var(--code));color:#ffd5da;word-break:break-word}
+  .tslab-rerr small{display:block;font:700 .75rem var(--font);opacity:.85}
+  .tslab-stale{opacity:.5}
+  .tslab-note{font:700 .75rem var(--font);color:var(--mute)}
+  .tslab-legend{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .tslab-legend>div{padding:.55em .8em;border-radius:8px;background:var(--card);border:1px solid var(--line);border-top:3px solid var(--lc);display:grid;gap:2px}
+  .tslab-legend code{font:800 .9375rem var(--mono);color:var(--lc)}.tslab-legend small{color:var(--mute);font-weight:700;font-size:.75rem}
+  @media(max-width:700px){.tslab-legend{grid-template-columns:1fr 1fr}}
+  `);
+
+  const INFER_LIB = 'interface Array<T>{length:number;push(...i:T[]):number;map<U>(f:(v:T)=>U):U[];forEach(f:(v:T,i:number)=>void):void} interface ReadonlyArray<T>{readonly length:number} interface Boolean{} interface Function{} interface CallableFunction extends Function{} interface NewableFunction extends Function{} interface IArguments{} interface RegExp{} interface Number{toFixed(n?:number):string} interface Object{} interface String{length:number;toUpperCase():string} interface TemplateStringsArray extends ReadonlyArray<string>{} declare const console:{log(...a:any[]):void}; declare const JSON:{parse(s:string):any;stringify(v:any):string}; declare const Math:{round(n:number):number}; declare function Number(v:any):number; declare function String(v:any):string;';
+  const GLOSS = [
+    [/Cannot assign to '(.+?)' because it is a constant/, (m) => `const の ${m[1]} は、あとから入れ直せない`],
+    [/Argument of type '(.+?)' is not assignable to parameter of type '(.+?)'/, (m) => `${m[1]} は、${m[2]} の引数には渡せない`],
+    [/Type '(.+?)' is not assignable to type '(.+?)'/, (m) => `${m[1]} の値は、${m[2]} の箱には入れられない`],
+    [/Parameter '(.+?)' implicitly has an 'any' type/, (m) => `${m[1]} の型が決まらない（any になる）。ここは型を書く`],
+    [/'(.+?)' is possibly '(null|undefined)'/, (m) => `${m[1]} は ${m[2]} かもしれない。確かめてから使う`],
+    [/'(.+?)' is of type 'unknown'/, (m) => `${m[1]} は unknown。typeof などで確かめるまで使えない`],
+    [/Property '(.+?)' does not exist on type '(.+?)'/, (m) => `${m[2]} に「${m[1]}」という項目は無い`],
+  ];
+  const gloss = (msg) => { for (const [re, f] of GLOSS) { const m = msg.match(re); if (m) return f(m); } return ''; };
+  const RGLOSS = [
+    [/Assignment to constant variable/, () => 'const に入れ直そうとして落ちた（TS は書いた瞬間に教えてくれていた）'],
+    [/Cannot read properties of (undefined|null) \(reading '(.+?)'\)/, (m) => `${m[1]} の中の「${m[2]}」を読もうとして落ちた（値が無い）`],
+    [/ループが長すぎます/, () => 'ずっと終わらないので止めた'],
+  ];
+  const fmtVal = (v) => { if (v === undefined) return 'undefined'; if (typeof v === 'string') return JSON.stringify(v); if (typeof v === 'number' || typeof v === 'boolean') return String(v); if (typeof v === 'function') return 'ƒ'; try { return JSON.stringify(v); } catch (e) { return String(v); } };
+
+  /* 宣言した型（書いた / 推論）を取り出す */
+  function inferTypes(ts, src) {
+    try {
+      const files = { '/lib.d.ts': INFER_LIB, '/main.ts': src };
+      const opts = { strict: true, target: ts.ScriptTarget.ES2020, noLib: true, types: [], module: ts.ModuleKind.ESNext, noEmit: true };
+      const host = {
+        getSourceFile: (f, l) => (files[f] != null ? ts.createSourceFile(f, files[f], l, true) : undefined),
+        getDefaultLibFileName: () => '/lib.d.ts', writeFile() {}, getCurrentDirectory: () => '/', getDirectories: () => [],
+        fileExists: (f) => files[f] != null, readFile: (f) => files[f], getCanonicalFileName: (f) => f, useCaseSensitiveFileNames: () => true, getNewLine: () => '\n',
+      };
+      const p = ts.createProgram(['/lib.d.ts', '/main.ts'], opts, host), sf = p.getSourceFile('/main.ts'), ck = p.getTypeChecker();
+      const out = [];
+      const ln = (n) => sf.getLineAndCharacterOfPosition(n.getStart(sf)).line + 1;
+      const visit = (n) => {
+        if (ts.isVariableDeclaration(n) && ts.isIdentifier(n.name)) out.push({ line: ln(n), name: n.name.text, type: ck.typeToString(ck.getTypeAtLocation(n.name)), written: !!n.type });
+        else if (ts.isParameter(n) && ts.isIdentifier(n.name)) out.push({ line: ln(n), name: n.name.text, type: ck.typeToString(ck.getTypeAtLocation(n.name)), written: !!n.type });
+        else if (ts.isFunctionDeclaration(n) && n.name) { const sig = ck.getSignatureFromDeclaration(n); if (sig) out.push({ line: ln(n), name: n.name.text + '()', type: ck.typeToString(ck.getReturnTypeOfSignature(sig)), written: !!n.type }); }
+        ts.forEachChild(n, visit);
+      };
+      visit(sf);
+      return out;
+    } catch (e) { return []; }
+  }
+
+  /* 1行ごとの変数の中身を記録して実行する */
+  function instrument(ts, src) {
+    const sf = ts.createSourceFile('/m.ts', src, ts.ScriptTarget.ES2020, true);
+    const ins = [], names = [];
+    const line = (pos) => sf.getLineAndCharacterOfPosition(pos).line + 1;
+    const snap = (ln, extra) => '__s(' + ln + ',{' + names.concat(extra || []).map((n) => JSON.stringify(n) + ':' + n).join(',') + '});';
+    const declNames = (list) => list.declarations.filter((d) => ts.isIdentifier(d.name)).map((d) => d.name.text);
+    const isLoop = (n) => ts.isForStatement(n) || ts.isWhileStatement(n) || ts.isDoStatement(n) || ts.isForInStatement(n) || ts.isForOfStatement(n);
+    sf.statements.forEach((st) => {
+      if (isLoop(st) && ts.isBlock(st.statement)) {
+        const extra = ts.isForStatement(st) && st.initializer && ts.isVariableDeclarationList(st.initializer) ? declNames(st.initializer) : [];
+        ins.push({ pos: st.statement.end - 1, text: '\n;if(++__n>3000)throw new Error("ループが長すぎます");' + snap(line(st.getStart(sf)), extra) + '\n' });
+      }
+      if (ts.isVariableStatement(st)) names.push(...declNames(st.declarationList));
+      if (ts.isFunctionDeclaration(st) || ts.isInterfaceDeclaration(st) || ts.isTypeAliasDeclaration(st)) return;
+      ins.push({ pos: st.end, text: '\n;' + snap(line(st.getStart(sf))) });
+    });
+    let out = src;
+    ins.sort((a, b) => b.pos - a.pos).forEach((i) => { out = out.slice(0, i.pos) + i.text + out.slice(i.pos); });
+    return out;
+  }
+  function execute(ts, src) {
+    const snaps = [], logs = []; let err = null, code2 = src;
+    try { code2 = instrument(ts, src); } catch (e) { code2 = src; }
+    const js = ts.transpileModule(code2, { compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.None } }).outputText;
+    const fmt = (a) => a.map((x) => (typeof x === 'string' ? x : fmtVal(x))).join(' ');
+    const con = { log: (...a) => logs.push(fmt(a)), error: (...a) => logs.push(fmt(a)) };
+    const sn = (ln, vars) => { const c = {}; Object.keys(vars).forEach((k) => (c[k] = fmtVal(vars[k]))); snaps.push({ line: ln, vars: c, logs: logs.length }); };
+    try { new Function('console', '__s', 'let __n=0;' + js)(con, sn); } catch (e) { err = String(e && e.message || e); }
+    return { snaps, logs, err };
+  }
+
+  /* o: { src, coach?(src)=>[tip], actions:[{label, icon, apply(src)}] , height } */
+  function lab(o) {
+    const root = h('div', { class: 'tslab-grid' });
+    let ts = null, rr = null, step = -1, stale = false, timer = 0, token = 0;
+    const ed = codeEditor(o.src, 'ts', () => { stale = true; paintOut(); clearTimeout(timer); timer = setTimeout(check, 350); });
+    { const nl = o.src.split('\n').length; ed.style.minHeight = (o.height || Math.min(430, 34 + nl * 24)) + 'px'; ed.style.maxHeight = '430px'; }
+    const chk = h('div', { class: 'bd2' }), inf = h('div', { class: 'bd2' }), out = h('div', { class: 'bd2' });
+    const lbl2 = h('em', ''), stepLbl = h('span', { class: 'tslab-note' });
+    const curLine = (n) => ed.querySelectorAll('pre .ln').forEach((x, i) => x.classList.toggle('tslab-cur', i === n - 1));
+    const prev = h('button', { class: 'btn ghost', title: '1つ前の行へ', onclick: () => go(step - 1) }, icon('chevron-left'));
+    const next = h('button', { class: 'btn ghost', title: '次の行へ', onclick: () => go(step + 1) }, icon('chevron-right'));
+    const runBtn = h('button', { class: 'btn primary', onclick: () => run() }, icon('play'), '実行');
+    const bar = h('div', { class: 'tslab-bar' }, runBtn, prev, next, stepLbl, h('span', { class: 'sp' }),
+      ...(o.actions || []).map((a) => h('button', { class: 'btn', onclick: () => { ed.set(a.apply(ed.get())); stale = true; check().then(run); } }, icon(a.icon || 'zap'), a.label)),
+      h('button', { class: 'btn ghost', title: 'はじめの状態に戻す', onclick: () => { ed.set(o.src); check().then(run); } }, icon('rotate-ccw'), 'もどす'));
+    function go(i) { if (!rr || !rr.snaps.length) return; step = Math.max(0, Math.min(rr.snaps.length - 1, i)); stale = false; paintOut(); }
+    function paintOut() {
+      out.replaceChildren(); out.classList.toggle('tslab-stale', stale && !!rr);
+      if (!rr) { out.append(h('div', { class: 'tslab-note' }, '「実行」を押すと、変数の中身と出力がここに出ます')); stepLbl.textContent = ''; curLine(0); return; }
+      const sn = rr.snaps[step] || null, last = !rr.snaps.length || step === rr.snaps.length - 1;
+      if (sn) {
+        const pv = step > 0 ? rr.snaps[step - 1].vars : {};
+        const grid = h('div', { class: 'tslab-vars' });
+        Object.keys(sn.vars).forEach((k) => grid.append(h('span', { class: 'k' }, k), h('span', { class: 'v' + (pv[k] !== sn.vars[k] ? ' ch' : '') }, sn.vars[k])));
+        out.append(grid);
+      }
+      const lg = sn && !last ? rr.logs.slice(0, sn.logs) : rr.logs;
+      if (lg.length) out.append(h('div', { class: 'tslab-log' }, lg.map((t) => '› ' + t).join('\n')));
+      if (rr.err && last) { const g = RGLOSS.map(([re, f]) => { const m = rr.err.match(re); return m ? f(m) : ''; }).find(Boolean) || ''; out.append(h('div', { class: 'tslab-rerr' }, '実行エラー: ' + rr.err, g ? h('small', g) : null)); }
+      if (!sn && !lg.length && !rr.err) out.append(h('div', { class: 'tslab-note' }, '（出力なし）'));
+      if (stale) out.append(h('div', { class: 'tslab-note' }, 'コードを変えました。「実行」で結果を更新'));
+      stepLbl.textContent = rr.snaps.length ? (step + 1) + ' / ' + rr.snaps.length + ' 行目まで実行' : '';
+      curLine(stale || (rr.err && last) ? 0 : (sn ? sn.line : 0));
+      prev.disabled = !rr.snaps.length || step <= 0; next.disabled = !rr.snaps.length || step >= rr.snaps.length - 1;
+    }
+    async function check() {
+      const my = ++token;
+      try { ts = ts || await K.W.loadTS(); } catch (e) { chk.replaceChildren(h('div', { class: 'tslab-note' }, 'TypeScript を読み込めません（オフライン？）')); return; }
+      if (my !== token) return;
+      const src = ed.get(), errs = K.W.tsCheck(ts, src);
+      ed.mark(errs.map((e) => e.line)); curLine(!stale && rr && rr.snaps[step] ? rr.snaps[step].line : 0);
+      lbl2.textContent = errs.length ? errs.length + ' 件' : '';
+      chk.replaceChildren(...(errs.length ? errs.map((e) => h('div', { class: 'tslab-err' }, 'L' + e.line + ': ' + e.msg, gloss(e.msg) ? h('small', gloss(e.msg)) : null)) : [h('div', { class: 'tslab-ok' }, '✓ 型エラーなし')]),
+        ...((o.coach ? o.coach(src) : []).map((t) => h('div', { class: 'tslab-tip', html: t }))));
+      const it = inferTypes(ts, src);
+      inf.replaceChildren(it.length ? h('div', { class: 'tslab-chips' }, it.map((x) => h('span', { class: 'tslab-chip ' + (x.written ? 'w' : 'inf'), title: 'L' + x.line }, x.name, ': ', h('b', x.type), h('i', x.written ? '書いた' : '推論')))) : h('div', { class: 'tslab-note' }, '（変数がありません）'));
+    }
+    async function run() {
+      try { ts = ts || await K.W.loadTS(); } catch (e) { return; }
+      rr = execute(ts, ed.get()); stale = false; step = rr.snaps.length - 1; paintOut();
+    }
+    root.append(
+      h('div', { class: 'tslab-ed' }, ed, bar),
+      h('div', { class: 'tslab-side' },
+        h('div', { class: 'tslab-box' }, h('h5', icon('shield-check'), '型チェック（書いた瞬間に判定）', lbl2), chk),
+        h('div', { class: 'tslab-box' }, h('h5', icon('tag'), 'TS が決めた型', h('em', '点線＝推論')), inf),
+        h('div', { class: 'tslab-box' }, h('h5', icon('terminal'), '実行結果（変数の中身）'), out)));
+    paintOut();
+    check().then(run);
+    root.ed = ed;
+    return root;
+  }
+
+  /* 「事故 → 直す」を1つずつ。tabs: [{ name, sub, story, tryIt, src, actions, coach }] */
+  function labTabs(el, tabs) {
+    const bar = h('div', { class: 'tsx3-tabs' }), body = h('div', { class: 'tslab' });
+    const show = (i) => {
+      bar.querySelectorAll('.tsx3-tab').forEach((t, k) => t.classList.toggle('on', k === i));
+      const t = tabs[i];
+      body.replaceChildren(
+        h('div', { class: 'tslab-story' }, icon('triangle-alert'), h('div', { html: t.story })),
+        lab(t),
+        t.tryIt ? h('div', { class: 'tslab-try' }, icon('lightbulb'), h('div', { html: t.tryIt })) : null);
+    };
+    tabs.forEach((t, i) => bar.append(h('button', { class: 'tsx3-tab', onclick: () => show(i) }, t.name, t.sub ? h('small', t.sub) : null)));
+    if (tabs.length > 1) el.append(bar);
+    el.append(body);
+    show(0);
+  }
+  const uncomment = (needle) => (s) => s.split('\n').map((l) => (l.indexOf(needle) >= 0 ? l.replace(/^(\s*)\/\/ ?/, '$1') : l)).join('\n');
+
   /* ================= ts-basic ================= */
   K.reg({
     id: 'ts-basic', track: 'ts', title: '基礎文法・データ型', sub: '型の指定の方法', emoji: '📘',
     scenes: [
       {
-        t: '型アノテーションの読み方', lead: '<code class="i">let age: number = 20;</code> を分解。「次へ」で順番に光ります。',
+        t: '型アノテーションの読み方', lead: '<code class="i">let age: number = 20;</code> は4つの部品でできています。読み方を覚えたら、下の<b>本物のコード</b>を書き換えて試そう。',
         render(el) {
-          const parts = [['let ', 0], ['age', 1], [': number', 2], [' = ', 3], ['20', 4], [';', 5]];
-          const line = h('div', { class: 'tsx-line' }, parts.map(([s]) => h('span', { class: 'tk' }, s)));
-          const typeTag = h('span', { class: 'ty' }, 'number'), val = h('div', { class: 'val' }), err = h('div', { class: 'tsx-res ng', style: { visibility: 'hidden' } }, "✖ Type 'string' is not assignable to type 'number'.");
-          const box = h('div', { class: 'tsx-box t-number' }, h('span', { class: 'nm' }, 'age'), typeTag, val);
-          const line2 = h('div', { class: 'tsx3-attempt', style: { display: 'none' } }, h('span', null, 'age = ', h('span', { class: 'tsx3-sq' }, '"twenty"'), ';'), h('span', { class: 'bk' }, '↩ 弾かれた（age は 20 のまま）'));
-          const hi = [[0], [1], [2], [3, 4], [1, 2, 4]];
-          const colors = ['var(--basic)', 'var(--pink)', 'var(--ts)', 'var(--team)', 'var(--vue)'];
-          el.append(stepper({
-            color: 'var(--ts)',
-            steps: [
-              { say: '<b>let</b>：「箱を作るよ」の合図。' }, { say: '<b>age</b>：箱の名前（変数名）。' }, { say: '<b>: number</b>：コロンの後ろが<b>型</b>。「数値しか入らない箱」にする。' },
-              { say: '<b>= 20</b>：中身を入れる。number なので ✓。' }, { say: '❌ あとで <b>age = "twenty"</b> と書いてみると… number の箱に string は入らない → <b>赤線で弾かれる</b>（値は 20 のまま）。' },
-            ],
-            init(vis) { vis.append(h('div', { class: 'col' }, line, h('div', { style: { display: 'grid', placeItems: 'center', gap: '10px' } }, box, line2, err))); },
-            update(n, s, vis) {
-              line.querySelectorAll('.tk').forEach((t, i) => { const on = hi[n].includes(i); t.classList.toggle('lit', on); t.style.setProperty('--pc', colors[n]); });
-              box.style.opacity = n >= 1 ? 1 : .3; typeTag.style.opacity = n >= 2 ? 1 : 0;
-              box.className = 'tsx-box t-number' + (n === 4 ? ' no' : n === 3 ? ' good' : '');
-              val.textContent = n >= 3 ? '20' : '';
-              err.style.visibility = n === 4 ? 'visible' : 'hidden';
-              line2.style.display = n === 4 ? 'flex' : 'none'; if (n === 4) { line2.classList.remove('tsx-fall'); void line2.offsetWidth; line2.classList.add('tsx-fall'); }
+          const L = [['let', '箱を作る合図', 'var(--basic)'], ['age', '箱の名前（変数名）', 'var(--pink)'], [': number', '型。数字だけ入る箱にする', 'var(--ts)'], ['= 20', '最初の中身', 'var(--team)']];
+          el.append(h('div', { class: 'tslab-legend' }, L.map(([c, s, col]) => h('div', { style: { '--lc': col } }, h('code', c), h('small', s)))), h('div', { style: { height: '12px' } }));
+          labTabs(el, [{
+            name: '申込フォームの値',
+            story: '申込フォームの「年齢」に、うっかり文字が入った。画面には <b>「二十1 歳」</b> と出る。動かすまで誰も気づけない。',
+            src: `// 申込フォームの値。「変数名: 型」で、入る種類を決める
+let age: number = 20;
+let name: string = "田中";
+let agree: boolean = true;
+
+// 文字が入ったら？ 「事故を起こす」で有効になる
+// age = "二十";
+
+console.log(name + "さんは来年 " + (age + 1) + " 歳");
+`,
+            actions: [{ label: '事故を起こす', icon: 'bug', apply: uncomment('age = "二十"') }],
+            tryIt: '<b>やってみよう</b>　① そのまま「実行」→ 「田中さんは来年 21 歳」。② 「事故を起こす」→ <b>実行する前に赤線</b>が出る（実行すると「二十1 歳」になってしまう）。③ 直す：<code>age = 21;</code> に書き換える。',
+          }]);
+        },
+      },
+      {
+        t: '型の箱に値を入れよう', tag: 'string · number', lead: '入力欄から届く値は<b>いつも文字</b>。数字と思って足すと、人数も料金も狂う。本物のコードで確かめよう。',
+        render(el) {
+          labTabs(el, [
+            {
+              name: '人数 "3" + 2', sub: 'string と number',
+              story: '参加人数 <code>"3"</code> に 2 人を足したら、画面に <b>「32人」</b>。赤線は出ない。文字と数字の足し算は、つなぐだけになる。',
+              src: `// フォームの入力欄から届く値は、いつも「文字」
+const peopleText: string = "3";
+const extra: number = 2;
+
+const total = peopleText + extra;
+console.log(total + "人");
+
+// 直す：文字を数字に変えて、number の箱に入れる
+// const people: number = peopleText;
+`,
+              actions: [{ label: '赤線を出す', icon: 'bug', apply: uncomment('const people: number = peopleText') }],
+              tryIt: '<b>やってみよう</b>　① 「実行」→ 32人（赤線なし）。② 「赤線を出す」→ <code>string</code> は <code>number</code> の箱に入らない。③ 直す：<code>const people: number = Number(peopleText);</code> にして、<code>people + extra</code> を出力する → 5人。',
             },
-          }));
+            {
+              name: '料金 3500 と "3500"', sub: 'number',
+              story: '料金 <code>"3500"</code> に手数料 500 を足したら <b>「3500500」円</b>。引用符が付くと文字になる。',
+              src: `const priceText: string = "3500";   // 文字
+const priceNum: number = 3500;      // 数字
+const fee: number = 500;
+
+console.log(priceText + fee);   // 文字 + 数字
+console.log(priceNum + fee);    // 数字 + 数字
+`,
+              tryIt: '<b>やってみよう</b>　① 「実行」で、2つの出力を見比べる。② <code>priceNum</code> の行を <code>"3500"</code>（引用符付き）に変えると、赤線が出る。',
+            },
+            {
+              name: '同意チェック "false"', sub: 'boolean',
+              story: 'チェックボックスの値を文字で持ったら、<code>"false"</code>（外したはず）なのに <b>「同意あり」</b> と判定された。文字は空でなければ true 扱い。',
+              src: `// 文字で持つと、"false" でも if を通ってしまう
+const agreeText: string = "false";
+if (agreeText) {
+  console.log("同意あり（のはずが…）");
+}
+
+// boolean なら true / false だけ
+const agree: boolean = false;
+if (agree) {
+  console.log("同意あり");
+} else {
+  console.log("同意なし");
+}
+`,
+              tryIt: '<b>やってみよう</b>　① 「実行」→ 上の if は通ってしまう。② <code>const agree: boolean = false;</code> を <code>"false"</code> に変えると、赤線で止まる。',
+            },
+          ]);
         },
       },
       {
-        t: '型の箱に値を入れよう', tag: 'GAME', lead: '申込フォームの値（年齢 20・名前・同意チェック・料金…）を<b>ドラッグ</b>（またはクリック→箱をクリック）して、合う型の箱に入れよう。<code class="i">"3500"</code> のように引用符が付くと文字です。',
+        t: 'const / let と型推論', lead: 'まず<b>const</b>で書く。あとから値を変える必要が出て<b>赤線</b>が出たら<b>let</b>に変える。本物のコードで、その理由を見よう。',
         render(el) {
-          const vals = [['20', 'number'], ['"田中"', 'string'], ['true', 'boolean'], ['3500', 'number'], ['"3500"', 'string'], ['false', 'boolean']];
-          const msg = h('div', { style: { minHeight: '2.2em' } });
-          let sel = null, placed = 0;
-          const pool = h('div', { class: 'row' });
-          const boxes = ['number', 'string', 'boolean'].map((t) => {
-            const items = h('div', { class: 'row', style: { justifyContent: 'center' } });
-            const b = h('div', { class: 'tsx-box t-' + t, style: { minHeight: '140px', alignContent: 'start' } }, h('span', { class: 'nm' }, 'x'), h('span', { class: 'ty' }, ': ' + t), items);
-            const tryIn = (idx) => {
-              const [lit, ty] = vals[idx]; const chip = chips[idx];
-              if (!chip || chip.dataset.done) return;
-              if (ty === t) {
-                chip.dataset.done = 1; chip.remove(); items.append(h('span', { class: 'tsx-chip in', style: { '--bc': `var(--${{ number: 'ts', string: 'basic', boolean: 'team' }[t]})` } }, lit));
-                b.classList.add('good'); msg.replaceChildren(res(true, `${lit} は ${t} だから OK`)); sel = null; placed++;
-                if (placed === vals.length) { celebrate(); msg.replaceChildren(res(true, '全部入った！型の違いがバッチリ 🎉')); }
-              } else {
-                b.classList.remove('no'); void b.offsetWidth; b.classList.add('no');
-                msg.replaceChildren(res(false, `Type '${ty}' is not assignable to type '${t}'.`));
-              }
-            };
-            b.addEventListener('dragover', (e) => { e.preventDefault(); b.classList.add('over'); });
-            b.addEventListener('dragleave', () => b.classList.remove('over'));
-            b.addEventListener('drop', (e) => { e.preventDefault(); b.classList.remove('over'); tryIn(+e.dataTransfer.getData('text/plain')); });
-            b.addEventListener('click', () => { if (sel != null) { tryIn(sel); chips.forEach((c) => c.classList.remove('sel')); sel = null; } });
-            return b;
-          });
-          const chips = vals.map(([lit], i) => {
-            const c = h('span', { class: 'tsx-chip', draggable: 'true' }, lit);
-            c.addEventListener('dragstart', (e) => e.dataTransfer.setData('text/plain', i));
-            c.addEventListener('click', (e) => { e.stopPropagation(); chips.forEach((x) => x.classList.remove('sel')); sel = i; c.classList.add('sel'); });
-            return c;
-          });
-          pool.append(...chips);
-          el.append(lbl('値'), pool, h('div', { class: 'split', style: { gridTemplateColumns: 'repeat(3,1fr)', margin: '14px 0' } }, boxes), msg);
+          labTabs(el, [
+            {
+              name: 'const：変わらない値', sub: '税率',
+              story: '消費税率がどこかで書き換わり、請求書の税額が<b>0円</b>に。原因は200行先の1行。探すだけで半日かかった。',
+              src: `const TAX_RATE = 0.1;   // 消費税率：ずっと同じ
+
+function withTax(price: number): number {
+  return Math.round(price * (1 + TAX_RATE));
+}
+
+// …（300行あと）…
+// TAX_RATE = 0;   // ← うっかり！
+
+console.log(withTax(1000));
+`,
+              actions: [{ label: '事故を起こす', icon: 'bug', apply: uncomment('TAX_RATE = 0;') }],
+              tryIt: '<b>やってみよう</b>　① 「実行」→ 1100。② 「事故を起こす」→ <b>書いた瞬間に赤線</b>。③ <code>const</code> を <code>let</code> に変えて実行してみよう → 赤線は消えるが、出力は <b>1000</b>（税が 0 円になった）。変わらない値は const で守る。',
+            },
+            {
+              name: 'let：変わる値', sub: '合計',
+              story: 'カートの合計金額は、商品を足すたびに変わる。<code>const</code> で作ると、足し算した瞬間に止まる。',
+              src: `const prices = [1200, 800, 2500];   // カートの商品
+let total = 0;                      // 足していくので let
+
+for (let i = 0; i < prices.length; i++) {
+  total += prices[i];
+}
+
+console.log("合計", total);
+`,
+              tryIt: '<b>やってみよう</b>　① 「実行」のあと、<b>◀ ▶</b> で1行ずつ進める → <code>total</code> が 0 → 1200 → 2000 → 4500 と変わる。② <code>let total</code> を <code>const total</code> に変える → <code>total += …</code> に赤線。赤線が出たら let に直す。',
+            },
+            {
+              name: 'const でも中身は変えられる', sub: 'カート',
+              story: '「const なのに push できた！」と混乱する人が多い。<b>const が守るのは「箱そのもの」</b>で、箱の中身ではない。',
+              src: `const cart = { items: ["相談 30分"], count: 1 };
+
+cart.items.push("書類確認");   // OK：中身を足す
+cart.count = 2;                // OK：項目を書き換える
+
+// cart = { items: [], count: 0 };   // 箱ごと入れ替えは NG
+console.log(cart.items, cart.count);
+`,
+              actions: [{ label: '箱ごと入れ替える', icon: 'bug', apply: uncomment('cart = { items: [], count: 0 };') }],
+              tryIt: '<b>やってみよう</b>　① 「実行」→ 中身が増える（const でも OK）。② 「箱ごと入れ替える」→ <code>Cannot assign to \'cart\'</code> の赤線。<code>cart</code> という名前に別のものを入れ直すのが禁止。',
+            },
+            {
+              name: '型は書かなくても決まる', sub: '型推論',
+              story: '<code>let status = "open"</code> のあとで <code>status = 5</code> と書いても、赤線で止まる。<b>初期値から TS が型を決めている</b>から。',
+              src: `const tax = 0.1;        // const は値そのものが型（0.1）
+let price = 1000;       // let は「数字」という種類（number）
+const status = "open";  // 値そのもの（"open"）
+let label = "受付中";   // 文字という種類（string）
+
+// 違う種類を入れると赤線。↓ 「事故を起こす」で有効になる
+// price = "千円";
+// label = 5;
+
+console.log(tax, price, status, label);
+`,
+              actions: [{ label: '事故を起こす', icon: 'bug', apply: (s) => uncomment('price = "千円"')(uncomment('label = 5;')(s)) }],
+              tryIt: '<b>見るところ</b>　右の「TS が決めた型」：<code>tax</code> は <code>0.1</code>、<code>price</code> は <code>number</code>。点線＝書いていないのに TS が推論した型。「事故を起こす」で、推論された型に反する代入が赤線になる。',
+            },
+          ]);
+          el.append(h('div', { class: 'tsx3-rule' }, icon('lightbulb'), h('span', { html: '<b>まず const</b>。値を変える必要が出て赤線（<code>Cannot assign to …</code>）が出たら、そこで<b>let</b>に変える。迷ったら const でよい。' })));
         },
       },
       {
-        t: 'const / let と型推論', lead: 'const と let、なぜ2つあるの？ まず<b>事故</b>を起こして体験。そのあと、どっちを使うか自分で選ぼう。',
+        t: '型推論：どこまで書く？', tag: 'inference', lead: '型は「全部に書く」のも「全部省く」のもダメ。<b>入口（引数）と出口（戻り値）</b>には書き、中の変数は推論に任せる。本物のコードで確かめよう。',
         render(el) {
-          const tabs = [['① 税率が消えた事件', 'うっかり上書き → const で守る'], ['② カウンタが動かない', '本当に変わる値 → let'], ['③ 推論も違う', 'const は 10、let は number']];
-          const bar = h('div', { class: 'tsx3-tabs' });
-          const body = h('div');
-          const run = (cardOut, ok, msg, lines, errLine, extra) => (pre) => {
-            pre.setHi([]); pre.setHi([], 'err');
-            if (lines) pre.setHi(lines, 'on'); if (errLine) pre.setHi([errLine], 'err');
-            cardOut.className = 'tsx3-out ' + (ok ? 'ok' : 'e'); cardOut.textContent = msg;
+          const noise = (src) => {
+            const tips = [];
+            src.split('\n').forEach((l, i) => { const m = l.match(/^\s{2,}(?:const|let)\s+(\w+)\s*:\s*(\w+)\s*=\s*\S/); if (m) tips.push('L' + (i + 1) + ': <code>' + m[1] + '</code> は右辺から <code>' + m[2] + '</code> と分かる。<b>書かなくてよい</b>（ノイズ）'); });
+            return tips;
           };
-          function col(kind, src, tail) {
-            const pre = code(src, 'ts', { file: kind + '.ts', dim: true });
-            const out = h('div', { class: 'tsx3-out' }, '▶ 実行を押してみよう');
-            const meter = h('div', { class: 'tsx3-meter' });
-            const c = h('div', { class: 'tsx3-col k-' + kind }, h('h4', icon(kind === 'const' ? 'lock' : 'pencil'), kind), pre, meter, out);
-            c.pre = pre; c.out = out; c.meter = meter; c.tail = tail;
-            return c;
-          }
-          const views = [
-            () => {
-              const L = (k) => `${k} tax = 0.1;\nfunction total(price: number) {\n  return price * (1 + tax);\n}\n// …（300行あと）…\ntax = 0;   // ← うっかり！\nconsole.log(total(1000));`;
-              const cl = col('let', L('let')), cc = col('const', L('const'));
-              cl.meter.append('犯人候補：', h('b', { class: 'bad' }, '?? 行'));
-              cc.meter.append('犯人候補：', h('b', { class: 'good' }, '宣言の 1 行だけ'));
-              const runBtn = (c, fn) => h('button', { class: 'btn primary', onclick: fn }, icon('play'), '実行');
-              cl.append(runBtn(cl, () => {
-                cl.pre.setHi([1, 3, 6], 'on'); cl.pre.setHi([], 'err');
-                cl.out.className = 'tsx3-out e'; cl.out.textContent = '1000   ← 期待は 1100。税が消えて、エラーも出ないまま動いた…';
-                cl.meter.replaceChildren('犯人候補：', h('b', { class: 'bad' }, 'tax を触る全部（1・3・6 行…）'), '→ 300 行を探す羽目に');
-              }));
-              cc.append(runBtn(cc, () => {
-                cc.pre.setHi([1], 'on'); cc.pre.setHi([6], 'err');
-                cc.out.className = 'tsx3-out ok'; cc.out.textContent = "L6: Cannot assign to 'tax' because it is a constant.\n→ 書いた瞬間に止まった。事故ゼロ！";
-                cc.meter.replaceChildren('犯人候補：', h('b', { class: 'good' }, '0 行（エディタが教えてくれた）'));
-              }));
-              return h('div', null, h('div', { class: 'tsx3-duo' }, cl, cc),
-                h('div', { class: 'tsx3-rule' }, icon('lightbulb'), h('span', { html: '<b>変わらない値は const</b>。「触れない」を機械に保証させると、バグの犯人探しが要らなくなる。' })));
+          labTabs(el, [
+            {
+              name: '引数に書かないと any', sub: '入口',
+              story: '請求書の小計。引数の型を省いたら <code>any</code> になり、<code>subtotal(1000, "3個")</code> が通って画面に <b>NaN</b> と出た。',
+              src: `// 引数の型を書いていない
+function subtotal(price, qty) {
+  return price * qty;
+}
+
+console.log(subtotal(1000, "3個"));   // 文字でも通る
+`,
+              tryIt: '<b>やってみよう</b>　① 「実行」→ NaN（赤線は引数の宣言に出ている）。② <code>price: number, qty: number</code> と書く → 今度は<b>呼び出し側</b>に赤線が出て、バグが実行前に分かる。③ 呼び出しを <code>subtotal(1000, 3)</code> にして直す。',
             },
-            () => {
-              const L = (k) => `${k} count = 0;\n\n// ボタンが押された\ncount++;\nconsole.log(count);`;
-              const cc = col('const', L('const')), cl = col('let', L('let'));
-              cc.meter.append('この値は…', h('b', { class: 'bad' }, '変わるもの'));
-              let n = 0; const disp = h('b', { class: 'good' }, '0');
-              cl.meter.append('この値は…', h('b', { class: 'good' }, '変わるもの'), ' count = ', disp);
-              cc.append(h('button', { class: 'btn primary', onclick: () => { cc.pre.setHi([4], 'err'); cc.out.className = 'tsx3-out e'; cc.out.textContent = "L4: Cannot assign to 'count' because it is a constant.\n→ 変わる値に const は不向き。let にしよう"; } }, icon('play'), '実行'));
-              cl.append(h('button', { class: 'btn primary', onclick: () => { n++; disp.textContent = n; cl.pre.setHi([4, 5], 'on'); cl.out.className = 'tsx3-out ok'; cl.out.textContent = 'count = ' + n + '   ← 何回押しても更新できる'; } }, icon('mouse-pointer-click'), 'ボタンを押す（count++）'));
-              return h('div', null, h('div', { class: 'tsx3-duo' }, cc, cl),
-                h('div', { class: 'tsx3-rule' }, icon('lightbulb'), h('span', { html: '<b>カウンタ・合計・ループ変数のように「変わる」のが仕事の値だけ let</b>。let は「書き換えてよい」の宣言。' })));
+            {
+              name: '中の変数は書かない', sub: '出口と中身',
+              story: 'レビューで「型だらけで読めない」と指摘された。<b>右辺を見れば分かる型</b>まで書くと、ノイズになる。',
+              src: `function subtotal(price: number, qty: number): number {
+  const sum: number = price * qty;
+  const label: string = "小計";
+  return sum;
+}
+
+console.log(subtotal(1000, 3));
+`,
+              coach: noise,
+              tryIt: '<b>やってみよう</b>　上の2つの変数から <code>: number</code> / <code>: string</code> を消す。右の「TS が決めた型」は変わらない（点線＝推論）。<b>引数と戻り値の型は残す</b>のがルール。',
             },
-            () => {
-              const S = [
-                ['let a = 10;\na = 20;', true, 'a は number と推論。let なので再代入 OK', 'a: number'],
-                ['const b = 10;\nb = 20;', false, "Cannot assign to 'b' because it is a constant.", 'b: 10（リテラル型）'],
-                ['let c = 10;\nc = "ten";', false, "Type 'string' is not assignable to type 'number'.", 'c: number（推論）'],
-                ['let d: number | string = 10;\nd = "ten";', true, 'Union 型なので OK', 'd: number | string'],
-              ];
-              const grid = h('div', { class: 'split' });
-              S.forEach(([src, ok, m, inf]) => {
-                const out = h('div', { style: { minHeight: '2.4em' } });
-                grid.append(h('div', { class: 'tsx-card' }, code(src, 'ts'), h('div', { class: 'row' }, h('span', { class: 'chip' }, '推論 ' + inf), h('button', { class: 'btn', onclick: () => out.replaceChildren(res(ok, m)) }, icon('play'), '試す')), out));
-              });
-              return h('div', null, grid, h('div', { class: 'tsx3-rule' }, icon('lightbulb'), h('span', { html: '型を書かなくても、<b>初期値から型が決まる</b>（推論）。const は値そのもの（10）、let は「その種類」（number）として扱われる。' })));
-            },
-          ];
-          function show(i) { bar.querySelectorAll('.tsx3-tab').forEach((t, k) => t.classList.toggle('on', k === i)); body.replaceChildren(views[i]()); }
-          tabs.forEach(([t, sm], i) => bar.append(h('button', { class: 'tsx3-tab', onclick: () => show(i) }, t, h('small', sm))));
-          el.append(bar, body);
-          show(0);
-          // ---- which would you pick?
-          const Q = [
-            ['消費税率 0.1（ずっと同じ）', 'const', '変えない値 → const で守る'],
-            ['ループの番号 i（1回ごとに増える）', 'let', '回るたびに変わる → let'],
-            ['読み込んだユーザー名（表示するだけ）', 'const', '再代入しない → const'],
-            ['買い物の合計金額（商品を足していく）', 'let', '足して更新する → let'],
-          ];
-          let okN = 0; const score = h('span', { class: 'chip' }, '0 / ' + Q.length);
-          const qbox = h('div', { class: 'tsx3-q' }, Q.map(([t, ans, why]) => {
-            const row = h('div', { class: 'tsx3-qr' }, h('span', t), h('div', { class: 'tsx3-qb' }, ['const', 'let'].map((k) => h('button', { onclick: (e) => {
-              if (row.classList.contains('ok')) return;
-              if (k === ans) { e.currentTarget.classList.add('ok'); row.classList.add('ok'); okN++; score.textContent = okN + ' / ' + Q.length; if (okN === Q.length) celebrate(); }
-              else { e.currentTarget.classList.remove('bad'); void e.currentTarget.offsetWidth; e.currentTarget.classList.add('bad'); }
-            } }, k))), h('small', '✓ ' + why));
-            return row;
-          }));
-          el.append(h('div', { style: { marginTop: '22px' } }, lbl('どっち？ 自分で選んでみよう'), h('div', { class: 'row', style: { marginBottom: '8px' } }, score, h('span', { style: { color: 'var(--mute)', fontSize: '.85rem', fontWeight: 700 } }, '迷ったら <まず const>。エラーが出たら let に変える。'.replace(/[<>]/g, ''))), qbox));
+          ]);
         },
       },
       {
-        t: '型推論：どこまで書く？', tag: 'inference', lead: '型は「全部に書く」のも「全部省く」のもダメ。<b>点線の枠をクリック</b>して、書くべき場所を見つけよう。',
+        t: '配列・タプル・オブジェクト', lead: 'データのまとまりも型で守れる。API から届く形を、本物のコードで試そう。',
         render(el) {
-          const SL = { a: ['a', ': number', 'param'], b: ['b', ': number', 'param'], ret: ['ret', ': number', 'ret'], sum: ['sum', ': number', 'local'], label: ['label', ': string', 'local'] };
-          const st = { a: false, b: false, ret: false, sum: false, label: false };
-          const out = h('div', { class: 'tsx3-out' });
-          const meter = h('div', { class: 'tsx3-meter' });
-          const slot = (k) => { const e = h('span', { class: 'tsx3-sl', 'data-k': k, onclick: () => { st[k] = !st[k]; paint(); } }, SL[k][1]); return e; };
-          const sl = {}; Object.keys(SL).forEach((k) => (sl[k] = slot(k)));
-          const pre = h('div', { class: 'tsx3-code' },
-            'function add(a', sl.a, ', b', sl.b, ')', sl.ret, ' {\n  const sum', sl.sum, ' = a + b;\n  const label', sl.label, ' = "合計";\n  return sum;\n}');
-          function paint() {
-            let errs = 0, noise = 0;
-            Object.entries(sl).forEach(([k, e]) => {
-              e.className = 'tsx3-sl';
-              if (SL[k][2] === 'param') { if (st[k]) e.classList.add('on'); else { e.classList.add('err'); errs++; } e.textContent = st[k] ? SL[k][1] : '← 書く場所'; }
-              else if (SL[k][2] === 'ret') { if (st[k]) e.classList.add('on'); e.textContent = st[k] ? SL[k][1] : ''; if (!st[k]) e.textContent = ': ?'; }
-              else { if (st[k]) { e.classList.add('noise'); noise++; } e.textContent = st[k] ? SL[k][1] : ''; if (!st[k]) e.textContent = ': ?'; }
-            });
-            meter.replaceChildren('エラー', h('b', { class: errs ? 'bad' : 'good' }, errs + ' 件'), 'ノイズ（不要な型）', h('b', { class: noise ? 'bad' : 'good' }, noise + ' 個'));
-            const ok = !errs && !noise && st.ret;
-            if (errs) { out.className = 'tsx3-out e'; out.textContent = "Parameter '" + (!st.a ? 'a' : 'b') + "' implicitly has an 'any' type.\n→ 引数は呼び出し側から来る値。ここは推論できないので、書く。"; }
-            else if (noise) { out.className = 'tsx3-out'; out.textContent = '動くけど…sum / label は右辺(a + b, "合計")から型が分かる。書くとノイズ。'; }
-            else if (!st.ret) { out.className = 'tsx3-out'; out.textContent = '引数は OK。戻り値の型も書くと「この関数は number を返す」という約束になる（任意だがおすすめ）。'; }
-            else { out.className = 'tsx3-out ok'; out.textContent = '✓ 引数・戻り値（境界）には書く／中の変数は推論に任せる。これが基本ルール！'; if (!paint.done) { paint.done = 1; celebrate(); } }
-          }
-          el.append(h('div', { class: 'split wide-l' }, h('div', { class: 'col' }, lbl('クリックで型を書く / 消す'), pre, out), h('div', { class: 'col' }, lbl('チェック'), meter,
-            h('div', { class: 'tsx3-card2' }, h('ul', { style: { paddingLeft: '1.2em', display: 'grid', gap: '.5em', fontWeight: 700, fontSize: '.9rem' } },
-              h('li', { html: '<b>引数</b>：外から来る → 必ず書く' }), h('li', { html: '<b>戻り値</b>：関数の約束 → 書くのがおすすめ' }), h('li', { html: '<b>中の変数</b>：右辺で分かる → 書かない' }))))));
-          paint();
+          labTabs(el, [
+            {
+              name: '配列', sub: '同じ型が並ぶ',
+              story: '担当弁護士の一覧に、うっかり数字を push した。画面の1行だけ <b>名前が数字</b>になっていた。',
+              src: `const lawyers: string[] = ["田中", "山本"];
+
+lawyers.push("鈴木");   // OK
+// lawyers.push(3);     // ← 数字は入らない
+
+console.log(lawyers.length, lawyers);
+`,
+              actions: [{ label: '数字を入れてみる', icon: 'bug', apply: uncomment('lawyers.push(3)') }],
+              tryIt: '<b>やってみよう</b>　① 「実行」→ 3人。② 「数字を入れてみる」→ <code>string[]</code> に数字は入らない（赤線）。',
+            },
+            {
+              name: 'タプル', sub: '位置ごとに型',
+              story: 'API が返す相談の1行 <code>["離婚相談", 3000, true]</code>。<code>row[1]</code> が料金か件数か分からず、画面が落ちた。',
+              src: `// 相談の1行：[題名, 料金, 公開中か]
+const row: [string, number, boolean] = ["離婚相談", 3000, true];
+
+console.log(row[1] * 2);   // 料金を2倍
+
+// row[1] = "無料";        // ← 2番目は number
+// const bad: [string, number, boolean] = [3000, "離婚相談", true];
+`,
+              actions: [
+                { label: '料金に文字', icon: 'bug', apply: uncomment('row[1] = "無料"') },
+                { label: '順番を入れ替え', icon: 'shuffle', apply: uncomment('const bad') },
+              ],
+              tryIt: '<b>やってみよう</b>　「料金に文字」「順番を入れ替え」を押して、赤線の文を読む。タプルは<b>個数・順番・型</b>まで決まっているので、row[1] がいつも料金だと保証される。',
+            },
+            {
+              name: 'オブジェクト', sub: '形を決める',
+              story: '相談データの項目名を変えたのに、直し忘れた画面が1つ。何も言われず、<b>料金が空</b>で表示された。',
+              src: `interface Consultation {
+  title: string;
+  fee: number;
+}
+
+const c: Consultation = { title: "相続の相談", fee: 3000 };
+c.fee = 5000;   // OK
+
+// c.fee = "無料";      // ← 料金は number
+// c.priority = 1;      // ← そんな項目は無い
+console.log(c);
+`,
+              actions: [
+                { label: '料金に文字', icon: 'bug', apply: uncomment('c.fee = "無料"') },
+                { label: '存在しない項目', icon: 'bug', apply: uncomment('c.priority = 1') },
+              ],
+              tryIt: '<b>やってみよう</b>　2つのボタンで赤線を出して、メッセージを読む。<code>interface</code> は「このオブジェクトはこの形」という約束。外れるとすぐ赤線。',
+            },
+          ]);
         },
       },
       {
-        t: '配列・タプル・オブジェクト', lead: 'データのまとまりも型で守れる。ボタンで<b>入れてみて</b>、通る/通らないを確認しよう。',
+        t: 'any と unknown', tag: 'any', lead: '外から来る値（API の返事）を <b>any</b> で受けるか、<b>unknown</b> で受けるか。本物のコードで、落ちるのと守られるのを見比べよう。',
         render(el) {
-          const body = h('div');
-          const tabs = ['配列', 'タプル', 'Object'];
-          const seg = h('div', { class: 'tsx-seg', style: { '--c': 'var(--ts)' } }, tabs.map((t, i) => h('button', { onclick: () => show(i) }, t)));
-          const views = [
-            () => {
-              const items = ['田中', '山本'], row = h('div', { class: 'tsx-slots' }), out = h('div');
-              const draw = () => row.replaceChildren(...items.map((x) => h('div', { class: 'tsx-slot f', style: { '--bc': 'var(--basic)' } }, h('small', 'string'), '"' + x + '"')), h('div', { class: 'tsx-slot' }, '＋'));
-              draw();
-              return h('div', { class: 'split' }, h('div', { class: 'col' }, code('let lawyers: string[] = ["田中", "山本"];', 'ts'), row, h('div', { class: 'row' },
-                h('button', { class: 'btn', onclick: () => { items.push('鈴木'); draw(); out.replaceChildren(res(true, 'lawyers.push("鈴木")')); } }, 'push("鈴木")'),
-                h('button', { class: 'btn', onclick: () => out.replaceChildren(res(false, "Argument of type 'number' is not assignable to parameter of type 'string'.")) }, 'push(3)')), out),
-                h('div', { class: 'card' }, h('b', '配列 = 同じ型が並ぶ'), h('p', { style: { color: 'var(--mute)' } }, '担当弁護士の一覧など、同じ種類のものが並ぶとき。長さは自由。')));
+          labTabs(el, [
+            {
+              name: 'any で受ける', sub: '落ちる',
+              story: '外部 API の JSON を <code>any</code> で受けた。相手が項目名を <code>name</code> → <code>fullName</code> に変えたのに赤線は出ず、<b>本番で画面が真っ白</b>に。',
+              src: `// 外部 API の返事。相手が項目名を変えた（name → fullName）
+const res: any = JSON.parse('{"fullName":"田中"}');
+
+console.log(res.name.toUpperCase());   // 赤線なし
+`,
+              tryIt: '<b>やってみよう</b>　「実行」→ <b>実行エラー</b>。<code>any</code> は型チェックを諦めるので、赤線が1本も出ない。誰も事前に気づけない。',
             },
-            () => {
-              const types = ['number', 'boolean', 'string'], slots = types.map((t) => h('div', { class: 'tsx-slot' }, h('small', t), '?')), out = h('div');
-              const fill = (vals, ok) => { slots.forEach((s, i) => { s.className = 'tsx-slot ' + (ok ? 'f' : (typeof vals[i] === types[i] ? 'f' : 'x')); s.style.setProperty('--bc', 'var(--ts)'); s.replaceChildren(h('small', types[i]), JSON.stringify(vals[i])); }); out.replaceChildren(ok ? res(true, '順番も型もピッタリ') : res(false, "Type 'string' is not assignable to type 'number'. （順番がズレてる）")); };
-              return h('div', { class: 'split' }, h('div', { class: 'col' }, code('type Row = [number, boolean, string];\n// [相談ID, 公開中か, 題名]\nlet row: Row = ...', 'ts'), h('div', { class: 'tsx-slots' }, slots), h('div', { class: 'row' },
-                h('button', { class: 'btn', onclick: () => fill([2, true, '相続の相談'], true) }, '[2, true, "相続の相談"]'), h('button', { class: 'btn', onclick: () => fill(['相続の相談', 2, true], false) }, '["相続の相談", 2, true]')), out),
-                h('div', { class: 'card' }, h('b', 'タプル = 位置ごとに型が決まる'), h('p', { style: { color: 'var(--mute)' } }, 'CSV の1行や [id, 題名] のような「位置ごとに意味が決まった組」に向いてる。')));
+            {
+              name: 'unknown で受ける', sub: '守られる',
+              story: '同じ API を <code>unknown</code> で受けると、使う前に赤線で止められる。<b>確かめてから使う</b>ようになる。',
+              src: `// 何が来るか分からない → unknown で受ける
+const res: unknown = JSON.parse('"tanaka"');   // 今回は文字が来た
+
+console.log(res.toUpperCase());   // 赤線：確かめる前は使えない
+
+// 直す：typeof で確かめてから使う
+// if (typeof res === "string") {
+//   console.log(res.toUpperCase());
+// }
+`,
+              actions: [{ label: '確かめてから使う', icon: 'shield-check', apply: () => '// 何が来るか分からない → unknown で受ける\nconst res: unknown = JSON.parse(\'"tanaka"\');   // 今回は文字が来た\n\n// 確かめてから使う：typeof で string と分かった枝の中だけ OK\nif (typeof res === "string") {\n  console.log(res.toUpperCase());\n}\n' }],
+              tryIt: '<b>やってみよう</b>　① 「実行」前に赤線（<code>\'res\' is of type \'unknown\'</code>）。② 「確かめてから使う」→ <code>typeof</code> で string と分かった枝の中だけ使える → 赤線が消える。',
             },
-            () => {
-              const o = { title: '"相続の相談"', fee: '3000' }, box = h('div', { class: 'tsx-obj' }), out = h('div');
-              const draw = () => box.replaceChildren(h('div', '{'), ...Object.entries(o).map(([k, v]) => h('div', { style: { paddingLeft: '1.2em' } }, k + ': ', h('span', { class: 'num' }, v))), h('div', '}'));
-              draw();
-              return h('div', { class: 'split' }, h('div', { class: 'col' }, code('interface Consultation {\n  title: string;\n  fee: number;\n}', 'ts'), box, h('div', { class: 'row' },
-                h('button', { class: 'btn', onclick: () => { o.fee = '5000'; draw(); out.replaceChildren(res(true, 'c.fee = 5000')); } }, 'fee = 5000'),
-                h('button', { class: 'btn', onclick: () => out.replaceChildren(res(false, "Type 'string' is not assignable to type 'number'.")) }, 'fee = "無料"'),
-                h('button', { class: 'btn', onclick: () => out.replaceChildren(res(false, "Property 'priority' does not exist on type 'Consultation'.")) }, 'c.priority = 1')), out),
-                h('div', { class: 'card' }, h('b', 'Object = 形（interface）で守る'), h('p', { style: { color: 'var(--mute)' } }, '決めた形から外れたら、すぐ赤線。')));
-            },
-          ];
-          function show(i) { seg.querySelectorAll('button').forEach((b, k) => b.classList.toggle('on', k === i)); body.replaceChildren(views[i]()); }
-          el.append(seg, body); show(0);
+          ]);
         },
       },
-      { t: 'any と unknown', tag: 'any', lead: '同じ値・同じ操作で <b>any</b> と <b>unknown</b> を比べよう。値を変えて、操作ボタンを押してみて。', render: anyScene },
-      { t: '値がない型：void / undefined / null', tag: 'void', lead: '「値がない」にも3種類。<b>実行</b>ボタンで違いを見て、null はスイッチで分岐を確かめよう。', render: voidNullScene },
+      {
+        t: '値がない型：void / undefined / null', tag: 'void', lead: '「値がない」にも3種類ある。ログイン前の画面で落ちる、よくある事故を本物のコードで見よう。',
+        render(el) {
+          labTabs(el, [
+            {
+              name: 'void', sub: '戻り値がない',
+              story: '記録するだけの関数の結果を、変数に入れて使おうとした。<b>戻り値は無い</b>（undefined）。',
+              src: `function logOrder(id: number): void {
+  console.log("注文 " + id + " を記録しました");
+}
+
+const r = logOrder(1);   // void：返す値は無い
+console.log(r);
+`,
+              tryIt: '<b>見るところ</b>　右の「TS が決めた型」：<code>logOrder()</code> は <code>void</code>、<code>r</code> も <code>void</code>。出力の2行目は <code>undefined</code>。「何かを返す関数」ではない目印。',
+            },
+            {
+              name: 'undefined', sub: 'まだ入っていない',
+              story: 'あだ名は<b>入力しなくてよい</b>項目。未入力の人の <code>nickname.length</code> を読んで画面が落ちた。',
+              src: `interface Profile {
+  name: string;
+  nickname?: string;   // あだ名は無いかも
+}
+
+const p: Profile = { name: "田中" };
+console.log(p.nickname);           // undefined
+
+// console.log(p.nickname.length);  // ← 赤線になる
+`,
+              actions: [{ label: 'そのまま使う', icon: 'bug', apply: uncomment('console.log(p.nickname.length)') }],
+              tryIt: '<b>やってみよう</b>　① 「実行」→ undefined。② 「そのまま使う」→ 実行前に赤線（<code>possibly \'undefined\'</code>）。直す：<code>if (p.nickname !== undefined) { … }</code>',
+            },
+            {
+              name: 'null', sub: '「ない」を自分で示す',
+              story: 'ログインしていない人の名前を表示しようとして <b>Cannot read properties of null</b>。見つからなかったら <code>null</code> を返す関数だった。',
+              src: `function findName(id: number): string | null {
+  return id === 1 ? "田中" : null;   // 見つからなければ null
+}
+
+const n = findName(2);
+console.log(n.length);   // 赤線：n は null かもしれない
+
+// 直す：null でないときだけ使う
+// if (n !== null) {
+//   console.log(n.length);
+// }
+`,
+              tryIt: '<b>やってみよう</b>　① 「実行」→ 実行エラー（赤線のまま動かすと落ちる）。② 直す：<code>console.log(n.length);</code> を消して、下のコメントを外す → 赤線が消えて、<code>n</code> は <code>string</code> として使える。',
+            },
+          ]);
+        },
+      },
       {
         t: '実践：型エラーを全部直そう', tag: 'PRACTICE', lead: 'ミッションは3つ（1行ずつ直すだけ）。「値を直す」でも「型を広げる」でも OK。',
         render(el) {

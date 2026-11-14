@@ -116,9 +116,9 @@
   const DAYS = [
     { d: '1', w: '', c: 'var(--basic)', t: 'HTML/CSS · CUI · Git', k: [['コース紹介', 'intro'], ['CUI・Vim', 'cuivim'], ['Git', 'git'], ['HTML', 'html'], ['CSS', 'css']], m: '開発の土台。ターミナル・バージョン管理・Webの骨組みと見た目。' },
     { d: '2', w: '', c: 'var(--ts)', t: 'TypeScript ①', k: [['紹介', 'ts-intro'], ['基礎文法・データ型', 'ts-basic'], ['型の構文', 'ts-types'], ['クラス', 'ts-class']], m: '型で「バグを書く前に気づく」力を付ける。' },
-    { d: '3', w: '', c: 'var(--ts)', t: 'TypeScript ②', k: [['interface・Type', 'ts-types'], ['ジェネリクス', 'ts-generics'], ['単体テスト入門', 'ts-test'], ['復習', 'review']], m: '型を設計し、テストで守る。' },
+    { d: '3', w: '', c: 'var(--ts)', t: 'TypeScript ②', k: [['interface・Type', 'ts-types'], ['ジェネリクス', 'ts-generics'], ['単体テスト入門', 'ts-test']], m: '型を設計し、テストで守る。' },
     { d: '4', w: '', c: 'var(--vue)', t: 'Vue.js ①', k: [['紹介', 'vue-intro'], ['環境設定', 'vue-env'], ['基礎', 'vue-basics'], ['コンポーネント', 'vue-comp']], m: '画面が「データに反応して」動く感覚をつかむ。' },
-    { d: '5', w: '', c: 'var(--vue)', t: 'Vue.js ②', k: [['復習', 'review'], ['アイデア発想', 'idea'], ['Lifecycle・Computed・Watcher', 'vue-life'], ['Vue Router', 'vue-router'], ['単体テスト', 'ts-test'], ['Q&A', 'qa']], m: '応用機能を学び、チーム開発のテーマを決める。' },
+    { d: '5', w: '', c: 'var(--vue)', t: 'Vue.js ②', k: [['アイデア発想', 'idea'], ['Lifecycle・Computed・Watcher', 'vue-life'], ['Vue Router', 'vue-router'], ['単体テスト', 'ts-test'], ['Q&A', 'qa']], m: '応用機能を学び、チーム開発のテーマを決める。' },
     { d: '6', w: '', c: 'var(--team)', t: '開発・発表', k: [['アイデア→発表', 'idea'], ['開発', 'dev'], ['準備', 'prep'], ['成果発表', 'demo']], m: '作る → 見せる。あなたらしいWebサイトを完成させる日。' },
   ];
 
@@ -465,13 +465,15 @@
       brkOut.replaceChildren(h('div', { class: 'ok' }, h('b', 'あなたの意図'), b.exp), h('div', { class: 'bad' }, h('b', 'ブラウザの木（右上を見よう）'), h('span', { html: b.got })));
     } }, b.t));
 
+    /* 下の操作ボタンを押したとき、結果（木とページ）が画面の外なら、見えるところまで戻す */
+    const revealTop = () => { const w = el.querySelector('.tr2-wrap'); if (!w) return; const r = w.getBoundingClientRect(); if (r.bottom < 90 || r.top > innerHeight - 90) w.scrollIntoView({ block: 'center', behavior: 'smooth' }); };
     const use = (ic, c, title, ...kids) => h('div', { class: 'tr2-use', style: { '--c': c } }, h('h4', I(ic), title), ...kids);
     el.append(
       h('div', { class: 'tr2-wrap' },
         h('div', { class: 'tr2-pane' }, h('div', { class: 'tr2-hd', style: { '--c': 'var(--ts)' } }, I('file-code'), 'HTML（書き換えてみよう）'), ed,
           h('div', { class: 'tr2-hd', style: { '--c': 'var(--vue)', borderTop: '1px solid var(--line)' } }, I('monitor'), 'ページ', h('small', 'カーソルを乗せると、木と連動')), prev),
         h('div', { class: 'tr2-pane' }, h('div', { class: 'tr2-hd', style: { '--c': 'var(--basic)' } }, I('git-fork'), 'DOM ツリー', h('small', '行にカーソル → ページで光る / コピー・削除もできる')), tree)),
-      h('div', { class: 'tr2-tools' },
+      h('div', { class: 'tr2-tools', onclick: (e) => { if (e.target.closest('button')) setTimeout(revealTop, 80); } },
         use('crosshair', 'var(--pink)', 'ほんとうの使われ方 ① CSS は、木をたどって「当てる相手」を探す',
           h('p', { html: '「このボタンだけ赤く」「リストの2番目だけ太く」。CSS は<b>セレクタ</b>で木の中の相手を探します。書き換えて、ヒットする相手を見よう。' }),
           h('div', { class: 'tr2-sel' }, h('code', 'セレクタ'), selIn), h('div', { class: 'tr2-sel' }, chips), result),

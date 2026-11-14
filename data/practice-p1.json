@@ -1,0 +1,284 @@
+[
+ {
+  "lesson": "html",
+  "scene": null,
+  "label": "HTML 実践課題一覧",
+  "path": "html/practice"
+ },
+ {
+  "lesson": "html",
+  "scene": "リスト：ul / ol / dl",
+  "label": "リスト練習",
+  "path": "html/practice/02_list"
+ },
+ {
+  "lesson": "html",
+  "scene": "フォーム：データを送る",
+  "label": "フォーム練習",
+  "path": "html/practice/03_form"
+ },
+ {
+  "lesson": "html",
+  "scene": "作ってみよう：企画と公開",
+  "label": "ミニプロジェクト",
+  "path": "html/practice/04_mini_project"
+ },
+ {
+  "lesson": "html",
+  "scene": "実践：自己紹介ページ",
+  "label": "自己紹介ページ",
+  "path": "html/practice/01_self_intro"
+ },
+ {
+  "lesson": "css",
+  "scene": null,
+  "label": "CSS 実践課題一覧",
+  "path": "html/practice"
+ },
+ {
+  "lesson": "css",
+  "scene": "文字のスタイル",
+  "label": "文字のスタイル課題",
+  "path": "html/practice/15_font_text"
+ },
+ {
+  "lesson": "css",
+  "scene": "ボックスモデル",
+  "label": "ボックスモデル課題",
+  "path": "html/practice/11_box_model"
+ },
+ {
+  "lesson": "css",
+  "scene": "Flexbox で並べる",
+  "label": "Flexbox 課題",
+  "path": "html/practice/12_flex_layout"
+ },
+ {
+  "lesson": "css",
+  "scene": "position：重ねる・ずらす",
+  "label": "position 課題",
+  "path": "html/practice/13_position_sticky"
+ },
+ {
+  "lesson": "css",
+  "scene": "fixed と sticky",
+  "label": "sticky ヘッダー課題",
+  "path": "html/practice/13_position_sticky"
+ },
+ {
+  "lesson": "css",
+  "scene": "z-index：重なり順",
+  "label": "z-index 課題",
+  "path": "html/practice/14_z_index"
+ },
+ {
+  "lesson": "css",
+  "scene": "Sass（プラスα）",
+  "label": "Sass コンパイル課題",
+  "path": "html/practice/16_sass"
+ },
+ {
+  "lesson": "css",
+  "scene": "実践：中央ぞろえカード",
+  "label": "中央ぞろえカード",
+  "path": "html/practice/10_css_center_card"
+ },
+ {
+  "lesson": "cuivim",
+  "scene": null,
+  "label": "ターミナル練習一覧",
+  "path": "cli/practice"
+ },
+ {
+  "lesson": "cuivim",
+  "scene": null,
+  "label": "Vim 練習一覧",
+  "path": "vim/practice"
+ },
+ {
+  "lesson": "cuivim",
+  "scene": "ターミナルを触ってみよう",
+  "label": "ターミナル基本",
+  "path": "cli/practice/01_terminal_basics"
+ },
+ {
+  "lesson": "cuivim",
+  "scene": "Vim：3つのモード",
+  "label": "Vim 練習ファイル",
+  "path": "vim/practice"
+ },
+ {
+  "lesson": "cuivim",
+  "scene": "実践：ターミナルで作ってみよう",
+  "label": "ターミナル実践",
+  "path": "cli/practice/01_terminal_basics"
+ },
+ {
+  "lesson": "git",
+  "scene": null,
+  "label": "Git 実践スクリプト一覧",
+  "path": "git/practice"
+ },
+ {
+  "lesson": "git",
+  "scene": "4つの場所とコマンド",
+  "label": "4つの場所の解説",
+  "path": "git/practice/README.md"
+ },
+ {
+  "lesson": "git",
+  "scene": "ブランチとマージ",
+  "label": "fast-forward シナリオ",
+  "path": "git/practice/01_branch_merge.sh"
+ },
+ {
+  "lesson": "git",
+  "scene": "ブランチとマージ",
+  "label": "マージコミット シナリオ",
+  "path": "git/practice/02_merge_commit.sh"
+ },
+ {
+  "lesson": "git",
+  "scene": "コンフリクトを解決しよう",
+  "label": "コンフリクト演習",
+  "path": "git/practice/03_conflict.sh"
+ },
+ {
+  "lesson": "git",
+  "scene": "GitHub と SSH でつなぐ",
+  "label": "SSH ガイド",
+  "path": "git/ssh_guide.md"
+ },
+ {
+  "lesson": "git",
+  "scene": "実践：コマンドを組み立てよう",
+  "label": "コマンド順クイズ",
+  "path": "git/practice/04_command_order.md"
+ },
+ {
+  "lesson": "x-terminal",
+  "scene": null,
+  "label": "ターミナル便利技 演習",
+  "path": "cli/practice/02_pipes_redirect"
+ },
+ {
+  "lesson": "x-terminal",
+  "scene": "パイプ ( | )：コマンドをつなぐ",
+  "label": "パイプ演習",
+  "path": "cli/practice/02_pipes_redirect"
+ },
+ {
+  "lesson": "x-terminal",
+  "scene": "リダイレクト と grep",
+  "label": "リダイレクト演習",
+  "path": "cli/practice/02_pipes_redirect"
+ },
+ {
+  "lesson": "x-terminal",
+  "scene": "oh-my-zsh：短縮 alias",
+  "label": "alias（Git 補足）",
+  "path": "git/bonus.md"
+ },
+ {
+  "lesson": "x-vscode",
+  "scene": null,
+  "label": "Emmet 演習",
+  "path": "html/practice/20_emmet"
+ },
+ {
+  "lesson": "x-vscode",
+  "scene": "Emmet：略語を Tab で展開",
+  "label": "Emmet 演習",
+  "path": "html/practice/20_emmet"
+ },
+ {
+  "lesson": "x-devtools",
+  "scene": null,
+  "label": "DevTools バグ探し",
+  "path": "html/practice/21_devtools"
+ },
+ {
+  "lesson": "x-devtools",
+  "scene": "Elements：その場で書き換える",
+  "label": "DevTools バグ探し",
+  "path": "html/practice/21_devtools"
+ },
+ {
+  "lesson": "x-devtools",
+  "scene": "Console と Network",
+  "label": "DevTools バグ探し",
+  "path": "html/practice/21_devtools"
+ },
+ {
+  "lesson": "x-devtools",
+  "scene": "Device mode：スマホで見る",
+  "label": "DevTools バグ探し",
+  "path": "html/practice/21_devtools"
+ },
+ {
+  "lesson": "x-bem",
+  "scene": null,
+  "label": "BEM 演習",
+  "path": "html/practice/17_bem"
+ },
+ {
+  "lesson": "x-bem",
+  "scene": "Block · Element · Modifier",
+  "label": "BEM 演習",
+  "path": "html/practice/17_bem"
+ },
+ {
+  "lesson": "x-bem",
+  "scene": "実践：BEM に直そう",
+  "label": "BEM に直す",
+  "path": "html/practice/17_bem"
+ },
+ {
+  "lesson": "x-css-plus",
+  "scene": null,
+  "label": "CSS プラスα 演習",
+  "path": "html/practice/18_css_variables_responsive"
+ },
+ {
+  "lesson": "x-css-plus",
+  "scene": "CSS 変数 var()",
+  "label": "変数とレスポンシブ",
+  "path": "html/practice/18_css_variables_responsive"
+ },
+ {
+  "lesson": "x-css-plus",
+  "scene": "Sass(SCSS)：書き方 → CSS",
+  "label": "Sass コンパイル",
+  "path": "html/practice/16_sass"
+ },
+ {
+  "lesson": "x-css-plus",
+  "scene": "レスポンシブ：幅で変わる",
+  "label": "メディアクエリ",
+  "path": "html/practice/18_css_variables_responsive"
+ },
+ {
+  "lesson": "x-css-plus",
+  "scene": "動きと重なり",
+  "label": "z-index 課題",
+  "path": "html/practice/14_z_index"
+ },
+ {
+  "lesson": "x-a11y",
+  "scene": null,
+  "label": "アクセシビリティ演習",
+  "path": "html/practice/05_semantic_a11y"
+ },
+ {
+  "lesson": "x-a11y",
+  "scene": "実践：アクセシブルに直そう",
+  "label": "アクセシブルに直す",
+  "path": "html/practice/05_semantic_a11y"
+ },
+ {
+  "lesson": "x-a11y",
+  "scene": "セマンティックHTML：読み上げ視点",
+  "label": "アクセシブルに直す",
+  "path": "html/practice/05_semantic_a11y"
+ }
+]

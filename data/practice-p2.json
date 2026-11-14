@@ -1,0 +1,326 @@
+[
+ {
+  "lesson": "ts-intro",
+  "scene": null,
+  "label": "練習：赤線を消そう",
+  "path": "typescript/practice/02_ts_intro_fix_error"
+ },
+ {
+  "lesson": "ts-intro",
+  "scene": "そのバグ、どこで見つかる？",
+  "label": "JS だと \"12\" になる例",
+  "path": "typescript/practice/02_ts_intro_fix_error/bug_in_js.js"
+ },
+ {
+  "lesson": "ts-intro",
+  "scene": "TS は JS に変換される",
+  "label": "02_ts_intro_fix_error",
+  "path": "typescript/practice/02_ts_intro_fix_error"
+ },
+ {
+  "lesson": "ts-intro",
+  "scene": "実践：赤線を消そう",
+  "label": "実践コード main.ts",
+  "path": "typescript/practice/02_ts_intro_fix_error/main.ts"
+ },
+ {
+  "lesson": "ts-basic",
+  "scene": null,
+  "label": "練習：基本の型",
+  "path": "typescript/practice/03_basic_types_fix"
+ },
+ {
+  "lesson": "ts-basic",
+  "scene": "実践：型エラーを全部直そう",
+  "label": "実践コード main.ts",
+  "path": "typescript/practice/03_basic_types_fix/main.ts"
+ },
+ {
+  "lesson": "ts-basic",
+  "scene": "any と unknown",
+  "label": "any / unknown 演習",
+  "path": "typescript/practice/03_basic_types_fix/any_unknown_void_null.ts"
+ },
+ {
+  "lesson": "ts-basic",
+  "scene": "値がない型：void / undefined / null",
+  "label": "void / null 演習",
+  "path": "typescript/practice/03_basic_types_fix/any_unknown_void_null.ts"
+ },
+ {
+  "lesson": "ts-types",
+  "scene": null,
+  "label": "練習：型を設計しよう",
+  "path": "typescript/practice/04_types_design"
+ },
+ {
+  "lesson": "ts-types",
+  "scene": "実践：型を設計しよう",
+  "label": "実践コード main.ts",
+  "path": "typescript/practice/04_types_design/main.ts"
+ },
+ {
+  "lesson": "ts-types",
+  "scene": "Enum：名前の付いた定数",
+  "label": "実践コード main.ts",
+  "path": "typescript/practice/04_types_design/main.ts"
+ },
+ {
+  "lesson": "ts-types",
+  "scene": "extends と merge",
+  "label": "実践コード main.ts",
+  "path": "typescript/practice/04_types_design/main.ts"
+ },
+ {
+  "lesson": "ts-class",
+  "scene": null,
+  "label": "練習：クラス",
+  "path": "typescript/practice/05_class_modifiers"
+ },
+ {
+  "lesson": "ts-class",
+  "scene": "アクセス修飾子：誰が触れる？",
+  "label": "01_protected.ts",
+  "path": "typescript/practice/05_class_modifiers/01_protected.ts"
+ },
+ {
+  "lesson": "ts-class",
+  "scene": "実践：private の壁を越えよう",
+  "label": "実践コード 01_protected.ts",
+  "path": "typescript/practice/05_class_modifiers/01_protected.ts"
+ },
+ {
+  "lesson": "ts-class",
+  "scene": "readonly：書き換え禁止",
+  "label": "02_readonly_getter_setter.ts",
+  "path": "typescript/practice/05_class_modifiers/02_readonly_getter_setter.ts"
+ },
+ {
+  "lesson": "ts-class",
+  "scene": "getter / setter：門番を置く",
+  "label": "02_readonly_getter_setter.ts",
+  "path": "typescript/practice/05_class_modifiers/02_readonly_getter_setter.ts"
+ },
+ {
+  "lesson": "ts-class",
+  "scene": "継承：親から子へ",
+  "label": "03_abstract.ts",
+  "path": "typescript/practice/05_class_modifiers/03_abstract.ts"
+ },
+ {
+  "lesson": "ts-generics",
+  "scene": null,
+  "label": "練習：ジェネリクス",
+  "path": "typescript/practice/06_generics"
+ },
+ {
+  "lesson": "ts-generics",
+  "scene": "Box<T> マシン",
+  "label": "実践コード main.ts",
+  "path": "typescript/practice/06_generics/main.ts"
+ },
+ {
+  "lesson": "ts-generics",
+  "scene": "identity<T>：入れた型が出てくる",
+  "label": "実践コード main.ts",
+  "path": "typescript/practice/06_generics/main.ts"
+ },
+ {
+  "lesson": "ts-generics",
+  "scene": "Array<T> と制約 extends",
+  "label": "実践コード main.ts",
+  "path": "typescript/practice/06_generics/main.ts"
+ },
+ {
+  "lesson": "ts-generics",
+  "scene": "実践：any を T に置き換えよう",
+  "label": "実践コード main.ts",
+  "path": "typescript/practice/06_generics/main.ts"
+ },
+ {
+  "lesson": "ts-test",
+  "scene": null,
+  "label": "練習：Vitest プロジェクト",
+  "path": "typescript/practice/07_unit_test"
+ },
+ {
+  "lesson": "ts-test",
+  "scene": "Vitest をセットアップ",
+  "label": "セットアップ手順 README",
+  "path": "typescript/practice/07_unit_test/README.md"
+ },
+ {
+  "lesson": "ts-test",
+  "scene": "TDD：赤 → 緑 → 赤 → 緑",
+  "label": "__tests__/ （テスト）",
+  "path": "typescript/practice/07_unit_test/__tests__"
+ },
+ {
+  "lesson": "ts-test",
+  "scene": "テストの型：Arrange → Act → Assert",
+  "label": "multiply.test.ts",
+  "path": "typescript/practice/07_unit_test/__tests__/multiply.test.ts"
+ },
+ {
+  "lesson": "ts-test",
+  "scene": "ミニテストランナー",
+  "label": "src/sum.ts（バグあり）",
+  "path": "typescript/practice/07_unit_test/src/sum.ts"
+ },
+ {
+  "lesson": "ts-test",
+  "scene": "describe / it / expect 早見表",
+  "label": "cart.test.ts（マッチャー）",
+  "path": "typescript/practice/07_unit_test/__tests__/cart.test.ts"
+ },
+ {
+  "lesson": "ts-test",
+  "scene": "実践：テストを書こう",
+  "label": "実践コード 07_unit_test",
+  "path": "typescript/practice/07_unit_test"
+ },
+ {
+  "lesson": "review",
+  "scene": null,
+  "label": "総合練習問題",
+  "path": "typescript/practice/01_practice.ts"
+ },
+ {
+  "lesson": "review",
+  "scene": "復習クイズ",
+  "label": "TypeScript 練習問題一覧",
+  "path": "typescript/practice/README.md"
+ },
+ {
+  "lesson": "x-js-basics",
+  "scene": null,
+  "label": "練習：JS の前提知識",
+  "path": "typescript/practice/08_js_basics"
+ },
+ {
+  "lesson": "x-js-basics",
+  "scene": "const / let とアロー関数",
+  "label": "実践コード main.ts",
+  "path": "typescript/practice/08_js_basics/main.ts"
+ },
+ {
+  "lesson": "x-js-basics",
+  "scene": "テンプレート・分割代入・スプレッド",
+  "label": "実践コード main.ts",
+  "path": "typescript/practice/08_js_basics/main.ts"
+ },
+ {
+  "lesson": "x-js-basics",
+  "scene": "map / filter / reduce",
+  "label": "実践コード main.ts",
+  "path": "typescript/practice/08_js_basics/main.ts"
+ },
+ {
+  "lesson": "x-js-basics",
+  "scene": "import / export",
+  "label": "08_js_basics",
+  "path": "typescript/practice/08_js_basics"
+ },
+ {
+  "lesson": "x-ts-narrow",
+  "scene": null,
+  "label": "練習：null を安全に扱う",
+  "path": "typescript/practice/09_narrowing"
+ },
+ {
+  "lesson": "x-ts-narrow",
+  "scene": "どの型に何が入る？",
+  "label": "実践コード main.ts",
+  "path": "typescript/practice/09_narrowing/main.ts"
+ },
+ {
+  "lesson": "x-ts-narrow",
+  "scene": "絞り込み（narrowing）",
+  "label": "実践コード main.ts",
+  "path": "typescript/practice/09_narrowing/main.ts"
+ },
+ {
+  "lesson": "x-ts-narrow",
+  "scene": "?. と ??",
+  "label": "実践コード main.ts",
+  "path": "typescript/practice/09_narrowing/main.ts"
+ },
+ {
+  "lesson": "x-ts-narrow",
+  "scene": "実践：null を安全に扱う",
+  "label": "実践コード main.ts",
+  "path": "typescript/practice/09_narrowing/main.ts"
+ },
+ {
+  "lesson": "x-ts-utility",
+  "scene": null,
+  "label": "練習：ユーティリティ型",
+  "path": "typescript/practice/10_utility_types"
+ },
+ {
+  "lesson": "x-ts-utility",
+  "scene": "as const：値をそのまま型に",
+  "label": "実践コード main.ts",
+  "path": "typescript/practice/10_utility_types/main.ts"
+ },
+ {
+  "lesson": "x-ts-utility",
+  "scene": "ユーティリティ型",
+  "label": "実践コード main.ts",
+  "path": "typescript/practice/10_utility_types/main.ts"
+ },
+ {
+  "lesson": "x-ts-utility",
+  "scene": "組み合わせ：権限チェック",
+  "label": "実践コード main.ts",
+  "path": "typescript/practice/10_utility_types/main.ts"
+ },
+ {
+  "lesson": "x-ts-utility",
+  "scene": "実践：演習問題",
+  "label": "実践コード main.ts",
+  "path": "typescript/practice/10_utility_types/main.ts"
+ },
+ {
+  "lesson": "x-ts-naming",
+  "scene": null,
+  "label": "練習：命名規則",
+  "path": "typescript/practice/11_naming"
+ },
+ {
+  "lesson": "x-ts-naming",
+  "scene": "4つの書き方",
+  "label": "命名ルール README",
+  "path": "typescript/practice/11_naming/README.md"
+ },
+ {
+  "lesson": "x-ts-naming",
+  "scene": "名前をつけよう",
+  "label": "実践コード main.ts",
+  "path": "typescript/practice/11_naming/main.ts"
+ },
+ {
+  "lesson": "x-async",
+  "scene": null,
+  "label": "練習：非同期処理",
+  "path": "typescript/practice/12_async"
+ },
+ {
+  "lesson": "x-async",
+  "scene": "待っている間、何が動く？",
+  "label": "12_async",
+  "path": "typescript/practice/12_async"
+ },
+ {
+  "lesson": "x-async",
+  "scene": "Promise の 3 つの状態",
+  "label": "12_async",
+  "path": "typescript/practice/12_async"
+ },
+ {
+  "lesson": "x-async",
+  "scene": "実践：順番を読み解く",
+  "label": "実践コード main.ts",
+  "path": "typescript/practice/12_async/main.ts"
+ }
+]

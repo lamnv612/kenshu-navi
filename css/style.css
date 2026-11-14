@@ -1091,3 +1091,17 @@ a.btn{text-decoration:none}
 .rail-fold span{flex:1}.rail-fold em{font:700 .6875rem var(--mono);font-style:normal;padding:0 .5em;border-radius:6px;border:1px solid var(--line);color:var(--mute)}
 .rail-fold .ic:last-child{width:16px;height:16px;transition:transform .2s;color:var(--mute)}.rail-fold.on .ic:last-child{transform:rotate(180deg)}
 .rail-xl{display:grid;gap:6px;margin-top:6px}.rail-xl[hidden]{display:none}
+
+/* 出力を上に固定（K.W.pinOutput） */
+.pin-out{position:sticky;top:64px;z-index:5;background:var(--bg);padding:6px 4px 10px;margin:0 -4px;box-shadow:0 12px 18px -14px rgba(0,0,0,.7)}
+.pin-out .cg-term{height:var(--pin-h,220px)}.pin-out .cg-tree{max-height:var(--pin-h,220px);min-height:0;overflow:auto}
+.pin-out iframe{max-height:var(--pin-h,220px)}
+.pin-lb{font-size:.75rem;color:var(--mute);display:flex;gap:.4em;align-items:center;margin-bottom:4px}.pin-lb .ic{width:12px;height:12px}
+@media(max-width:800px){.pin-out{top:56px}.pin-out .cg-term{height:var(--pin-mh,150px)}.pin-out .cg-tree{max-height:var(--pin-mh,150px)}.pin-out iframe{max-height:var(--pin-mh,150px)}}
+
+/* 切り替えチップ（リストの種類・display など共通） */
+.gap-chips{display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 10px}
+.gap-chip{all:unset;box-sizing:border-box;cursor:pointer;padding:.35em .9em;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--text);font:700 .8125rem var(--mono);transition:background .2s,border-color .2s,transform .2s}
+.gap-chip:hover{background:var(--card2);transform:translateY(-1px)}
+.gap-chip:focus-visible{outline:2px solid var(--ts);outline-offset:2px}
+.gap-chip.on{background:color-mix(in srgb,var(--c,var(--ts)) 24%,var(--card));border-color:var(--c,var(--ts));box-shadow:0 0 0 1px var(--c,var(--ts)) inset}

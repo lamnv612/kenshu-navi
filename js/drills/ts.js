@@ -82,136 +82,176 @@ console.log(tax(price));\`;
   /* ================= ts-basic ================= */
   D['ts-basic'] = {
     '型アノテーションの読み方': mk(
-`let age = 20;
-let name = "太郎";
-let isAdmin = true;
-// 3つとも「変数名: 型」の形に書き足そう
+`// 申込フォームの値。3つとも「変数名: 型」の形に書き足そう
+let age = 20;
+let name = "田中";
+let agree = true;
+
+console.log(name + "さんは来年 " + (age + 1) + " 歳");
 `,
 `let age: number = 20;
-let name: string = "太郎";
-let isAdmin: boolean = true;
-let tags: string[] = ["ts", "vue"];
+let name: string = "田中";
+let agree: boolean = true;
+let tags: string[] = ["相談", "予約"];
+
+console.log(name + "さんは来年 " + (age + 1) + " 歳");
 `,
       (s, c) => [
-        { level: 1, label: 'age に number、name に string の型を付ける', ok: /let\s+age\s*:\s*number/.test(s) && /let\s+name\s*:\s*string/.test(s) && clean(c), hint: ['let age: number = 20;'] },
-        { level: 2, label: 'isAdmin に boolean を付け、文字列の配列 tags: string[] も作る', ok: /let\s+isAdmin\s*:\s*boolean/.test(s) && /let\s+tags\s*:\s*string\s*\[\s*\]\s*=\s*\[/.test(s) && clean(c), hint: ['string[] は「文字列の配列」。'] },
-      ], 200),
+        { level: 1, label: 'age に number、name に string の型を付ける', ok: /let\s+age\s*:\s*number/.test(s) && /let\s+name\s*:\s*string/.test(s) && clean(c), hint: ['let age: number = 20;', '「変数名: 型」の順番。'] },
+        { level: 2, label: 'agree に boolean を付け、文字列の配列 tags: string[] も作る', ok: /let\s+agree\s*:\s*boolean/.test(s) && /let\s+tags\s*:\s*string\s*\[\s*\]\s*=\s*\[/.test(s) && clean(c), hint: ['string[] は「文字列の配列」。tags は相談の分類を入れる想定。'] },
+      ], 220),
     '型の箱に値を入れよう': mk(
-`let a: string = 42;      // 赤線
-let b: number = "7";     // 赤線
-let c: boolean = "true"; // 赤線
-console.log(a, b, c);
+`// フォームから届いた値は、いつも「文字」
+const peopleText: string = "3";
+const people: number = peopleText;   // 赤線：文字は number の箱に入らない
+const agree: boolean = "true";       // 赤線：boolean は true / false だけ
+
+console.log(people + 2, agree);
 `,
-`let a: string = "42";
-let b: number = 7;
-let c: boolean = true;
-console.log(a, b, c);
+`const peopleText: string = "3";
+const people: number = Number(peopleText);
+const agree: boolean = true;
+
+console.log(people + 2, agree);
 `,
       (s, c, raw) => [
-        { level: 1, label: 'a の赤線を直す（string の箱には文字列）', ok: !/let\s+a\s*:\s*string\s*=\s*42/.test(s) && /let\s+a\s*:/.test(s) && !errAt(raw, c, /let\s+a\b/), hint: ['42 を "42" にする、または型を number にする。'] },
-        { level: 2, label: 'b の赤線を直す（number の箱には数字）', ok: !/let\s+b\s*:\s*number\s*=\s*["']/.test(s) && /let\s+b\s*:/.test(s) && !errAt(raw, c, /let\s+b\b/), hint: ['"7" を 7 にする。'] },
-        { level: 3, label: 'c の赤線を直す（boolean の箱には true / false）', ok: /let\s+c\s*:\s*boolean\s*=\s*(true|false)/.test(s) && clean(c), hint: ['"true" の引用符を外す。'] },
-      ], 200),
+        { level: 1, label: 'people の赤線を直す（文字 "3" を数字にして number の箱へ：Number(…)）', ok: /const\s+people\s*:\s*number\s*=\s*Number\s*\(\s*peopleText\s*\)/.test(s) && !errAt(raw, c, /const\s+people\b/), hint: ['Number("3") は数字の 3 になる。', 'const people: number = Number(peopleText);'] },
+        { level: 2, label: 'agree の赤線を直す（boolean の箱には true / false）', ok: /const\s+agree\s*:\s*boolean\s*=\s*(true|false)\b/.test(s) && clean(c), hint: ['"true" の引用符を外すと、文字ではなく真偽値になる。'] },
+      ], 220),
     'const / let と型推論': mk(
-`const limit = 10;
-let count = 0;
-count = "three"; // 赤線：count は number だと推論された
+`const TAX_RATE = 0.1;                 // 消費税率：ずっと同じ
+let total = 0;                        // カートの合計：足していく
+const prices = [1200, 800, 2500];
 
-console.log(limit, count);
+TAX_RATE = 0.08;                      // 赤線：const は入れ直せない
+
+console.log(total, TAX_RATE);
 `,
-`const limit = 10;
-let count = 0;
-count = 3;
+`const TAX_RATE = 0.1;
+let total = 0;
+const prices = [1200, 800, 2500];
 
-let step = 1;
-step = 2;
+for (let i = 0; i < prices.length; i++) {
+  total += prices[i];
+}
 
-console.log(limit, count, step);
+const cart: { items: string[] } = { items: [] };
+cart.items.push("相談 30分");
+
+console.log(Math.round(total * (1 + TAX_RATE)), cart.items);
 `,
       (s, c) => [
-        { level: 1, label: 'count の赤線を直す（数字を入れる）', ok: !/count\s*=\s*["']/.test(s) && /count\s*(=\s*\d+|\+\+|\+=)/.test(s) && clean(c), hint: ['型を書かなくても、0 を入れた時点で number と決まる。'] },
-        { level: 2, label: 'let step = 1 を作り、あとから step = 2 に変える', ok: /let\s+step\s*=\s*1/.test(s) && /step\s*=\s*2/.test(s) && clean(c), hint: ['let は再代入できる。const はできない。'] },
-      ], 200),
+        { level: 1, label: 'TAX_RATE の赤線を消す（const のまま、入れ直す行をやめる）', ok: /const\s+TAX_RATE\b/.test(s) && !/(^|\n)\s*TAX_RATE\s*=[^=]/.test(s) && clean(c), hint: ['変わらない値は const。入れ直す行を消せば赤線も消える。'] },
+        { level: 2, label: 'for で prices をぜんぶ total に足す（total += …、total は let のまま）', ok: /let\s+total\b/.test(s) && /\bfor\s*\(/.test(s) && /total\s*\+=/.test(s) && clean(c), hint: ['足していく値だから let。for (let i = 0; i < prices.length; i++) { total += prices[i]; }'] },
+        { level: 3, label: 'const cart = { items: [] } を作り、cart.items.push(…) で足す（const でも中身は変えられる）', ok: /const\s+cart\b/.test(s) && /cart\.items\.push\s*\(/.test(s) && !/(^|\n)\s*cart\s*=[^=]/.test(s) && clean(c), hint: ['const が守るのは箱そのもの。中身を足すのは OK。', 'const cart: { items: string[] } = { items: [] };'] },
+      ], 260),
     '型推論：どこまで書く？': mk(
-`function greet(name, times) {
-  return name.repeat(times);
+`// 請求書の小計。引数の型が無い（赤線）、中の変数は書きすぎ
+function subtotal(price, qty) {
+  const sum: number = price * qty;
+  return sum;
 }
-const msg: string = greet("Hi", 2);
-console.log(msg);
+
+console.log(subtotal(1000, 3));
 `,
-`function greet(name: string, times: number): string {
-  return name.repeat(times);
+`function subtotal(price: number, qty: number): number {
+  const sum = price * qty;
+  return sum;
 }
-const msg = greet("Hi", 2);
-console.log(msg);
+
+console.log(subtotal(1000, 3));
 `,
       (s, c) => [
-        { level: 1, label: '引数に型を書く（name: string, times: number）', ok: /function\s+greet\s*\(\s*name\s*:\s*string\s*,\s*times\s*:\s*number\s*\)/.test(s) && clean(c), hint: ['引数は推論できないので、必ず書く。'] },
-        { level: 2, label: '戻り値に : string を書き、msg の型は省く（推論に任せる）', ok: /function\s+greet\s*\([^)]*\)\s*:\s*string/.test(s) && /const\s+msg\s*=/.test(s) && clean(c), hint: ['const msg = greet(...) だけで string と分かる。'] },
-      ], 200),
+        { level: 1, label: '引数に型を書く（price: number, qty: number）', ok: /function\s+subtotal\s*\(\s*price\s*:\s*number\s*,\s*qty\s*:\s*number\s*\)/.test(s) && clean(c), hint: ['引数は外から来る値。TS は推論できないので、必ず書く。'] },
+        { level: 2, label: '戻り値に : number を書き、中の sum には型を書かない（推論に任せる）', ok: /function\s+subtotal\s*\([^)]*\)\s*:\s*number/.test(s) && /const\s+sum\s*=/.test(s) && clean(c), hint: ['const sum = price * qty; だけで number と分かる。'] },
+      ], 220),
     '配列・タプル・オブジェクト': mk(
-`const names: string[] = ["田中"];
-const point: [number, number] = [10, 20];
-const user: { name: string; age: number } = { name: "花子" }; // 赤線
+`const lawyers: string[] = ["田中", "山本"];
+const row: [string, number, boolean] = ["離婚相談", 3000, true];
 
-console.log(names, point, user);
+interface Consultation {
+  title: string;
+  fee: number;
+}
+const c: Consultation = { title: "相続の相談" };   // 赤線：fee が無い
+
+console.log(lawyers, row, c);
 `,
-`const names: string[] = ["田中"];
-names.push("鈴木");
-const point: [number, number] = [10, 20];
-const rgb: [number, number, number] = [255, 0, 0];
-const user: { name: string; age: number } = { name: "花子", age: 20 };
+`const lawyers: string[] = ["田中", "山本"];
+lawyers.push("鈴木");
+const row: [string, number, boolean] = ["離婚相談", 3000, true];
+const range: [number, number] = [1000, 5000];
 
-console.log(names, point, rgb, user);
+interface Consultation {
+  title: string;
+  fee: number;
+}
+const c: Consultation = { title: "相続の相談", fee: 3000 };
+
+console.log(lawyers, row, range, c);
 `,
       (s, c) => [
-        { level: 1, label: 'user の赤線を直す（age も入れる）', ok: /const\s+user[\s\S]*\{\s*name\s*:\s*["'][^"']*["']\s*,\s*age\s*:\s*\d+\s*\}/.test(s) && clean(c), hint: ['{ name: "花子", age: 20 }'] },
-        { level: 2, label: 'names に push で名前を足し、3つの数のタプル rgb: [number, number, number] も作る', ok: /names\.push\s*\(\s*["']/.test(s) && /const\s+rgb\s*:\s*\[\s*number\s*,\s*number\s*,\s*number\s*\]\s*=\s*\[/.test(s) && clean(c), hint: ['タプルは「個数と順番」まで決まる。'] },
-      ], 220),
+        { level: 1, label: 'c の赤線を直す（fee も入れる）', ok: /const\s+c\s*:\s*Consultation\s*=\s*\{[^}]*title\s*:\s*["'][^"']*["'][^}]*fee\s*:\s*\d+[^}]*\}|const\s+c\s*:\s*Consultation\s*=\s*\{[^}]*fee\s*:\s*\d+[^}]*title\s*:/.test(s) && clean(c), hint: ['{ title: "相続の相談", fee: 3000 }'] },
+        { level: 2, label: 'lawyers に push で名前を足し、料金の下限・上限 range: [number, number] も作る', ok: /lawyers\.push\s*\(\s*["']/.test(s) && /const\s+range\s*:\s*\[\s*number\s*,\s*number\s*\]\s*=\s*\[/.test(s) && clean(c), hint: ['タプルは「個数と順番と型」まで決まる。[1000, 5000] のように。'] },
+      ], 260),
     'any と unknown': mk(
-`let a: any = "hello";
-let u: unknown = "hello";
-console.log(a.toUpperCase());
-console.log(u.toUpperCase()); // 赤線：unknown はそのまま使えない
+`// 外部 API の返事。何が来るか分からないので unknown で受けている
+const res: unknown = JSON.parse('"田中"');
+console.log(res.toUpperCase());   // 赤線：確かめる前は使えない
+
+// 古いコードは any のまま（赤線が出ないので、間違いに気づけない）
+const code: any = JSON.parse('"A-1"');
+console.log(code.toLowerCase());
 `,
-`let a: unknown = "hello";
-let u: unknown = "hello";
-if (typeof a === "string") {
-  console.log(a.toUpperCase());
+`const res: unknown = JSON.parse('"田中"');
+if (typeof res === "string") {
+  console.log(res.toUpperCase());
 }
-if (typeof u === "string") {
-  console.log(u.toUpperCase());
+
+const code: unknown = JSON.parse('"A-1"');
+if (typeof code === "string") {
+  console.log(code.toLowerCase());
 }
 `,
       (s, c) => [
-        { level: 1, label: 'u の赤線を直す（typeof u === "string" で確かめてから使う）', ok: /typeof\s+u\s*===\s*["']string["']/.test(s) && clean(c), hint: ['if (typeof u === "string") { ... } の中なら string として使える。'] },
-        { level: 2, label: 'a も unknown に変えて、同じように typeof で確かめる', ok: !/a\s*:\s*any/.test(s) && /typeof\s+a\s*===\s*["']string["']/.test(s) && clean(c), hint: ['any は何でも通すので、確かめ忘れてもエラーにならない。'] },
-      ], 220),
+        { level: 1, label: 'res の赤線を直す（typeof res === "string" で確かめてから使う）', ok: /typeof\s+res\s*===\s*["']string["']/.test(s) && clean(c), hint: ['if (typeof res === "string") { … } の中なら string として使える。'] },
+        { level: 2, label: 'code も any をやめて unknown にし、typeof で確かめてから使う', ok: !/code\s*:\s*any/.test(s) && /code\s*:\s*unknown/.test(s) && /typeof\s+code\s*===\s*["']string["']/.test(s) && clean(c), hint: ['any は何でも通すので、確かめ忘れても赤線が出ない。unknown なら出る。'] },
+      ], 260),
     '値がない型：void / undefined / null': mk(
-`function log(msg: string) {
-  console.log(msg);
+`function findName(id: number): string | null {
+  return id === 1 ? "田中" : null;   // 見つからなければ null
 }
-function find(id: number) {
-  return id === 1 ? "田中" : null;
+const n = findName(2);
+console.log(n.length);               // 赤線：null かもしれない
+
+interface Profile {
+  name: string;
+  nickname?: string;                 // あだ名は無いかも
 }
-const n: string = find(1); // 赤線：null かもしれない
-log(n);
+const p: Profile = { name: "田中" };
+console.log(p.nickname.length);      // 赤線：undefined かもしれない
 `,
-`function log(msg: string): void {
-  console.log(msg);
-}
-function find(id: number) {
+`function findName(id: number): string | null {
   return id === 1 ? "田中" : null;
 }
-const n: string | null = find(1);
+const n = findName(2);
 if (n !== null) {
-  log(n);
+  console.log(n.length);
+}
+
+interface Profile {
+  name: string;
+  nickname?: string;
+}
+const p: Profile = { name: "田中" };
+if (p.nickname !== undefined) {
+  console.log(p.nickname.length);
 }
 `,
       (s, c) => [
-        { level: 1, label: 'n の赤線を直す（string | null にして、null でないときだけ使う）', ok: /const\s+n\s*(:\s*string\s*\|\s*null)?\s*=\s*find/.test(s) && !/const\s+n\s*:\s*string\s*=/.test(s) && clean(c), hint: ['null かもしれない値は、型にも null を書く。'] },
-        { level: 2, label: 'log 関数に戻り値の型 : void を付ける', ok: /function\s+log\s*\([^)]*\)\s*:\s*void/.test(s) && clean(c), hint: ['何も返さない関数は void。'] },
-      ], 240),
+        { level: 1, label: 'n の赤線を直す（null でないときだけ n.length を使う）', ok: /(n\s*!==?\s*null|null\s*!==?\s*n)/.test(s) && clean(c) || (/(n\s*!==?\s*null)/.test(s) && !errAt(s, c, /n\.length/)), hint: ['if (n !== null) { console.log(n.length); }'] },
+        { level: 2, label: 'p.nickname の赤線を直す（undefined でないときだけ使う）', ok: /p\.nickname\s*!==?\s*undefined|undefined\s*!==?\s*p\.nickname|\bif\s*\(\s*p\.nickname\s*\)/.test(s) && clean(c), hint: ['? が付いた項目は undefined かもしれない。if で確かめてから使う。'] },
+      ], 300),
   };
 
   /* ================= ts-types ================= */

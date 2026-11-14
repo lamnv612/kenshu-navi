@@ -43,11 +43,11 @@
 
   /* ---------- ts-basic ---------- */
   T['ts-basic'] = mk({
-    starter: 'let count: number = "5";\nconst names: string[] = ["田中", 3];\nconst point: [number, number] = [10, "20"];\n\nlet value: unknown = "text";\n// value は unknown。文字のときだけ length を使えるようにする\n\n// user を作る：name は文字、age は数字\n',
-    solution: 'let count: number = 5;\nconst names: string[] = ["田中", "鈴木"];\nconst point: [number, number] = [10, 20];\n\nlet value: unknown = "text";\nif (typeof value === "string") {\n  console.log(value.length);\n}\n\nconst user: { name: string; age: number } = { name: "ミナ", age: 20 };\nconsole.log(count, names, point, user);\n',
+    starter: 'const people: number = "3";                          // 人数：赤線\nconst names: string[] = ["田中", 3];                 // 担当：赤線\nconst row: [string, number] = [3000, "離婚相談"];     // 相談の1行：赤線\n\nlet value: unknown = JSON.parse(\'"text"\');\n// value は unknown。文字のときだけ length を使えるようにする\n\n// consultation を作る：title は文字、fee は数字\n',
+    solution: 'const people: number = 3;\nconst names: string[] = ["田中", "鈴木"];\nconst row: [string, number] = ["離婚相談", 3000];\n\nlet value: unknown = JSON.parse(\'"text"\');\nif (typeof value === "string") {\n  console.log(value.length);\n}\n\nconst consultation: { title: string; fee: number } = { title: "相続の相談", fee: 3000 };\nconsole.log(people, names, row, consultation);\n',
     tasks: [
-      [1, 'count / names / point の3つの赤線を直す', (s, c) => noErr(c) && /count\s*:\s*number\s*=\s*-?\d/.test(s), ['値の型を、書いた型に合わせる。', 'count は数字、names は文字だけ、point は [数字, 数字]。']],
-      [2, 'const user に { name: string; age: number } の型を付けて値を入れる', (s, c) => noErr(c) && /const\s+user\s*:\s*\{[^}]*\bname\s*:\s*string[^}]*\bage\s*:\s*number[^}]*\}\s*=\s*\{/.test(s.replace(/\s+/g, ' ')) || noErr(c) && /const\s+user\s*:\s*\{[^}]*\bage\s*:\s*number[^}]*\bname\s*:\s*string[^}]*\}\s*=\s*\{/.test(s.replace(/\s+/g, ' ')), ['オブジェクトの型は { name: string; age: number }。', 'const user: { ... } = { name: "...", age: 20 };']],
+      [1, 'people / names / row の3つの赤線を直す', (s, c) => noErr(c) && /people\s*:\s*number\s*=\s*-?\d/.test(s), ['値の型を、書いた型に合わせる。', 'people は数字、names は文字だけ、row は [文字, 数字] の順番。']],
+      [2, 'const consultation に { title: string; fee: number } の型を付けて値を入れる', (s, c) => noErr(c) && (/const\s+consultation\s*:\s*\{[^}]*\btitle\s*:\s*string[^}]*\bfee\s*:\s*number[^}]*\}\s*=\s*\{/.test(s.replace(/\s+/g, ' ')) || /const\s+consultation\s*:\s*\{[^}]*\bfee\s*:\s*number[^}]*\btitle\s*:\s*string[^}]*\}\s*=\s*\{/.test(s.replace(/\s+/g, ' '))), ['オブジェクトの型は { title: string; fee: number }。', 'const consultation: { ... } = { title: "…", fee: 3000 };']],
       [3, 'unknown の value を typeof で絞り込んで、value.length を使う（赤線なし）', (s, c) => noErr(c) && /typeof\s+value\s*===?\s*["'`]string["'`]/.test(s) && /value\.length/.test(s), ['unknown のままでは .length は使えない。', 'if (typeof value === "string") { ... } の中なら使える。']],
     ],
   });

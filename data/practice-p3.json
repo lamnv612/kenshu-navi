@@ -1,0 +1,476 @@
+[
+ {
+  "lesson": "vue-intro",
+  "scene": null,
+  "label": "Hello Vue 演習",
+  "path": "vuejs/practice/00_hello_vue"
+ },
+ {
+  "lesson": "vue-intro",
+  "scene": "データを変えるだけ",
+  "label": "Hello Vue 演習",
+  "path": "vuejs/practice/00_hello_vue"
+ },
+ {
+  "lesson": "vue-intro",
+  "scene": "リアクティブの仕組み",
+  "label": "Hello Vue 演習",
+  "path": "vuejs/practice/00_hello_vue"
+ },
+ {
+  "lesson": "vue-intro",
+  "scene": ".vue ファイルの解剖",
+  "label": "Hello Vue 演習",
+  "path": "vuejs/practice/00_hello_vue"
+ },
+ {
+  "lesson": "vue-env",
+  "scene": null,
+  "label": "環境設定チェック",
+  "path": "vuejs/practice/00_setup"
+ },
+ {
+  "lesson": "vue-env",
+  "scene": "プロジェクトを作る",
+  "label": "環境設定チェック",
+  "path": "vuejs/practice/00_setup"
+ },
+ {
+  "lesson": "vue-env",
+  "scene": "フォルダ探索",
+  "label": "src の解説",
+  "path": "vuejs/01_init_project/05_src.md"
+ },
+ {
+  "lesson": "vue-env",
+  "scene": "開発サーバーとHMR",
+  "label": "環境設定チェック",
+  "path": "vuejs/practice/00_setup"
+ },
+ {
+  "lesson": "vue-basics",
+  "scene": null,
+  "label": "ミニTodo",
+  "path": "vuejs/practice/01_mini_todo"
+ },
+ {
+  "lesson": "vue-basics",
+  "scene": "ref：状態と画面",
+  "label": "Hello Vue 演習",
+  "path": "vuejs/practice/00_hello_vue"
+ },
+ {
+  "lesson": "vue-basics",
+  "scene": "v-if と v-show",
+  "label": "v-if/v-show 資料",
+  "path": "vuejs/05_v-if_v-else_v-show"
+ },
+ {
+  "lesson": "vue-basics",
+  "scene": "v-model：双方向",
+  "label": "v-model 資料",
+  "path": "vuejs/04_model"
+ },
+ {
+  "lesson": "vue-basics",
+  "scene": "イベント処理 @click",
+  "label": "イベント資料",
+  "path": "vuejs/06_event-handling"
+ },
+ {
+  "lesson": "vue-basics",
+  "scene": ":class と v-for",
+  "label": "class バインド資料",
+  "path": "vuejs/07_css-binding"
+ },
+ {
+  "lesson": "vue-basics",
+  "scene": "実践：ミニTodo",
+  "label": "ミニTodo",
+  "path": "vuejs/practice/01_mini_todo"
+ },
+ {
+  "lesson": "vue-comp",
+  "scene": null,
+  "label": "カード部品",
+  "path": "vuejs/practice/02_card_component"
+ },
+ {
+  "lesson": "vue-comp",
+  "scene": "props：親から子へ",
+  "label": "props 資料",
+  "path": "vuejs/03_props"
+ },
+ {
+  "lesson": "vue-comp",
+  "scene": "emit：子から親へ",
+  "label": "カード部品",
+  "path": "vuejs/practice/02_card_component"
+ },
+ {
+  "lesson": "vue-comp",
+  "scene": "v-model を部品に",
+  "label": "model 資料",
+  "path": "vuejs/04_model"
+ },
+ {
+  "lesson": "vue-comp",
+  "scene": "実践：カード部品",
+  "label": "カード部品",
+  "path": "vuejs/practice/02_card_component"
+ },
+ {
+  "lesson": "vue-life",
+  "scene": null,
+  "label": "computed/watch 演習",
+  "path": "vuejs/practice/03_lifecycle_computed"
+ },
+ {
+  "lesson": "vue-life",
+  "scene": "ライフサイクル",
+  "label": "ライフサイクル資料",
+  "path": "vuejs/08_lifecycle-hooks"
+ },
+ {
+  "lesson": "vue-life",
+  "scene": "computed：賢い計算",
+  "label": "computed 資料",
+  "path": "vuejs/09_computed"
+ },
+ {
+  "lesson": "vue-life",
+  "scene": "watch / watchEffect",
+  "label": "watch 資料",
+  "path": "vuejs/10_watcher"
+ },
+ {
+  "lesson": "vue-life",
+  "scene": "実践：ライフサイクル+計算",
+  "label": "computed/watch 演習",
+  "path": "vuejs/practice/03_lifecycle_computed"
+ },
+ {
+  "lesson": "vue-router",
+  "scene": null,
+  "label": "Router 演習",
+  "path": "vuejs/practice/04_router_about"
+ },
+ {
+  "lesson": "vue-router",
+  "scene": "URL ↔ コンポーネント",
+  "label": "Router 資料",
+  "path": "vuejs/12_router"
+ },
+ {
+  "lesson": "vue-router",
+  "scene": "動的ルート /users/:id",
+  "label": "Router 資料",
+  "path": "vuejs/12_router"
+ },
+ {
+  "lesson": "vue-router",
+  "scene": "ナビゲーションガード",
+  "label": "Router 資料",
+  "path": "vuejs/12_router"
+ },
+ {
+  "lesson": "vue-router",
+  "scene": "実践：ルーターを動かす",
+  "label": "Router 演習",
+  "path": "vuejs/practice/04_router_about"
+ },
+ {
+  "lesson": "vue-test",
+  "scene": null,
+  "label": "単体テスト演習",
+  "path": "vuejs/practice/05_unit_test"
+ },
+ {
+  "lesson": "vue-test",
+  "scene": "mount → find → trigger → expect",
+  "label": "テスト資料",
+  "path": "vuejs/13_unit-test"
+ },
+ {
+  "lesson": "vue-test",
+  "scene": "確認クイズ",
+  "label": "単体テスト演習",
+  "path": "vuejs/practice/05_unit_test"
+ },
+ {
+  "lesson": "x-vue-api",
+  "scene": null,
+  "label": "API 3状態",
+  "path": "vuejs/practice/06_api_three_states"
+ },
+ {
+  "lesson": "x-vue-api",
+  "scene": "fetch と3つの状態",
+  "label": "API サンプル",
+  "path": "vuejs/11_api/01_intro.vue"
+ },
+ {
+  "lesson": "x-vue-api",
+  "scene": "リクエストの旅",
+  "label": "API 3状態",
+  "path": "vuejs/practice/06_api_three_states"
+ },
+ {
+  "lesson": "x-vue-api",
+  "scene": "実践：3状態の画面を作る",
+  "label": "API 3状態",
+  "path": "vuejs/practice/06_api_three_states"
+ },
+ {
+  "lesson": "x-vue-slots",
+  "scene": null,
+  "label": "スロット演習",
+  "path": "vuejs/practice/07_named_slots"
+ },
+ {
+  "lesson": "x-vue-slots",
+  "scene": "穴あきカード",
+  "label": "スロット演習",
+  "path": "vuejs/practice/07_named_slots"
+ },
+ {
+  "lesson": "x-vue-slots",
+  "scene": "スコープ付きスロット",
+  "label": "スロット演習",
+  "path": "vuejs/practice/07_named_slots"
+ },
+ {
+  "lesson": "x-vue-slots",
+  "scene": "実践：名前付きスロットのカード",
+  "label": "スロット演習",
+  "path": "vuejs/practice/07_named_slots"
+ },
+ {
+  "lesson": "x-vue-dynamic",
+  "scene": null,
+  "label": "動的タブ",
+  "path": "vuejs/practice/08_dynamic_tabs"
+ },
+ {
+  "lesson": "x-vue-dynamic",
+  "scene": "<component :is> で切り替え",
+  "label": "動的タブ",
+  "path": "vuejs/practice/08_dynamic_tabs"
+ },
+ {
+  "lesson": "x-vue-dynamic",
+  "scene": "v-bind をぜんぶ",
+  "label": "動的タブ",
+  "path": "vuejs/practice/08_dynamic_tabs"
+ },
+ {
+  "lesson": "x-vue-dynamic",
+  "scene": "実践：タブ切り替え",
+  "label": "動的タブ",
+  "path": "vuejs/practice/08_dynamic_tabs"
+ },
+ {
+  "lesson": "x-vue-composables",
+  "scene": null,
+  "label": "Composable 演習",
+  "path": "vuejs/practice/09_composables"
+ },
+ {
+  "lesson": "x-vue-composables",
+  "scene": "コピペをやめよう",
+  "label": "Composable 演習",
+  "path": "vuejs/practice/09_composables"
+ },
+ {
+  "lesson": "x-vue-composables",
+  "scene": "useMouse とクリーンアップ",
+  "label": "Composable 演習",
+  "path": "vuejs/practice/09_composables"
+ },
+ {
+  "lesson": "x-vue-composables",
+  "scene": "VueUse ツアー",
+  "label": "Composable 演習",
+  "path": "vuejs/practice/09_composables"
+ },
+ {
+  "lesson": "x-vue-state",
+  "scene": null,
+  "label": "共有ステート",
+  "path": "vuejs/practice/10_shared_state"
+ },
+ {
+  "lesson": "x-vue-state",
+  "scene": "誰が誰に話しかける？",
+  "label": "共有ステート",
+  "path": "vuejs/practice/10_shared_state"
+ },
+ {
+  "lesson": "x-vue-state",
+  "scene": "使い分けクイズ",
+  "label": "共有ステート",
+  "path": "vuejs/practice/10_shared_state"
+ },
+ {
+  "lesson": "x-vue-render",
+  "scene": null,
+  "label": "描画方式の実験",
+  "path": "vuejs/practice/11_rendering_modes"
+ },
+ {
+  "lesson": "x-vue-render",
+  "scene": "誰がいつ HTML を作る？",
+  "label": "描画方式の実験",
+  "path": "vuejs/practice/11_rendering_modes"
+ },
+ {
+  "lesson": "x-vue-render",
+  "scene": "Nuxt が自動でやること",
+  "label": "描画方式の実験",
+  "path": "vuejs/practice/11_rendering_modes"
+ },
+ {
+  "lesson": "x-vue-render",
+  "scene": "方式えらびクイズ",
+  "label": "描画方式の実験",
+  "path": "vuejs/practice/11_rendering_modes"
+ },
+ {
+  "lesson": "x-vue-workflow",
+  "scene": null,
+  "label": "開発フロー演習",
+  "path": "vuejs/practice/12_workflow"
+ },
+ {
+  "lesson": "x-vue-workflow",
+  "scene": "1 つの機能ができるまで",
+  "label": "開発フロー演習",
+  "path": "vuejs/practice/12_workflow"
+ },
+ {
+  "lesson": "x-vue-workflow",
+  "scene": "Prettier：保存で整う",
+  "label": "開発フロー演習",
+  "path": "vuejs/practice/12_workflow"
+ },
+ {
+  "lesson": "x-vue-workflow",
+  "scene": "コメント：「なぜ」を書く",
+  "label": "開発フロー演習",
+  "path": "vuejs/practice/12_workflow"
+ },
+ {
+  "lesson": "idea",
+  "scene": null,
+  "label": "ブレスト",
+  "path": "team/01_brainstorm.md"
+ },
+ {
+  "lesson": "idea",
+  "scene": "ブレスト・ウォール",
+  "label": "ブレスト",
+  "path": "team/01_brainstorm.md"
+ },
+ {
+  "lesson": "idea",
+  "scene": "アイデアキャンバス",
+  "label": "アイデアキャンバス",
+  "path": "team/02_idea_canvas.md"
+ },
+ {
+  "lesson": "idea",
+  "scene": "30秒ピッチ",
+  "label": "ピッチ構成",
+  "path": "team/03_pitch_outline.md"
+ },
+ {
+  "lesson": "dev",
+  "scene": null,
+  "label": "カンバン",
+  "path": "team/04_kanban.md"
+ },
+ {
+  "lesson": "dev",
+  "scene": "カンバンボード",
+  "label": "カンバン",
+  "path": "team/04_kanban.md"
+ },
+ {
+  "lesson": "dev",
+  "scene": "1日の流れ と Git",
+  "label": "1日の流れ",
+  "path": "team/05_dev_daily_flow.md"
+ },
+ {
+  "lesson": "dev",
+  "scene": "詰まったら？",
+  "label": "詰まったら",
+  "path": "team/05_dev_daily_flow.md"
+ },
+ {
+  "lesson": "prep",
+  "scene": null,
+  "label": "資料チェック",
+  "path": "team/06_prep_slides_checklist.md"
+ },
+ {
+  "lesson": "prep",
+  "scene": "資料の構成",
+  "label": "資料チェック",
+  "path": "team/06_prep_slides_checklist.md"
+ },
+ {
+  "lesson": "prep",
+  "scene": "リハーサル・タイマー",
+  "label": "タイムシート",
+  "path": "team/07_rehearsal_timesheet.md"
+ },
+ {
+  "lesson": "prep",
+  "scene": "本番前チェック",
+  "label": "本番前チェック",
+  "path": "team/08_demo_day_checklist.md"
+ },
+ {
+  "lesson": "demo",
+  "scene": null,
+  "label": "発表・採点シート",
+  "path": "team/09_demo_order_feedback.md"
+ },
+ {
+  "lesson": "demo",
+  "scene": "発表順ルーレット",
+  "label": "発表・採点シート",
+  "path": "team/09_demo_order_feedback.md"
+ },
+ {
+  "lesson": "demo",
+  "scene": "発表タイマー",
+  "label": "発表・採点シート",
+  "path": "team/09_demo_order_feedback.md"
+ },
+ {
+  "lesson": "demo",
+  "scene": "フィードバック",
+  "label": "発表・採点シート",
+  "path": "team/09_demo_order_feedback.md"
+ },
+ {
+  "lesson": "qa",
+  "scene": null,
+  "label": "Q&Aテンプレ",
+  "path": "team/10_qa_template.md"
+ },
+ {
+  "lesson": "qa",
+  "scene": "質問ボード",
+  "label": "Q&Aテンプレ",
+  "path": "team/10_qa_template.md"
+ },
+ {
+  "lesson": "qa",
+  "scene": "よくある質問",
+  "label": "Q&Aテンプレ",
+  "path": "team/10_qa_template.md"
+ }
+]

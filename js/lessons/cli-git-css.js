@@ -5,7 +5,13 @@
   const BASIC = 'var(--basic)', TS = 'var(--ts)', PINK = 'var(--pink)', TEAM = 'var(--team)', VIO = 'var(--violet)', VUE = 'var(--vue)';
 
   style('cg', `
-  .cg-term{background:var(--code);border:1px solid var(--line);border-radius:8px;font:.875rem/1.6 var(--mono);color:#d8dcff;display:flex;flex-direction:column;height:330px;box-shadow:var(--shadow)}
+  .cg-vimov{position:absolute;inset:0;z-index:5;background:var(--code);display:flex;flex-direction:column;border-radius:8px;overflow:hidden}.cg-vimov-h{padding:6px 12px;font-size:.75rem;color:#8e97c4;border-bottom:1px solid rgba(255,255,255,.08)}.cg-vimov .cg-vim{flex:1;border-radius:0;border:0}
+  .cg-vim.fl .vl.cr,.cg-vim.fl .st .md{animation:cgvfl .7s}@keyframes cgvfl{0%{background:rgba(255,200,80,.6)}100%{background:transparent}}
+  .cgv-pin{position:sticky;top:64px;z-index:5;background:var(--bg);padding:6px 0 10px;margin:0 -4px;padding-left:4px;padding-right:4px;box-shadow:0 12px 18px -14px rgba(0,0,0,.7)}
+  .cgv-pin .cg-vim .bd{min-height:0;max-height:120px;overflow:auto;padding:6px 0}
+  .cgv-lb{font-size:.75rem;color:var(--mute);display:flex;gap:.4em;align-items:center;margin-bottom:4px}.cgv-lb .ic{width:12px;height:12px}
+  @media(max-width:800px){.cgv-pin{top:56px}.cgv-pin .cg-vim .bd{max-height:75px}}
+  .cg-term{position:relative;background:var(--code);border:1px solid var(--line);border-radius:8px;font:.875rem/1.6 var(--mono);color:#d8dcff;display:flex;flex-direction:column;height:330px;box-shadow:var(--shadow)}
   .cg-term .hd{display:flex;gap:6px;padding:8px 12px;border-bottom:1px solid rgba(255,255,255,.08)}
   .cg-term .hd i{width:10px;height:10px;border-radius:50%;background:#ff5f57}.cg-term .hd i:nth-child(2){background:#febc2e}.cg-term .hd i:nth-child(3){background:#28c840}
   .cg-out{flex:1;overflow:auto;padding:10px 14px;white-space:pre-wrap;word-break:break-all}
@@ -17,6 +23,8 @@
   .cg-tree li{padding:1px 0}.cg-tree .nm{padding:0 .4em;border-radius:6px}
   .cg-tree .cwd>.nm{background:color-mix(in srgb,var(--basic) 30%,transparent);outline:1px solid var(--basic)}
   .cg-tree .nw>.nm{animation:cgflash 1.3s}
+  .cg-pre{padding:4px 12px;font:600 .6875rem/1.5 var(--font);color:#8e97c4;border-bottom:1px solid rgba(255,255,255,.06)}
+  .cg-tree .pre{margin-left:.5em;font:700 .625rem var(--font);color:var(--mute);border:1px solid var(--line);border-radius:6px;padding:0 .4em;vertical-align:1px}
   @keyframes cgflash{0%{background:var(--pink);transform:scale(1.4)}100%{background:transparent;transform:none}}
   .cgr-top{display:flex;align-items:center;gap:14px;margin-bottom:10px}.cgr-top .kc{display:flex;gap:6px;flex-wrap:wrap}.cgr-top .kc i{font:800 1rem var(--mono);padding:.2em .6em;border-radius:6px;background:var(--code);color:#fff;font-style:normal;border:1px solid var(--line)}.cgr-top .en{font:.875rem var(--mono);color:var(--mute)}.cgr-top .en b{color:var(--c);text-decoration:underline;text-underline-offset:3px}.cgr-top .jp{font-weight:800}
   .cgr-what{margin:6px 0 10px;line-height:1.8}.cgr-ans{margin:8px 0 0;padding:12px 14px;border-radius:8px;background:var(--code);color:#d8dcff;font:.875rem/1.7 var(--mono);white-space:pre-wrap}
@@ -122,6 +130,13 @@
     draw(val);
     return d;
   }
+
+  function gitQ(sim) {
+    sim.q = { ahead: (a, b) => [...sim.ancestors(a)].filter((x) => !sim.ancestors(b).has(x)).length, tip: sim.tip, C: sim.C, isAnc: (a, b) => sim.ancestors(b).has(a), ancestors: sim.ancestors, headTree: sim.headTree, work: sim.work, rev: sim.rev,
+      changed: (id) => { const c = sim.C(id), pt = c.parents[0] ? sim.C(c.parents[0]).tree : {}; return [...new Set([...Object.keys(pt), ...Object.keys(c.tree)])].filter((p) => pt[p] !== c.tree[p]); } };
+    return sim;
+  }
+  K.sim = { makeTerm, makeVim, makeGitSim, gitQ };
 
   /* ============================================================
      CUI simulator
@@ -465,12 +480,16 @@
   function makeTerm(onChange, opt) {
     const fs = (opt && opt.fs) || { t: 'd', c: { logs: { t: 'd', c: { 'app.log': { t: 'f', v: 'INFO server started\nERROR E1001 DB connection failed\nerror retry 1\nINFO connected\nError E2040 timeout\n' } } }, docs: { t: 'd', c: { 'memo.txt': { t: 'f', v: '月曜 見積を確認\n火曜 リリース準備\n水曜 リリース\n' } } }, 'report.txt': { t: 'f', v: '売上 120\n経費 80\n' } } };
     let cwd = [];
+    const initial = new WeakSet(), initPaths = [];
+    (function walk(n, pre) { Object.entries(n.c).forEach(([k, v]) => { if (k.startsWith('.')) return; initial.add(v); if (v.t === 'd') walk(v, pre + k + '/'); else initPaths.push(pre + k); }); })(fs, '');
     const hist = [], ran = [];
+    let curVim = null;
+    const st = { tabs: 0, dev: 0, built: 0, installed: [], created: [], ssh: 0, registered: 0, vimLog: [], prettier: 0, eslint: 0 }, aliases = {};
     let hi = 0;
     const out = h('div', { class: 'cg-out' });
     const prompt = h('span');
     const input = h('input', { spellcheck: 'false', autocomplete: 'off', autocapitalize: 'off', placeholder: 'コマンドを入力…' });
-    const el = h('div', { class: 'cg-term', onclick: () => input.focus() }, h('div', { class: 'hd' }, h('i'), h('i'), h('i')), out, h('div', { class: 'cg-line' }, prompt, input));
+    const el = h('div', { class: 'cg-term', onclick: () => input.focus() }, h('div', { class: 'hd' }, h('i'), h('i'), h('i')), initPaths.length ? h('div', { class: 'cg-pre' }, 'はじめからあるファイル：' + initPaths.slice(0, 8).join('、') + (initPaths.length > 8 ? ' …' : '')) : null, out, h('div', { class: 'cg-line' }, prompt, input));
     const tree = h('div', { class: 'cg-tree' });
     const fresh = new Set();
     const nodeAt = (parts) => { let n = fs; for (const p of parts) { if (!n || n.t !== 'd') return null; n = n.c[p]; } return n || null; };
@@ -488,14 +507,151 @@
     function drawTree() {
       const rec = (n, parts) => h('ul', Object.entries(n.c).sort((a, b) => (a[1].t === b[1].t ? a[0].localeCompare(b[0]) : a[1].t === 'd' ? -1 : 1)).map(([k, v]) => {
         const cur = v.t === 'd' && parts.concat(k).join('/') === cwd.join('/');
-        return h('li', { class: (cur ? 'cwd ' : '') + (fresh.has(v) ? 'nw' : '') }, h('span', { class: 'nm' }, (v.t === 'd' ? '📁 ' : '📄 ') + k), v.t === 'd' ? rec(v, parts.concat(k)) : null);
+        return h('li', { class: (cur ? 'cwd ' : '') + (fresh.has(v) ? 'nw' : '') }, h('span', { class: 'nm' }, (v.t === 'd' ? '📁 ' : '📄 ') + k), initial.has(v) ? h('small', { class: 'pre' }, 'はじめからある') : null, v.t === 'd' ? rec(v, parts.concat(k)) : null);
       }));
       tree.replaceChildren(h('div', { class: cwd.length ? '' : 'cwd' }, h('span', { class: 'nm' }, '🏠 ~ (ホーム)')), rec(fs, []));
       fresh.clear();
     }
     const pr = () => 'kenshu@pc ' + path() + (opt && opt.git ? ' (' + opt.git.S.head + ')' : '') + ' $';
     function refresh() { prompt.textContent = pr(); drawTree(); onChange && onChange(api); }
+
+    /* ---- パイプ・リダイレクト・for ・alias ・Tab 補完 ・vim ・npm ・ssh（練習用の小さな本物） ---- */
+    const unq = (x) => x.replace(/^["']|["']$/g, '');
+    function splitPipe(line) {
+      const o = []; let cur = '', q = null;
+      for (const ch of line) { if (q) { cur += ch; if (ch === q) q = null; continue; } if (ch === '"' || ch === "'") { q = ch; cur += ch; continue; } if (ch === '|') { o.push(cur); cur = ''; continue; } cur += ch; }
+      o.push(cur); return o.map((x) => x.trim());
+    }
+    const hasPipe = (line) => splitPipe(line).length > 1;
+    const globNames = (pat) => { const d = nodeAt(cwd); if (!d) return []; const rx = new RegExp('^' + pat.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*') + '$'); return Object.entries(d.c).filter(([k, v]) => v.t === 'f' && rx.test(k)).map(([k]) => k).sort(); };
+    function writeFile(path, text, append) {
+      const { dir, name } = split(path);
+      if (!dir || dir.t !== 'd' || !name) { err('書き込み先が不正です: ' + path); return false; }
+      if (!dir.c[name]) fresh.add((dir.c[name] = { t: 'f', v: '' }));
+      if (dir.c[name].t === 'd') { err(path + ': Is a directory'); return false; }
+      dir.c[name].v = (append ? dir.c[name].v : '') + text; return true;
+    }
+    const fileLines = (n) => n.v.split('\n').filter((x, i, arr) => !(i === arr.length - 1 && x === ''));
+    function textCmd(toks, input) {
+      const cmd = toks[0], args = toks.slice(1), fl = args.filter((x) => /^-/.test(x)), rest = args.filter((x) => !/^-/.test(x));
+      const has = (f) => fl.some((x) => x.replace(/^-+/, '').includes(f));
+      const src = (files) => { if (files.length) { let o = []; for (const f of files) { const n = get(f); if (!n) return { err: `${cmd}: ${f}: No such file or directory` }; if (n.t === 'd') return { err: `${cmd}: ${f}: Is a directory` }; o = o.concat(fileLines(n)); } return { out: o }; } return input ? { out: input } : { err: `${cmd}: 入力がありません（ファイル名か、| の前の命令が要ります）` }; };
+      const num = () => { const i = args.findIndex((x) => /^-n$/.test(x)); if (i >= 0 && /^\d+$/.test(args[i + 1] || '')) return +args[i + 1]; const m = args.find((x) => /^-\d+$/.test(x)); return m ? -+m : 10; };
+      switch (cmd) {
+        case 'cat': return src(rest);
+        case 'echo': return { out: [rest.join(' ')] };
+        case 'ls': { const d = rest[0] ? get(rest[0]) : nodeAt(cwd); if (!d || d.t !== 'd') return { err: `ls: ${rest[0] || ''}: No such file or directory` }; return { out: Object.keys(d.c).sort() }; }
+        case 'grep': {
+          const pat = rest[0]; if (pat === undefined) return { err: 'usage: grep [-i] [-n] [-v] [-c] pattern [file]' };
+          const r = src(rest.slice(1)); if (r.err) return r;
+          const rx = new RegExp(pat.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), has('i') ? 'i' : '');
+          let hits = r.out.map((l, i) => [l, i + 1]).filter(([l]) => rx.test(l) !== has('v'));
+          if (ran.length) ran[ran.length - 1].hits = hits.length;
+          return has('c') ? { out: [String(hits.length)] } : { out: hits.map(([l, i]) => (has('n') ? i + ':' : '') + l) };
+        }
+        case 'head': case 'tail': { const r = src(rest.filter((x) => !/^\d+$/.test(x))); if (r.err) return r; const k = Math.abs(num()); return { out: cmd === 'head' ? r.out.slice(0, k) : r.out.slice(-k) }; }
+        case 'wc': { const r = src(rest); if (r.err) return r; return { out: [has('l') ? String(r.out.length) + (rest[0] ? ' ' + rest[0] : '') : r.out.length + '  ' + r.out.join(' ').split(/\s+/).filter(Boolean).length + '  ' + r.out.join('\n').length] }; }
+        case 'sort': { const r = src(rest); if (r.err) return r; let o = r.out.slice(); const key = (x) => (parseFloat(x.trim()) || 0); o.sort(has('n') ? (a, b) => key(a) - key(b) : (a, b) => (a < b ? -1 : a > b ? 1 : 0)); if (has('r')) o.reverse(); if (has('u')) o = o.filter((x, i) => i === 0 || x !== o[i - 1]); return { out: o }; }
+        case 'uniq': { const r = src(rest); if (r.err) return r; const o = []; r.out.forEach((l) => { const last = o[o.length - 1]; if (last && last[0] === l) last[1]++; else o.push([l, 1]); }); return { out: o.map(([l, n]) => (has('c') ? String(n).padStart(4) + ' ' : '') + l) }; }
+        case 'cut': {
+          let d = '\t', f = 0; const files = [];
+          for (let k = 0; k < args.length; k++) { const x = args[k]; if (x.startsWith('-d')) d = x.length > 2 ? x.slice(2) : (args[++k] || ''); else if (x.startsWith('-f')) f = parseInt(x.length > 2 ? x.slice(2) : args[++k], 10); else if (!x.startsWith('-')) files.push(x); }
+          if (!f) return { err: 'usage: cut -d 区切り -f 番号' };
+          const r = src(files); if (r.err) return r; return { out: r.out.map((l) => l.split(d)[f - 1] || '') };
+        }
+        default: return { err: `zsh: command not found: ${cmd}　（この練習場では、パイプで使えるのは cat grep head tail wc sort uniq cut など）` };
+      }
+    }
+    function pipeline(line) {
+      const segs = splitPipe(line);
+      let redir = null; const lastM = segs[segs.length - 1].match(/^(.*?)(>>|>)\s*([^\s>]+)\s*$/);
+      if (lastM) { redir = { app: lastM[2] === '>>', file: unq(lastM[3]) }; segs[segs.length - 1] = lastM[1].trim(); }
+      const names = segs.map((x) => (x.split(/\s+/)[0] || ''));
+      ran.push({ cmd: names[0], args: [], flags: '', line, pipe: segs.length > 1, segs: names, redir: !!redir });
+      let data = null;
+      for (const sg of segs) {
+        const toks = (sg.match(/(?:[^\s"']|"[^"]*"|'[^']*')+/g) || []).map((x) => x.replace(/"([^"]*)"|'([^']*)'/g, '$1$2')); if (!toks.length) return err('パイプの先に命令がありません');
+        const res = textCmd(toks, data); if (res.err) return err(res.err); data = res.out;
+      }
+      if (redir) { writeFile(redir.file, data.join('\n') + (data.length ? '\n' : ''), redir.app); return; }
+      say(data.map(esc).join('\n') || '<span style="opacity:.65">（何も表示されない）</span>');
+    }
+    function openVim(path) {
+      const { dir, name } = split(path);
+      if (!dir || dir.t !== 'd' || !name) return err(`vim: ${path}: No such file or directory`);
+      if (dir.c[name] && dir.c[name].t === 'd') return err(`vim: ${path} はフォルダです`);
+      const text = dir.c[name] ? dir.c[name].v : '', lines0 = text ? text.replace(/\n$/, '').split('\n') : [''];
+      const save = (vm) => { if (!dir.c[name]) fresh.add((dir.c[name] = { t: 'f', v: '' })); dir.c[name].v = vm.lines.join('\n') + '\n'; };
+      const ov = h('div', { class: 'cg-vimov' }); let vm = null;
+      const close = () => { curVim = null; ov.remove(); drawTree(); onChange && onChange(api); setTimeout(() => input.focus(), 0); };
+      vm = makeVim((n) => {
+        if (n === 'w') save(vm);
+        else if (n === 'wq') { save(vm); st.vimLog.push({ file: path, saved: true, hist: vm.hist.slice(), lines: vm.lines }); close(); }
+        else if (n === 'q' || n === 'q!') { st.vimLog.push({ file: path, saved: false, hist: vm.hist.slice(), lines: vm.lines }); close(); }
+      }, { lines: lines0, file: path });
+      ov.append(h('div', { class: 'cg-vimov-h' }, 'vim ' + path + '　（i で書く / Esc で戻る / :wq で保存して終了）'), vm.el);
+      curVim = vm; el.append(ov); setTimeout(() => vm.el.focus(), 0);
+    }
+    const PKG = (n) => JSON.stringify({ name: n, version: '0.0.0', scripts: { dev: 'vite', build: 'vite build', test: 'vitest', lint: 'eslint .' }, dependencies: { vue: '^3.4.0' } }, null, 2) + '\n';
+    function npm(cmd, args) {
+      const dirNode = nodeAt(cwd), here = '~' + (cwd.length ? '/' + cwd.join('/') : '');
+      const mk = (parent, nm, node) => { parent.c[nm] = node; fresh.add(node); return node; };
+      if (cmd === 'npx') {
+        const tool = args[0];
+        if (tool === 'prettier') { st.prettier++; return say('index.html 12ms\nsrc/App.vue 31ms\nsrc/main.ts 5ms\n<span style="opacity:.65">（整形した）</span>'); }
+        if (tool === 'eslint') { st.eslint++; return say('✔ 0 problems（エラーなし）'); }
+        return say('npx: ' + esc(tool || '') + ' を実行（練習場では何も起きない）');
+      }
+      const sub = args[0];
+      if (sub === 'create' || sub === 'init') {
+        const nm = args.slice(2).find((x) => !/^-/.test(x)) || 'vue-project';
+        if (dirNode.c[nm]) return err(`${nm} はもうあります`);
+        const root = mk(dirNode, nm, { t: 'd', c: {} });
+        mk(root, 'package.json', { t: 'f', v: PKG(nm) }); mk(root, 'index.html', { t: 'f', v: '<div id="app"></div>\n<script type="module" src="/src/main.ts"></script>\n' });
+        const src = mk(root, 'src', { t: 'd', c: {} }); mk(src, 'main.ts', { t: 'f', v: "import { createApp } from 'vue'\nimport App from './App.vue'\ncreateApp(App).mount('#app')\n" }); mk(src, 'App.vue', { t: 'f', v: '<script setup lang="ts"></script>\n<template><h1>Hello Vue</h1></template>\n' });
+        st.created.push(nm);
+        return say(`Vue.js - The Progressive JavaScript Framework\n\n✔ Project name: … ${esc(nm)}\n✔ Add TypeScript? … Yes\n✔ Add Vue Router? … No\n\nScaffolding project in ${esc(here)}/${esc(nm)}...\n\nDone. Now run:\n\n  cd ${esc(nm)}\n  npm install\n  npm run dev`);
+      }
+      if (!dirNode.c['package.json']) return err(`npm error code ENOENT\nnpm error path ${here}/package.json\nnpm error enoent Could not read package.json（package.json があるフォルダ＝プロジェクトの中で実行する。cd を忘れていない？）`);
+      if (['install', 'i', 'ci'].includes(sub)) {
+        if (!dirNode.c.node_modules) mk(dirNode, 'node_modules', { t: 'd', c: { '.bin': { t: 'd', c: {} }, vue: { t: 'd', c: {} } } });
+        st.installed.push(here); return say('added 52 packages, and audited 53 packages in 4s\n\nfound 0 vulnerabilities');
+      }
+      if (sub === 'run' || sub === 'test' || sub === 'start') {
+        const script = sub === 'run' ? args[1] : sub === 'start' ? 'dev' : 'test';
+        let pj = {}; try { pj = JSON.parse(dirNode.c['package.json'].v); } catch { /* ignore */ }
+        if (!script) return say('Scripts available:\n  dev\n  build\n  test\n  lint');
+        if (!pj.scripts || !pj.scripts[script]) return err(`npm error Missing script: "${esc(script)}"`);
+        const nm = pj.name || 'app', head = `> ${nm}@0.0.0 ${script}\n> ${pj.scripts[script]}\n\n`;
+        if (['dev', 'build'].includes(script) && !dirNode.c.node_modules) return err(head + 'sh: vite: command not found　（先に npm install で部品を入れる）');
+        if (script === 'dev') { st.dev++; return say(head + '  VITE v5.4.0  ready in 312 ms\n\n  ➜  Local:   http://localhost:5173/\n  ➜  press h + enter to show help'); }
+        if (script === 'build') { if (!dirNode.c.dist) { const d = mk(dirNode, 'dist', { t: 'd', c: {} }); mk(d, 'index.html', { t: 'f', v: '<!doctype html>\n' }); } st.built++; return say(head + 'vite v5.4.0 building for production...\n✓ 18 modules transformed.\ndist/index.html   0.43 kB\ndist/assets/index.js  68.20 kB\n✓ built in 1.20s'); }
+        return say(head + '✓ 1 test passed');
+      }
+      return err('npm: ' + esc(sub || '') + ' は練習場では使えません（create / install / run dev / run build を使おう）');
+    }
+    const CMDS = ['pwd', 'ls', 'cd', 'mkdir', 'touch', 'cat', 'echo', 'rm', 'cp', 'mv', 'grep', 'head', 'tail', 'wc', 'sort', 'uniq', 'cut', 'clear', 'history', 'alias', 'vim', 'npm', 'git', 'ssh', 'ssh-keygen'];
+    function typeTab(partial) { input.value = partial; complete(); const v = input.value.trim(); input.value = ''; run(v); }
+    function complete() {
+      const v = input.value, tok = (v.match(/(\S*)$/) || ['', ''])[1], first = !/\s/.test(v.trimStart());
+      let cands;
+      if (first) cands = CMDS.filter((c) => c.startsWith(tok));
+      else {
+        const i = tok.lastIndexOf('/'), dp = i >= 0 ? tok.slice(0, i + 1) : '', pre = tok.slice(i + 1), d = dp ? get(dp) : nodeAt(cwd);
+        cands = d && d.t === 'd' ? Object.entries(d.c).filter(([k]) => k.startsWith(pre) && (pre || !k.startsWith('.'))).map(([k, n]) => dp + k + (n.t === 'd' ? '/' : '')) : [];
+      }
+      if (!cands.length) return;
+      if (cands.length === 1) { input.value = v.slice(0, v.length - tok.length) + cands[0] + (/\/$/.test(cands[0]) ? '' : ' '); st.tabs++; return; }
+      let cp = cands[0]; cands.forEach((c) => { while (!c.startsWith(cp)) cp = cp.slice(0, -1); });
+      if (cp.length > tok.length) { input.value = v.slice(0, v.length - tok.length) + cp; st.tabs++; }
+      say('<span style="opacity:.75">' + cands.map(esc).join('  ') + '</span>');
+    }
     function exec(line) {
+      const w0 = line.trim().split(/\s+/)[0];
+      if (aliases[w0]) { const ex = aliases[w0] + line.trim().slice(w0.length), a0 = aliases[w0]; ran.push({ cmd: w0, args: [], flags: '', line, alias: true }); delete aliases[w0]; try { return exec(ex); } finally { aliases[w0] = a0; } }
+      const fm = line.match(/^\s*for\s+(\w+)\s+in\s+(\S+)\s*;\s*do\s+(.+?)\s*;\s*done\s*$/);
+      if (fm) { ran.push({ cmd: 'for', args: [fm[2]], flags: '', line }); const names = globNames(fm[2]); if (!names.length) return say('<span style="opacity:.65">（一致するファイルがない）</span>'); names.forEach((nm) => exec(fm[3].replace(new RegExp('\\$\\{?' + fm[1] + '\\}?', 'g'), nm))); return; }
+      if (hasPipe(line) || /^\s*(sort|uniq|cut)\b/.test(line) || (/>/.test(line) && /^\s*(grep|cat|head|tail|wc|ls)\b/.test(line))) return pipeline(line);
       const raw = line.match(/"[^"]*"|'[^']*'|>>|>|[^\s>]+/g) || [];
       let redir = null, args = [];
       for (let i = 0; i < raw.length; i++) {
@@ -543,6 +699,7 @@
           const n = get(a[0]);
           if (!n) return err(`cat: ${a[0]}: No such file or directory`);
           if (n.t === 'd') return err(`cat: ${a[0]}: Is a directory`);
+          if (/\.pub$/.test(a[0])) { st.registered = 1; say(esc(n.v.replace(/\n$/, '')) + '\n<span style="opacity:.65">（本物では、この1行をコピーして GitHub の SSH 設定に貼り付ける。ここでは貼り付けたことにする）</span>'); return; }
           return say(esc(n.v.replace(/\n$/, '')) || '(空)');
         }
         case 'echo': {
@@ -576,7 +733,9 @@
           if (!dir || dir.t !== 'd') return err(`${cmd}: ${a[1]}: No such file or directory`);
           const copy = cmd === 'cp' ? { t: 'f', v: s.v } : s;
           if (cmd === 'mv') { const sp = split(a[0]); delete sp.dir.c[sp.name]; }
-          dir.c[name] = copy; fresh.add(copy); return;
+          dir.c[name] = copy; fresh.add(copy);
+          if (cmd === 'mv' && !(t && t.t === 'd') && a[1] === cwd[cwd.length - 1]) say('<span style="opacity:.7">← 「' + esc(a[1]) + '」というフォルダは、いま居る場所の中には無い。だから移動ではなく<b>名前変更</b>になった（「' + esc(a[1]) + '」という名前のファイルができた）。フォルダへ移すなら <code>mv ' + esc(a[0]) + ' .</code>（. = いま居るフォルダ）</span>');
+          return;
         }
         case 'grep': {
           if (a.length < 2) return err('usage: grep [-i] [-n] pattern file');
@@ -600,6 +759,27 @@
           const m = line.match(/-n\s*(\d+)|\s-(\d+)/), k = m ? +(m[1] || m[2]) : 10;
           return say(esc((cmd === 'head' ? ls.slice(0, k) : ls.slice(-k)).join('\n')) || '(空)');
         }
+        case 'alias': {
+          if (!args.length) return say(Object.entries(aliases).map(([k, v]) => esc(k + "='" + v + "'")).join('\n') || '（alias はまだ無い）');
+          const m = line.trim().match(/^alias\s+([\w.-]+)=(['"]?)(.*)\2$/); if (!m) return err("alias: 書き方は alias 名前='命令'");
+          aliases[m[1]] = m[3]; return;
+        }
+        case 'vim': case 'vi': if (!a[0]) return err('usage: vim ファイル名'); return openVim(a[0]);
+        case 'npm': case 'npx': return npm(cmd, args);
+        case 'ssh-keygen': {
+          let d = nodeAt(['.ssh']); if (!d) { d = { t: 'd', c: {} }; nodeAt([]).c['.ssh'] = d; fresh.add(d); }
+          if (d.c.id_ed25519) return say('id_ed25519 already exists.（すでに鍵のペアがある）');
+          d.c.id_ed25519 = { t: 'f', v: '-----BEGIN OPENSSH PRIVATE KEY-----\n（秘密鍵：絶対に人に見せない）\n-----END OPENSSH PRIVATE KEY-----\n' }; d.c['id_ed25519.pub'] = { t: 'f', v: 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIExample you@example.com\n' };
+          fresh.add(d.c.id_ed25519); fresh.add(d.c['id_ed25519.pub']); st.keygen = 1;
+          return say('Generating public/private ed25519 key pair.\nYour identification has been saved in ~/.ssh/id_ed25519\nYour public key has been saved in ~/.ssh/id_ed25519.pub');
+        }
+        case 'ssh': {
+          if (!/-T/.test(flags) && !args.includes('-T')) return err('練習では ssh -T git@github.com だけ使えます（接続テスト）');
+          const pub = get('.ssh/id_ed25519.pub');
+          if (!pub) return err('git@github.com: Permission denied (publickey).　（鍵のペアがまだ無い → ssh-keygen）');
+          if (!st.registered) return err('git@github.com: Permission denied (publickey).　（公開鍵を GitHub に登録していない。cat で公開鍵を表示して、GitHub の設定ページに貼り付ける）');
+          st.ssh++; return say("Hi lamnv612! You've successfully authenticated, but GitHub does not provide shell access.");
+        }
         case 'clear': out.replaceChildren(); return;
         case 'history': return say(hist.map((x, i) => `${i + 1}  ${esc(x)}`).join('\n'));
         case 'help': return say('pwd ls cd mkdir touch cat echo rm cp mv grep head tail wc clear history\n例: echo "hi" > a.txt / grep -i error logs/app.log');
@@ -616,10 +796,11 @@
     }
     input.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') { const v = input.value; input.value = ''; run(v); }
+      else if (e.key === 'Tab') { e.preventDefault(); complete(); }
       else if (e.key === 'ArrowUp') { e.preventDefault(); if (hi > 0) input.value = hist[--hi]; }
       else if (e.key === 'ArrowDown') { e.preventDefault(); hi = Math.min(hist.length, hi + 1); input.value = hist[hi] || ''; }
     });
-    const api = { el, tree, run, ran, hist, exists: (p) => get(p), cwd: () => cwd, input, say };
+    const api = { el, tree, run, ran, hist, exists: (p) => get(p), cwd: () => cwd, input, say, st, aliases, vim: () => curVim, typeTab };
     say(opt && opt.git ? '練習用のリポジトリです。<span class="dir">git status</span> から始めよう。↑キーで履歴。' : 'ようこそ！ <span class="dir">help</span> でコマンド一覧。↑キーで履歴。');
     refresh();
     return api;
@@ -825,18 +1006,20 @@ style('cgk', `
   /* ============================================================
      Vim engine
   ============================================================ */
-  function makeVim(onEvent) {
-    let L = ['# app.conf（本番サーバーの設定）', 'port = 8080', 'debug = true   # 本番では false にしたい'];
+  function makeVim(onEvent, init) {
+    const FN = (init && init.file) || 'practice.md';
+    let L = init && init.lines ? init.lines.slice() : ['# app.conf（本番サーバーの設定）', 'port = 8080', 'debug = true   # 本番では false にしたい'];
+    const hist = [];
     let r = 0, c = 0, mode = 'NORMAL', cmd = '', msg = 'クリックしてキーを押そう', reg = null, pend = '', dirty = false;
     const body = h('div', { class: 'bd' });
     const st = h('div', { class: 'st' });
     const el = h('div', { class: 'cg-vim', tabindex: '0' }, body, st, h('div', { class: 'ov' }, '👆 クリックして操作開始（キーボード入力）'));
-    const ev = (n, from, to) => onEvent && onEvent(n, from, to);
+    const ev = (n, from, to) => { hist.push(n); onEvent && onEvent(n, from, to); };
     const maxc = () => Math.max(0, L[r].length - (mode === 'INSERT' ? 0 : 1));
     function draw() {
       el.classList.toggle('ins', mode === 'INSERT'); el.classList.toggle('cmd', mode === 'COMMAND');
       body.replaceChildren(...L.map((l, i) => {
-        const line = h('div', { class: 'vl' }, h('b', i + 1));
+        const line = h('div', { class: 'vl' + (i === r ? ' cr' : '') }, h('b', i + 1));
         if (i !== r) { line.append(l || ' '); return line; }
         line.append(l.slice(0, c), h('span', { class: 'cur' }, l[c] || ' '), l.slice(c + 1));
         return line;
@@ -858,7 +1041,7 @@ style('cgk', `
         if (k === 'Escape') { cmd = ''; to('NORMAL', 'Esc'); }
         else if (k === 'Enter') {
           const x = cmd.trim(); cmd = ''; to('NORMAL', 'Enter');
-          if (x === 'w') { msg = '"practice.md" を保存しました'; dirty = false; ev('w'); }
+          if (x === 'w') { msg = '"' + FN + '" を保存しました'; dirty = false; ev('w'); }
           else if (x === 'wq' || x === 'x') { msg = '保存して終了！ (シミュレータなので続けて遊べます)'; dirty = false; ev('wq'); }
           else if (x === 'q') { if (dirty) msg = 'E37: 最後の変更が保存されていません（:q! で破棄して終了／:wq で保存して終了）'; else { msg = '終了（変更なし）'; ev('q'); } }
           else if (x === 'q!') { msg = '保存せず強制終了（変更は捨てられた）'; dirty = false; ev('q!'); }
@@ -895,7 +1078,7 @@ style('cgk', `
       if (e.key.length === 1 || ['Escape', 'Enter', 'Backspace', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) { e.preventDefault(); e.stopPropagation(); key(e.key); }
     });
     draw();
-    return { el, key, get mode() { return mode; }, feed(seq) { el.focus(); if (seq === 'Esc') return key('Escape'); if (seq[0] === ':' && seq.length > 1) { seq.split('').forEach(key); return key('Enter'); } seq.split('').forEach(key); } };
+    return { el, key, hist, flash() { el.classList.remove('fl'); void el.offsetWidth; el.classList.add('fl'); setTimeout(() => el.classList.remove('fl'), 700); }, get lines() { return L.slice(); }, get dirty() { return dirty; }, get cursor() { return [r, c]; }, get mode() { return mode; }, feed(seq) { el.focus(); if (seq === 'Esc') return key('Escape'); if (seq[0] === ':' && seq.length > 1) { seq.split('').forEach(key); return key('Enter'); } seq.split('').forEach(key); } };
   }
 
   /* ---------- cuivim lesson ---------- */
@@ -906,10 +1089,11 @@ style('cgk', `
         t: 'ターミナルを触ってみよう', tag: 'CUI', lead: '文字だけでサーバーを操作するのが <b>CUI</b>。たとえば<b>ログから ERROR の行だけ</b>を探す。下のコマンドを<b>クリック</b>、または自分で入力。右の<b>フォルダ木</b>が一緒に変わるよ。',
         render(el) {
           const term = makeTerm();
-          el.append(h('div', { class: 'split' }, term.el, h('div', { class: 'col' }, lbl('フォルダの様子（リアルタイム）'), term.tree)));
-          el.append(h('div', { style: { marginTop: '14px' } }, lbl('これを押してみよう'), chipRow(term, ['pwd', 'ls', 'cd docs', 'cat memo.txt', 'cd ..', 'mkdir work', 'touch work/a.txt', 'echo "hello" > work/a.txt', 'cat work/a.txt', 'grep -i error logs/app.log', 'mv report.txt work', 'rm -r work'])));
-          el.append(h('div', { style: { marginTop: '18px' } }, lbl('よく使うコマンド — クリックで解説と練習 / カーソルを乗せると由来を解説'), TR.view()));
-          el.append(h('p', { class: 'lead', style: { marginTop: '12px' }, html: '💡 <code class="i">&gt;</code> は「上書き」、<code class="i">&gt;&gt;</code> は「追記」。<code class="i">cd ..</code> は 1つ上へ。' }));
+          const stage = h('div', { class: 'pin-stage' }, K.W.pinOutput(h('div', { class: 'split' }, term.el, h('div', { class: 'col' }, lbl('フォルダの様子（リアルタイム）'), term.tree)), { label: 'ターミナルとフォルダ（ここに固定。下のコマンドを押すと、ここが変わる）', height: 220, mobileHeight: 150 }));
+          stage.append(h('div', { style: { marginTop: '14px' } }, lbl('これを押してみよう'), chipRow(term, ['pwd', 'ls', 'cd docs', 'cat memo.txt', 'cd ..', 'mkdir work', 'touch work/a.txt', 'echo "hello" > work/a.txt', 'cat work/a.txt', 'grep -i error logs/app.log', 'mv report.txt work', 'rm -r work'])));
+          stage.append(h('div', { style: { marginTop: '18px' } }, lbl('よく使うコマンド — クリックで解説と練習 / カーソルを乗せると由来を解説'), TR.view()));
+          stage.append(h('p', { class: 'lead', style: { marginTop: '12px' }, html: '💡 <code class="i">&gt;</code> は「上書き」、<code class="i">&gt;&gt;</code> は「追記」。<code class="i">cd ..</code> は 1つ上へ。' }));
+          el.append(stage);
         },
       },
       {
@@ -988,19 +1172,23 @@ style('cgk', `
                 vim.el.focus();
                 if (!k.always && vim.mode !== 'NORMAL') vim.feed('Esc');
                 vim.feed(k.feed);
+                vim.flash();
+                if (matchMedia('(max-width:800px)').matches) vim.el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
               } },
               h('span', { class: 'kc' }, k.caps.map((c) => (c.startsWith('icon:') ? icon(c.slice(5)) : h('i', c)))),
               h('span', { class: 'en', html: k.en }), h('span', { class: 'jp' }, k.jp));
               cards[k.id] = b; if (k.id === ':w') cards['w-cmd'] = b;
               return b;
             })))));
-          el.append(h('div', { class: 'split' }, h('div', { class: 'col' }, lbl('エディタ（クリックしてキー入力）'), vim.el, tb), h('div', { class: 'col' }, lbl('モードの移り変わり'), h('div', { class: 'card' }, svg))));
-          el.append(h('div', { style: { marginTop: '18px' } }, lbl('キー早見表 — クリックで実行 / カーソルを乗せると由来を解説'), kb));
-          el.append(h('div', { class: 'cgk-note' }, icon('lightbulb'), '英語の頭文字を覚えると忘れにくい。', h('span', { html: '下線の付いた文字が<b>実際に押すキー</b>。' }), icon('life-buoy'), '迷ったら ', h('kbd', 'Esc'), ' を連打！'));
+          const pin = h('div', { class: 'cgv-pin' }, h('div', { class: 'cgv-lb' }, icon('pin'), 'エディタ（クリックしてキー入力）　下のキー早見表を押すと、ここが変わる'), vim.el);
+          el.append(h('div', { class: 'cgv-stage' }, pin,
+            h('div', { class: 'split' }, h('div', { class: 'col' }, lbl('ミッション'), tb), h('div', { class: 'col' }, lbl('モードの移り変わり'), h('div', { class: 'card' }, svg))),
+            h('div', { style: { marginTop: '18px' } }, lbl('キー早見表 — クリックで実行 / カーソルを乗せると由来を解説'), kb),
+            h('div', { class: 'cgk-note' }, icon('lightbulb'), '英語の頭文字を覚えると忘れにくい。', h('span', { html: '下線の付いた文字が<b>実際に押すキー</b>。' }), icon('life-buoy'), '迷ったら ', h('kbd', 'Esc'), ' を連打！')));
         },
       },
       {
-        t: '実践：ターミナルで作ってみよう', tag: 'PRACTICE', lead: '下のミッションを<b>3つ</b>✓にしよう（目安 5分）。迷ったら右上のヒントを見てね。',
+        t: '実践：ターミナルで作ってみよう', tag: 'PRACTICE', lead: '下のミッションを<b>3つ</b>✓にしよう（目安 5分）。ホームには、<b>最初から</b> report.txt・logs/app.log・docs/memo.txt があります（フォルダの木に「はじめからある」と出ます）。迷ったら右上のヒントを見てね。',
         hint: '<p>使うのは3種類だけ。</p><ul style="line-height:1.9"><li>フォルダを作る：<code>mkdir フォルダ名</code></li><li>文字を書き込む：<code>echo "文字" &gt; フォルダ名/ファイル名</code></li><li>文字を探す：<code>grep 言葉 ファイル名</code></li></ul><p style="color:var(--mute);font-size:.875rem">もっと遊ぶなら：<code>&gt;&gt;</code> で追記、<code>mv</code> で移動、<code>rm -r</code> で消す。</p>',
         render(el) {
           const tb = taskBox(), stt = {};
@@ -1010,7 +1198,7 @@ style('cgk', `
               { label: 'work フォルダを作る', ok: !!(t.exists('/work') && t.exists('/work').t === 'd'), hint: ['フォルダを作るコマンドは <code>mkdir</code>（make directory）。', '<code>mkdir</code> のあとに名前を書く。'], answer: { code: 'mkdir work', lang: 'sh' } },
               { label: 'work の中に error.txt を作り、E1001 と書く（調べたエラーのメモ）', ok: !!(f && f.t === 'f' && /E1001/.test(f.v)), hint: ['文字をファイルに書き込むのは <code>echo "文字" &gt; ファイル名</code>。', 'work の中に作るので、ファイル名は <code>work/error.txt</code>。'], answer: { code: 'echo "E1001" > work/error.txt', lang: 'sh' } },
               { label: 'grep で E1001 を探して、見つける', ok: t.ran.some((r) => r.cmd === 'grep' && r.hits > 0), hint: ['探すコマンドは <code>grep</code>。<code>grep 言葉 ファイル名</code> の順に書く。', '探す言葉は E1001、ファイルは work/error.txt。'], answer: { code: 'grep E1001 work/error.txt', lang: 'sh' } },
-              { optional: true, level: 1, label: 'error.txt に E2040 を追記して2行にし、report.txt も work に移す', ok: !!(f && f.t === 'f' && f.v.split('\n').filter(Boolean).length >= 2 && t.exists('/work/report.txt') && !t.exists('/report.txt')), hint: ['追記は <code>&gt;&gt;</code>（<code>&gt;</code> は上書きなので注意）。', '移動は <code>mv 元 先</code>。先は <code>work</code> でOK。'], answer: { code: 'echo "E2040" >> work/error.txt\nmv report.txt work', lang: 'sh' } },
+              { optional: true, level: 1, label: 'error.txt に E2040 を追記して2行にし、<b>はじめからある</b> report.txt を work に移す（ホームなら <code>mv report.txt work</code>、work の中なら <code>mv ../report.txt .</code>）', ok: !!(f && f.t === 'f' && f.v.split('\n').filter(Boolean).length >= 2 && t.exists('/work/report.txt') && !t.exists('/report.txt')), hint: ['追記は <code>&gt;&gt;</code>（<code>&gt;</code> は上書きなので注意）。', '移動は <code>mv 元 先</code>。<b>先がフォルダでないと、mv は名前変更になる</b>（work という名前のファイルができてしまう）。', '書き方は「いま居る場所」で変わる。ホームなら <code>mv report.txt work</code>。work の中なら <code>mv ../report.txt .</code>（<code>..</code> = 1つ上、<code>.</code> = いま居るフォルダ）。'], answer: { code: 'echo "E2040" >> work/error.txt\nmv report.txt work\n# （work の中にいるときは）mv ../report.txt .', lang: 'sh' } },
               { optional: true, level: 2, label: 'logs/app.log を work にコピーして、grep -i で error（大文字・小文字をむし）を探す', ok: !!(t.exists('/work/app.log') && t.exists('/work/app.log').t === 'f' && t.exists('/logs/app.log') && t.ran.some((r) => r.cmd === 'grep' && r.flags.includes('i') && r.hits >= 3 && /app\.log/.test(r.line))), hint: ['コピーは <code>cp 元 先</code>。元の logs/app.log は残る（mv との違い）。', '大文字・小文字をむしするのは <code>grep -i</code>。<code>ERROR</code>・<code>error</code>・<code>Error</code> の3行が見つかれば OK。'], answer: { code: 'cp logs/app.log work\ngrep -i apple work/memo.txt', lang: 'sh' } },
               { optional: true, level: 3, label: 'mkdir -p で work/archive/2026 を一度に作り、error.txt をコピーして、cat で中身を確かめる', ok: !!(t.ran.some((r) => r.cmd === 'mkdir' && r.flags.includes('p')) && t.exists('/work/archive/2026') && t.exists('/work/archive/2026').t === 'd' && t.exists('/work/archive/2026/error.txt') && t.exists('/work/archive/2026/error.txt').t === 'f' && t.ran.some((r) => r.cmd === 'cat' && /error\.txt$/.test(r.args[0] || ''))), hint: ['途中のフォルダもまとめて作るのは <code>mkdir -p</code>。<code>mkdir -p work/archive/2026</code>。', 'そのあと <code>cp work/error.txt work/archive/2026</code> でコピーして、<code>cat</code> で中身を表示。'], answer: { code: 'mkdir -p work/archive/2026\ncp work/error.txt work/archive/2026\ncat work/archive/2026/error.txt', lang: 'sh' } },
             ], stt);
@@ -1566,15 +1754,6 @@ style('cgk', `
                 { lv: 2, l: '問題の commit を <b>revert</b> で取り消す（元の commit は残る）', ok: (s) => /DEBUG=false/.test(s.q.headTree()['config.js'] || '') && s.q.isAnc(s.S.marks.bad, s.q.tip()) && [...s.q.ancestors(s.q.tip())].some((x) => /^Revert/.test(s.q.C(x).msg)), hint: '<code>git revert 問題のハッシュ</code>。履歴は消さず、取り消す commit が 1 つ増える', ans: (s) => 'git log --oneline\ngit revert ' + s.S.marks.bad },
                 { lv: 3, l: '取り消した結果を GitHub に送る', ok: (s) => s.S.remote.main === s.q.tip() && [...s.q.ancestors(s.q.tip())].some((x) => /^Revert/.test(s.q.C(x).msg)), hint: '<code>git push</code>。push 済みの履歴は reset ではなく revert で直す（他の人の履歴を壊さない）', ans: 'git push' },
               ] },
-            { id: 'stash', c: TEAM, ic: 'archive', t: '作業中に急ぎの依頼', sub: 'stash',
-              story: 'feature/login で<b>作業中（まだ commit していない）</b>のとき、「main の緊急修正をお願い」と頼まれた。<b>いまの作業を一時的にしまって</b>対応し、あとで<b>元に戻そう</b>。',
-              gh: [],
-              seed(sim) { sim.seed({ commits: [{ msg: 'first commit', files: { 'index.html': '<h1>研修ナビ</h1>\n', 'README.md': '# app\n' }, push: true }, { msg: 'ログイン画面', files: { 'login.html': '<form></form>\n' }, branch: 'feature/login', push: true }, { msg: 'main: 見出しを更新', files: { 'index.html': '<h1>研修ナビ v2</h1>\n' }, branch: 'main', push: true }], head: 'feature/login', work: { 'index.html': '<h1>研修ナビ（作業中）</h1>\n' } }); },
-              ms: [
-                { lv: 1, l: 'まず main に移ってみる（変更が残っているのでエラーになる）→ 作業を<b>一時的にしまう</b>', ok: (s) => (s.S.maxStash || 0) >= 1, hint: 'エラーの通り「commit か stash」が必要。commit したくないときは <code>git stash</code>', ans: 'git checkout main\ngit stash' },
-                { lv: 2, l: 'main から hotfix/ の枝を作り、緊急修正を commit する', ok: (s) => Object.keys(s.S.branches).some((b) => b.startsWith('hotfix/') && s.S.branches[b] !== s.S.branches.main && s.q.isAnc(s.S.branches.main, s.S.branches[b])), hint: '<code>git checkout main</code> → <code>git checkout -b hotfix/名前</code> → 修正 → add → commit', ans: 'git checkout main\ngit checkout -b hotfix/urgent\necho "緊急修正" >> README.md\ngit add README.md\ngit commit -m "fix: 緊急対応"' },
-                { lv: 3, l: 'feature/login に戻って、しまった作業を<b>取り出す</b>', ok: (s) => s.S.head === 'feature/login' && (s.S.maxStash || 0) >= 1 && s.S.stash.length === 0 && /作業中/.test(s.q.work()['index.html'] || ''), hint: '枝を戻したら <code>git stash pop</code>（取り出して、stash から消す）', ans: 'git checkout feature/login\ngit stash pop' },
-              ] },
           ];
           const wrap = h('div'), tabs = h('div', { class: 'cgp-tabs' }), body = h('div');
           let cur = null;
@@ -1595,7 +1774,7 @@ style('cgk', `
               S0.ms.forEach((m, i) => { if (!done[i]) { try { done[i] = !!m.ok(sim); } catch { done[i] = false; } } });
               const li = (arr, cls) => arr.length ? h('ul', arr.map(([k, p]) => h('li', h('span', { class: cls }, k), h('span', p)))) : h('div', { class: 'none' }, 'なし');
               repo.replaceChildren(
-                h('div', null, h('h5', icon('git-branch'), 'いまの枝'), h('span', { class: 'br' }, 'HEAD → ' + sn.head), sn.stash ? h('span', { class: 'dc', style: { marginLeft: '8px' } }, 'stash ' + sn.stash + ' 件') : null),
+                h('div', null, h('h5', icon('git-branch'), 'いまの枝'), h('span', { class: 'br' }, 'HEAD → ' + sn.head)),
                 h('div', null, h('h5', icon('file-diff'), 'ファイルの状態'),
                   c.staged.length || c.unstaged.length || c.untracked.length ? h('ul', [...c.staged.map(([k, p]) => h('li', h('span', { class: 'st-n' }, 'ステージ済み'), h('span', k + '：' + p))), ...c.unstaged.map(([k, p]) => h('li', h('span', { class: 'st-m' }, '変更あり（未 add）'), h('span', k + '：' + p))), ...c.untracked.map((p) => h('li', h('span', { class: 'st-u' }, '未追跡'), h('span', p)))]) : h('div', { class: 'none' }, 'きれい（変更なし）')),
                 h('div', null, h('h5', icon('history'), '履歴（新しい順）'), h('ul', sn.log.map((x) => h('li', h('code', x.id), h('span', x.msg), x.d ? h('span', { class: 'dc' }, x.d.trim()) : null)))),
@@ -3245,40 +3424,114 @@ style('cgk', `
     },
   };
 
-  /* ⑦ コミットの書き方・PR の書き方 */
+  /* ⑦ コミットの書き方・PR の書き方（1画面で見渡せる・書いて見せるアニメ） */
   const sceneWriting = {
     t: 'コミットの書き方・PR の書き方', tag: 'message',
-    lead: '履歴は<b>未来の自分とチーム</b>への手紙です。書き方を整えると、調べる・レビューするのが<b>ぐっと楽</b>になります。',
+    lead: '履歴は<b>未来の自分とチーム</b>への手紙。',
     why: {
-      problem: '履歴が「修正」「いろいろ」ばかり。<b>バグの原因 commit が探せない</b>。PR は 800 行で、誰もレビューできない',
-      idea: 'commit は<b>1つの意味</b>だけ。メッセージは「<b>種類: 何をした</b>」。PR は<b>小さく・説明つき</b>',
+      problem: '履歴が「修正」ばかりで原因が探せない。PR は 800 行で誰もレビューできない',
+      idea: 'commit は<b>種類: 何をした</b>。PR は<b>小さく・3項目</b>',
       answer: '<code>feat: 案件検索を追加</code> ／ PR は「何を・なぜ・確認方法」',
-      when: [['新機能', 'feat:'], ['バグ修正', 'fix:'], ['文書・設定・整理', 'docs: / chore: / refactor:'], ['PR の大きさ', '数百行まで・1つの目的']],
+      when: [['新機能', 'feat:'], ['バグ修正', 'fix:'], ['PR の大きさ', '数百行まで・1つの目的']],
     },
     render(el) {
-      const KINDS = ['feat', 'fix', 'docs', 'refactor', 'test', 'chore'];
-      const msg = h('input', { value: '修正', spellcheck: 'false', 'aria-label': 'コミットメッセージ' });
-      const chk = h('ul', { class: 'cgx-chk' }), log = h('div', { class: 'cgx-log' });
-      const rule = (ok, t, s) => h('li', { class: ok ? 'y' : 'n' }, icon(ok ? 'circle-check' : 'circle-x'), h('div', null, t, s ? h('small', s) : null));
-      function draw() {
-        const v = msg.value.trim(), m = v.match(/^(\w+)(\([^)]*\))?:\s*(.+)$/), kind = m && KINDS.includes(m[1]), body = m ? m[3] : v;
-        chk.replaceChildren(
-          rule(kind, '先頭に「種類:」がある（feat / fix / docs …）', kind ? null : '例：fix: 書面作成の金額を直す'),
-          rule(body.length >= 6, '「何をしたか」が分かる（6文字以上）', body.length >= 6 ? null : '「修正」だけでは、あとで何も分からない'),
-          rule(v.length > 0 && v.length <= 50, '短い（50文字以内）', v.length > 50 ? '長い説明は、2行目以降に書く' : null),
-          rule(!/最終|あれこれ|いろいろ|とりあえず|WIP|tmp/i.test(v), '「いろいろ」「とりあえず」などを使っていない', null),
-          rule(!/、|と|および|\s&\s/.test(body) || body.length < 14, '1つの変更だけを書いている', '「AとB」と書きたくなったら commit を分ける'));
-        log.replaceChildren(h('div', null, h('span', { class: 'hx' }, 'a1b2c3d'), ' fix: 書面作成を 25,000 円に変更'), h('div', null, h('span', { class: 'hx' }, '9f8e7d6'), ' feat: 案件検索を追加'), h('div', { class: 'cgx-me' }, h('span', { class: 'hx' }, 'e5d4c3b'), ' ' + (v || '（空）')), h('div', null, h('span', { class: 'hx' }, '1a2b3c4'), ' docs: README に起動方法を追記'));
+      style('cgw2', `
+      .cgw2{display:grid;gap:12px}
+      .cgw2-top{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:12px;align-items:start}@media(max-width:860px){.cgw2-top{grid-template-columns:1fr}}
+      .cgw2-card{border:1px solid var(--line);border-radius:10px;background:var(--card);padding:12px 14px;display:grid;gap:10px;position:relative}
+      .cgw2-card h4{margin:0;font-size:.9375rem;font-weight:900;display:flex;gap:.5em;align-items:center}.cgw2-card h4 .ic{width:18px;height:18px;color:var(--c,var(--ts))}
+      .cgw2-bar{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+      .cgw2 .hw{font-family:'Klee One','Zen Kurenaido','Hiragino Maru Gothic ProN','Yu Gothic',sans-serif;font-weight:600;letter-spacing:.02em}
+      .cgw2-formula{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font:800 .9375rem var(--mono)}
+      .cgw2-formula .fc{padding:.25em .8em;border-radius:8px;border:1px solid var(--c);background:color-mix(in srgb,var(--c) 16%,transparent);opacity:0;transform:translateX(-14px);transition:.45s}.cgw2-formula.go .fc{opacity:1;transform:none}
+      .cgw2-formula .fc:nth-child(2){transition-delay:.25s;border:0;background:none;padding:0}.cgw2-formula .fc:nth-child(3){transition-delay:.5s}
+      .cgw2-kinds{display:flex;gap:6px;flex-wrap:wrap}
+      .cgw2-kind{all:unset;cursor:pointer;display:inline-flex;gap:.4em;align-items:baseline;padding:.25em .7em;border-radius:8px;border:1px solid var(--line);background:var(--card2);font:700 .8125rem var(--mono);transition:.2s}
+      .cgw2-kind small{font:600 .6875rem var(--font);color:var(--mute)}.cgw2-kind:hover,.cgw2-kind.on{border-color:var(--c);background:color-mix(in srgb,var(--c) 18%,var(--card2));transform:translateY(-2px)}
+      .cgw2-box{min-height:2.6em;display:flex;align-items:center;gap:.4em;padding:.5em .8em;border-radius:8px;border:1px solid var(--line);background:var(--bg2);font-size:1rem;overflow:hidden}
+      .cgw2-box .cm{white-space:pre-wrap;word-break:break-all}.cgw2-caret{display:inline-block;width:2px;height:1.1em;background:var(--text);animation:cgw2c 1s steps(2) infinite;vertical-align:-3px}
+      @keyframes cgw2c{50%{opacity:0}}.cgw2 .nw{animation:cgw2n 1.4s}@keyframes cgw2n{0%{background:rgba(255,200,80,.7)}100%{background:transparent}}
+      .cgw2 .gone{text-decoration:line-through;opacity:.6;transition:.3s}
+      .cgw2-chk{display:flex;gap:10px;align-items:center}.cgw2-chk span{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:8px;border:1px solid var(--line);color:var(--mute);transition:.3s}.cgw2-chk span .ic{width:16px;height:16px}
+      .cgw2-chk span.y{color:var(--ok);border-color:var(--ok);background:color-mix(in srgb,var(--ok) 14%,transparent)}.cgw2-chk span.n{color:var(--bad);border-color:var(--bad);background:color-mix(in srgb,var(--bad) 12%,transparent)}
+      .cgw2-pr{border:1px solid var(--line);border-radius:8px;background:var(--bg2);padding:8px 10px;display:grid;gap:7px}
+      .cgw2-pr .ttl{display:flex;gap:.5em;align-items:center;font-weight:800;font-size:.875rem}.cgw2-pr .ttl .ic{width:16px;height:16px;color:var(--ok)}
+      .cgw2-f{display:grid;grid-template-columns:5.2em 1fr;gap:8px;align-items:baseline;font-size:.875rem}.cgw2-f b{font-size:.75rem;color:var(--mute);padding:.1em .5em;border-radius:6px;border:1px solid var(--line);text-align:center}
+      .cgw2-f .tx{min-height:1.6em;border-bottom:1px dashed var(--line)}.cgw2-pen{display:inline-block;width:14px;height:14px;vertical-align:-2px;color:var(--pink);animation:cgw2p .5s infinite alternate}@keyframes cgw2p{to{transform:translate(2px,-2px) rotate(8deg)}}
+      .cgw2-rv{display:grid;gap:7px}.cgw2-rv .row2{display:grid;grid-template-columns:7.5em 1fr 4.6em;gap:8px;align-items:center;font-size:.8125rem}
+      .cgw2-rv .trk{height:10px;border-radius:6px;background:var(--line);overflow:hidden}.cgw2-rv .trk i{display:block;height:100%;width:0;border-radius:6px;transition:width 1.6s cubic-bezier(.3,.8,.3,1)}.cgw2-rv .num{font:800 .8125rem var(--mono);display:flex;gap:.3em;align-items:center}.cgw2-rv .num .ic{width:15px;height:15px}
+      .cgw2-tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}@media(max-width:700px){.cgw2-tiles{grid-template-columns:1fr}}
+      .cgw2-tile{display:flex;gap:.7em;align-items:center;border:1px solid var(--line);border-radius:10px;background:var(--card);padding:10px 12px;font-weight:800;font-size:.875rem}.cgw2-tile .ic{width:22px;height:22px;color:var(--c)}
+      @media (prefers-reduced-motion:reduce){.cgw2 .nw,.cgw2-caret,.cgw2-pen{animation:none}.cgw2-formula .fc,.cgw2-rv .trk i{transition:none}}
+      `);
+      const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const sleep = (ms) => new Promise((r) => setTimeout(r, RM ? 0 : ms));
+      let tok = 0;
+      const KINDS = [['feat', '追加', 'feat: 申込フォームに電話番号欄を追加'], ['fix', '修正', 'fix: 料金表の税込表示を直す'], ['docs', '文書', 'docs: README に起動手順を追記'], ['refactor', '整理', 'refactor: 料金計算を関数に分ける'], ['chore', '雑務', 'chore: ESLint を 9 に更新']];
+      const GOOD = 'fix: 料金表の税込表示を直す';
+      /* --- コミット --- */
+      const formula = h('div', { class: 'cgw2-formula', style: { '--c': TS } }, h('span', { class: 'fc' }, '種類'), h('span', { class: 'fc' }, ':'), h('span', { class: 'fc' }, '何をした'));
+      const cm = h('span', { class: 'cm hw' }), box = h('div', { class: 'cgw2-box' }, icon('git-commit-horizontal'), cm, h('span', { class: 'cgw2-caret' }));
+      const mkChk = (ic, tip) => { const s = h('span', { 'data-tip': tip }, icon(ic)); return s; };
+      const c1 = mkChk('tag', '種類で始まる'), c2 = mkChk('ruler', '50字以内'), c3 = mkChk('message-square-text', '「何を」が分かる');
+      const chk = h('div', { class: 'cgw2-chk' }, c1, c2, c3);
+      const set = (s, ok) => { s.className = ok === null ? '' : ok ? 'y' : 'n'; };
+      const verdict = (t) => { const m = t.match(/^(feat|fix|docs|refactor|test|chore)(\([^)]*\))?:\s*(.{4,})$/); set(c1, t ? !!m : null); set(c2, t ? t.length <= 50 : null); set(c3, t ? !!m && m[3].length >= 6 : null); };
+      const kindBtns = KINDS.map(([k, hint, ex]) => h('button', { class: 'cgw2-kind', style: { '--c': TS }, onclick: () => { cur(); typeCommit(ex); kindBtns.forEach((b) => b.classList.toggle('on', b.dataset.k === k)); }, 'data-k': k }, k, h('small', hint)));
+      const cur = () => ++tok;
+      async function typeCommit(text, keep) {
+        const my = tok; cm.replaceChildren(); verdict('');
+        if (RM) { cm.textContent = text; verdict(text); return; }
+        let acc = '';
+        for (const ch of text) { if (my !== tok) return; acc += ch; const sp = h('span', { class: 'nw' }, ch); cm.append(sp); await sleep(40); }
+        verdict(acc);
       }
-      msg.addEventListener('input', draw); draw();
-      el.append(
-        h('div', { class: 'cgx-lint' },
-          h('div', null, lbl('コミットメッセージを書いてみよう'), msg, h('div', { style: { height: '10px' } }), chk),
-          h('div', null, lbl('git log --oneline で見える姿（あなたのは緑）'), log)),
-        h('div', { class: 'cgx-cmp' },
-          h('div', { class: 'ng' }, h('h6', icon('circle-x'), 'こんな PR は困る'), h('pre', { html: 'タイトル：いろいろ修正\n説明：（空）\n変更：+812 −403（12ファイル）\n\n→ 何を見ればいい？ 確認方法は？\n→ レビューに半日かかり、見落としも出る' })),
-          h('div', { class: 'ok' }, h('h6', icon('circle-check'), 'こんな PR はありがたい'), h('pre', { html: 'タイトル：feat: 案件検索を追加\n\n## 何を\n案件一覧に検索ボックスを追加\n## なぜ\n件数が増えて探しにくいため\n## 確認方法\n1. 案件一覧を開く\n2. 「山田」と入力 → 該当だけ表示\n\n変更：+96 −8（3ファイル）' }))),
-        GX.table(['ルール', '理由'], [['commit は1つの意味だけ', '取り消す・探すのが簡単になる'], ['メッセージは「種類: 何を」', '一覧で内容が分かる。バグ調査が速い'], ['PR は小さく（数百行まで）', 'レビューが早く、質も上がる'], ['PR に「何を・なぜ・確認方法」', 'レビュアーが迷わない']]));
+      async function erase(my) { const sp = [...cm.children]; for (let k = sp.length - 1; k >= 0; k--) { if (my !== tok) return false; sp[k].remove(); await sleep(28); } return true; }
+      /* --- PR --- */
+      const F3 = [['何を', '案件一覧に検索ボックスを追加'], ['なぜ', '件数が増えて探しにくいため'], ['確認方法', '「山田」と入力 → 該当だけ出る']];
+      const prRows = F3.map(([l]) => h('div', { class: 'cgw2-f' }, h('b', l), h('div', { class: 'tx hw' })));
+      const pr = h('div', { class: 'cgw2-pr' }, h('div', { class: 'ttl' }, icon('git-pull-request'), h('span', { class: 'hw' }, 'feat: 案件検索を追加')), ...prRows);
+      async function fillPR(my) {
+        prRows.forEach((r) => r.lastChild.replaceChildren());
+        for (let i = 0; i < F3.length; i++) {
+          const tx = prRows[i].lastChild, pen = h('span', { class: 'cgw2-pen' }, icon('pen-line'));
+          if (RM) { tx.textContent = F3[i][1]; continue; }
+          tx.append(pen);
+          for (const ch of F3[i][1]) { if (my !== tok) return; pen.before(h('span', { class: 'nw' }, ch)); await sleep(36); }
+          pen.remove(); await sleep(250);
+        }
+      }
+      /* --- レビュー時間 --- */
+      const mkRow = (label, c) => { const bar = h('i', { style: { background: c } }), num = h('span', { class: 'num' }, '—'); return { el: h('div', { class: 'row2' }, h('span', label), h('div', { class: 'trk' }, bar), num), bar, num }; };
+      const rs = mkRow('小さな PR（+80行）', 'var(--ok)'), rb = mkRow('巨大な PR（+812行）', 'var(--bad)');
+      async function review(my) {
+        [rs, rb].forEach((r) => { r.bar.style.transition = 'none'; r.bar.style.width = '0'; r.num.replaceChildren('—'); });
+        await sleep(60); if (my !== tok) return;
+        const run = (r, to, ic, c) => { r.bar.style.transition = RM ? 'none' : ''; r.bar.style.width = (to / 60) * 100 + '%'; if (RM) { r.num.replaceChildren(icon(ic), to + '分'); r.num.style.color = c; return; }
+          let n = 0; const t0 = performance.now(); const tm = setInterval(() => { if (my !== tok) { clearInterval(tm); return; } const f = Math.min(1, (performance.now() - t0) / 1600); n = Math.round(to * f); r.num.replaceChildren(n + '分'); if (f >= 1) { clearInterval(tm); r.num.replaceChildren(icon(ic), to + '分'); r.num.style.color = c; } }, 60); };
+        run(rs, 5, 'smile', 'var(--ok)'); run(rb, 60, 'frown', 'var(--bad)');
+      }
+      /* --- 再生 --- */
+      async function play() {
+        const my = cur(); formula.classList.remove('go'); kindBtns.forEach((b) => b.classList.remove('on')); cm.replaceChildren(); verdict('');
+        await sleep(80); formula.classList.add('go'); await sleep(900);
+        // 悪い例 → 消す → 良い例
+        for (const ch of 'update') { if (my !== tok) return; cm.append(h('span', { class: 'nw' }, ch)); await sleep(60); }
+        verdict('update'); await sleep(900); if (my !== tok) return;
+        cm.classList.add('gone'); await sleep(500); cm.classList.remove('gone'); if (!(await erase(my))) return; await sleep(250);
+        for (const ch of GOOD) { if (my !== tok) return; cm.append(h('span', { class: 'nw' }, ch)); await sleep(40); }
+        verdict(GOOD); kindBtns[1].classList.add('on'); await sleep(500);
+        review(my); await fillPR(my);
+      }
+      const replay = h('button', { class: 'btn ghost', onclick: play }, icon('play'), 'もう一度');
+      if (RM) { formula.classList.add('go'); cm.textContent = GOOD; verdict(GOOD); kindBtns[1].classList.add('on'); fillPR(tok); review(tok); } else setTimeout(play, 250);
+      el.append(h('div', { class: 'cgw2' },
+        h('div', { class: 'cgw2-top' },
+          h('div', { class: 'cgw2-card', style: { '--c': TS } }, h('div', { class: 'cgw2-bar' }, h('h4', icon('git-commit-horizontal'), 'コミット'), replay), formula, h('div', { class: 'cgw2-kinds' }, kindBtns), box, chk),
+          h('div', { class: 'cgw2-card', style: { '--c': PINK } }, h('h4', icon('git-pull-request'), 'PR（Pull Request）'), pr, h('div', { class: 'cgw2-rv' }, h('div', { style: { font: '700 .75rem var(--font)', color: 'var(--mute)', display: 'flex', gap: '.4em', alignItems: 'center' } }, icon('timer'), 'レビューにかかる時間'), rs.el, rb.el))),
+        h('div', { class: 'cgw2-tiles' },
+          ...[['scissors', TS, 'コミットは小さく'], ['target', PINK, '1つの目的'], ['book-open', BASIC, 'あとで読める']].map(([ic, c, t]) => h('div', { class: 'cgw2-tile', style: { '--c': c } }, icon(ic), t)))));
+      return () => { tok++; };
     },
   };
 

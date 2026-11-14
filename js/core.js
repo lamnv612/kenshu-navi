@@ -511,7 +511,7 @@ declare function Boolean(v:any):boolean;
       const row = h('div', { class: 'row', style: { marginTop: '6px' } });
       if (shown < hints.length) row.append(h('button', { class: 'btn', onclick: () => { shown++; draw(); } }, icon('lightbulb'), 'もう少しヒント'));
       if (!answered) row.append(h('button', { class: 'btn primary', onclick: () => { answered = true; draw(); if (!t.answer && o.fallback) { m.close(); o.fallback(); } } }, icon('key-round'), '答えを見る'));
-      else if (o.use && t.answer) row.append(h('button', { class: 'btn primary', onclick: () => { o.use(t); m.close(); } }, icon('corner-down-left'), 'エディタに入れる'));
+      else if (o.use && t.answer) row.append(h('button', { class: 'btn primary', onclick: () => { o.use(t); m.close(); } }, icon('corner-down-left'), o.useLabel || 'エディタに入れる'));
       if (row.children.length) body.append(row);
     };
     draw();
@@ -523,11 +523,22 @@ declare function Boolean(v:any):boolean;
     return h('button', { class: 'task-hint', title: 'ヒント・答え', 'aria-label': 'ヒント', onclick: (e) => { e.stopPropagation(); openHint(t, o); } }, icon('lightbulb'));
   }
 
+  /* 出力（ターミナル・プレビュー・図）を画面の上に固定して、下のボタンを押しても結果が見えるようにする。
+     使い方: 親（ステージ）の最初の子に pinOutput(出力の要素) を置き、操作ボタンは同じ親の中の下に並べる。 */
+  function pinOutput(node, o = {}) {
+    const pin = h('div', { class: 'pin-out' }, o.label ? h('div', { class: 'pin-lb' }, icon('pin'), o.label) : null, node);
+    if (o.height) pin.style.setProperty('--pin-h', o.height + 'px');
+    if (o.mobileHeight) pin.style.setProperty('--pin-mh', o.mobileHeight + 'px');
+    return pin;
+  }
+  /* スマホ用：操作したあとに、結果の要素が見えるところまでスクロール */
+  function revealOutput(node) { if (node && matchMedia('(max-width:800px)').matches) node.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
+
   const styled = {};
   function style(id, css) {
     if (styled[id]) return; styled[id] = 1;
     document.head.append(h('style', { 'data-l': id }, css));
   }
 
-  K.W = { openHint, hintButton, mini, modal, icon, iconifyNode, watchIcons, style, h, esc, sleep, clamp, hl, code, stepper, codeEditor, playground, quiz, celebrate, lbl, store, loadTS, tsCheck };
+  K.W = { pinOutput, revealOutput, openHint, hintButton, mini, modal, icon, iconifyNode, watchIcons, style, h, esc, sleep, clamp, hl, code, stepper, codeEditor, playground, quiz, celebrate, lbl, store, loadTS, tsCheck };
 })();

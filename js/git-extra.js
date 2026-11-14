@@ -3,7 +3,7 @@
   const K = window.KENSHU;
   if (!K || !K.lessons || !K.reg) return;
   const MOVES = [
-    { from: 'git', id: 'x-git-scenarios', scenes: ['コンフリクトを解決しよう', 'レビュー指摘に対応', '履歴を調べる', 'リリースとタグ'],   // 実践（Git）で使う「ミスを取り消す」「stash」は本編に残す
+    { from: 'git', id: 'x-git-scenarios', scenes: ['コンフリクトを解決しよう', 'レビュー指摘に対応', '作業を一時退避：stash', '履歴を調べる', 'リリースとタグ'],   // 実践（Git）で使う「ミスを取り消す」は本編に残す。stash は任意へ
       title: '任意：Git 実践シナリオ', sub: '現場で必ず起きる場面と、その対処', emoji: '🧭',
       meta: { cat: 'basic', day: '1日目', when: 'Git 実習のあと、余った時間や、現場で困ったときに', mins: 15, order: 13.5, level: '応用', after: 'git', why: '衝突・レビュー対応・取り消し・退避・履歴調べ・リリースは、現場で毎週起きる。慌てず直せるようになる' } },
     { from: 'html', id: 'x-html-deep', scenes: ['HTML は「木」'],   // 実践（HTML）で nav を使うので「なぜ意味のあるタグ？」は本編に残す
