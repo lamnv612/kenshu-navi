@@ -99,10 +99,15 @@
   const nc = (v) => v['main.ts'].replace(/\/\/.*$/gm, '');
   const ranOk = (c, f) => c.errors.length === 0 && c.logs.length > 0 && !c.logs.some((l) => l.k === 'e') && (!f || f(c.logs.map((l) => l.t)));
   const applyFix = (starter, fix) => (typeof fix === 'string' ? fix : fix.reduce((t, [a, b]) => t.replace(a, b), starter));
-  const tsPractice = (starter, missions, solution, title, help) => playground({
+  const tsPractice = (starter, missions, solution, title, help, extra) => playground({
     title: title || 'TypeScript', mode: 'ts', files: [{ name: 'main.ts', lang: 'ts', code: starter }],
-    solution: { 'main.ts': solution },
-    tasks: (v, c) => missions(v, c, v['main.ts'] !== starter).map((t, i) => (help && help[i] ? Object.assign({}, t, { hint: help[i].hint, answer: { code: applyFix(starter, help[i].fix), lang: 'ts', mode: 'replace' } }) : t)),
+    solution: { 'main.ts': solution + (extra || []).map((e) => e.sol || '').join('') },
+    tasks: (v, c) => {
+      const ed = v['main.ts'] !== starter;
+      const base = missions(v, c, ed).map((t, i) => (help && help[i] ? Object.assign({}, t, { hint: help[i].hint, answer: { code: applyFix(starter, help[i].fix), lang: 'ts', mode: 'replace' } }) : t));
+      const more = (extra || []).map((e) => ({ optional: true, level: e.level, label: e.label, hint: e.hint, ok: ed && !!e.ok(v, c), answer: { code: e.code, lang: 'ts', mode: 'replace' } }));
+      return base.map((t) => (t.optional ? Object.assign({ level: 1 }, t, { label: String(t.label).replace(/^任意：/, '') }) : t)).concat(more);
+    },
   });
 
   /* =====================================================================
@@ -252,25 +257,29 @@
       { say: '使う側で <b>import { add } from</b>。公開された add が届く！', m: 'export const add = (a, b) => a + b;\nconst PI = 3.14; // 外に見せない', mh: [1], n: 'import { add } from "./math";\nconsole.log(add(1, 2)); // 3', nh: [1], e: false, pk: true },
       { say: '<b>export default</b> は 1ファイル1つ。受け取る側は <b>{ } なし</b>で好きな名前で。', m: 'const add = (a, b) => a + b;\nexport default add;', mh: [2], n: 'import add from "./math";\nconsole.log(add(1, 2)); // 3', nh: [1], e: false, pk: true },
     ];
-    const mh = h('div'), nh = h('div'), lane = h('div', { class: 'xt-lanex' }), pk = h('span', { class: 'xt-c xt-pk', style: { '--cc': 'var(--basic)' } }, 'add'); lane.append(pk);
-    const err = msg();
-    return stepper({
+    const mh = h('div'), nh = h('div'), lane = h('div', { class: 'xt-lanex', style: { alignSelf: 'center' } }), pk = h('span', { class: 'xt-c xt-pk', style: { '--cc': 'var(--basic)' } }, 'add'); lane.append(pk);
+    const err = msg(), con = h('div', { class: 'fo2-out' });
+    let API = null, busy = false;
+    const st = stepper({
       color: VI, steps: S.map((s) => ({ say: s.say })),
-      init(vis) { vis.append(h('div', { style: { display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 90px minmax(0,1fr)', gap: '10px', alignItems: 'center' } }, h('div', null, h('div', { class: 'label' }, 'math.ts'), mh), lane, h('div', null, h('div', { class: 'label' }, 'main.ts'), nh, err))); },
+      init(vis, api) { API = api; vis.append(h('div', { class: 'fo2-mod' }, h('div', null, h('div', { class: 'label' }, 'math.ts'), mh), lane, h('div', null, h('div', { class: 'label' }, 'main.ts'), nh, err, h('div', { class: 'label', style: { marginTop: '8px' } }, 'コンソール'), con))); },
       update(n) {
         const s = S[n];
         mh.replaceChildren(code(s.m, 'ts', { color: 'var(--basic)', hi: s.mh })); nh.replaceChildren(code(s.n, 'ts', { color: 'var(--ts)', hi: s.nh }));
         err.className = 'xt-msg ' + (s.e ? 'e' : 'ok'); err.textContent = s.e ? '✖ main.ts から add が使えない' : '✓ import できた';
+        con.className = 'fo2-out ' + (s.e ? 'e' : 'ok'); con.replaceChildren(s.e ? h('div', { class: 'er' }, 'ReferenceError: add is not defined') : h('div', null, '› 3'));
         pk.style.transition = 'none'; pk.style.left = '0%'; pk.style.opacity = s.pk ? 1 : 0; void pk.offsetWidth;
         if (s.pk) { pk.style.transition = ''; pk.style.left = '82%'; }
       },
     });
+    const play = h('button', { class: 'btn primary', style: { '--c': VI }, onclick: async () => { if (busy || !API) return; busy = true; for (let i = 0; i < S.length; i++) { API.go(i); await sleep(1500); } busy = false; } }, K.W.icon('play'), '実行（通し）');
+    return h('div', null, st, h('div', { style: { marginTop: '10px' } }, play));
   }
 
   K.reg({
     id: 'x-js-basics', track: 'extra', title: 'JS の前提知識', sub: 'TS を読むための土台', emoji: '🧱',
     gh: [{ label: 'typescript/ のサンプル', path: 'typescript' }],
-    meta: meta({ day: '17日(火)', when: 'TypeScript 紹介の直後（JS が初めての人向けに）', mins: 10, order: 20, level: '入門', after: 'ts-intro', why: 'TS は JS の上に成り立つ。アロー関数・分割代入・map/filter が読めないと後の例が追えない' }),
+    meta: meta({ day: '2日目', when: 'TypeScript 紹介の直後（JS が初めての人向けに）', mins: 10, order: 20, level: '入門', after: 'ts-intro', why: 'TS は JS の上に成り立つ。アロー関数・分割代入・map/filter が読めないと後の例が追えない' }),
     scenes: [
       { t: 'const / let とアロー関数', tag: 'JS', lead: '変数は基本 <b>const</b>。関数は <b>=&gt;</b> でスッキリ書ける。ボタンと「次へ」で確かめよう。',
         render(el) { el.append(constLetCards(), h('div', { style: { height: '16px' } }), arrowStepper()); } },
@@ -375,7 +384,7 @@
   K.reg({
     id: 'x-ts-narrow', track: 'extra', title: 'any / unknown / null と絞り込み', sub: '型を安全に絞る', emoji: '🛡️',
     gh: [{ label: 'any の型', path: 'typescript/10_any_type.ts' }, { label: 'undefined / null', path: 'typescript/11_undefined_null.ts' }],
-    meta: meta({ day: '17日(火)', when: 'データ型の説明の後（スライド p19-21 の補足）', mins: 10, order: 21, level: '入門', after: 'ts-basic', why: 'null / undefined のエラーは現場で最も多い。型ガードで安全に扱う考え方を先に知っておく' }),
+    meta: meta({ day: '2日目', when: 'データ型の説明の後（スライド p19-21 の補足）', mins: 10, order: 21, level: '入門', after: 'ts-basic', why: 'null / undefined のエラーは現場で最も多い。型ガードで安全に扱う考え方を先に知っておく' }),
     scenes: [
       { t: 'どの型に何が入る？', tag: 'any / unknown', lead: '行を<b>クリック</b>して、型ごとの違いを比べよう。<b>any と unknown</b> の差に注目。', render(el) { el.append(matrixScene()); } },
       { t: '絞り込み（narrowing）', tag: 'typeof', lead: '<b>if で分岐するたびに x の型が絞られる</b>。値を選んで、道筋をたどろう。', render(el) { el.append(narrowScene()); } },
@@ -387,7 +396,7 @@
             { label: '② null のとき「なし」を返す', ok: ed && ranOk(c, (t) => t[2] === 'なし') },
             { label: '③ 実行して hi / 42 / なし の順に出る', ok: ed && ranOk(c, (t) => t.length >= 3 && t[0] === 'hi' && t[1] === '42' && t[2] === 'なし') },
             { optional: true, label: '任意：describe が boolean も受け取り、true なら「はい」、false なら「いいえ」を返す（実行して確かめる）', ok: ed && /boolean/.test(nc(v)) && ranOk(c, (t) => t.includes('はい') && t.includes('いいえ')) },
-          ], "// 任意チャレンジ：boolean も受け取る（true は \"はい\"、false は \"いいえ\"）\nfunction describe(x: string | number | boolean | null): string {\n  if (x === null) return \"なし\";\n  if (typeof x === \"boolean\") return x ? \"はい\" : \"いいえ\";\n  return x.toString();\n}\n\nconsole.log(describe(\"hi\"));\nconsole.log(describe(42));\nconsole.log(describe(null));\nconsole.log(describe(true));\nconsole.log(describe(false));\n", 'TypeScript', [{"hint": ["x は null かもしれない（string | number | null）。このままでは toString() を呼べないよ。", "先に if (x === null) で null を分けると、あとは安全。"], "fix": [["  return x.toString();", "  if (x === null) return \"なし\";\n  return x.toString();"]]}, {"hint": ["null のとき返す文字は「なし」。", "関数の最初に if (x === null) return \"なし\"; を書こう。"], "fix": [["  return x.toString();", "  if (x === null) return \"なし\";\n  return x.toString();"]]}, {"hint": ["直したら「▶ 実行」を押そう。", "hi / 42 / なし の順に3行出れば OK。"], "fix": [["  return x.toString();", "  if (x === null) return \"なし\";\n  return x.toString();"]]}, {"hint": ["引数の型に boolean を足す。typeof x === \"boolean\" で分けられるよ。", "if (typeof x === \"boolean\") return x ? \"はい\" : \"いいえ\"; を null の分岐のあとに。describe(true) も console.log しよう。"], "fix": "// 任意チャレンジ：boolean も受け取る（true は \"はい\"、false は \"いいえ\"）\nfunction describe(x: string | number | boolean | null): string {\n  if (x === null) return \"なし\";\n  if (typeof x === \"boolean\") return x ? \"はい\" : \"いいえ\";\n  return x.toString();\n}\n\nconsole.log(describe(\"hi\"));\nconsole.log(describe(42));\nconsole.log(describe(null));\nconsole.log(describe(true));\nconsole.log(describe(false));\n"}]));
+          ], "// 任意チャレンジ：boolean も受け取る（true は \"はい\"、false は \"いいえ\"）\nfunction describe(x: string | number | boolean | null): string {\n  if (x === null) return \"なし\";\n  if (typeof x === \"boolean\") return x ? \"はい\" : \"いいえ\";\n  return x.toString();\n}\n\nconsole.log(describe(\"hi\"));\nconsole.log(describe(42));\nconsole.log(describe(null));\nconsole.log(describe(true));\nconsole.log(describe(false));\n", 'TypeScript', [{"hint": ["x は null かもしれない（string | number | null）。このままでは toString() を呼べないよ。", "先に if (x === null) で null を分けると、あとは安全。"], "fix": [["  return x.toString();", "  if (x === null) return \"なし\";\n  return x.toString();"]]}, {"hint": ["null のとき返す文字は「なし」。", "関数の最初に if (x === null) return \"なし\"; を書こう。"], "fix": [["  return x.toString();", "  if (x === null) return \"なし\";\n  return x.toString();"]]}, {"hint": ["直したら「▶ 実行」を押そう。", "hi / 42 / なし の順に3行出れば OK。"], "fix": [["  return x.toString();", "  if (x === null) return \"なし\";\n  return x.toString();"]]}, {"hint": ["引数の型に boolean を足す。typeof x === \"boolean\" で分けられるよ。", "if (typeof x === \"boolean\") return x ? \"はい\" : \"いいえ\"; を null の分岐のあとに。describe(true) も console.log しよう。"], "fix": "// 任意チャレンジ：boolean も受け取る（true は \"はい\"、false は \"いいえ\"）\nfunction describe(x: string | number | boolean | null): string {\n  if (x === null) return \"なし\";\n  if (typeof x === \"boolean\") return x ? \"はい\" : \"いいえ\";\n  return x.toString();\n}\n\nconsole.log(describe(\"hi\"));\nconsole.log(describe(42));\nconsole.log(describe(null));\nconsole.log(describe(true));\nconsole.log(describe(false));\n"}], [{ level: 2, label: "undefined も受け取り、undefined のとき「未設定」を返す（実行して確かめる）", hint: ["引数の型に undefined を足す。null と undefined は別物。", "if (x === undefined) return \"未設定\"; を null の分岐のあとに足し、describe(undefined) も console.log しよう。"], ok: (v, c) => /undefined/.test(nc(v)) && ranOk(c, (t) => t.includes('未設定')), code: "function describe(x: string | number | null): string {\n  if (x === null) return \"なし\";\n  return x.toString();\n}\n\nconsole.log(describe(\"hi\"));\nconsole.log(describe(42));\nconsole.log(describe(null));\n\nfunction describe2(x: string | number | null | undefined): string {\n  if (x === null) return \"なし\";\n  if (x === undefined) return \"未設定\";\n  return x.toString();\n}\nconsole.log(describe2(undefined)); // 未設定\n", sol: "\n// 中級チャレンジ：undefined も安全に\nfunction describe2(x: string | number | null | undefined): string {\n  if (x === null) return \"なし\";\n  if (x === undefined) return \"未設定\";\n  return x.toString();\n}\nconsole.log(describe2(undefined)); // 未設定\n" }, { level: 3, label: "{ name: string } のオブジェクトも受け取り、typeof x === \"object\" で絞り込んで「名前:○○」を返す", hint: ["typeof x === \"object\" で、オブジェクトだけを選べる（null は先に除いておく）。", "if (typeof x === \"object\") return \"名前:\" + x.name; を x.toString() の前に。describe({ name: \"Lam\" }) も実行しよう。"], ok: (v, c) => /typeof\s+x\s*===?\s*[\"']object[\"']/.test(nc(v)) && /\.name\b/.test(nc(v)) && ranOk(c, (t) => t.some((x) => x.includes('名前:'))), code: "function describe(x: string | number | null): string {\n  if (x === null) return \"なし\";\n  return x.toString();\n}\n\nconsole.log(describe(\"hi\"));\nconsole.log(describe(42));\nconsole.log(describe(null));\n\nfunction describe3(x: string | number | null | { name: string }): string {\n  if (x === null) return \"なし\";\n  if (typeof x === \"object\") return \"名前:\" + x.name;\n  return x.toString();\n}\nconsole.log(describe3({ name: \"Lam\" })); // 名前:Lam\n", sol: "\n// 上級チャレンジ：オブジェクトも絞り込む\nfunction describe3(x: string | number | null | { name: string }): string {\n  if (x === null) return \"なし\";\n  if (typeof x === \"object\") return \"名前:\" + x.name;\n  return x.toString();\n}\nconsole.log(describe3({ name: \"Lam\" })); // 名前:Lam\n" }]));
         } },
     ],
   });
@@ -484,7 +493,7 @@
   K.reg({
     id: 'x-ts-utility', track: 'extra', title: 'as const とユーティリティ型', sub: '実務で頻出の型テク', emoji: '🧰',
     gh: [{ label: '実務向け解説 (99_bonus.md)', path: 'typescript/12_class/99_bonus.md' }],
-    meta: meta({ day: '18日(水)', when: 'インタフェース / Type の後、または復習の前の余り時間', mins: 10, order: 22, level: '応用', after: 'ts-types', why: '固定値管理・更新処理・権限チェックなど、現場でよく使う型の道具を先取りする' }),
+    meta: meta({ day: '3日目', when: 'インタフェース / Type の後、または復習の前の余り時間', mins: 10, order: 22, level: '応用', after: 'ts-types', why: '固定値管理・更新処理・権限チェックなど、現場でよく使う型の道具を先取りする' }),
     scenes: [
       { t: 'as const：値をそのまま型に', tag: 'as const', lead: '「次へ」で、<b>typo が型エラーになる</b>までの流れを追おう。', render(el) { el.append(asConstStepper()); } },
       { t: 'ユーティリティ型', tag: 'Partial / Pick / Omit …', lead: '型を選ぶと、<b>元の型がどう変形するか</b>が動いて見える。Pick / Omit はキーをクリック。', render(el) { el.append(utilityScene()); } },
@@ -496,7 +505,7 @@
             { label: '② ProductInfo を Pick<Product, …> で作る', ok: ed && /Pick\s*<\s*Product\s*,/.test(nc(v)) },
             { label: '③ 赤線なしで実行できる', ok: ed && ranOk(c) },
             { optional: true, label: '任意：Partial<Product> を使った updateProduct(p, patch) を作り、price だけ変えて実行する', ok: ed && /Partial\s*<\s*Product\s*>/.test(nc(v)) && /updateProduct\s*\(/.test(nc(v)) && ranOk(c, (t) => t.some((x) => /800/.test(x))) },
-          ], "interface Product {\n  id: number;\n  name: string;\n  price: number;\n  stock: number;\n}\n\nconst colors = [\"red\", \"green\", \"blue\"] as const;\ntype Color = typeof colors[number]; // \"red\" | \"green\" | \"blue\"\nfunction setColor(color: Color) {\n  console.log(`color set to ${color}`);\n}\nsetColor(\"red\");\n\ntype ProductInfo = Pick<Product, \"price\" | \"stock\">;\nconst info: ProductInfo = { price: 1000, stock: 50 };\nconsole.log(info.price);\n\n// 任意チャレンジ：一部だけ更新できる関数\nfunction updateProduct(p: Product, patch: Partial<Product>): Product {\n  return { ...p, ...patch };\n}\nconst sample: Product = { id: 1, name: \"マウス\", price: 1200, stock: 10 };\nconsole.log(updateProduct(sample, { price: 800 }).price); // 800\n", 'TypeScript', [{"hint": ["配列のうしろに as const を付けると、値そのものが型になる。", "type Color = typeof colors[number]; に書き換えよう。"], "fix": [["const colors = [\"red\", \"green\", \"blue\"];", "const colors = [\"red\", \"green\", \"blue\"] as const;"], ["type Color = string; // ← typeof colors[number] にする", "type Color = typeof colors[number];"]]}, {"hint": ["Pick<元の型, \"取り出す項目\"> の形。", "type ProductInfo = Pick<Product, \"price\" | \"stock\">;"], "fix": [["type ProductInfo = Product; // ← Pick<Product, ...> にする", "type ProductInfo = Pick<Product, \"price\" | \"stock\">;"]]}, {"hint": ["2つ直したら「▶ 実行」を押そう。", "color set to red（と 1000）が出れば OK。"], "fix": [["const colors = [\"red\", \"green\", \"blue\"];", "const colors = [\"red\", \"green\", \"blue\"] as const;"], ["type Color = string; // ← typeof colors[number] にする", "type Color = typeof colors[number];"], ["type ProductInfo = Product; // ← Pick<Product, ...> にする", "type ProductInfo = Pick<Product, \"price\" | \"stock\">;"]]}, {"hint": ["「一部の項目だけ渡す」型は Partial<元の型>。", "function updateProduct(p: Product, patch: Partial<Product>): Product { return { ...p, ...patch }; }"], "fix": "interface Product {\n  id: number;\n  name: string;\n  price: number;\n  stock: number;\n}\n\nconst colors = [\"red\", \"green\", \"blue\"] as const;\ntype Color = typeof colors[number]; // \"red\" | \"green\" | \"blue\"\nfunction setColor(color: Color) {\n  console.log(`color set to ${color}`);\n}\nsetColor(\"red\");\n\ntype ProductInfo = Pick<Product, \"price\" | \"stock\">;\nconst info: ProductInfo = { price: 1000, stock: 50 };\nconsole.log(info.price);\n\n// 任意チャレンジ：一部だけ更新できる関数\nfunction updateProduct(p: Product, patch: Partial<Product>): Product {\n  return { ...p, ...patch };\n}\nconst sample: Product = { id: 1, name: \"マウス\", price: 1200, stock: 10 };\nconsole.log(updateProduct(sample, { price: 800 }).price); // 800\n"}]));
+          ], "interface Product {\n  id: number;\n  name: string;\n  price: number;\n  stock: number;\n}\n\nconst colors = [\"red\", \"green\", \"blue\"] as const;\ntype Color = typeof colors[number]; // \"red\" | \"green\" | \"blue\"\nfunction setColor(color: Color) {\n  console.log(`color set to ${color}`);\n}\nsetColor(\"red\");\n\ntype ProductInfo = Pick<Product, \"price\" | \"stock\">;\nconst info: ProductInfo = { price: 1000, stock: 50 };\nconsole.log(info.price);\n\n// 任意チャレンジ：一部だけ更新できる関数\nfunction updateProduct(p: Product, patch: Partial<Product>): Product {\n  return { ...p, ...patch };\n}\nconst sample: Product = { id: 1, name: \"マウス\", price: 1200, stock: 10 };\nconsole.log(updateProduct(sample, { price: 800 }).price); // 800\n", 'TypeScript', [{"hint": ["配列のうしろに as const を付けると、値そのものが型になる。", "type Color = typeof colors[number]; に書き換えよう。"], "fix": [["const colors = [\"red\", \"green\", \"blue\"];", "const colors = [\"red\", \"green\", \"blue\"] as const;"], ["type Color = string; // ← typeof colors[number] にする", "type Color = typeof colors[number];"]]}, {"hint": ["Pick<元の型, \"取り出す項目\"> の形。", "type ProductInfo = Pick<Product, \"price\" | \"stock\">;"], "fix": [["type ProductInfo = Product; // ← Pick<Product, ...> にする", "type ProductInfo = Pick<Product, \"price\" | \"stock\">;"]]}, {"hint": ["2つ直したら「▶ 実行」を押そう。", "color set to red（と 1000）が出れば OK。"], "fix": [["const colors = [\"red\", \"green\", \"blue\"];", "const colors = [\"red\", \"green\", \"blue\"] as const;"], ["type Color = string; // ← typeof colors[number] にする", "type Color = typeof colors[number];"], ["type ProductInfo = Product; // ← Pick<Product, ...> にする", "type ProductInfo = Pick<Product, \"price\" | \"stock\">;"]]}, {"hint": ["「一部の項目だけ渡す」型は Partial<元の型>。", "function updateProduct(p: Product, patch: Partial<Product>): Product { return { ...p, ...patch }; }"], "fix": "interface Product {\n  id: number;\n  name: string;\n  price: number;\n  stock: number;\n}\n\nconst colors = [\"red\", \"green\", \"blue\"] as const;\ntype Color = typeof colors[number]; // \"red\" | \"green\" | \"blue\"\nfunction setColor(color: Color) {\n  console.log(`color set to ${color}`);\n}\nsetColor(\"red\");\n\ntype ProductInfo = Pick<Product, \"price\" | \"stock\">;\nconst info: ProductInfo = { price: 1000, stock: 50 };\nconsole.log(info.price);\n\n// 任意チャレンジ：一部だけ更新できる関数\nfunction updateProduct(p: Product, patch: Partial<Product>): Product {\n  return { ...p, ...patch };\n}\nconst sample: Product = { id: 1, name: \"マウス\", price: 1200, stock: 10 };\nconsole.log(updateProduct(sample, { price: 800 }).price); // 800\n"}], [{ level: 2, label: "Omit<Product, \"id\"> で NewProduct を作り、id を付けて Product にする createProduct(data) を実行する", hint: ["Omit<元の型, \"除く項目\"> で、id だけ抜いた型が作れる。", "type NewProduct = Omit<Product, \"id\">; function createProduct(data: NewProduct): Product { return { id: 1, ...data }; }"], ok: (v, c) => /Omit\s*<\s*Product\s*,\s*[\"']id[\"']\s*>/.test(nc(v)) && /createProduct\s*\(/.test(nc(v)) && ranOk(c, (t) => t.length >= 3), code: "interface Product {\n  id: number;\n  name: string;\n  price: number;\n  stock: number;\n}\n\nconst colors = [\"red\", \"green\", \"blue\"] as const;\ntype Color = typeof colors[number];\nfunction setColor(color: Color) {\n  console.log(`color set to ${color}`);\n}\nsetColor(\"red\");\n\ntype ProductInfo = Pick<Product, \"price\" | \"stock\">;\nconst info: ProductInfo = { price: 1000, stock: 50 };\nconsole.log(info.price);\n\ntype NewProduct = Omit<Product, \"id\">;\nfunction createProduct(data: NewProduct): Product {\n  return { id: 1, ...data };\n}\nconsole.log(createProduct({ name: \"キーボード\", price: 3000, stock: 5 }));\n", sol: "\n// 中級チャレンジ：Omit で「作る前」の型\ntype NewProduct = Omit<Product, \"id\">;\nfunction createProduct(data: NewProduct): Product {\n  return { id: 1, ...data };\n}\nconsole.log(createProduct({ name: \"キーボード\", price: 3000, stock: 5 }));\n" }, { level: 3, label: "Record<Color, number> で色ごとの在庫 stockByColor を作り（3色すべて）、stockByColor.red を出す", hint: ["Record<キー, 値> は「キーが全部そろった辞書」。キーに Color を使うと red / green / blue の3つが必須。", "const stockByColor: Record<Color, number> = { red: 5, green: 3, blue: 0 }; console.log(stockByColor.red);"], ok: (v, c) => /Record\s*<\s*Color\s*,\s*number\s*>/.test(nc(v)) && /stockByColor/.test(nc(v)) && /as const/.test(nc(v)) && ranOk(c, (t) => t.length >= 3), code: "interface Product {\n  id: number;\n  name: string;\n  price: number;\n  stock: number;\n}\n\nconst colors = [\"red\", \"green\", \"blue\"] as const;\ntype Color = typeof colors[number];\nfunction setColor(color: Color) {\n  console.log(`color set to ${color}`);\n}\nsetColor(\"red\");\n\ntype ProductInfo = Pick<Product, \"price\" | \"stock\">;\nconst info: ProductInfo = { price: 1000, stock: 50 };\nconsole.log(info.price);\n\nconst stockByColor: Record<Color, number> = { red: 5, green: 3, blue: 0 };\nconsole.log(stockByColor.red); // 5\n", sol: "\n// 上級チャレンジ：as const と Record を組み合わせる\nconst stockByColor: Record<Color, number> = { red: 5, green: 3, blue: 0 };\nconsole.log(stockByColor.red); // 5\n" }]));
         } },
     ],
   });
@@ -526,50 +535,39 @@
   }
 
   function namingGame() {
-    const Q = [
-      { q: ['let ', '', ' = "Tanaka";'], o: ['User_name', 'name', 'userName'], a: 2, why: '変数は camelCase。name だけだと、何の名前か分からない。' },
-      { q: ['const ', '', ' = 3;'], o: ['maxretries', 'MAX_RETRIES', 'ApiUrl'], a: 1, why: '定数は UPPER_SNAKE_CASE（または camelCase）。' },
-      { q: ['function ', '', '(id: number): string'], o: ['userName', 'nameById', 'getUserName'], a: 2, why: '関数は「動詞 + 対象」。get が付くと処理内容が伝わる。' },
-      { q: ['function ', '', '(id: number): boolean'], o: ['userActive', 'isUserActive', 'activeUser'], a: 1, why: '真偽値を返す関数は is / has から始める。' },
-      { q: ['class ', '', ' {}'], o: ['useraccount', 'userAccount', 'UserAccount'], a: 2, why: 'クラスは PascalCase（先頭も大文字）。' },
-      { q: ['type ', '', ' = number;'], o: ['userid', 'UserID', 'user_id'], a: 1, why: '型エイリアスも PascalCase。' },
-      { q: ['enum ', '', ' { ADMIN = "ADMIN" }'], o: ['userRole', 'UserRole', 'USER_ROLE'], a: 1, why: 'enum 名は PascalCase。メンバーは UPPER_SNAKE_CASE か PascalCase（チームで統一）。' },
-      { q: ['', '', '  // ファイル名'], o: ['UserProfile.ts', 'user_profile.ts', 'user-profile.ts'], a: 2, why: 'ファイル・フォルダは小文字の kebab-case にそろえる（チームの決まりに合わせる）。' },
-      { q: ['function identity<', '', '>(value: ', '', ') { return value; }'], o: ['T', 'tType', 'genericValue'], a: 0, why: 'ジェネリクスは T, U など単文字が慣習（意味があるなら単語でも可）。' },
+    /* 選択式ではなく、実際のレビューで直す名前を「前 → 後」で見比べる */
+    const BEFORE = 'function get(d) {\n  const flag = d.filter(x => x.s === 1);\n  const n = flag.length;\n  return n;\n}\n\nconst ok = check(user);\nlet User_name = "田中";';
+    const AFTER = 'function countTodoConsultations(consultations) {\n  const todoList = consultations.filter(c => c.status === STATUS_TODO);\n  const todoCount = todoList.length;\n  return todoCount;\n}\n\nconst isLoggedIn = checkLogin(user);\nlet userName = "田中";';
+    const ROWS = [
+      ['get', 'countTodoConsultations', '何を取る？ 動詞 + 対象で、処理内容が伝わる名前に', 1],
+      ['d', 'consultations', '1文字は検索できない。中身が分かる複数形に', 1],
+      ['flag', 'todoList', '何の flag？ 入っている物をそのまま名前にする', 2],
+      ['x.s === 1', 'c.status === STATUS_TODO', '1 は何？ 意味のある名前の定数にする', 2],
+      ['n', 'todoCount', '件数だと分かる名前に', 3],
+      ['ok', 'isLoggedIn', '真偽値は is / has / can から始める', 7],
+      ['User_name', 'userName', '変数は camelCase（_ は使わない）', 8],
     ];
-    let i = 0, score = 0, streak = 0, done = false;
-    const root = h('div', { class: 'xt-panel' });
-    const draw = () => {
-      if (i >= Q.length) {
-        const p = Math.round((score / Q.length) * 100);
-        root.replaceChildren(h('div', { class: 'xt-score', style: { '--p': p } }, h('span', `${score}/${Q.length}`)), h('div', { style: { textAlign: 'center', fontWeight: 800 } }, p === 100 ? '満点！命名マスター' : p >= 70 ? 'いい感じ！あと少し' : 'もう一度挑戦してみよう'), h('button', { class: 'btn primary', style: { justifySelf: 'center', '--c': VI }, onclick: () => { i = 0; score = 0; streak = 0; draw(); } }, '⟲ もう一度'));
-        if (p === 100) celebrate();
-        return;
-      }
-      done = false; const q = Q[i]; const blanks = [];
-      const qline = h('div', { class: 'xt-q' }, ...q.q.map((t, k) => { if (k % 2 === 0) return t; const b = h('span', { class: 'blank' }, '？？？'); blanks.push(b); return b; }));
-      const why = msg(); setMsg(why, '正しい名前を選ぼう', 'w');
-      const opts = q.o.map((t, k) => h('button', { class: 'xt-opt', onclick: (ev) => {
-        if (done) return; const btn = ev.currentTarget;
-        if (k === q.a) { done = true; score++; streak++; btn.classList.add('ok'); blanks.forEach((b) => { b.className = 'got'; b.textContent = t; }); setMsg(why, '✓ 正解！ ' + q.why, 'ok'); nxt.style.display = ''; nxt.classList.add('pulse'); }
-        else { btn.classList.add('bad', 'dis'); streak = 0; setMsg(why, '✖ おしい。もう一度！', 'e'); }
-        stat.textContent = `連続 ${streak}`;
-      } }, t));
-      const nxt = h('button', { class: 'btn primary', style: { '--c': VI, display: 'none' }, onclick: () => { i++; draw(); } }, i === Q.length - 1 ? '結果を見る' : '次の問題 →');
-      const stat = h('span', { class: 'chip', style: { '--c': VI } }, `連続 ${streak}`);
-      root.replaceChildren(h('div', { class: 'row' }, h('span', { style: { fontWeight: 900 } }, `Q${i + 1} / ${Q.length}`), h('div', { class: 'xt-bar', style: { flex: 1 } }, h('i', { style: { width: (i / Q.length) * 100 + '%' } })), stat), qline, ...opts, why, h('div', { class: 'row' }, h('span', { style: { flex: 1 } }), nxt));
-    };
+    let after = false;
+    const cbox = h('div'), tbl = h('div', { class: 'xt-panel' });
+    const seg = h('div', { class: 'xt-seg', style: { '--c': VI, alignSelf: 'start', marginBottom: '2px' } }, [['レビュー前', false], ['直したあと', true]].map(([t, v]) => h('button', { class: v === after ? 'on' : '', onclick: () => { after = v; draw(); } }, t)));
+    function draw() {
+      [...seg.children].forEach((b, i) => b.classList.toggle('on', (i === 1) === after));
+      cbox.replaceChildren(code(after ? AFTER : BEFORE, 'ts', { file: 'consultation.ts', color: VI, ...(after ? {} : { }) }));
+      const c = cbox.firstChild; if (c && c.setHi) c.setHi(ROWS.map((r) => r[3]), after ? 'on' : 'err');
+      tbl.replaceChildren(h('div', { style: { fontWeight: 800, marginBottom: '2px' } }, 'レビューでよく指される名前'), ...ROWS.map(([bad, good, why]) => h('div', { style: { display: 'grid', gridTemplateColumns: 'minmax(0,1fr) auto minmax(0,1.3fr)', gap: '8px', alignItems: 'baseline', fontSize: '.875rem' } },
+        h('code', { style: { color: 'var(--bad)' } }, bad), h('span', { style: { color: 'var(--mute)' } }, '→'), h('div', null, h('code', { style: { color: 'var(--ok)' } }, good), h('div', { style: { color: 'var(--mute)', fontSize: '.8125rem' } }, why)))));
+    }
     draw();
-    return root;
+    return h('div', { class: 'xt-eq' }, h('div', { style: { display: 'grid', gap: '10px', alignContent: 'start' } }, seg, cbox), tbl);
   }
 
   K.reg({
     id: 'x-ts-naming', track: 'extra', title: '命名規則', sub: '読みやすい名前の付け方', emoji: '🏷️',
     gh: [{ label: '命名規則 (03_naming.md)', path: 'typescript/bonus/03_naming.md' }, { label: '良い例・悪い例 (03.1)', path: 'typescript/bonus/03.1_naming_sample.md' }],
-    meta: meta({ day: '17日(火)', when: 'クラスの前、または実践の前の5分', mins: 5, order: 23, level: '入門', after: 'ts-class', why: '名前が揃うとチーム開発でコードが読みやすい。レビューで一番よく指摘される点' }),
+    meta: meta({ day: '2日目', when: 'クラスの前、または実践の前の5分', mins: 5, order: 23, level: '入門', after: 'ts-class', why: '名前が揃うとチーム開発でコードが読みやすい。レビューで一番よく指摘される点' }),
     scenes: [
       { t: '4つの書き方', tag: 'case', lead: '単語を入れると、<b>4つのケース</b>に変換。何に使うかも一緒に覚えよう。', render(el) { el.append(caseScene()); } },
-      { t: '名前をつけよう', tag: 'GAME', lead: '9問。<b>いちばん良い名前</b>を選んでね。連続正解を目指そう！', render(el) { el.append(namingGame()); } },
+      { t: '名前をつけよう', tag: 'review', lead: '実際のレビューで直される名前を、前と後で見比べよう。ボタンで切り替え。名前を考える練習は右上の「練習」アイコンから。', render(el) { el.append(namingGame()); } },
     ],
   });
 
@@ -648,7 +646,7 @@
   K.reg({
     id: 'x-async', track: 'extra', title: '非同期処理', sub: 'Promise と async / await', emoji: '⏱️',
     gh: [{ label: '非同期 (Async.md)', path: 'vuejs/99_bonus/Async.md' }, { label: 'API 連携 (11_api)', path: 'vuejs/11_api' }],
-    meta: meta({ day: '18日(水)', when: 'ジェネリクスの後の余り時間、または Vue の API 連携の前', mins: 15, order: 24, level: '応用', after: 'ts-generics', why: 'API 通信・タイマー・ファイル読み込みはすべて非同期。Vue の演習で必ず使う' }),
+    meta: meta({ day: '3日目', when: 'ジェネリクスの後の余り時間、または Vue の API 連携の前', mins: 15, order: 24, level: '応用', after: 'ts-generics', why: 'API 通信・タイマー・ファイル読み込みはすべて非同期。Vue の演習で必ず使う' }),
     scenes: [
       { t: '待っている間、何が動く？', tag: 'イベントループ', lead: '同じ 4 行でも出力は <b>A D C B</b>。「次へ」で、<b>どの箱を通るか</b>を追おう。', render(el) { el.append(loopStepper()); } },
       { t: 'Promise の 3 つの状態', tag: 'async / await', lead: '応答時間をいじって<b>実行</b>。pending → fulfilled / rejected と、コードの<b>どの行が動いているか</b>を見よう。',
@@ -658,12 +656,14 @@
           const starter = `const wait = (ms) => new Promise((r) => setTimeout(r, ms));\n\nasync function fetchUser(id) {\n  await wait(500);\n  if (id < 0) throw new Error("not found");\n  return { id, name: "Lam" };\n}\n\nconsole.log("1: 開始");\n\n// TODO: async 関数 main() を作り、\n//  fetchUser(1) の name を表示\n//  fetchUser(-1) の失敗を try / catch で捕まえて表示\n// 作ったら main() を呼ぶのを忘れずに\n\nconsole.log("3: 終了");\n`;
           el.append(playground({
             title: 'JavaScript', mode: 'web', files: [{ name: 'main.js', lang: 'js', code: starter }],
-            solution: { 'main.js': 'const wait = (ms) => new Promise((r) => setTimeout(r, ms));\n\nasync function fetchUser(id) {\n  await wait(500);\n  if (id < 0) throw new Error("not found");\n  return { id, name: "Lam" };\n}\n\nconsole.log("1: 開始");\n\nasync function main() {\n  try {\n    const user = await fetchUser(1);\n    console.log("2:", user.name);\n    // 任意チャレンジ：2人を同時に待つ\n    const [a, b] = await Promise.all([fetchUser(1), fetchUser(2)]);\n    console.log("同時:", a.name, b.name);\n    await fetchUser(-1); // ここで失敗する\n  } catch (e) {\n    console.log("エラー:", e.message);\n  }\n}\nmain();\n\nconsole.log("3: 終了");\n' },
+            solution: { 'main.js': 'const wait = (ms) => new Promise((r) => setTimeout(r, ms));\n\nasync function fetchUser(id) {\n  await wait(500);\n  if (id < 0) throw new Error("not found");\n  return { id, name: "Lam" };\n}\n\nconsole.log("1: 開始");\n\nasync function main() {\n  try {\n    const user = await fetchUser(1);\n    console.log("2:", user.name);\n    // 任意チャレンジ：2人を同時に待つ\n    const [a, b] = await Promise.all([fetchUser(1), fetchUser(2)]);\n    console.log("同時:", a.name, b.name);\n    await fetchUser(-1); // ここで失敗する\n  } catch (e) {\n    console.log("エラー:", e.message);\n  }\n}\nmain();\n\nconsole.log("3: 終了");\n\n// 中級チャレンジ：失敗しても止まらない\nasync function safeFetch(id) {\n  try {\n    return await fetchUser(id);\n  } catch (e) {\n    return null;\n  }\n}\nsafeFetch(-1).then((r) => console.log("safeFetch(-1):", r));\n\n// 上級チャレンジ：時間切れにする\nfunction withTimeout(promise, ms) {\n  const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error("タイムアウト")), ms));\n  return Promise.race([promise, timeout]);\n}\nwithTimeout(fetchUser(1), 300).catch((e) => console.log("withTimeout:", e.message));\n' },
             tasks: (v) => { const s = v['main.js'].replace(/\/\/.*$/gm, ''); const edited = v['main.js'] !== starter; return [
               { hint: ['async function main() { … } を作って、中で await fetchUser(1) を使う。', 'const user = await fetchUser(1); console.log("2:", user.name);'], answer: { code: starter.replace('\nconsole.log("3: 終了");', '\nasync function main() {\n  const user = await fetchUser(1);\n  console.log("2:", user.name);\n}\nmain();\n\nconsole.log("3: 終了");'), lang: 'js', mode: 'replace' }, label: '① async 関数 main を作り、中で await fetchUser(1) を使う', ok: edited && /async\s+function\s+main[\s\S]*await\s+fetchUser\(\s*1\s*\)|const\s+main\s*=\s*async[\s\S]*await\s+fetchUser\(\s*1\s*\)/.test(s) },
               { hint: ['失敗しそうな呼び出しは try { … } で囲み、catch (e) で受ける。', 'try { await fetchUser(-1); } catch (e) { console.log("エラー:", e.message); }'], answer: { code: starter.replace('\nconsole.log("3: 終了");', '\nasync function main() {\n  try {\n    const user = await fetchUser(1);\n    console.log("2:", user.name);\n    await fetchUser(-1);\n  } catch (e) {\n    console.log("エラー:", e.message);\n  }\n}\nmain();\n\nconsole.log("3: 終了");'), lang: 'js', mode: 'replace' }, label: '② fetchUser(-1) の失敗を try / catch で捕まえる', ok: edited && /try\s*{[\s\S]*fetchUser\(\s*-1\s*\)[\s\S]*}\s*catch/.test(s) },
               { hint: ['最後に main(); と書いて呼ばないと動かないよ。', '「1 → 3 → 2」の順に出れば OK（await の続きはあとから）。'], answer: { code: starter.replace('\nconsole.log("3: 終了");', '\nasync function main() {\n  try {\n    const user = await fetchUser(1);\n    console.log("2:", user.name);\n    await fetchUser(-1);\n  } catch (e) {\n    console.log("エラー:", e.message);\n  }\n}\nmain();\n\nconsole.log("3: 終了");'), lang: 'js', mode: 'replace' }, label: '③ main() を呼び出す（「1 → 3」が先に出る）', ok: edited && /(^|[^\w.])main\s*\(\s*\)\s*;?/.test(s.replace(/async\s+function\s+main\s*\(/, '')) },
-              { optional: true, hint: ['2人分を「同時に」待つ道具は Promise.all。配列で渡すよ。', 'const [a, b] = await Promise.all([fetchUser(1), fetchUser(2)]);'], answer: { code: starter.replace('\nconsole.log("3: 終了");', '\nasync function main() {\n  const [a, b] = await Promise.all([fetchUser(1), fetchUser(2)]);\n  console.log(a.name, b.name);\n}\nmain();\n\nconsole.log("3: 終了");'), lang: 'js', mode: 'replace' }, label: '任意：Promise.all で fetchUser(1) と fetchUser(2) を同時に待つ', ok: edited && /await\s+Promise\.all\s*\(\s*\[[\s\S]*fetchUser\(\s*1\s*\)[\s\S]*fetchUser\(\s*2\s*\)[\s\S]*\]\s*\)/.test(s) },
+              { optional: true, level: 1, hint: ['2人分を「同時に」待つ道具は Promise.all。配列で渡すよ。', 'const [a, b] = await Promise.all([fetchUser(1), fetchUser(2)]);'], answer: { code: starter.replace('\nconsole.log("3: 終了");', '\nasync function main() {\n  const [a, b] = await Promise.all([fetchUser(1), fetchUser(2)]);\n  console.log(a.name, b.name);\n}\nmain();\n\nconsole.log("3: 終了");'), lang: 'js', mode: 'replace' }, label: 'Promise.all で fetchUser(1) と fetchUser(2) を同時に待つ', ok: edited && /await\s+Promise\.all\s*\(\s*\[[\s\S]*fetchUser\(\s*1\s*\)[\s\S]*fetchUser\(\s*2\s*\)[\s\S]*\]\s*\)/.test(s) },
+              { optional: true, level: 2, hint: ['失敗しても止まらない関数にするには、中で try / catch して「失敗したら null」を返す。', 'async function safeFetch(id) { try { return await fetchUser(id); } catch (e) { return null; } }'], answer: { code: starter.replace('\nconsole.log("3: 終了");', '\nasync function safeFetch(id) {\n  try {\n    return await fetchUser(id);\n  } catch (e) {\n    return null;\n  }\n}\nasync function main() {\n  console.log("2:", await safeFetch(1));\n  console.log("失敗:", await safeFetch(-1)); // null\n}\nmain();\n\nconsole.log("3: 終了");'), lang: 'js', mode: 'replace' }, label: 'safeFetch(id) を作る（失敗しても止まらず、失敗したら null を返す）', ok: edited && /(async\s+function\s+safeFetch|const\s+safeFetch\s*=\s*async)[\s\S]*catch[\s\S]*return\s+null/.test(s) && /safeFetch\s*\(\s*-1\s*\)/.test(s) },
+              { optional: true, level: 3, hint: ['「先に終わったほう」を採用する道具は Promise.race。時間切れ用に、ms 後に reject する Promise を作って並べる。', 'const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error("タイムアウト")), ms)); return Promise.race([promise, timeout]);'], answer: { code: starter.replace('\nconsole.log("3: 終了");', '\nfunction withTimeout(promise, ms) {\n  const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error("タイムアウト")), ms));\n  return Promise.race([promise, timeout]);\n}\nasync function main() {\n  try {\n    const user = await withTimeout(fetchUser(1), 300); // 500ms かかるので間に合わない\n    console.log(user.name);\n  } catch (e) {\n    console.log("エラー:", e.message);\n  }\n}\nmain();\n\nconsole.log("3: 終了");'), lang: 'js', mode: 'replace' }, label: 'withTimeout(promise, ms) を作る（Promise.race で、時間切れなら「タイムアウト」で失敗させる）', ok: edited && /function\s+withTimeout|const\s+withTimeout\s*=/.test(s) && /Promise\.race\s*\(/.test(s) && /reject|throw/.test(s) && /withTimeout\s*\(\s*fetchUser/.test(s) },
             ]; },
           }));
           el.append(h('p', { class: 'lead', style: { marginTop: '12px' }, html: '💡 console を見よう：<b>「1 → 3」が先</b>に出て、<b>await の結果は後</b>から届く。これが非同期！' }));
@@ -674,28 +674,28 @@
   /* ---------- 困りごと → 考え方 → 解決 (+使い分け) ---------- */
   const WHY = {
     'x-js-basics': {
-      'const / let とアロー関数': { problem: 'TS のサンプルに <code>=&gt;</code> が出てくる。これは何？', idea: '昔の書き方を、短く安全に書けるようにした JS の標準', answer: '<code>const</code> / <code>let</code> / アロー関数 <code>(x) =&gt; x * 2</code>', when: [['普通の関数', 'function'], ['短い処理・コールバック', 'アロー関数']] },
-      'テンプレート・分割代入・スプレッド': { problem: '文字をつなぐ <code>+</code> や、<code>obj.a</code> <code>obj.b</code> の繰り返しが読みにくい', idea: '「組み立てる・取り出す・広げる」を、1行で書く記法がある', answer: '<code>`${x}`</code> / <code>{a, b} = obj</code> / <code>...arr</code>', when: [['文字を組み立てる', 'テンプレートリテラル'], ['必要な項目だけ取り出す', '分割代入'], ['コピーして一部だけ変える', 'スプレッド']] },
-      'map / filter / reduce': { problem: '配列を加工する for 文を、毎回書くのは長くてミスしやすい', idea: '「どう加工するか」だけ関数で渡す。繰り返しは JS におまかせ', answer: '<code>map</code> / <code>filter</code> / <code>reduce</code>', when: [['全部を変換', 'map'], ['条件で絞る', 'filter'], ['1つにまとめる', 'reduce']] },
-      'import / export': { problem: '全部を1ファイルに書くと、巨大になって名前もぶつかる', idea: 'ファイルを分ける。見せたいものだけ export して、使う所で import', answer: '<code>export</code> / <code>import</code>', when: [['1ファイル1つの主役', 'export default'], ['複数の部品', '名前付き export']] },
+      'const / let とアロー関数': { problem: 'チームのコードに <code>=&gt;</code> がたくさん出てくる。読めないままレビューを通し、<b>バグを見逃した</b>', idea: '昔の書き方を、短く安全に書けるようにした JS の標準。意味が分かれば、読むのも速くなる', answer: '<code>const</code> / <code>let</code> / アロー関数 <code>(x) =&gt; x * 2</code>', when: [['普通の関数', 'function'], ['短い処理・コールバック', 'アロー関数']] },
+      'テンプレート・分割代入・スプレッド': { problem: '通知メッセージを <code>+</code> でつないでいて、1か所つなぎ忘れ。画面に「受付番号 undefined を受け付けました」と出た', idea: '「組み立てる・取り出す・広げる」を、1行で書く記法がある', answer: '<code>`${x}`</code> / <code>{a, b} = obj</code> / <code>...arr</code>', when: [['文字を組み立てる', 'テンプレートリテラル'], ['必要な項目だけ取り出す', '分割代入'], ['コピーして一部だけ変える', 'スプレッド']] },
+      'map / filter / reduce': { problem: '相談一覧から「未対応だけ」を取り出したい。<code>for</code> 文を毎回書くと長く、<code>&lt;=</code> と <code>&lt;</code> を間違えて<b>1件多く</b>読んで落ちた', idea: '「どう加工するか」だけ関数で渡す。繰り返しは JS におまかせ', answer: '<code>map</code> / <code>filter</code> / <code>reduce</code>', when: [['全部を変換', 'map'], ['条件で絞る', 'filter'], ['1つにまとめる', 'reduce']] },
+      'import / export': { problem: '全部を1ファイルに書いて2000行に。別の人が作った同名の <code>format</code> がぶつかり、<b>金額の表示が壊れた</b>', idea: 'ファイルを分ける。見せたいものだけ export して、使う所で import', answer: '<code>export</code> / <code>import</code>', when: [['1ファイル1つの主役', 'export default'], ['複数の部品', '名前付き export']] },
     },
     'x-ts-narrow': {
-      'どの型に何が入る？': { problem: '<code>any</code> は何でも通る。typo も見逃す', idea: '分からない値は <b>unknown</b> に入れる。使う前に確かめさせる', answer: '<code>unknown</code>（any の安全版）', when: [['確認せず何でも通す', 'any（避ける）'], ['外から来た値', 'unknown']] },
-      '絞り込み（narrowing）': { problem: '<code>string | number</code> のままだと、文字専用の操作が使えない', idea: 'if で確かめた枝の中では、型が1つに決まる', answer: '<code>typeof</code> / <code>in</code> / <code>instanceof</code>', when: [['プリミティブ型の判定', 'typeof'], ['プロパティの有無', 'in'], ['クラスのインスタンス', 'instanceof']] },
-      '?. と ??': { problem: '<code>user.address.city</code> で、address がないと落ちる', idea: '「ないかも」の所で安全に止める。なければ代わりの値を使う', answer: '<code>?.</code>（オプショナルチェーン）と <code>??</code>', when: [['無いかもしれない参照', '?.'], ['null / undefined のときだけ既定値', '??'], ['0 や "" も既定値にしたい', '||']] },
+      'どの型に何が入る？': { problem: 'API から来た値を <code>any</code> で扱った。数字が来たときに <code>toUpperCase()</code> が走り、<b>本番でエラー</b>になった', idea: '分からない値は <b>unknown</b> に入れる。使う前に確かめさせる', answer: '<code>unknown</code>（any の安全版）', when: [['確認せず何でも通す', 'any（避ける）'], ['外から来た値', 'unknown']] },
+      '絞り込み（narrowing）': { problem: '検索ボックスの値は、文字（名前検索）か数字（ID 検索）。<code>string | number</code> のままだと、文字用の操作が赤線になる', idea: 'if で確かめた枝の中では、型が1つに決まる', answer: '<code>typeof</code> / <code>in</code> / <code>instanceof</code>', when: [['プリミティブ型の判定', 'typeof'], ['プロパティの有無', 'in'], ['クラスのインスタンス', 'instanceof']] },
+      '?. と ??': { problem: 'プロフィール未入力のユーザーで <code>user.address.city</code> が落ち、<b>一覧画面が全員分</b>表示されなくなった', idea: '「ないかも」の所で安全に止める。なければ代わりの値を使う', answer: '<code>?.</code>（オプショナルチェーン）と <code>??</code>', when: [['無いかもしれない参照', '?.'], ['null / undefined のときだけ既定値', '??'], ['0 や "" も既定値にしたい', '||']] },
     },
     'x-ts-utility': {
-      'as const：値をそのまま型に': { problem: '配列が <code>string[]</code> になり、"superadmin" のような typo も通る', idea: '値そのものを型にする。そこから型を作る', answer: '<code>as const</code> ＋ <code>typeof x[number]</code>', when: [['固定の選択肢リスト', 'as const'], ['実行中に変わる配列', '普通の配列']] },
-      'ユーティリティ型': { problem: '似た型をコピペで何個も作る（更新用は全部 ? にする、など）', idea: '元の型を変形して作る。元を直せば、全部に反映される', answer: '<code>Partial</code> / <code>Pick</code> / <code>Omit</code> / <code>Record</code>…', when: [['全項目を省略可', 'Partial'], ['一部だけ使う', 'Pick'], ['一部を除く', 'Omit'], ['キー→値の辞書', 'Record']] },
-      '組み合わせ：権限チェック': { problem: '権限の文字列があちこちにあり、typo や書き忘れが出る', idea: '1か所で決めて、型も判定もそこから作る', answer: '<code>as const</code> ＋ <code>Record</code>', when: '値を足したら、型エラーで「対応漏れ」の場所が全部分かる。' },
+      'as const：値をそのまま型に': { problem: '権限の配列が <code>string[]</code> になり、存在しない <code>"superadmin"</code> も通ってしまう。画面では「権限なし」になるだけで、<b>原因が分かりにくい</b>', idea: '値そのものを型にする。そこから型を作る', answer: '<code>as const</code> ＋ <code>typeof x[number]</code>', when: [['固定の選択肢リスト', 'as const'], ['実行中に変わる配列', '普通の配列']] },
+      'ユーティリティ型': { problem: 'ユーザー更新フォーム用の型を、コピペで作った。ユーザーに項目を足したのに、<b>更新用だけ直し忘れ</b>て、保存されない項目が出た', idea: '元の型を変形して作る。元を直せば、全部に反映される', answer: '<code>Partial</code> / <code>Pick</code> / <code>Omit</code> / <code>Record</code>…', when: [['全項目を省略可', 'Partial'], ['一部だけ使う', 'Pick'], ['一部を除く', 'Omit'], ['キー→値の辞書', 'Record']] },
+      '組み合わせ：権限チェック': { problem: '管理画面の権限チェックで <code>"admn"</code> と typo。誰も気づかず、<b>管理者だけ操作できない</b>状態で公開された', idea: '1か所で決めて、型も判定もそこから作る', answer: '<code>as const</code> ＋ <code>Record</code>', when: '値を足したら、型エラーで「対応漏れ」の場所が全部分かる。' },
     },
     'x-ts-naming': {
-      '4つの書き方': { problem: '人によって名前の付け方が違うと、読むたびに迷う', idea: '「何の名前か」で、書き方を決めておく', answer: 'camelCase / PascalCase / UPPER_SNAKE / kebab-case', when: [['変数・関数', 'camelCase'], ['クラス・型', 'PascalCase'], ['定数', 'UPPER_SNAKE'], ['ファイル・CSS', 'kebab-case']] },
-      '名前をつけよう': { problem: '<code>data</code> や <code>flag</code> では、中身が分からない', idea: '名前を見れば役割が分かるようにする（isXxx、動詞で始める）', answer: '<code>isXxx</code> / <code>hasXxx</code> / 動詞で始まる関数名', when: [['真偽値', 'is / has / can'], ['関数', '動詞（get / fetch / create）'], ['配列', '複数形']] },
+      '4つの書き方': { problem: 'メンバーによって <code>user_name</code> と <code>userName</code> が混在。検索しても見つからず、<b>同じ処理が2つ</b>できてしまった', idea: '「何の名前か」で、書き方を決めておく', answer: 'camelCase / PascalCase / UPPER_SNAKE / kebab-case', when: [['変数・関数', 'camelCase'], ['クラス・型', 'PascalCase'], ['定数', 'UPPER_SNAKE'], ['ファイル・CSS', 'kebab-case']] },
+      '名前をつけよう': { problem: '<code>data</code> や <code>flag</code> では中身が分からず、レビューのたびに「これ何？」と聞かれる。直すのに半日かかった', idea: '名前を見れば役割が分かるようにする（isXxx、動詞で始める）', answer: '<code>isXxx</code> / <code>hasXxx</code> / 動詞で始まる関数名', when: [['真偽値', 'is / has / can'], ['関数', '動詞（get / fetch / create）'], ['配列', '複数形']] },
     },
     'x-async': {
-      '待っている間、何が動く？': { problem: '通信を待つあいだ、画面が固まってしまう', idea: '待つ処理は先に預けておく。その間、ほかの処理を進める', answer: '非同期（イベントループ）', when: [['すぐ終わる計算', '同期でOK'], ['通信・タイマー・ファイル', '非同期']] },
-      'Promise の 3 つの状態': { problem: '「いつ終わるか分からない結果」を、どう受け取る？ コールバックが入れ子になる', idea: '結果の引換券（Promise）をもらう。結果が出たら続きを実行する', answer: '<code>Promise</code> / <code>async</code> / <code>await</code>', when: [['成功時の続き', '.then / await'], ['失敗時の処理', '.catch / try-catch']] },
+      '待っている間、何が動く？': { problem: '検索の通信を待つ間、画面が固まった。ユーザーが「壊れた？」と連打して、<b>申し込みが二重に</b>送られた', idea: '待つ処理は先に預けておく。その間、ほかの処理を進める', answer: '非同期（イベントループ）', when: [['すぐ終わる計算', '同期でOK'], ['通信・タイマー・ファイル', '非同期']] },
+      'Promise の 3 つの状態': { problem: '「予約 → 支払い → 通知」を順に呼ぶコードが、コールバックの入れ子になった。1か所の失敗処理を書き忘れ、<b>支払い失敗に気づけなかった</b>', idea: '結果の引換券（Promise）をもらう。結果が出たら続きを実行する', answer: '<code>Promise</code> / <code>async</code> / <code>await</code>', when: [['成功時の続き', '.then / await'], ['失敗時の処理', '.catch / try-catch']] },
     },
   };
 
@@ -707,70 +707,70 @@
   const T = (file, text, o = {}) => Object.assign({ k: 'code', lang: 'ts', file, text }, o);
   const MINI = {
     'x-js-basics': {
-      'const / let とアロー関数': { problem: '<code>=&gt;</code> って何？', idea: '<code>function</code> をもっと短く書ける', answer: '<code>(n) =&gt; n * 2</code>',
-        pv: T('app.js', 'arr.map(n => n * 2)\n// => って何？', { lang: 'js', err: [1], keys: { 1: 'arw' } }),
-        iv: T('app.js', 'function (n) { return n * 2 }\n//   ↓ 短くする\n(n) => n * 2', { lang: 'js', idea: [3], keys: { 3: 'arw' } }),
-        av: T('app.js', 'const double = (n) => n * 2;\ndouble(3); // 6', { lang: 'js', ok: [1], keys: { 1: 'arw' } }) },
-      'テンプレート・分割代入・スプレッド': { problem: '<code>+</code> でつなぐのが読みにくい', idea: '文字は <code>${ }</code> で埋め込む', answer: '`…${x}…` / <code>{ a, b }</code> / <code>...</code>',
-        pv: T('app.js', '"こんにちは、" + name + "さん"\nconst a = user.a;\nconst b = user.b;', { lang: 'js', err: [1, 2, 3], keys: { 1: 'tpl' } }),
-        iv: T('app.js', '`こんにちは、${name}さん`\n//          ^^^^^^^ 値が入る', { lang: 'js', idea: [1], keys: { 1: 'tpl' } }),
-        av: T('app.js', 'const msg = `${name}さん`;\nconst { a, b } = user;\nconst u2 = { ...user, a: 9 };', { lang: 'js', ok: [1, 2, 3], keys: { 1: 'tpl' } }) },
-      'map / filter / reduce': { problem: 'for 文を毎回書くのは長い', idea: 'やり方だけ渡す。繰り返しは JS が', answer: '<code>map</code> / <code>filter</code> / <code>reduce</code>',
-        pv: T('app.js', 'const out = [];\nfor (let i = 0; i < n; i++) {\n  out.push(f(arr[i]));\n}', { lang: 'js', err: [2, 3], keys: { 2: 'map' } }),
-        iv: T('app.js', 'arr.map(n => n * 2)\n// [1,2,3] → [2,4,6]\n// 繰り返しは JS におまかせ', { lang: 'js', idea: [1], keys: { 1: 'map' } }),
-        av: T('app.js', 'arr.map(f)      // 全部を変換\narr.filter(ok)  // 条件で絞る\narr.reduce(sum, 0) // 1つに', { lang: 'js', ok: [1, 2, 3], keys: { 1: 'map' } }) },
-      'import / export': { problem: '1ファイルに全部。名前もぶつかる', idea: '分けて、見せる物だけ export', answer: '<code>export</code> / <code>import</code>',
-        pv: T('app.js', 'function add() {}\n// 別ファイルにも add が…\nfunction add() {} // ✖ ぶつかる', { lang: 'js', err: [3], keys: { 3: 'exp' } }),
-        iv: T('math.ts', '// math.ts\nexport const add = (a, b) => a + b;\n// 見せたい物だけ export', { idea: [2], keys: { 2: 'exp' } }),
-        av: T('main.ts', '// main.ts\nimport { add } from "./math";', { ok: [2], keys: { 2: 'exp' } }) },
+      'const / let とアロー関数': { problem: '<code>=&gt;</code> が読めず、レビューで見逃した', idea: '<code>function</code> をもっと短く書ける', answer: '<code>(n) =&gt; n * 2</code>',
+        pv: T('app.js', 'fees.map(f => f * 1.1)\n// => って何？', { lang: 'js', err: [1], keys: { 1: 'arw' } }),
+        iv: T('app.js', 'function (f) { return f * 1.1 }\n//   ↓ 短くする\n(f) => f * 1.1', { lang: 'js', idea: [3], keys: { 3: 'arw' } }),
+        av: T('app.js', 'const addTax = (f) => f * 1.1;\naddTax(1000); // 1100', { lang: 'js', ok: [1], keys: { 1: 'arw' } }) },
+      'テンプレート・分割代入・スプレッド': { problem: '+ でつなぐ通知文が、つなぎ忘れで undefined', idea: '文は <code>${ }</code> で埋め込む', answer: '`…${x}…` / <code>{ a, b }</code> / <code>...</code>',
+        pv: T('app.js', '"受付番号 " + no + " を受け付けました"\nconst name = user.name;\nconst email = user.email;', { lang: 'js', err: [1, 2, 3], keys: { 1: 'tpl' } }),
+        iv: T('app.js', '`受付番号 ${no} を受け付けました`\n//        ^^^^^ 値が入る', { lang: 'js', idea: [1], keys: { 1: 'tpl' } }),
+        av: T('app.js', 'const msg = `${name}さん`;\nconst { name, email } = user;\nconst u2 = { ...user, email: "new@example.com" };', { lang: 'js', ok: [1, 2, 3], keys: { 1: 'tpl' } }) },
+      'map / filter / reduce': { problem: 'for 文の条件ミスで、存在しない1件を読んで落ちた', idea: 'やり方だけ渡す。繰り返しは JS が', answer: '<code>map</code> / <code>filter</code> / <code>reduce</code>',
+        pv: T('app.js', 'const todo = [];\nfor (let i = 0; i <= n; i++) {\n  if (list[i].status === "todo")\n    todo.push(list[i]);\n}', { lang: 'js', err: [2], keys: { 2: 'map' } }),
+        iv: T('app.js', 'list.filter(c => c.status === "todo")\n// 未対応だけが残る\n// 繰り返しは JS におまかせ', { lang: 'js', idea: [1], keys: { 1: 'map' } }),
+        av: T('app.js', 'list.map(c => c.title)       // 題名だけ\nlist.filter(c => c.fee > 0)  // 有料だけ\nlist.reduce((s, c) => s + c.fee, 0) // 売上合計', { lang: 'js', ok: [1, 2, 3], keys: { 1: 'map' } }) },
+      'import / export': { problem: '同名の format がぶつかって金額表示が壊れた', idea: '分けて、見せる物だけ export', answer: '<code>export</code> / <code>import</code>',
+        pv: T('app.js', 'function format() {}\n// 別の人の format が…\nfunction format() {} // ✖ ぶつかる', { lang: 'js', err: [3], keys: { 3: 'exp' } }),
+        iv: T('money.ts', '// money.ts\nexport const formatYen = (n) => `${n}円`;\n// 見せたい物だけ export', { idea: [2], keys: { 2: 'exp' } }),
+        av: T('main.ts', '// main.ts\nimport { formatYen } from "./money";', { ok: [2], keys: { 2: 'exp' } }) },
     },
     'x-ts-narrow': {
-      'どの型に何が入る？': { problem: '<code>any</code> は typo も通す', idea: '分からない値は <b>unknown</b> に入れる', answer: '確かめてから使う',
+      'どの型に何が入る？': { problem: '数字が来て toUpperCase が本番で落ちた', idea: '分からない値は <b>unknown</b> に入れる', answer: '確かめてから使う',
         pv: T('v.ts', 'let v: any = getValue();\nv.toUpperCase(); // 数字でも通る', { err: [2], keys: { 1: 'unk' } }),
-        iv: T('v.ts', 'let v: unknown = getValue();\nv.toUpperCase(); // ✖ まず確認', { idea: [1], err: [2], keys: { 1: 'unk' } }),
+        iv: T('v.ts', 'let v: unknown = getValue();\nv.toUpperCase(); // ✖ まず確認', { err: [2], idea: [1], keys: { 1: 'unk' } }),
         av: T('v.ts', 'if (typeof v === "string") {\n  v.toUpperCase(); // OK\n}', { ok: [1, 2], keys: { 1: 'unk' } }) },
       '絞り込み（narrowing）': { problem: '<code>string | number</code> だと文字の操作ができない', idea: 'if で確かめた中は、型が1つ', answer: '<code>typeof</code> / <code>in</code> / <code>instanceof</code>',
         pv: T('f.ts', 'function f(x: string | number) {\n  x.toUpperCase(); // ✖ number かも\n}', { err: [2], keys: { 1: 'nar' } }),
         iv: T('f.ts', 'if (typeof x === "string") {\n  // ここでは x: string\n}\n// else 側は x: number', { idea: [1], keys: { 1: 'nar' } }),
         av: T('f.ts', 'if (typeof x === "string") {\n  x.toUpperCase(); // OK\n}', { ok: [2], keys: { 1: 'nar' } }) },
-      '?. と ??': { problem: '<code>address</code> が無いと落ちる', idea: '無いかもは安全に止める', answer: '<code>?.</code> と <code>??</code>',
+      '?. と ??': { problem: '住所が無いユーザーで一覧が落ちた', idea: '無いかもは安全に止める', answer: '<code>?.</code> と <code>??</code>',
         pv: T('user.ts', 'user.address.city;\n// address が無いと TypeError', { err: [1], keys: { 1: 'opt' } }),
         iv: T('user.ts', 'user.address?.city\n// address が無ければ undefined', { idea: [1], keys: { 1: 'opt' } }),
-        av: T('user.ts', 'user.address?.city ?? "不明"\n// 無ければ "不明"', { ok: [1], keys: { 1: 'opt' } }) },
+        av: T('user.ts', 'user.address?.city ?? "未入力"\n// 無ければ "未入力"', { ok: [1], keys: { 1: 'opt' } }) },
     },
     'x-ts-utility': {
       'as const：値をそのまま型に': { problem: '<code>"superadmin"</code> も通ってしまう', idea: '値を固定して、そこから型を作る', answer: '<code>as const</code> ＋ <code>typeof</code>',
         pv: T('roles.ts', 'const roles = ["admin", "user"];\n// 型は string[]\ncanEdit("superadmin"); // 通る', { err: [3], keys: { 1: 'asc' } }),
         iv: T('roles.ts', 'const roles = [\n  "admin", "user"\n] as const;', { idea: [3], keys: { 3: 'asc' } }),
         av: T('roles.ts', 'type Role = typeof roles[number];\n// "admin" | "user"', { ok: [1], keys: { 1: 'asc' } }) },
-      'ユーティリティ型': { problem: '似た型をコピペで何個も作る', idea: '元の型を変形して作る', answer: '<code>Partial</code> / <code>Pick</code> / <code>Omit</code>',
-        pv: T('user.ts', 'interface UserUpdate {\n  name?: string; // コピペ\n  email?: string;\n}', { err: [1, 2, 3], keys: { 1: 'util' } }),
+      'ユーティリティ型': { problem: '更新用の型だけ直し忘れた', idea: '元の型を変形して作る', answer: '<code>Partial</code> / <code>Pick</code> / <code>Omit</code>',
+        pv: T('user.ts', 'interface UserUpdate {\n  name?: string; // コピペ\n  email?: string; // 項目を足し忘れる\n}', { err: [1, 2, 3], keys: { 1: 'util' } }),
         iv: T('user.ts', 'type UserUpdate = Partial<User>;\n// 全部 ? にした型を自動で作る', { idea: [1], keys: { 1: 'util' } }),
         av: T('user.ts', 'Pick<User, "id">   // 一部だけ\nOmit<User, "password"> // 一部除く', { ok: [1, 2], keys: { 1: 'util' } }) },
-      '組み合わせ：権限チェック': { problem: '権限の文字列が typo しやすい', idea: '1か所で決めて、型もそこから', answer: '<code>as const</code> ＋ <code>Record</code>',
+      '組み合わせ：権限チェック': { problem: '"admn" の typo で管理者が操作できない', idea: '1か所で決めて、型もそこから', answer: '<code>as const</code> ＋ <code>Record</code>',
         pv: T('auth.ts', 'if (role === "admn") {} // typo\n// 文字列があちこちに', { err: [1], keys: { 1: 'perm' } }),
         iv: T('auth.ts', 'const PERM: Record<\n  Role, boolean\n> = { admin: true, … };', { idea: [1, 2], keys: { 1: 'perm' } }),
         av: T('auth.ts', 'PERM["admn"];\n// ✖ \'admn\' は Role にない', { err: [1], keys: { 1: 'perm' } }) },
     },
     'x-ts-naming': {
-      '4つの書き方': { problem: '書き方がバラバラで迷う', idea: '「何の名前か」で書き方を決める', answer: 'camel / Pascal / UPPER_SNAKE / kebab',
+      '4つの書き方': { problem: 'user_name と userName が混在して二重実装', idea: '「何の名前か」で書き方を決める', answer: 'camel / Pascal / UPPER_SNAKE / kebab',
         pv: T('app.ts', 'let user_name; let UserName;\nlet username; // どれが正解？', { err: [1, 2], keys: { 1: 'case' } }),
         iv: T('rules.ts', 'userName   // 変数・関数\nUserCard   // クラス・型\nMAX_COUNT  // 定数\nuser-card  // ファイル', { idea: [1, 2, 3, 4], keys: { 1: 'case' } }),
         av: T('app.ts', 'let userName;\nclass UserCard {}\nconst MAX_COUNT = 5;', { ok: [1, 2, 3], keys: { 1: 'case' } }) },
-      '名前をつけよう': { problem: '<code>data</code> や <code>flag</code> では分からない', idea: '名前で役割が分かるようにする', answer: '<code>isXxx</code> / 動詞 / 複数形',
+      '名前をつけよう': { problem: 'data / flag で中身が分からない', idea: '名前で役割が分かるようにする', answer: '<code>isXxx</code> / 動詞 / 複数形',
         pv: T('app.ts', 'const d = get();\nconst flag = true; // 何の flag？', { err: [1, 2], keys: { 1: 'name' } }),
         iv: T('rules.ts', 'isLoggedIn   // 真偽値は is / has\nfetchUsers() // 関数は動詞\nusers        // 配列は複数形', { idea: [1], keys: { 1: 'name' } }),
         av: T('app.ts', 'const users = fetchUsers();\nconst isLoggedIn = true;', { ok: [1, 2], keys: { 1: 'name' } }) },
     },
     'x-async': {
-      '待っている間、何が動く？': { problem: '通信を待つ間、画面が固まる', idea: '待つ処理は預けて、先へ進む', answer: '非同期（イベントループ）',
+      '待っている間、何が動く？': { problem: '通信中に画面が固まって二重送信', idea: '待つ処理は預けて、先へ進む', answer: '非同期（イベントループ）',
         pv: T('app.js', 'const res = syncFetch(url);\n// ↑ 終わるまで画面が固まる', { lang: 'js', err: [1], keys: { 1: 'async' } }),
         iv: T('app.js', 'console.log("A");\nsetTimeout(() => log("B"), 0);\nconsole.log("D");', { lang: 'js', idea: [2], keys: { 2: 'async' } }),
         av: T('app.js', '// 実行順: A → D → B\n// 待つ間も D が動く', { lang: 'js', ok: [1], keys: { 1: 'async' } }) },
-      'Promise の 3 つの状態': { problem: 'コールバックが入れ子になる', idea: '結果の引換券（Promise）をもらう', answer: '<code>async</code> / <code>await</code>',
-        pv: T('app.js', 'getUser(id, (u) => {\n  getPosts(u, (p) => { /* … */ });\n});', { lang: 'js', err: [1, 2], keys: { 1: 'prom' } }),
-        iv: T('app.js', 'const p = getUser(id);\n// p = 引換券（Promise）\n// pending → fulfilled / rejected', { lang: 'js', idea: [1], keys: { 1: 'prom' } }),
-        av: T('app.js', 'const u = await getUser(id);\nconst p = await getPosts(u);', { lang: 'js', ok: [1, 2], keys: { 1: 'prom' } }) },
+      'Promise の 3 つの状態': { problem: '予約→支払い→通知が入れ子で、失敗に気づけない', idea: '結果の引換券（Promise）をもらう', answer: '<code>async</code> / <code>await</code>',
+        pv: T('app.js', 'reserve(id, (r) => {\n  pay(r, (p) => { notify(p); });\n});', { lang: 'js', err: [1, 2], keys: { 1: 'prom' } }),
+        iv: T('app.js', 'const r = reserve(id);\n// r = 引換券（Promise）\n// pending → fulfilled / rejected', { lang: 'js', idea: [1], keys: { 1: 'prom' } }),
+        av: T('app.js', 'const r = await reserve(id);\nconst p = await pay(r);\nawait notify(p);', { lang: 'js', ok: [1, 2], keys: { 1: 'prom' } }) },
     },
   };
   const REF = {"x-ts-utility": {"ユーティリティ型": {"ref": [{"title": "早見表", "icon": "table", "html": "<table class=\"tsx-tbl\" style=\"width:100%;border-collapse:collapse\"><tr><th style=\"text-align:left;padding:.4em .6em;color:var(--mute);font-size:.75rem\">型</th><th style=\"text-align:left;padding:.4em .6em;color:var(--mute);font-size:.75rem\">できること</th></tr><tr><td style=\"padding:.45em .6em;border-top:1px solid var(--line)\"><code>Partial&lt;T&gt;</code></td><td style=\"padding:.45em .6em;border-top:1px solid var(--line)\">全項目を省略可にする</td></tr><tr><td style=\"padding:.45em .6em;border-top:1px solid var(--line)\"><code>Required&lt;T&gt;</code></td><td style=\"padding:.45em .6em;border-top:1px solid var(--line)\">全項目を必須にする</td></tr><tr><td style=\"padding:.45em .6em;border-top:1px solid var(--line)\"><code>Readonly&lt;T&gt;</code></td><td style=\"padding:.45em .6em;border-top:1px solid var(--line)\">全項目を書き換え禁止に</td></tr><tr><td style=\"padding:.45em .6em;border-top:1px solid var(--line)\"><code>Pick&lt;T, K&gt;</code></td><td style=\"padding:.45em .6em;border-top:1px solid var(--line)\">一部の項目だけ取り出す</td></tr><tr><td style=\"padding:.45em .6em;border-top:1px solid var(--line)\"><code>Omit&lt;T, K&gt;</code></td><td style=\"padding:.45em .6em;border-top:1px solid var(--line)\">一部の項目を除く</td></tr><tr><td style=\"padding:.45em .6em;border-top:1px solid var(--line)\"><code>Record&lt;K, V&gt;</code></td><td style=\"padding:.45em .6em;border-top:1px solid var(--line)\">キー → 値の辞書</td></tr></table>"}]}}, "x-ts-naming": {"4つの書き方": {"ref": [{"title": "命名の早見表", "icon": "table", "html": "<table class=\"tsx-tbl\" style=\"width:100%;border-collapse:collapse\"><tr><th style=\"text-align:left;padding:.4em .6em;color:var(--mute);font-size:.75rem\">対象</th><th style=\"text-align:left;padding:.4em .6em;color:var(--mute);font-size:.75rem\">書き方</th><th style=\"text-align:left;padding:.4em .6em;color:var(--mute);font-size:.75rem\">例</th></tr><tr><td style=\"padding:.45em .6em;border-top:1px solid var(--line)\">変数・関数</td><td style=\"padding:.45em .6em;border-top:1px solid var(--line)\">camelCase</td><td style=\"padding:.45em .6em;border-top:1px solid var(--line)\"><code>userName</code></td></tr><tr><td style=\"padding:.45em .6em;border-top:1px solid var(--line)\">クラス・型</td><td style=\"padding:.45em .6em;border-top:1px solid var(--line)\">PascalCase</td><td style=\"padding:.45em .6em;border-top:1px solid var(--line)\"><code>UserCard</code></td></tr><tr><td style=\"padding:.45em .6em;border-top:1px solid var(--line)\">定数</td><td style=\"padding:.45em .6em;border-top:1px solid var(--line)\">UPPER_SNAKE</td><td style=\"padding:.45em .6em;border-top:1px solid var(--line)\"><code>MAX_COUNT</code></td></tr><tr><td style=\"padding:.45em .6em;border-top:1px solid var(--line)\">ファイル・CSS</td><td style=\"padding:.45em .6em;border-top:1px solid var(--line)\">kebab-case</td><td style=\"padding:.45em .6em;border-top:1px solid var(--line)\"><code>user-card.css</code></td></tr></table>"}]}}, "x-async": {"Promise の 3 つの状態": {"hint": "<b>書き方の対応</b><br><code>promise.then(f)</code> ＝ 成功したら f を実行<br><code>await promise</code> ＝ 終わるまで待って、結果を受け取る（<code>async</code> 関数の中だけ）<br><code>try / catch</code> ＝ 失敗したときの受け皿"}}, "x-ts-narrow": {"絞り込み（narrowing）": {"hint": "<b>絞り込みの道具</b>：<code>typeof x === \"string\"</code>（基本の型）／<code>\"a\" in obj</code>（項目の有無）／<code>x instanceof Date</code>（クラス）。if の<b>中だけ</b>型が絞られます。"}}};

@@ -219,7 +219,7 @@
       }));
 
     const badges = h('section', { class: 'me-badges' }, h('h2', icon('medal'), 'バッジ'),
-      h('div', { class: 'bd-grid' }, BADGES.map(([ic, name, ok]) => h('div', { class: 'bd' + (ok ? ' on' : '') }, h('span', { class: 'bd-i' }, icon(ok ? ic : 'lock')), h('small', name)))));
+      h('div', { class: 'bd-grid' }, BADGES.map(([ic, name, ok]) => h('div', { class: 'me-bd' + (ok ? ' on' : '') }, h('span', { class: 'bd-i' }, icon(ok ? ic : 'lock')), h('small', name)))));
 
     return h('div', { class: 'me' }, hero, road, badges,
       h('div', { class: 'row', style: { justifyContent: 'center', marginTop: '10px' } }, h('button', { class: 'btn ghost', onclick: () => { U.logout(); location.hash = '#/'; location.reload(); } }, icon('log-out'), 'ログアウト')));

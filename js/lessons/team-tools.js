@@ -8,7 +8,7 @@
   const cl = (ctx, f) => ctx && ctx.cleanups && ctx.cleanups.push(f);
   const quizScene = (t, tag, lead, why, Q) => ({
     t, tag, lead, why,
-    render(el) { el.append(h('div', { class: 'tt-qz' }, Q.map(([q, o, a, w]) => h('div', { class: 'card' }, quiz({ q, options: o, answer: a, why: w }))))); },
+    render(el) { el.append(h('div', { class: 'tt-qz fo4-q' + Q.length }, Q.map(([q, o, a, w]) => h('div', { class: 'card' }, quiz({ q, options: o, answer: a, why: w }))))); },
   });
   style('tt-q', `
   .tt-qz{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:start}
@@ -27,7 +27,7 @@
   .tt-timer.ended .tt-ring{animation:pulse 1s ease-in-out 4}.tt-timer.ended .tt-time{color:var(--pink)}
   .tt-msg{font-weight:800;min-height:1.5em;color:var(--mute)}
   .tt-timer.ended .tt-msg{color:var(--pink)}
-  .tt-wall{position:relative;height:440px;border-radius:var(--r);border:2px dashed var(--line);background:radial-gradient(circle at 1px 1px,var(--line) 1px,transparent 0) 0 0/22px 22px;overflow:hidden;touch-action:none}
+  .tt-wall{position:relative;height:340px;border-radius:var(--r);border:2px dashed var(--line);background:radial-gradient(circle at 1px 1px,var(--line) 1px,transparent 0) 0 0/22px 22px;overflow:hidden;touch-action:none}
   .tt-note{position:absolute;width:156px;min-height:96px;padding:10px 12px 30px;border-radius:6px 6px 14px 6px;color:#1b1b2f;font-weight:700;font-size:.875rem;line-height:1.4;cursor:grab;box-shadow:0 10px 18px -8px rgba(0,0,0,.5);transform:rotate(var(--rot,0deg));transition:box-shadow .2s,transform .2s;animation:pop .45s both;user-select:none;word-break:break-word}
   .tt-note.drag{cursor:grabbing;box-shadow:0 24px 30px -10px rgba(0,0,0,.6);transform:rotate(0) scale(1.07);z-index:50}
   .tt-note .ft{position:absolute;left:8px;right:8px;bottom:4px;display:flex;justify-content:space-between;align-items:center}
@@ -52,7 +52,7 @@
   .tt-seg div i{position:absolute;left:0;bottom:0;height:4px;background:rgba(255,255,255,.8);width:0}
   .tt-quote{padding:14px 18px;border-radius:8px;background:var(--card2);border-left:5px solid var(--c);font-weight:700;margin-top:10px;animation:capin .4s both}
   .tt-kb{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-  .tt-col{border-radius:var(--r);background:var(--card);border:2px solid var(--line);padding:10px;min-height:260px;transition:.2s;display:flex;flex-direction:column;gap:8px}
+  .tt-col{border-radius:var(--r);background:var(--card);border:2px solid var(--line);padding:10px;min-height:190px;transition:.2s;display:flex;flex-direction:column;gap:8px}
   .tt-col.over{border-color:var(--cc);background:color-mix(in srgb,var(--cc) 12%,var(--card));transform:scale(1.015)}
   .tt-col h4{display:flex;justify-content:space-between;color:var(--cc);font-weight:900}
   .tt-card{padding:.6em .8em;border-radius:8px;background:var(--card2);border:1px solid var(--line);cursor:grab;font-weight:700;font-size:.875rem;display:flex;gap:8px;align-items:center;animation:pop .35s both;transition:.2s}
@@ -80,6 +80,9 @@
   .tt-splits div.on span{color:#06101f}
   .tt-slot{font:900 clamp(2rem,6vw,3.6rem) var(--font);text-align:center;padding:26px 14px;border-radius:var(--r);background:var(--code);color:#fff;min-height:120px;display:grid;place-items:center;border:2px solid var(--line);overflow:hidden}
   .tt-slot.spin{border-color:var(--pink);box-shadow:0 0 34px -8px var(--pink)}
+  .tt-msg{border:1px solid var(--line);border-radius:8px;background:var(--card);padding:.6em .9em;display:grid;gap:.4em;font-size:.875rem}.tt-msg .who,.tt-msg .rep>b{font-weight:800}.tt-msg small{color:var(--mute);margin-left:.6em}.tt-msg p{margin:0;line-height:1.7}.tt-msg .rep{padding-left:1em;border-left:3px solid var(--line)}.tt-msg .cost{margin-top:.2em;padding:.5em .8em;border-radius:8px;font-weight:800}.tt-msg.bad .cost{background:color-mix(in srgb,var(--bad) 14%,transparent);color:var(--bad)}.tt-msg.good .cost{background:color-mix(in srgb,var(--ok) 14%,transparent);color:var(--ok)}.tt-msg .blank{color:var(--mute)}
+  .tt-fld{display:grid;gap:4px;margin-bottom:8px}.tt-fld>span{font-weight:800;font-size:.875rem}.tt-fld textarea{width:100%;font:600 .875rem var(--mono);padding:.5em .7em;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--text);resize:vertical}.tt-ex{all:unset;cursor:pointer;justify-self:end;font-size:.75rem;color:var(--mute);text-decoration:underline}
+  .tt-meter{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}.tt-meter span{font-size:.75rem;font-weight:800;padding:.2em .7em;border-radius:6px;border:1px solid var(--line);color:var(--mute)}.tt-meter span.on{color:var(--ok);border-color:var(--ok)}
   .tt-order{display:grid;gap:8px;counter-reset:o}
   .tt-order div{counter-increment:o;display:flex;gap:12px;align-items:center;padding:.6em 1em;border-radius:8px;background:var(--card);border:1px solid var(--line);font-weight:800;animation:pop .5s both}
   .tt-order div::before{content:counter(o);width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--team);color:#06101f;font-weight:900}
@@ -98,10 +101,42 @@
   .tt-acc>button{all:unset;cursor:pointer;display:flex;justify-content:space-between;width:100%;box-sizing:border-box;padding:.8em 1.1em;font-weight:800}
   .tt-acc>button::after{content:"＋";transition:.3s;color:var(--vue)}.tt-acc.open>button::after{transform:rotate(135deg)}
   .tt-set{display:flex;align-items:center;gap:6px;color:var(--mute);font-weight:700}.tt-min{width:4.2em;padding:8px 8px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--text);font:inherit;text-align:center}
-  .tt-acc .bd{display:grid;grid-template-rows:0fr;transition:grid-template-rows .35s}.tt-acc.open .bd{grid-template-rows:1fr}
-  .tt-acc .bd>div{overflow:hidden}.tt-acc .bd p{padding:0 1.1em 1em;color:var(--mute)}
+  .tt-acc .tt-bd{display:grid;grid-template-rows:0fr;transition:grid-template-rows .35s}.tt-acc.open .tt-bd{grid-template-rows:1fr}
+  .tt-acc .tt-bd>div{overflow:hidden}.tt-acc .tt-bd p{padding:0 1.1em 1em;color:var(--mute);text-align:left}
   @media(max-width:700px){.tt-kb,.tt-canvas{grid-template-columns:1fr}}
   `);
+
+  style('tt-r3', `
+  .tt-fl{display:grid;gap:4px;font-weight:800;font-size:.875rem}
+  .tt-out{padding:12px 14px;border-radius:8px;border:1px solid var(--line);background:var(--card2);font-weight:800;line-height:1.8;min-height:3.6em;border-left:5px solid var(--team)}
+  .tt-ck{display:grid;gap:6px}.tt-ckr{display:flex;gap:8px;align-items:flex-start;padding:.45em .7em;border-radius:8px;border:1px solid var(--line);background:var(--card);font-size:.875rem;font-weight:700}
+  .tt-ckr .ic{width:18px;height:18px;flex:none;color:var(--mute);margin-top:2px}.tt-ckr.ok{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 10%,var(--card))}.tt-ckr.ok .ic{color:var(--ok)}.tt-ckr small{display:block;color:var(--mute);font-weight:600}
+  .tt-met{display:grid;grid-template-columns:8em 1fr 7.5em;gap:10px;align-items:center;font-size:.875rem;font-weight:700}
+  .tt-met .b{height:14px;border-radius:7px;background:var(--code);overflow:hidden}.tt-met .b i{display:block;height:100%;border-radius:7px;transition:width .4s,background .4s}
+  .tt-rs{width:100%;border-collapse:collapse;font-size:.875rem}.tt-rs th{text-align:left;font-size:.75rem;color:var(--mute);padding:4px 6px;white-space:nowrap}.tt-rs td{padding:4px 6px;border-top:1px solid var(--line);vertical-align:middle}
+  .tt-rs input,.tt-rs select{font:inherit;padding:.3em .5em;border-radius:6px;border:1px solid var(--line);background:var(--bg2);color:var(--text);max-width:100%}.tt-rs input[type=number]{width:4.8em}.tt-rs td.pb input{width:100%;min-width:9em}
+  .tt-rs tr.demo td:first-child{color:var(--vue);font-weight:800}
+  .tt-qa{display:grid;gap:6px;padding:10px 12px;border-radius:8px;border:1px solid var(--line);background:var(--card)}.tt-qa.ok{border-color:var(--ok)}.tt-qa b{font-size:.875rem}.tt-qa small{color:var(--mute);font-weight:700}
+  @media(max-width:700px){.tt-met{grid-template-columns:6em 1fr}.tt-met span:last-child{grid-column:1/-1}}
+  `);
+  /* 穴埋めして 1 文にする（課題文・コメントで共用） */
+  function composer(o) {
+    const d = Object.assign({}, o.examples.bad), ins = {};
+    const checkBox = h('div', { class: 'tt-ck' }), out = h('div', { class: 'tt-out' }), score = h('b', { style: { fontFamily: 'var(--mono)' } });
+    let fired = false;
+    function draw() {
+      out.textContent = o.compose(d);
+      const rows = o.checks.map(([l, f, hint]) => { let ok = false; try { ok = !!f(d); } catch (e) { ok = false; } return [ok, l, hint]; });
+      checkBox.replaceChildren(...rows.map(([ok, l, hint]) => h('div', { class: 'tt-ckr' + (ok ? ' ok' : '') }, K.W.icon(ok ? 'circle-check' : 'circle'), h('div', null, l, hint && !ok ? h('small', hint) : null))));
+      const n = rows.filter((r) => r[0]).length; score.textContent = n + ' / ' + rows.length;
+      if (n === rows.length && !fired) { fired = true; celebrate(); } else if (n < rows.length) fired = false;
+    }
+    const fields = o.fields.map(([k, label, ph]) => { const i = h('input', { class: 'tt-in', placeholder: ph, value: d[k] || '', oninput: (e) => { d[k] = e.target.value; draw(); } }); ins[k] = i; return h('label', { class: 'tt-fl' }, h('span', label), i); });
+    const set = (src) => { o.fields.forEach(([k]) => { d[k] = src[k] || ''; ins[k].value = d[k]; }); draw(); };
+    const ex = h('div', { class: 'row' }, h('button', { class: 'btn ghost', onclick: () => set(o.examples.bad) }, 'あいまいな例'), h('button', { class: 'btn ghost', onclick: () => set(o.examples.good) }, 'いい例'), h('button', { class: 'btn ghost', onclick: () => set({}) }, 'からにする'));
+    draw();
+    return h('div', { class: 'split fo4-top' }, h('div', { class: 'col' }, lbl('埋める'), ...fields, ex), h('div', { class: 'col' }, lbl(o.outLabel || '1 文にすると'), out, lbl('チェック'), checkBox, h('div', { class: 'row', style: { justifyContent: 'space-between' } }, lbl('できている数'), score)));
+  }
 
   /* ---------- shared widgets ---------- */
   function timer(ctx, o = {}) {
@@ -184,13 +219,13 @@
     id: 'idea', track: 'team', title: 'アイデア発想 → 発表', sub: 'ブレスト・企画・ピッチ', emoji: '💡',
     scenes: [
       {
-        t: 'ブレスト・ウォール', tag: 'BRAINSTORM', lead: 'まず数を出そう。<b>否定しない</b>。付箋は<b>ドラッグ</b>で動かせる。❤️で投票もできる。',
+        t: 'ブレスト・ウォール', tag: 'BRAINSTORM', lead: '今日のお題：「<b>弁護士に、もっと相談しやすくするには？</b>」。まず数を出そう。<b>否定しない</b>。付箋は<b>ドラッグ</b>で動かせる。上の帯が、30分の配分。',
         why: {pv: {"k": "code", "file": "meeting.log", "lang": "txt", "text": "10:00 A: まず案を出して\n10:01 B: ログイン機能？\n10:02 C: それ無理じゃない？\n10:03 （みんな黙る）", "err": [3, 4], "keys": {"3": "veto"}}, iv: {"k": "code", "file": "rules.md", "lang": "txt", "text": "1. 数を出す（質より量）\n2. 否定しない\n3. 人の案に乗っかる\n4. 選ぶのは最後", "idea": [2], "keys": {"2": "veto"}}, av: {"k": "code", "file": "wall.md", "lang": "txt", "text": "付箋 12枚（否定ゼロ）\n検索を速く       ♥♥♥\n通知をまとめる   ♥\nダークモード     ♥♥", "ok": [1], "keys": {"1": "veto"}}, problem: "最初の案に引っぱられて止まる", idea: "数を出す。否定は禁止", answer: "付箋を同時に書く → ❤️で投票", "when": [["アイデアを増やす", "広げる（否定しない）"], ["絞り込む", "絞る（基準を決めて投票）"]]},
-        answer: { html: '<p style="color:var(--mute);font-size:.875rem;margin-bottom:.6em">例：付箋の出し方</p><ul><li><b>困りごと</b>：勉強が続かない／ToDo がたまる／質問しづらい</li><li><b>アイデア</b>：学習ログ／タイマー／ごほうびバッジ／チームの進捗ボード</li><li>ポイント：「無理」と言わない。まず数を出して、あとで ❤️ で選ぶ。</li></ul>' },
+        answer: { html: '<p style="color:var(--mute);font-size:.875rem;margin-bottom:.6em">例：付箋の出し方（お題：弁護士に相談しやすく）</p><ul><li><b>困りごと</b>：電話が苦手／平日の昼しか予約できない／費用が分からない</li><li><b>アイデア</b>：夜でも使えるチャット相談／料金の目安を先に表示／予約の空き状況カレンダー</li><li>ポイント：「無理」と言わない。まず数を出して、あとで ❤️ で選ぶ。</li></ul>' },
         render(el, ctx) {
           let notes = store.get('tt.idea.notes', null);
           if (!notes) notes = [
-            { id: uid(), t: '勉強の進捗を見える化', c: 0, x: 24, y: 24, v: 1 }, { id: uid(), t: 'ToDoが続かない', c: 1, x: 220, y: 70, v: 0 }, { id: uid(), t: '新入社員の私たち', c: 2, x: 420, y: 30, v: 0 }];
+            { id: uid(), t: '夜でもチャットで相談できる', c: 0, x: 24, y: 24, v: 1 }, { id: uid(), t: '電話が苦手で予約できない', c: 1, x: 220, y: 70, v: 0 }, { id: uid(), t: '初めて相談する人', c: 2, x: 420, y: 30, v: 0 }];
           const save = () => store.set('tt.idea.notes', notes);
           let cat = 0;
           const wall = h('div', { class: 'tt-wall' });
@@ -219,18 +254,41 @@
               note.addEventListener('pointerup', up); note.addEventListener('pointercancel', up);
               wall.append(note);
             });
+            requestAnimationFrame(() => { const W = wall.clientWidth, H = wall.clientHeight; if (!W) return; wall.querySelectorAll('.tt-note').forEach((e) => { const l = parseFloat(e.style.left), t = parseFloat(e.style.top); if (l > W - 160) e.style.left = Math.max(0, W - 160) + 'px'; if (t > H - 104) e.style.top = Math.max(0, H - 104) + 'px'; }); });
           }
           const inp = h('input', { class: 'tt-in', placeholder: 'アイデアを書いて Enter', maxlength: 40, onkeydown: (e) => { if (e.key === 'Enter') add(); } });
           const add = () => {
             const t = inp.value.trim(); if (!t) return;
-            notes.push({ id: uid(), t, c: cat, x: 30 + Math.random() * 520, y: 20 + Math.random() * 280, v: 0 }); inp.value = ''; save(); draw();
+            notes.push({ id: uid(), t, c: cat, x: 30 + Math.random() * 520, y: 20 + Math.random() * 200, v: 0 }); inp.value = ''; save(); draw();
           };
           const cats = h('div', { class: 'tt-cats' }, CATS.map(([n, c], i) => h('button', { class: 'tt-cat' + (i === 0 ? ' on' : ''), style: { '--cc': c }, onclick: (e) => { cat = i; cats.querySelectorAll('.tt-cat').forEach((b, k) => b.classList.toggle('on', k === i)); } }, n)));
-          el.append(timer(ctx, { secs: 600, presets: [5, 10, 15], label: '⏱ ブレスト タイマー', warn: 30 }),
+          el.append(h('div', { style: { marginBottom: '14px' } }, lbl('30分ブレストの配分'),
+              h('div', { class: 'tt-seg' }, [['確認', 5, 'var(--pink)'], ['広げる', 15, 'var(--ts)'], ['絞る', 5, 'var(--vue)'], ['決める', 5, 'var(--team)']].map(([n, m, c]) => h('div', { class: 'on', style: { '--sc': c, flexGrow: m } }, n + ' ' + m + '分'))),
+              h('div', { style: { color: 'var(--mute)', fontSize: '.8125rem', fontWeight: 700, marginTop: '6px' } }, '確認＝お題と「誰の困りごとか」をそろえる / 広げる＝否定せず数を出す / 絞る＝基準で票を入れる / 決める＝1つに決めて次の担当を決める')),
+            timer(ctx, { secs: 900, presets: [5, 10, 15], label: '⏱ 「広げる」15分 タイマー', warn: 30 }),
             h('div', { class: 'col', style: { marginTop: '14px' } }, cats, h('div', { class: 'row' }, h('div', { style: { flex: 1, minWidth: '200px' } }, inp), h('button', { class: 'btn primary', onclick: add }, '＋ 貼る')), wall,
               h('div', { class: 'row' }, h('button', { class: 'btn ghost', onclick: () => { notes = []; save(); draw(); } }, '🗑 全部はがす'),
                 h('span', { style: { color: 'var(--mute)', fontSize: '.875rem' } }, '❤️が多い付箋が、次のステップの候補！'))));
           draw();
+        },
+      },
+      {
+        t: 'あいまいな願いを課題文にする', tag: 'PROBLEM', lead: '「弁護士にもっと相談しやすくしたい」では、何を作ればいいか決まらない。<b>誰が・いつ・何に困る</b>を埋めて、1文にしよう。解決策は入れない。',
+        why: {pv: {"k": "code", "file": "meeting.log", "lang": "txt", "text": "A: もっと相談しやすくしたい\nB: 具体的には？\nA: うーん、いい感じに…\n→ 30分たっても決まらない", "err": [1, 3, 4]}, iv: {"k": "code", "file": "problem.md", "lang": "txt", "text": "誰が   ：初めて相談する人\nいつ   ：夜に思いついたとき\n困りごと：予約の電話がつながらない\n結果   ：相談をあきらめる", "idea": [1, 2, 3, 4]}, av: {"k": "code", "file": "problem.md", "lang": "txt", "text": "初めて相談する人は、夜に思いついたとき、\n予約の電話がつながらない。\nその結果、相談をあきらめてしまう。", "ok": [1, 2, 3]}, problem: '「相談しやすく」のような<b>あいまいな願い</b>では、何を作るか決まらない', idea: '<b>誰が・いつ・何に困るか</b>を埋めて、解決策を含まない1文にする', answer: '1文の課題文'},
+        answer: { html: '<p style="color:var(--mute);font-size:.875rem;margin-bottom:.6em">例：いい課題文</p><ul><li><b>誰が</b>：初めて法律相談をする人</li><li><b>いつ</b>：夜に困りごとを思いついたとき</li><li><b>困りごと</b>：予約の電話が平日の昼しかつながらず</li><li><b>結果</b>：相談をあきらめてしまう</li></ul>' },
+        render(el) {
+          el.append(composer({
+            outLabel: '課題文（これが企画の出発点）',
+            fields: [['who', '誰が', '例：初めて法律相談をする人'], ['when', 'いつ・どんな場面で', '例：夜に困りごとを思いついたとき'], ['pain', '何に困っている（起きたこと）', '例：予約の電話が平日の昼しかつながらず'], ['cost', 'その結果', '例：相談をあきらめてしまう']],
+            examples: { bad: { who: 'みんな', when: 'いつでも', pain: '相談しにくい', cost: 'アプリがあるといい' }, good: { who: '初めて法律相談をする人', when: '夜に困りごとを思いついたとき', pain: '予約の電話が平日の昼しかつながらず', cost: '相談をあきらめてしまう' } },
+            compose: (d) => `${d.who || '＿＿'}は、${d.when || '＿＿'}、${d.pain || '＿＿'}。その結果、${d.cost || '＿＿'}。`,
+            checks: [
+              ['「誰が」が具体的（「みんな」「ユーザー」だけはNG）', (d) => (d.who || '').length >= 5 && !/^(みんな|ユーザー|お客さん|お客様|人|全員|誰でも)$/.test(d.who.trim()), '年齢・状況など、顔が思い浮かぶ言葉にする'],
+              ['「いつ・どんな場面」が分かる', (d) => (d.when || '').length >= 8 && !/^(いつでも|いつも|常に)$/.test(d.when.trim()), '「夜に…とき」のように、場面を書く'],
+              ['気持ちだけでなく、起きたことで書く', (d) => (d.pain || '').length >= 10 && !/(しにくい|使いにくい|分かりにくい|わかりにくい|不便|いやな|嫌な)/.test((d.pain || '') + (d.cost || '')), '「〜しにくい」ではなく、何が起きたかを書く'],
+              ['解決策（アプリ・機能・AI など）を入れない', (d) => !/(アプリ|システム|サービス|サイト|機能|AI|チャット|を作|作りたい|導入)/.test([d.who, d.when, d.pain, d.cost].join('')), '解決策は、このあとのブレストで考える'],
+            ],
+          }));
         },
       },
       {
@@ -248,9 +306,9 @@
               ...[['WHO ・ 誰の', d.who], ['PROBLEM ・ 課題', d.problem], ['SOLUTION ・ 解決', d.sol], ['FEATURES ・ 機能', (d.feat || '').split('\n').filter(Boolean).map((x) => '✦ ' + x).join('\n')]].map(([a, b]) => h('div', { class: 'sec' }, h('b', a), b || '…')));
             d.pi = pi; store.set('tt.idea.canvas', d);
           };
-          const field = (k, jp, tag, ph) => h('label', jp, tag === 'ta' ? h('textarea', { class: 'tt-in', placeholder: ph, oninput: (e) => { d[k] = e.target.value; draw(); } }, d[k]) : h('input', { class: 'tt-in', value: d[k], placeholder: ph, oninput: (e) => { d[k] = e.target.value; draw(); } }));
+          const field = (k, jp, tag, ph) => h('label', h('span', { class: 'r2d-lt' }, jp), tag === 'ta' ? h('textarea', { class: 'tt-in', placeholder: ph, oninput: (e) => { d[k] = e.target.value; draw(); } }, d[k]) : h('input', { class: 'tt-in', value: d[k], placeholder: ph, oninput: (e) => { d[k] = e.target.value; draw(); } }));
           const sw = h('div', { class: 'row' }, h('span', { style: { fontWeight: 800, fontSize: '.875rem' } }, 'カラー'), palettes.map(([a, b], i) => h('button', { class: 'btn ghost', style: { padding: '.3em .9em', background: `linear-gradient(135deg,${a},${b})`, border: 0, width: '46px', height: '28px' }, onclick: () => { pi = i; draw(); } })));
-          el.append(h('div', { class: 'split wide-l' },
+          el.append(h('div', { class: 'split wide-l fo4-top' },
             h('div', { class: 'col' }, h('div', { class: 'tt-canvas' }, field('name', 'アプリ名', 'in', '例: StudyLog'), field('who', '👤 誰の？', 'in', 'ターゲット'), field('problem', '❗ 課題', 'ta', '困っていること'), field('sol', '💡 解決策', 'ta', 'どう解決する？')), field('feat', '🧩 主な機能（1行に1つ）', 'ta', '機能を3つ'), sw),
             prev));
           draw();
@@ -261,19 +319,47 @@
         why: {pv: {"k": "code", "file": "speech.txt", "lang": "txt", "text": "0:00 背景から説明します…\n0:20 技術構成は…\n0:50 えーと、デモが…\n1:30 （時間切れ）", "err": [2, 3, 4], "keys": {"4": "time"}}, iv: {"k": "code", "file": "pitch.md", "lang": "txt", "text": "課題   8秒 困っている人\n解決   8秒 こう直す\nデモ  10秒 動かして見せる\n学び   4秒 次に活かす\n合計  30秒", "idea": [5], "keys": {"5": "time"}}, av: {"k": "chips", "items": [{"t": "課題 8秒"}, {"t": "解決 8秒"}, {"t": "デモ 10秒"}, {"t": "学び 4秒"}, {"i": "timer", "t": "= 30秒", "key": "time"}]}, problem: "長くて「結局なに？」になる", idea: "聞く人が知りたい順に話す", answer: "課題・解決・デモ・学びで30秒", "when": [["時間が短い", "課題と解決だけ残す"], ["技術が主役", "学びを厚く"]]},
         answer: { html: '<p style="color:var(--mute);font-size:.875rem;margin-bottom:.6em">例：学習トラッカー（30秒）</p><ul><li><b>課題（8秒）</b>：新入社員は、学んだことが続かなくて困っています。</li><li><b>解決（8秒）</b>：そこで、毎日の学習を記録して成長が見えるアプリを作りました。</li><li><b>デモ（10秒）</b>：ここで入力すると、グラフが伸びます。</li><li><b>学び（4秒）</b>：TypeScript の型が、いちばん助けになりました。</li></ul>' },
         render(el, ctx) {
-          const P = [['課題', 8, 'var(--pink)', '❗', '「〇〇な人は、△△で困っています。」'], ['解決', 8, 'var(--ts)', '💡', '「そこで□□というアプリを作りました。」'], ['デモ', 10, 'var(--vue)', '🎬', '「実際に動かしてみます。ここを押すと…」'], ['学び', 4, 'var(--team)', '🌱', '「TypeScriptの型が一番助けになりました。」']];
-          const seg = h('div', { class: 'tt-seg' }, P.map(([n, s, c, e]) => h('div', { style: { '--sc': c, flexGrow: s } }, e + ' ' + n + ' ' + s + '秒', h('i'))));
-          const quote = h('div', { class: 'tt-quote', style: { '--c': 'var(--team)' } });
+          const ic = K.W.icon, sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+          const P = [['課題', 8, 'var(--pink)', 'triangle-alert', '「〇〇な人は、△△で困っています。」'], ['解決', 8, 'var(--ts)', 'lightbulb', '「そこで□□というアプリを作りました。」'], ['デモ', 10, 'var(--vue)', 'clapperboard', '「実際に動かしてみます。ここを押すと…」'], ['学び', 4, 'var(--team)', 'sprout', '「TypeScriptの型が一番助けになりました。」']];
+          const seg = h('div', { class: 'tt-seg' }, P.map(([n, s, c, e]) => h('div', { style: { '--sc': c, flexGrow: s } }, h('span', { style: { display: 'inline-flex', alignItems: 'center', gap: '.3em' } }, ic(e), n + ' ' + s + '秒'), h('i'))));
+          const script = code('課題｜' + P[0][4] + '\n解決｜' + P[1][4] + '\nデモ｜' + P[2][4] + '\n学び｜' + P[3][4], 'txt', { dim: true, color: 'var(--team)' });
+          const clock = h('div', { class: 'fo4-clock' }, '0:00 ', h('small', '/ 0:30'));
+          const slide = h('div');
+          const bars = [3, 5, 4, 7, 6, 8, 5];
+          let api = null, token = 0, busy = false;
+          const bar = h('div', { class: 'fo4-bars', style: { '--c': 'var(--vue)' } }, bars.map((v) => h('i', { style: { height: v * 6 + 'px' } })));
+          const addBtn = h('button', { class: 'btn primary', style: { '--c': 'var(--vue)' }, onclick: () => { bars.push(Math.min(9, 3 + Math.floor(Math.random() * 7))); bars.shift(); bar.replaceChildren(...bars.map((v) => h('i', { style: { height: v * 6 + 'px' } }))); } }, ic('plus'), '今日の学習を記録');
+          const SL = [
+            () => h('div', { class: 'fo4-slide', style: { borderColor: 'var(--pink)' } }, h('small', '画面：課題'), h('b', '学んだことが、続かない。見えない。'), h('small', '誰が？ 新入社員')),
+            () => h('div', { class: 'fo4-slide', style: { borderColor: 'var(--ts)' } }, h('small', '画面：解決'), h('b', '学習トラッカー'), h('small', '毎日の学習を記録して、成長が見える。')),
+            () => h('div', { class: 'fo4-slide', style: { borderColor: 'var(--vue)' } }, h('small', '画面：デモ（押してみよう）'), bar, h('div', { class: 'fo4-ctl' }, addBtn)),
+            () => h('div', { class: 'fo4-slide', style: { borderColor: 'var(--team)' } }, h('small', '画面：学び'), h('b', 'TypeScript の型が、一番助けになった。'), h('small', 'ミスに早く気づけた。')),
+          ];
+          const fmt = (t) => Math.floor(t / 60) + ':' + String(Math.floor(t % 60)).padStart(2, '0');
+          const setT = (t) => { clock.firstChild.textContent = fmt(t) + ' '; let acc = 0; [...seg.children].forEach((d, i) => { const w = P[i][1]; d.querySelector('i').style.width = Math.max(0, Math.min(1, (t - acc) / w)) * 100 + '%'; acc += w; }); };
+          async function play() {
+            if (busy) { token++; return; }
+            busy = true; const my = ++token; const total = 30;
+            for (let t = 0; t <= total && my === token && !ctx.dead; t += 0.4) {
+              const idx = t < 8 ? 0 : t < 16 ? 1 : t < 26 ? 2 : 3;
+              if (api.cur !== idx + 1) api.go(idx + 1);
+              setT(t); await sleep(100);
+            }
+            busy = false;
+          }
+          cl(ctx, () => { token++; });
           el.append(stepper({
             color: 'var(--team)',
             steps: [{ say: '30秒ピッチ全体。<b>短く・1つのメッセージ</b>。' }, ...P.map(([n, s, , , ex]) => ({ say: `<b>${n}</b>（${s}秒）— ${ex}` }))],
-            init(vis) { vis.style.minHeight = '120px'; vis.append(seg, quote); },
+            init(vis, a) { api = a; vis.style.minHeight = '120px'; vis.append(seg, h('div', { class: 'fo4-split' }, h('div', { class: 'fo4-col' }, lbl('話すこと'), script, clock), h('div', { class: 'fo4-col' }, lbl('出力：聞き手に見える画面'), slide))); },
             update(n) {
               [...seg.children].forEach((d, i) => d.classList.toggle('on', n === 0 ? false : i === n - 1));
-              quote.style.setProperty('--c', n ? P[n - 1][2] : 'var(--team)');
-              quote.textContent = n ? P[n - 1][4] : '🎤 4パートを順番に話すだけ！';
+              script.setHi(n ? [n] : []);
+              slide.replaceChildren(n ? SL[n - 1]() : h('div', { class: 'fo4-slide' }, h('small', '画面'), h('b', '4パートを順番に話すだけ。')));
+              if (!busy) { let acc = 0; for (let i = 0; i < n - 1; i++) acc += P[i][1]; setT(n ? acc : 0); }
             },
           }));
+          el.append(h('div', { class: 'fo4-ctl fo4-c', style: { marginTop: '12px' } }, h('button', { class: 'btn primary', style: { '--c': 'var(--team)' }, onclick: play }, ic('play'), '30秒を通して再生')));
           el.append(h('div', { style: { marginTop: '18px' } }, lbl('本番 3分タイマー'), timer(ctx, { secs: 180, presets: [1, 3, 5], label: '🎤 発表', warn: 20, color: 'var(--pink)' })));
         },
       },
@@ -351,47 +437,155 @@
       },
       {
         t: '1日の流れ と Git', tag: 'FLOW', lead: '開発の基本の流れ。<b>branch → commit → push → PR</b>。「次へ」で1ステップずつ見よう。右上の <b>今日の習慣</b> アイコンにチェックリストがある。',
-        why: {pv: {"k": "code", "file": "terminal", "lang": "sh", "text": "$ git switch main\n$ vim app.ts   # main を直接\n$ git push\n# → 壊れた。誰の変更？", "err": [2, 3, 4], "keys": {"2": "branch"}}, iv: {"k": "code", "file": "graph", "lang": "txt", "text": "main    ●────●────●────●\n         \\         /\nfeature   ●──●──●", "idea": [3], "keys": {"3": "branch"}}, av: {"k": "code", "file": "terminal", "lang": "sh", "text": "git switch -c feature/login\ngit commit -m \"ログイン画面\"\ngit push -u origin feature/login", "ok": [1, 2, 3], "keys": {"1": "branch"}}, problem: "main を直接直して壊した", idea: "枝で作業して、見てから合流", answer: "branch → commit → push → PR", "when": [["新しい作業", "必ず新しい branch"], ["commit", "小さく・意味のある単位"], ["迷う変更", "PR で相談"]]},
-        answer: { code: '# 朝：最新にして、作業用の枝を作る\ngit switch main && git pull\ngit switch -c feature/login\n\n# 作業のあと：小さく保存\ngit add .\ngit commit -m "ログイン画面を追加"\n\n# 夕方：送って、見てもらう\ngit push -u origin feature/login\n# → GitHub で Pull Request を作る', lang: 'sh', file: 'terminal' },
-        ref: [{ title: '今日の習慣', icon: 'list-checks', node: () => checklist('tt.dev.daily', [['☀️', '朝会：今日やることを共有', null, { hint: ['今日やることを、チームに1分で話す。'], answer: '例：「今日は、ログイン画面を作ります」' }], ['🌿', 'ブランチを切ってから作業', null, { hint: ['main では作業しない。作業用の枝を作る。'], answer: { code: 'git switch -c feature/login', lang: 'sh', file: 'terminal' } }], ['💾', 'こまめに commit', null, { hint: ['区切りのいいところで、小さく保存する。'], answer: { code: 'git add .\ngit commit -m "ログイン画面を追加"', lang: 'sh', file: 'terminal' } }], ['🙌', '夕会：進捗と困りごとを共有', null, { hint: ['進んだことと、困っていることを話す。'], answer: '例：「画面は完成。バリデーションで困っています」' }], ['📝', 'PR の説明に「何を・なぜ・どう確かめたか」を書く', null, { opt: 1, hint: ['PR を見る人は、何も知らない。3つの見出しで説明しよう。', '「何を」「なぜ」「どう確かめたか」の順に書く。'], answer: { code: '## 何を\nログイン画面を追加した\n\n## なぜ\nユーザーがログインできるようにするため\n\n## どう確かめたか\nnpm run dev で、入力→ログインできることを確認', lang: 'text' } }]]) }],
-        render(el) {
-          const F = [['🌿', 'branch', 'git switch -c feature/login', '作業用の枝を作る。mainは触らない！'], ['💾', 'commit', 'git add .\ngit commit -m "ログイン画面を追加"', '小さく・意味のある単位で保存'], ['☁️', 'push', 'git push -u origin feature/login', 'GitHub にアップロード'], ['🔀', 'Pull Request', '# GitHub で "Compare & pull request"', 'チームにレビューをお願いする'], ['🎉', 'merge', 'git switch main && git pull', 'mainに取り込んで最新化']];
-          const flow = h('div', { class: 'tt-flow' });
-          F.forEach(([e, n], i) => { flow.append(h('div', { class: 'tt-fn', style: { '--c': 'var(--team)' } }, h('b', e), n)); if (i < F.length - 1) flow.append(h('span', { class: 'tt-ar' }, '➜')); });
-          const cbox = h('div');
+        why: {pv: {"k": "code", "file": "terminal", "lang": "sh", "text": "$ git checkout main\n$ vim app.ts   # main を直接\n$ git push\n# → 壊れた。誰の変更？", "err": [2, 3, 4], "keys": {"2": "branch"}}, iv: {"k": "code", "file": "graph", "lang": "txt", "text": "main    ●────●────●────●\n         \\         /\nfeature   ●──●──●", "idea": [3], "keys": {"3": "branch"}}, av: {"k": "code", "file": "terminal", "lang": "sh", "text": "git checkout -b feature/login\ngit commit -m \"ログイン画面\"\ngit push -u origin feature/login", "ok": [1, 2, 3], "keys": {"1": "branch"}}, problem: "main を直接直して壊した", idea: "枝で作業して、見てから合流", answer: "branch → commit → push → PR", "when": [["新しい作業", "必ず新しい branch"], ["commit", "小さく・意味のある単位"], ["迷う変更", "PR で相談"]]},
+        answer: { code: '# 朝：最新にして、作業用の枝を作る\ngit checkout main && git pull\ngit checkout -b feature/login\n\n# 作業のあと：小さく保存\ngit add .\ngit commit -m "ログイン画面を追加"\n\n# 夕方：送って、見てもらう\ngit push -u origin feature/login\n# → GitHub で Pull Request を作る', lang: 'sh', file: 'terminal' },
+        ref: [{ title: '今日の習慣', icon: 'list-checks', node: () => checklist('tt.dev.daily', [['☀️', '朝会：今日やることを共有', null, { hint: ['今日やることを、チームに1分で話す。'], answer: '例：「今日は、ログイン画面を作ります」' }], ['🌿', 'ブランチを切ってから作業', null, { hint: ['main では作業しない。作業用の枝を作る。'], answer: { code: 'git checkout -b feature/login', lang: 'sh', file: 'terminal' } }], ['💾', 'こまめに commit', null, { hint: ['区切りのいいところで、小さく保存する。'], answer: { code: 'git add .\ngit commit -m "ログイン画面を追加"', lang: 'sh', file: 'terminal' } }], ['🙌', '夕会：進捗と困りごとを共有', null, { hint: ['進んだことと、困っていることを話す。'], answer: '例：「画面は完成。バリデーションで困っています」' }], ['📝', 'PR の説明に「何を・なぜ・どう確かめたか」を書く', null, { opt: 1, hint: ['PR を見る人は、何も知らない。3つの見出しで説明しよう。', '「何を」「なぜ」「どう確かめたか」の順に書く。'], answer: { code: '## 何を\nログイン画面を追加した\n\n## なぜ\nユーザーがログインできるようにするため\n\n## どう確かめたか\nnpm run dev で、入力→ログインできることを確認', lang: 'text' } }]]) }],
+        render(el, ctx) {
+          const ic = K.W.icon, sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+          const F = [['git-branch', 'branch', '作業用の枝を作る。mainは触らない！'], ['save', 'commit', '小さく・意味のある単位で保存'], ['cloud-upload', 'push', 'GitHub にアップロード'], ['git-pull-request', 'Pull Request', 'チームにレビューをお願いする'], ['git-merge', 'merge', 'mainに取り込んで最新化']];
+          const SCRIPT = '# 朝：最新にして、作業用の枝を作る\ngit checkout main && git pull\ngit checkout -b feature/login\n\n# 作業のあと：小さく保存\ngit add .\ngit commit -m "ログイン画面を追加"\n\n# 夕方：送って、見てもらう\ngit push -u origin feature/login\n# → GitHub で Pull Request を作る\n\n# レビューOK → Merge のあと\ngit checkout main && git pull';
+          const HI = [[2, 3], [6, 7], [10], [11], [14]];
+          const OUT = [
+            [['$ git checkout main && git pull', 'c'], ['Already up to date.'], ['$ git checkout -b feature/login', 'c'], ["Switched to a new branch 'feature/login'"]],
+            [['$ git add .', 'c'], ['$ git commit -m "ログイン画面を追加"', 'c'], ['[feature/login 3f2a1c9] ログイン画面を追加'], [' 2 files changed, 48 insertions(+)']],
+            [['$ git push -u origin feature/login', 'c'], ['Writing objects: 100% (4/4), done.'], [' * [new branch]  feature/login -> feature/login']],
+            [['# GitHub で "Compare & pull request" を押す', 'm']],
+            [['$ git checkout main && git pull', 'c'], ['Updating 8c1d4e2..e41b7d0'], ['Fast-forward'], [' 2 files changed, 48 insertions(+)']],
+          ];
+          const flow = h('div', { class: 'tt-flow fo4-fl' });
+          F.forEach(([e, n], i) => { flow.append(h('div', { class: 'tt-fn', style: { '--c': 'var(--team)' } }, h('b', ic(e)), n)); if (i < F.length - 1) flow.append(h('span', { class: 'tt-ar' }, '➜')); });
+          const cd = code(SCRIPT, 'sh', { dim: true, color: 'var(--team)' });
+          const term = h('div', { class: 'fo4-term', role: 'log', 'aria-label': 'ターミナルの出力' });
+          const graph = h('div', { html: '<svg class="fo4-g" viewBox="0 0 360 104" role="img" aria-label="ブランチの図"><line class="ln main" x1="12" y1="26" x2="348" y2="26"/><circle class="cm" cx="40" cy="26" r="6"/><circle class="cm" cx="110" cy="26" r="6"/><circle class="cm" cx="180" cy="26" r="6"/><text x="12" y="14">main</text>' +
+            '<g class="hid" data-s="0"><path class="br" style="--c:var(--team)" d="M180 26 C196 26 196 72 222 72 L270 72"/><circle class="cb" style="--c:var(--team)" cx="222" cy="72" r="5"/><text x="222" y="94" text-anchor="middle" style="fill:var(--team)">feature/login</text></g>' +
+            '<g class="hid" data-s="1"><circle class="cb" style="--c:var(--team)" cx="262" cy="72" r="6"/><text x="262" y="60" text-anchor="middle">commit</text></g>' +
+            '<g class="hid" data-s="2"><path class="dash" d="M270 72 L298 72"/><rect x="298" y="60" width="50" height="24" rx="6" style="fill:var(--card2);stroke:var(--mute)"/><text x="323" y="76" text-anchor="middle" class="tx">origin</text></g>' +
+            '<g class="hid" data-s="3"><path class="dash" d="M266 66 C288 44 304 34 320 31"/><text x="296" y="48" class="tx">PR #12</text></g>' +
+            '<g class="hid" data-s="4"><path class="br" style="--c:var(--team)" d="M266 72 C296 72 304 26 330 26"/><circle class="cb" style="--c:var(--team)" cx="330" cy="26" r="7"/><text x="330" y="14" text-anchor="middle" class="tx">merge</text></g></svg>' });
+          const gs = [...graph.querySelectorAll('.hid')];
+          const prBox = h('div');
+          let api = null, dead = false, busy = false;
+          cl(ctx, () => { dead = true; });
+          let prTok = 0;
+          const pr = (n) => {
+            const my = ++prTok;
+            prBox.replaceChildren();
+            if (n < 3) { prBox.append(h('div', { class: 'fo4-pr fo4-wait' }, h('div', { class: 'h' }, ic('git-pull-request'), 'Pull Request', h('span', { class: 'st' }, 'まだ')), h('div', { class: 'fo4-chk' }, 'push のあとに作る'))); return; }
+            const merged = n >= 4;
+            const ci = h('div', { class: 'fo4-chk' }), rv = h('div', { class: 'fo4-chk' });
+            const merge = h('button', { class: 'btn primary', onclick: () => api && api.go(4) }, ic('git-merge'), 'Merge する');
+            const setChk = (el, ok, okTxt, waitTxt) => el.replaceChildren(ic(ok ? 'circle-check' : 'clock'), ok ? okTxt : waitTxt);
+            const done = merged || false;
+            setChk(ci, done, 'CI：テスト 12/12 成功', 'CI：テストを実行中…');
+            setChk(rv, done, 'レビュー：1人が承認', 'レビュー：待っています');
+            merge.disabled = !done;
+            prBox.append(h('div', { class: 'fo4-pr' + (merged ? ' merged' : '') },
+              h('div', { class: 'h' }, ic(merged ? 'git-merge' : 'git-pull-request'), 'ログイン画面を追加', h('small', { style: { color: 'var(--mute)' } }, '#12'), h('span', { class: 'st' }, merged ? 'Merged' : 'Open')),
+              ci, rv, merged ? null : h('div', { class: 'fo4-ctl' }, merge, h('small', { style: { color: 'var(--mute)' } }, 'CI とレビューが済むと押せる'))));
+            if (!merged) {
+              setTimeout(() => { if (my !== prTok || dead) return; setChk(ci, true, 'CI：テスト 12/12 成功', ''); }, 900);
+              setTimeout(() => { if (my !== prTok || dead) return; setChk(rv, true, 'レビュー：1人が承認', ''); merge.disabled = false; }, 1800);
+            }
+          };
+          const paint = (n) => {
+            term.replaceChildren();
+            OUT.slice(0, n + 1).forEach((blk, i) => blk.forEach(([t, k], j) => term.append(h('p', { class: (k || '') + (i === n ? ' new' : ''), style: i === n ? { animationDelay: j * 150 + 'ms' } : null }, t))));
+            term.scrollTop = term.scrollHeight;
+          };
+          async function play() {
+            if (busy) return; busy = true;
+            for (let i = 0; i < 5 && !dead; i++) { api.go(i); await sleep(i === 0 ? 600 : 1700); }
+            busy = false;
+          }
           el.append(stepper({
             color: 'var(--team)', interval: 2200,
-            steps: F.map(([, n, , d]) => ({ say: `<b>${n}</b>：${d}` })),
-            init(vis) { vis.style.minHeight = '120px'; vis.append(flow, cbox); },
-            update(n, s, vis) {
+            steps: F.map(([, n, d]) => ({ say: `<b>${n}</b>：${d}` })),
+            init(vis, a) { api = a; vis.style.minHeight = '120px'; vis.append(flow, h('div', { class: 'fo4-split' }, h('div', { class: 'fo4-col' }, lbl('今日のコマンド'), cd), h('div', { class: 'fo4-col' }, lbl('出力：ターミナルと枝の図'), term, graph)), prBox); },
+            update(n) {
               [...flow.querySelectorAll('.tt-fn')].forEach((f, i) => f.classList.toggle('on', i === n));
               [...flow.querySelectorAll('.tt-ar')].forEach((f, i) => f.classList.toggle('on', i < n));
-              cbox.replaceChildren(h('div', { style: { marginTop: '12px' } }, code(F[n][2], 'sh', { color: 'var(--team)' })));
+              cd.setHi(HI[n]); paint(n); pr(n);
+              gs.forEach((g) => g.classList.toggle('on', +g.dataset.s <= n));
             },
           }));
+          el.append(h('div', { class: 'fo4-ctl fo4-c', style: { marginTop: '12px' } }, h('button', { class: 'btn primary', style: { '--c': 'var(--team)' }, onclick: play }, ic('play'), '1日を通して実行')));
         },
       },
       {
-        t: '詰まったら？', tag: 'DEBUG', lead: '質問に答えて進もう。次にやることが見つかる。',
+        t: 'PR は小さく・早くレビュー', tag: 'PR SIZE', lead: '800行の PR は、誰も読めない。変更行数を動かして、<b>レビューにかかる時間</b>と<b>見つかるバグ</b>がどう変わるか見よう。',
+        why: {pv: {"k": "code", "file": "PR #31", "lang": "txt", "text": "ログイン機能（全部入り）\n+780 −120  14 files\n[2日後] レビュー待ち…\n[3日後] コンフリクト！", "err": [2, 3, 4]}, iv: {"k": "code", "file": "split.md", "lang": "txt", "text": "PR1 画面だけ      +120\nPR2 API だけ      +150\nPR3 テストだけ     +90\n→ 1つ30分で読める", "idea": [1, 2, 3, 4]}, av: {"k": "code", "file": "split.md", "lang": "txt", "text": "小さい PR → 当日中にレビュー\n→ バグを見つけやすい\n→ コンフリクトも少ない", "ok": [1, 2, 3]}, problem: '大きな PR は誰も読めず、レビューが止まり、バグも見逃す', idea: '<b>1つの PR で1つのこと</b>。200〜400行以内に分ける', answer: '小さく分けて出す'},
+        answer: { html: '<p style="color:var(--mute);font-size:.875rem;margin-bottom:.6em">例：ログイン機能（800行）の分け方</p><ul><li><b>PR1</b> feat: ログイン画面（見た目だけ）120行</li><li><b>PR2</b> feat: ログイン API をつなぐ 150行</li><li><b>PR3</b> test: ログインのテスト 90行</li></ul><p>それぞれ、30分以内に読み終わる大きさ。</p>' },
+        render(el) {
+          const ic = K.W.icon;
+          let n = 800;
+          const model = (x) => ({
+            min: Math.round(x / 20 + (x > 400 ? (x - 400) / 10 : 0)),
+            bug: Math.max(15, Math.round(95 - Math.max(0, x - 200) / 12)),
+            wait: x <= 200 ? '半日' : x <= 400 ? '1日' : x <= 700 ? '2日' : '3日以上',
+            risk: x < 150 ? '低' : x < 500 ? '中' : '高',
+          });
+          const val = h('b', { style: { fontFamily: 'var(--mono)', fontSize: '1.5rem' } });
+          const r = h('input', { type: 'range', min: 20, max: 1200, step: 10, value: n, 'aria-label': '変更行数', oninput: (e) => { n = +e.target.value; draw(); } });
+          const meters = h('div', { class: 'col' });
+          const pr = h('div', { class: 'tt-out' });
+          const note = h('div', { class: 'tt-ckr' });
+          const bar = (label, pct, text, c) => h('div', { class: 'tt-met' }, h('span', label), h('div', { class: 'b' }, h('i', { style: { width: pct + '%', background: c } })), h('span', text));
+          function draw() {
+            const m = model(n), good = n <= 400;
+            val.textContent = '+' + n + ' 行';
+            pr.innerHTML = `<b>ログイン機能（全部入り）</b><br><span style="color:var(--mute);font-weight:700;font-size:.8125rem">+${n} −${Math.round(n / 6)}　${Math.max(1, Math.round(n / 60))} files changed</span>`;
+            meters.replaceChildren(
+              bar('レビュー時間', Math.min(100, m.min / 1.2), m.min + ' 分', m.min <= 30 ? 'var(--ok)' : m.min <= 60 ? 'var(--team)' : 'var(--bad)'),
+              bar('見つかるバグ', m.bug, m.bug + ' %', m.bug >= 80 ? 'var(--ok)' : m.bug >= 55 ? 'var(--team)' : 'var(--bad)'),
+              bar('レビューまでの待ち', Math.min(100, n / 12), m.wait, n <= 400 ? 'var(--ok)' : 'var(--bad)'),
+              bar('コンフリクトの危険', n < 150 ? 20 : n < 500 ? 55 : 95, m.risk, m.risk === '低' ? 'var(--ok)' : m.risk === '中' ? 'var(--team)' : 'var(--bad)'));
+            note.className = 'tt-ckr' + (good ? ' ok' : '');
+            note.replaceChildren(ic(good ? 'circle-check' : 'triangle-alert'), h('div', null, good ? '読める大きさ。当日中にレビューが終わり、直しも早い。' : '大きすぎる。誰も読み切れず、「LGTM」で通ってしまう。分けよう。', h('small', 'ひとつの目安：200〜400行以内、30分で読める量')));
+          }
+          const preset = (v) => h('button', { class: 'btn ghost', onclick: () => { n = v; r.value = v; draw(); } }, v + '行');
+          el.append(h('div', { class: 'split fo4-top' },
+            h('div', { class: 'col' }, lbl('PR の大きさ'), val, r, h('div', { class: 'row' }, [100, 300, 800, 1200].map(preset)), pr, note),
+            h('div', { class: 'col' }, lbl('その結果'), meters, lbl('分け方の例（800行のログイン機能）'),
+              code('PR1  feat: ログイン画面       +120\nPR2  feat: ログイン API をつなぐ +150\nPR3  test: ログインのテスト      +90', 'txt', { file: 'split.md', color: 'var(--team)' }))));
+          draw();
+        },
+      },
+      {
+        t: '詰まったら？', tag: 'DEBUG', lead: 'ひとりで悩み続けると、時間が溶ける。<b>10分</b>悩んだら、<b>1回で伝わる質問</b>を書いて声をかけよう。5項目を埋めてみて。',
         why: {pv: {"k": "code", "file": "slack", "lang": "txt", "text": "[14:00] 動きません\n[14:05] （返事なし）\n…\n[17:30] まだ動きません", "err": [1, 4], "keys": {"1": "ask"}}, iv: {"k": "code", "file": "question.md", "lang": "txt", "text": "やったこと: npm run dev\n期待      : 画面が出る\n実際      : 白い画面 + エラー\n10分悩んだら声をかける", "idea": [4], "keys": {"4": "ask"}}, av: {"k": "chips", "items": [{"i": "timer", "t": "10分で相談", "key": "ask"}, "check|やったこと", "check|期待", "check|実際"]}, problem: "「動きません」だけで伝わらない", idea: "10分悩んだら、型で相談", answer: "やったこと・期待・実際", "when": [["10分悩んだ", "声をかける"], ["エラー文がある", "そのまま検索 / AI に"], ["値がおかしい", "console.log で遡る"]]},
         render(el) {
-          const box = h('div', { class: 'tt-tree', style: { '--c': 'var(--team)' } });
-          let path = [];
-          function draw(k) {
-            const n = DEBUG[k];
-            box.replaceChildren(h('div', { class: 'tt-crumb' }, path.map((p) => h('span', DEBUG[p].q ? DEBUG[p].q.slice(0, 14) + '…' : ''))));
-            if (n.q) {
-              box.append(h('div', { class: 'tt-q' }, n.q), h('div', null, n.o.map(([a, nx]) => h('button', { class: 'tt-opt', onclick: () => { path.push(k); draw(nx); } }, a))));
-            } else {
-              box.append(h('div', { class: 'tt-leaf' }, h('h3', n.tip), h('ul', { html: n.items.map((i) => `<li>${i}</li>`).join('') })));
-            }
-            const row = h('div', { class: 'row' });
-            if (path.length) row.append(h('button', { class: 'btn', onclick: () => draw(path.pop()) }, '← 戻る'));
-            if (k !== 'start') row.append(h('button', { class: 'btn ghost', onclick: () => { path = []; draw('start'); } }, '⟲ 最初から'));
-            box.append(row);
+          const F = [
+            ['やりたいこと', 'ログイン画面の「送信」を押したら、一覧画面へ移動させたい', 'やりたいこと'],
+            ['期待', '一覧画面（/consults）が開く', '期待'],
+            ['実際', '画面が白くなる。Console に「Cannot read properties of undefined (reading \'id\')」', '実際（エラーの文をそのまま貼る）'],
+            ['試したこと', 'リロード・npm run dev の再起動・router.push の引数を console.log した（undefined だった）', '試したこと'],
+            ['場所', 'src/views/Login.vue の 38 行目付近。ブランチは feat/login', '場所（ファイル・ブランチ）'],
+          ];
+          const vals = F.map(() => '');
+          const bad = h('div', { class: 'tt-msg bad' }, h('div', { class: 'who' }, h('b', 'あなた'), h('small', '14:00')), h('p', '動きません'),
+            h('div', { class: 'rep' }, h('b', '先輩'), h('small', '14:20'), h('p', 'どの画面？ エラーは？ 何をしたら？')),
+            h('div', { class: 'rep' }, h('b', 'あなた'), h('small', '14:45'), h('p', 'ログインです…')),
+            h('div', { class: 'cost' }, '往復 3 回・45分たっても、まだ原因に着いていない'));
+          const preview = h('div', { class: 'tt-msg good' });
+          const meter = h('div', { class: 'tt-meter' });
+          const fields = F.map(([k, ex, ph], i) => {
+            const ta = h('textarea', { rows: 2, placeholder: ph, spellcheck: 'false', oninput: () => { vals[i] = ta.value; paint(); } });
+            return h('label', { class: 'tt-fld' }, h('span', k), ta, h('button', { class: 'tt-ex', type: 'button', onclick: () => { ta.value = ex; vals[i] = ex; paint(); } }, '例を入れる'));
+          });
+          let done = false;
+          function paint() {
+            const n = vals.filter((v) => v.trim().length >= 6).length;
+            preview.replaceChildren(h('div', { class: 'who' }, h('b', 'あなた'), h('small', '14:00')),
+              ...F.map(([k], i) => (vals[i].trim() ? h('p', null, h('b', '【' + k + '】'), vals[i].trim()) : h('p', { class: 'blank' }, '【' + k + '】…'))),
+              h('div', { class: 'cost' }, n === 5 ? '1 回で伝わる。先輩は読んですぐ、原因の見当を付けられる（返信まで 約5分）' : `あと ${5 - n} 項目で「1回で伝わる質問」（今のままだと、聞き返しが ${Math.max(1, 5 - n)} 回ぐらい）`));
+            meter.replaceChildren(...F.map(([k], i) => h('span', { class: vals[i].trim().length >= 6 ? 'on' : '' }, k)));
+            if (n === 5 && !done) { done = true; K.W.celebrate && K.W.celebrate(); }
           }
-          draw('start');
-          el.append(box, h('div', { class: 'card', style: { marginTop: '18px' } }, quiz({ q: '10分考えても解決しない。次にやるべきことは？', options: ['もう1時間ひとりで粘る', '状況を整理して、チームや講師に相談する', '最初から全部書き直す'], answer: 1, why: '早めの相談はチームの武器！' })));
+          el.append(h('div', { class: 'fo4-split' },
+            h('div', { class: 'fo4-col' }, lbl('よくある質問（Slack）'), bad),
+            h('div', { class: 'fo4-col' }, lbl('伝わる質問を書いてみよう（10分悩んだら声をかける）'), meter, ...fields)),
+          h('div', { style: { height: '12px' } }), lbl('送るメッセージ（プレビュー）'), preview);
+          paint();
         },
       },
       quizScene('進め方の判断', 'THINK', '開発の「迷ったらどうする？」を3つ。<b>理由</b>まで読んで確認しよう。',
@@ -412,6 +606,43 @@
         answer: { html: '<p style="color:var(--mute);font-size:.875rem;margin-bottom:.6em">例：6枚の中身</p><ul><li><b>タイトル</b>：学習トラッカー／チーム A／3人</li><li><b>課題</b>：学んだことが続かない・見えない</li><li><b>解決策</b>：毎日の記録を、グラフで見せるアプリ（画面のスクショ）</li><li><b>デモ</b>：①入力 ②グラフが伸びる ③バッジがもらえる</li><li><b>技術と工夫</b>：TypeScript の型でバグを減らした／Vue で部品に分けた</li><li><b>学びと今後</b>：型が助けになった。次は通知機能を作りたい</li></ul>' },
         render(el) {
           el.append(checklist('tt.prep.slides', [['1️⃣', 'タイトル', 'アプリ名・チーム名・メンバー', { hint: ['アプリの名前と、チーム名、メンバーの名前を1枚にまとめる。'], answer: '例：学習トラッカー／チーム A／3人' }], ['2️⃣', '課題', '誰がどんなことに困っている？', { hint: ['「誰が」「何に困っているか」を1文で書く。'], answer: '例：新入社員は、学んだことが続かず困っている。' }], ['3️⃣', '解決策', 'アプリの一言説明とスクショ', { hint: ['アプリを一言で。画面のスクショを1枚のせる。'], answer: '例：毎日の記録を、グラフで見せるアプリ。' }], ['4️⃣', 'デモ', '見せる流れを3ステップに絞る', { hint: ['見せる流れを、3ステップに絞る。'], answer: '例：①入力 ②グラフが伸びる ③バッジがもらえる' }], ['5️⃣', '技術と工夫', 'TypeScript / Vue でやったこと', { hint: ['使った技術と、工夫したところを1〜2個。'], answer: '例：TypeScript の型でバグを減らした／Vue で部品に分けた' }], ['6️⃣', '学びと今後', 'ふりかえり・次にやりたいこと', { hint: ['やってみて分かったことと、次にやりたいこと。'], answer: '例：型が助けになった。次は通知機能を作りたい。' }], ['❓', '聞き手の質問を2つ予想して、答えを用意する', null, { opt: 1, hint: ['聞く人なら、何が気になる？ 「なぜ？」「次は？」を考えてみる。', '技術の選び方と、これから足したい機能は、よく聞かれる。'], answer: '例：「なぜ Vue を選んだ？」→「画面を部品に分けやすいから」／「次に何を足す？」→「通知機能」' }]], 'var(--team)'));
+        },
+      },
+      {
+        t: 'デモ進行表（5分）', tag: 'RUN SHEET', lead: '5分の発表を、<b>時間・担当・動かなかったときの代わり（Plan B）</b>まで決めた進行表にしよう。最初は崩れている。直してチェックを全部つけよう。',
+        why: {pv: {"k": "code", "file": "当日", "lang": "txt", "text": "導入 1:30 ／ 解決 1:00\nデモ 0:40 ← 急いで\n質疑 なし\n[デモ] 動かない… 沈黙", "err": [1, 2, 3, 4]}, iv: {"k": "code", "file": "runsheet.md", "lang": "txt", "text": "導入 30秒 A\n解決 45秒 A\nデモ 120秒 B / 代わり: 録画\nまとめ 45秒 A\n質疑 60秒 全員", "idea": [1, 2, 3, 4, 5]}, av: {"k": "code", "file": "runsheet.md", "lang": "txt", "text": "合計 5:00 ぴったり\nデモが全体の4割\n動かなくても録画で続けられる", "ok": [1, 2, 3]}, problem: '時間配分も担当も決めずに本番に出て、デモが動かず止まる', idea: '<b>秒数・担当・Plan B</b>を紙に書いてから本番に出る', answer: '5分の進行表'},
+        answer: { html: '<p style="color:var(--mute);font-size:.875rem;margin-bottom:.6em">例：5分の進行表</p><ul><li>導入・課題 30秒（A）／ 解決の説明 45秒（A）</li><li>デモ① 入力 60秒（B）Plan B：録画を流す</li><li>デモ② グラフ 60秒（B）Plan B：スクショ3枚</li><li>まとめ・学び 45秒（A）／ 質疑 60秒（全員）</li></ul>' },
+        render(el) {
+          const R = [
+            { n: '導入・課題', s: 90, w: 'A' }, { n: '解決の説明', s: 60, w: 'A' }, { n: 'デモ① 入力', s: 40, w: 'B', demo: 1, pb: '' }, { n: 'デモ② グラフ', s: 30, w: 'B', demo: 1, pb: '' }, { n: 'まとめ・学び', s: 40, w: 'A' }, { n: '質疑応答', s: 0, w: '' },
+          ];
+          const checks = h('div', { class: 'tt-ck' }), bar = h('div', { class: 'tt-splits' }), tot = h('b', { style: { fontFamily: 'var(--mono)', fontSize: '1.5rem' } });
+          let fired = false;
+          const COL = ['var(--pink)', 'var(--ts)', 'var(--vue)', 'var(--vue)', 'var(--team)', 'var(--violet)'];
+          function draw() {
+            const total = R.reduce((a, r) => a + r.s, 0), demo = R.filter((r) => r.demo).reduce((a, r) => a + r.s, 0);
+            tot.textContent = mmss(total) + ' / 05:00'; tot.style.color = Math.abs(total - 300) <= 10 ? 'var(--ok)' : 'var(--bad)';
+            bar.replaceChildren(...R.map((r, i) => h('div', { style: { '--sc': COL[i], flexGrow: Math.max(r.s, 1), flexBasis: 0 } }, h('i', { style: { transform: 'scaleX(1)' } }), h('span', r.n.replace(/^デモ.*/, 'デモ') + '\n' + r.s + '秒'))));
+            bar.querySelectorAll('span').forEach((x) => (x.style.whiteSpace = 'pre'));
+            const rows = [
+              [Math.abs(total - 300) <= 10, '合計が 5:00（±10秒）', '今は ' + mmss(total) + '。長いパートを削る'],
+              [total > 0 && demo / total >= 0.4, 'デモが全体の 4 割以上', 'いちばん見せたいのはデモ。導入を短く'],
+              [R.filter((r) => r.demo).every((r) => (r.pb || '').trim().length >= 4), 'デモのすべてに Plan B（録画・スクショなど）がある', '動かなくても発表を止めない代わりを書く'],
+              [R.every((r) => r.s === 0 || r.w), 'すべてのパートに担当が決まっている', '誰が話すか、迷う時間をなくす'],
+              [R[R.length - 1].s >= 60, '質疑の時間が 60 秒以上ある', '質問を受ける時間も本番のうち'],
+            ];
+            checks.replaceChildren(...rows.map(([ok, l, hint]) => h('div', { class: 'tt-ckr' + (ok ? ' ok' : '') }, K.W.icon(ok ? 'circle-check' : 'circle'), h('div', null, l, !ok ? h('small', hint) : null))));
+            const n = rows.filter((x) => x[0]).length;
+            if (n === rows.length && !fired) { fired = true; celebrate(); } else if (n < rows.length) fired = false;
+          }
+          const table = h('table', { class: 'tt-rs' }, h('thead', null, h('tr', null, ['パート', '秒', '担当', 'Plan B（デモのとき）'].map((x) => h('th', x)))),
+            h('tbody', null, R.map((r) => h('tr', { class: r.demo ? 'demo' : '' },
+              h('td', r.n),
+              h('td', h('input', { type: 'number', min: 0, max: 300, step: 5, value: r.s, 'aria-label': r.n + ' の秒数', oninput: (e) => { r.s = Math.max(0, Math.min(300, +e.target.value || 0)); draw(); } })),
+              h('td', h('select', { 'aria-label': r.n + ' の担当', onchange: (e) => { r.w = e.target.value; draw(); } }, ['', 'A', 'B', 'C', '全員'].map((o) => h('option', { value: o, selected: o === r.w }, o || '（未定）')))),
+              h('td', { class: 'pb' }, r.demo ? h('input', { placeholder: '例：録画を流す / スクショ3枚', value: r.pb, oninput: (e) => { r.pb = e.target.value; draw(); } }) : '—')))));
+          el.append(h('div', { class: 'split wide-l fo4-top' }, h('div', { class: 'col' }, lbl('進行表（直して OK）'), table, h('div', { class: 'row', style: { justifyContent: 'space-between' } }, lbl('合計'), tot), bar), h('div', { class: 'col' }, lbl('チェック'), checks)));
+          draw();
         },
       },
       {
@@ -477,7 +708,7 @@
           function draw() {
             const left = teams.filter((t) => !order.includes(t));
             chips.replaceChildren(...left.map((t) => h('span', { class: 'chip', style: { '--c': 'var(--team)', cursor: 'pointer' }, title: 'クリックで削除', onclick: () => { teams = teams.filter((x) => x !== t); save(); draw(); } }, t + ' ✕')));
-            ord.replaceChildren(...order.map((t) => h('div', t)));
+            ord.replaceChildren(...(order.length ? order.map((t) => h('div', t)) : [h('p', { class: 'r2d-ph' }, K.W.icon('dices'), '抽選すると、ここに順番が出ます')]));
             draw.btn.disabled = spinning || !left.length;
           }
           draw.btn = h('button', { class: 'btn primary', onclick: () => {
@@ -492,7 +723,7 @@
             step();
           } }, '🎰 抽選！');
           cl(ctx, () => clearTimeout(timerId));
-          el.append(h('div', { class: 'split' }, h('div', { class: 'col' }, h('div', { class: 'row' }, h('div', { style: { flex: 1 } }, inp), h('button', { class: 'btn', onclick: addT }, '＋ 追加')), chips, slot,
+          el.append(h('div', { class: 'split fo4-top' }, h('div', { class: 'col' }, h('div', { class: 'row' }, h('div', { style: { flex: 1 } }, inp), h('button', { class: 'btn', onclick: addT }, '＋ 追加')), chips, slot,
             h('div', { class: 'row' }, draw.btn, h('button', { class: 'btn ghost', onclick: () => { order = []; save(); slot.textContent = '🎲'; draw(); } }, '⟲ 順番リセット'))),
             h('div', null, lbl('発表順'), ord)));
           draw();
@@ -511,7 +742,36 @@
           const next = h('button', { class: 'btn primary', onclick: () => { if (cur < names.length - 1) { cur++; T.reset(); draw(); } else { celebrate(); title.textContent = '🎉 全チーム発表おつかれさま！'; } } }, '次のチーム ➜');
           function draw() { title.textContent = '🎤 ' + names[cur]; list.replaceChildren(...names.map((n, i) => h('div', { class: i === cur ? 'cur' : i < cur ? 'past' : '' }, n))); next.textContent = cur < names.length - 1 ? '次のチーム ➜' : '🏁 終了'; }
           draw();
-          el.append(h('div', { class: 'split wide-l' }, h('div', { class: 'col' }, title, T, h('div', { class: 'row', style: { justifyContent: 'center' } }, next)), h('div', null, lbl('順番'), list)));
+          el.append(h('div', { class: 'split wide-l fo4-top' }, h('div', { class: 'col' }, title, T, h('div', { class: 'row', style: { justifyContent: 'center' } }, next)), h('div', null, lbl('順番'), list)));
+        },
+      },
+      {
+        t: 'Q&A に備える', tag: 'Q&A', lead: '発表のあとの質問に、<b>30秒で答える</b>練習。「結論 → 理由」で、25〜90文字。よく聞かれる5つに、先に答えを用意しておこう。',
+        why: {pv: {"k": "code", "file": "本番", "lang": "txt", "text": "Q: なぜ Vue を選びましたか？\nA: えーと…その…\nA: （3分たっても終わらない）", "err": [2, 3]}, iv: {"k": "code", "file": "qa.md", "lang": "txt", "text": "結論：型でミスを減らしたかった\n理由：画面が増えても直しやすい\n→ 30秒で言い切る", "idea": [1, 2, 3]}, av: {"k": "code", "file": "qa.md", "lang": "txt", "text": "Q1〜Q5 の答えを先に書いておく\n→ 本番で慌てない", "ok": [1, 2]}, problem: '質問されて黙る、または長々と話して時間を使い切る', idea: 'よく聞かれる質問は決まっている。<b>結論＋理由</b>を先に用意する', answer: '5つの答えを30秒で'},
+        answer: { html: '<p style="color:var(--mute);font-size:.875rem;margin-bottom:.6em">例：「なぜその技術？」への答え</p><p>型でミスを早く見つけたかったからです。画面は Vue で部品に分けると、直す場所が分かりやすいと考えました。</p>' },
+        render(el) {
+          const ic = K.W.icon;
+          const QS = [
+            ['なぜ、その技術（TypeScript / Vue）を選びましたか？', '型でミスを早く見つけたかったからです。画面は Vue で部品に分けると、直す場所が分かりやすいと考えました。'],
+            ['どんな人が、いつ使うアプリですか？', '新入社員が、毎日の終わりに学習を記録するときに使います。続けられるように、入力は10秒で終わるようにしたからです。'],
+            ['いちばん大変だったことは？', 'グラフが更新されないバグです。ref の .value を忘れていたのが原因で、チームで画面を見ながら直しました。'],
+            ['もう1週間あったら、何を作りますか？', '通知機能です。記録を忘れた日に知らせると、続けやすくなると思うからです。'],
+            ['デモが動かなくなったら、どうしますか？', '発表を止めないために、録画した動画で見せます。動かない理由はあとで調べて、チームに共有します。'],
+          ];
+          const A = QS.map(() => '');
+          const score = h('b', { style: { fontFamily: 'var(--mono)' } });
+          let fired = false;
+          const cards = QS.map(([q, ex], i) => {
+            const ta = h('textarea', { class: 'tt-in', rows: 2, placeholder: '結論 → 理由 の順で、25〜90文字', 'aria-label': 'Q' + (i + 1) + ' の答え', oninput: (e) => { A[i] = e.target.value; upd(); } });
+            const st = h('small'), box = h('div', { class: 'tt-qa' });
+            const check = () => { const a = (A[i] || '').trim(), n = a.length; const ok = n >= 25 && n <= 90 && /から|ため|ので|ことで|原因/.test(a); return { ok, n, msg: n < 25 ? '短い。結論のあとに理由を足そう' : n > 90 ? '長い。30秒で話せるのは90文字まで' : !/から|ため|ので|ことで|原因/.test(a) ? '理由がない。「〜から」「〜ため」を足そう' : '30秒で言い切れる' }; };
+            box.update = () => { const c = check(); box.classList.toggle('ok', c.ok); st.replaceChildren(ic(c.ok ? 'circle-check' : 'circle'), ' ' + c.n + '文字：' + c.msg); st.style.color = c.ok ? 'var(--ok)' : 'var(--mute)'; return c.ok; };
+            box.append(h('b', 'Q' + (i + 1) + '．' + q), ta, h('div', { class: 'row', style: { justifyContent: 'space-between' } }, st, h('button', { class: 'btn ghost', onclick: () => { A[i] = ex; ta.value = ex; upd(); } }, '例を入れる')));
+            return box;
+          });
+          function upd() { const n = cards.filter((c) => c.update()).length; score.textContent = n + ' / ' + QS.length; if (n === QS.length && !fired) { fired = true; celebrate(); } else if (n < QS.length) fired = false; }
+          el.append(h('div', { class: 'col' }, ...cards, h('div', { class: 'row', style: { justifyContent: 'space-between' } }, lbl('30秒で答えられる数'), score)));
+          upd();
         },
       },
       {
@@ -532,12 +792,31 @@
           }
           const send = h('button', { class: 'btn primary', onclick: () => { votes.push({ t: team, s: [...cur] }); store.set('tt.demo.votes', votes); draw(); send.animate([{ transform: 'scale(1.2)' }, { transform: 'none' }], { duration: 300 }); } }, '📮 送信');
           const final = h('button', { class: 'btn', onclick: () => {
-            const rk = names.map((t) => ({ t, a: avg(t) })).map((x) => ({ ...x, m: x.a.n ? x.a.s.reduce((a, b) => a + b, 0) / 4 : 0 })).sort((a, b) => b.m - a.m);
+            const rk = names.map((t) => ({ t, a: avg(t) })).filter((x) => x.a.n).map((x) => ({ ...x, m: x.a.s.reduce((a, b) => a + b, 0) / 4 })).sort((a, b) => b.m - a.m);
+            if (!rk.length) { rank.replaceChildren(h('p', { class: 'r2d-ph' }, '先に「送信」で票を入れてください')); return; }
             rank.replaceChildren(...rk.map((x, i) => h('div', { style: { animationDelay: i * .2 + 's' } }, (i === 0 ? '🏆 ' : '') + x.t + '　', h('b', x.m.toFixed(2) + ' ★')))); celebrate();
           } }, '🏆 結果発表');
-          el.append(h('div', { class: 'split' }, h('div', { class: 'card col' }, lbl('評価する'), sel, rate.map(({ a, s }) => h('div', { class: 'tt-ax', style: { gridTemplateColumns: '90px 1fr' } }, h('span', a), s)), h('div', { class: 'row' }, send, h('button', { class: 'btn ghost', onclick: () => { votes = []; store.set('tt.demo.votes', votes); rank.replaceChildren(); draw(); } }, '🗑 票をリセット'))),
+          el.append(h('div', { class: 'split fo4-top' }, h('div', { class: 'card col' }, lbl('評価する'), sel, rate.map(({ a, s }) => h('div', { class: 'tt-ax', style: { gridTemplateColumns: '90px 1fr' } }, h('span', a), s)), h('div', { class: 'row' }, send, h('button', { class: 'btn ghost', onclick: () => { votes = []; store.set('tt.demo.votes', votes); rank.replaceChildren(); draw(); } }, '🗑 票をリセット'))),
             h('div', { class: 'card' }, lbl('集計'), agg, h('div', { style: { marginTop: '12px' } }, final), rank)));
           draw();
+        },
+      },
+      {
+        t: 'コメントの書き方', tag: 'COMMENT', lead: '「良かったです！」だけでは、発表した人は次に何を直すか分からない。<b>良かった点（事実）→ 理由 → 提案</b>の3つで書こう。',
+        why: {pv: {"k": "code", "file": "comments.txt", "lang": "txt", "text": "A: 良かったです！\nB: 面白かった\nC: 良かったです\n→ 次に何を直す？ 不明", "err": [1, 2, 3, 4]}, iv: {"k": "code", "file": "feedback.md", "lang": "txt", "text": "事実：デモで金額が即時に変わった\n理由：使い方がすぐ伝わったから\n提案：エラー画面も見せると安心", "idea": [1, 2, 3]}, av: {"k": "code", "file": "feedback.md", "lang": "txt", "text": "具体的 → 理由つき → 次の一歩つき", "ok": [1]}, problem: '「良かったです」だけでは、発表者の次の一歩にならない', idea: '<b>見たこと（事実）・理由・提案</b>の3点で書く', answer: '事実 + 理由 + 提案'},
+        answer: { html: '<p style="color:var(--mute);font-size:.875rem;margin-bottom:.6em">例：いいコメント</p><ul><li><b>良かった点</b>：デモで、数量を変えると合計金額がすぐ変わった</li><li><b>理由</b>：使い方が見ただけで伝わったから</li><li><b>提案</b>：入力ミスのエラー画面も見せると、安心感が増すと思います</li></ul>' },
+        render(el) {
+          el.append(composer({
+            outLabel: 'コメント',
+            fields: [['fact', '良かった点（見たこと）', '例：デモで数量を変えると合計金額がすぐ変わった'], ['why', 'そう思った理由', '例：使い方が見ただけで伝わったから'], ['next', '次への提案', '例：エラー画面も見せると安心すると思います']],
+            examples: { bad: { fact: '良かったです', why: '', next: '' }, good: { fact: 'デモで、数量を変えると合計金額がすぐ変わった', why: '使い方が見ただけで伝わったから', next: '入力ミスのエラー画面も見せると、安心感が増すと思います' } },
+            compose: (d) => [d.fact, d.why && '理由：' + d.why, d.next && '提案：' + d.next].filter(Boolean).join('\n'),
+            checks: [
+              ['見たことが具体的（画面・数字・場面が分かる）', (d) => (d.fact || '').trim().length >= 12 && !/^(良かった|よかった|面白かった|すごかった)(です)?[！!。]?$/.test(d.fact.trim()), '「良かった」ではなく、何を見てそう思ったか'],
+              ['理由がある（「〜から」「〜ため」）', (d) => /から|ため|ので/.test(d.why || '') && (d.why || '').length >= 8, '理由があると、発表者が次に活かせる'],
+              ['次への提案がある（「〜すると」「〜してみては」）', (d) => (d.next || '').trim().length >= 10 && /すると|してみ|してはどう|したい|してほしい|はどうでしょう|と思います/.test(d.next), '悪い点だけでなく、次の一歩を一緒に出す'],
+            ],
+          }));
         },
       },
       quizScene('発表を聞く側の判断', 'THINK', '発表は<b>聞く側</b>にも役割がある。良いフィードバックとは？',
@@ -586,7 +865,7 @@
         why: {pv: {"k": "code", "file": "terminal", "lang": "sh", "text": "$ npm run dev\nError: Cannot find module 'vue'\n# 30分調べた… 前の人も同じ", "err": [2, 3], "keys": {"2": "faq"}}, iv: {"k": "code", "file": "FAQ.md", "lang": "txt", "text": "Q. Cannot find module 'vue'\nA. npm install を忘れた\nQ. ポートが使用中\nA. 別のターミナルを閉じる", "idea": [1, 2], "keys": {"1": "faq"}}, av: {"k": "code", "file": "FAQ を検索", "lang": "txt", "text": "\"Cannot find module\"\n→ npm install → 30秒で解決", "ok": [1, 2], "keys": {"1": "faq"}}, problem: "同じつまずきで時間が溶ける", idea: "よくある原因を先に知る", answer: "FAQ を先に検索する", "when": [["まず", "FAQ を見る"], ["載っていない", "質問ボードへ"]]},
         render(el) {
           el.append(h('div', null, FAQ.map(([q, a]) => {
-            const acc = h('div', { class: 'tt-acc' }, h('button', { onclick: () => acc.classList.toggle('open') }, q), h('div', { class: 'bd' }, h('div', h('p', { html: a }))));
+            const acc = h('div', { class: 'tt-acc' }, h('button', { onclick: () => acc.classList.toggle('open') }, q), h('div', { class: 'tt-bd' }, h('div', h('p', { html: a }))));
             return acc;
           })));
         },

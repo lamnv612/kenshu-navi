@@ -115,7 +115,7 @@
   function extrasSection() {
     const ex = Object.values(K.lessons).filter((l) => l.track === 'extra').sort((a, b) => ((a.meta || {}).order || 99) - ((b.meta || {}).order || 99));
     if (!ex.length) return null;
-    const CATS = [['basic', '16日(月)', 'HTML/CSS · CUI · Git', 'var(--basic)'], ['ts', '17–18日', 'TypeScript', 'var(--ts)'], ['vue', '19日 以降', 'Vue.js', 'var(--vue)'], ['common', 'いつでも', '共通・チーム開発', 'var(--team)']];
+    const CATS = [['basic', '1日目', 'HTML/CSS · CUI · Git', 'var(--basic)'], ['ts', '2–3日目', 'TypeScript', 'var(--ts)'], ['vue', '4日目 以降', 'Vue.js', 'var(--vue)'], ['common', 'いつでも', '共通・チーム開発', 'var(--team)']];
     const totalMin = ex.reduce((n, l) => n + ((l.meta || {}).mins || 0), 0);
     const wrap = h('section', { class: 'extras', id: 'extras' },
       h('div', { class: 'ex-head' },
@@ -328,8 +328,14 @@
     const rail = h('aside', { class: 'rail' }, h('h3', null, L.emoji + ' ' + L.title), h('div', { class: 'sub' }, L.sub || ''), h('ol', null, railItems),
       L.meta && L.meta.mins ? h('div', { class: 'rail-meta' }, h('span', K.W.icon('timer'), L.meta.mins + '分'), L.meta.when ? h('p', L.meta.when) : null) : null,
       GH && (gl.length || practiceFor(id, '').lesson.length) ? h('div', { class: 'rail-box' }, h('div', { class: 'label' }, 'GitHub'), practiceFor(id, '').lesson.map((x) => ghChip({ label: (x.label || x.path), url: ghUrl(x.path) })), gl.map(ghChip)) : null,
-      ex.length ? h('div', { class: 'rail-box' }, h('div', { class: 'label' }, '補足トピック'), ex.map((x) => h('a', { class: 'rail-x', href: '#/lesson/' + x.id }, K.W.icon('sparkles'), h('span', x.title), h('small', ((x.meta || {}).mins || 5) + '分')))) : null);
+      ex.length ? (() => {
+        const list = h('div', { class: 'rail-xl', hidden: true }, ex.map((x) => h('a', { class: 'rail-x', href: '#/lesson/' + x.id }, K.W.icon('sparkles'), h('span', x.title), h('small', ((x.meta || {}).mins || 5) + '分'))));
+        const fold = h('button', { class: 'rail-fold', 'aria-expanded': 'false', onclick: () => { const on = list.hidden; list.hidden = !on; fold.setAttribute('aria-expanded', String(on)); fold.classList.toggle('on', on); } },
+          K.W.icon('sparkles'), h('span', '補足トピック'), h('em', String(ex.length)), K.W.icon('chevron-down'));
+        return h('div', { class: 'rail-box' }, fold, list);
+      })() : null);
 
+    { const fb = K.testButton && K.testButton(id, 'rail-final'); if (fb) { fb.append(h('span', '最終チャレンジ')); fb.removeAttribute('data-tip'); rail.append(fb); } }
     rail.append(h('button', { class: 'rail-toggle', onclick: (e) => { rail.classList.toggle('more'); e.currentTarget.classList.toggle('on'); } }, K.W.icon('chevron-down'), '関連リンク・補足'));
     const S = L.scenes[idx];
     const el = h('section', { class: 'scene' });
@@ -363,6 +369,7 @@
     if (W_ && W_.when) tools.append(toolBtn('split', '使い分けガイド', () => K.W.modal({ title: '使い分けガイド', icon: 'split', narrow: true, content: () => h('div', null, h('p', { style: { color: 'var(--mute)', fontSize: '.875rem', marginBottom: '.8em' } }, '迷ったら、条件に当てはまるほうを選ぶ。'), whenRows()) })));
     if (W_) tools.append(toolBtn('circle-help', 'なぜ？ 困りごと → 考え方 → 解決 を見直す', () => K.W.modal({ title: S.t + ' — なぜ必要？', icon: 'circle-help', content: () => { const b = buildCards(); b.links.set(true, true); return b.flow; } })));
 
+    { const db = K.drillButton && K.drillButton(id, S.t); if (db) tools.append(db); const tb = idx === L.scenes.length - 1 && K.testButton && K.testButton(id); if (tb) tools.append(tb); }
     const body = h('div', { class: 'body-wrap' });
     if (W_) {
       const { cards, flow, links } = buildCards();
@@ -402,6 +409,9 @@
     K.ctx = ctx;
     const clean = S.render(body, ctx);
     K.ctx = null;
+    K.stripChoiceQuiz && K.stripChoiceQuiz(body);
+    K.glossify && K.glossify(body);
+    K.glossWatch && (ctx.cleanups.push(() => {}), K.ctx = ctx, K.glossWatch(body), K.ctx = null);
     if (typeof clean === 'function') ctx.cleanups.push(clean);
     if (W_) story.sync(false);
     store.seen(id, idx);

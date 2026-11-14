@@ -64,6 +64,7 @@
   .road .rd{position:relative;padding:10px 8px;border-radius:8px;background:var(--card);border:1px solid var(--line);text-align:center;opacity:.35;transform:scale(.94);transition:.5s}
   .road .rd.on{opacity:1;transform:none;border-color:var(--rc);background:linear-gradient(160deg,color-mix(in srgb,var(--rc) 22%,var(--card)),var(--card))}
   .road .rd b{display:block;font-size:1.25rem}.road .rd span{font-size:.75rem;font-weight:800;color:var(--mute)}
+  @media(max-width:760px){.road{grid-template-columns:repeat(3,minmax(0,1fr))}.road .rd{padding:8px 4px}}
   .web{border-radius:8px;background:#fff;color:#222;padding:18px;min-height:170px;position:relative;overflow:hidden;border:1px solid var(--line)}
   .web .layer{position:absolute;inset:0;display:grid;place-items:center;font-size:2.6rem;opacity:0;transition:.6s}
   .web .skel{display:grid;gap:8px;transition:.6s}.web .skel i{display:block;height:14px;border-radius:7px;background:#dde1ef;transition:.6s}
@@ -155,15 +156,15 @@
   }
 
   function listScene(el) {
-    const S = { t: 'ul', items: ['りんご', 'みかん', 'ぶどう'], nest: false };
+    const S = { t: 'ul', items: ['初回30分は無料', 'ビデオ通話OK', '土日も対応'], nest: false };
     const stage = h('div', { class: 'gap-ol' }), cd = h('div'), chips = h('div', { class: 'gap-items' }), note = h('div', { class: 'st-cap' });
-    const NOTE = { ul: '<b>ul</b> = Unordered List（順番なし）。●が付く。買い物リスト・メニュー向き。', ol: '<b>ol</b> = Ordered List（順番あり）。1,2,3…が自動で振られる。手順・ランキング向き。', dl: '<b>dl</b> = 用語（dt）と説明（dd）のセット。' };
-    function html() {
-      if (S.t === 'dl') return '<dl>\n' + S.items.map((x) => `  <dt>${x}</dt>\n  <dd>${x}の説明</dd>`).join('\n') + '\n</dl>';
-      return `<${S.t}>\n` + S.items.map((x, i) => `  <li>${x}` + (S.nest && i === 0 ? `\n    <${S.t}>\n      <li>${x}の仲間</li>\n    </${S.t}>\n  ` : '') + '</li>').join('\n') + `\n</${S.t}>`;
+    const NOTE = { ul: '<b>ul</b> = Unordered List（順番なし）。●が付く。<b>メニュー・特長の一覧</b>向き。読み上げが「リスト 3項目」と数まで教えてくれる。', ol: '<b>ol</b> = Ordered List（順番あり）。1,2,3…が自動で振られる。<b>申込の手順・ランキング</b>向き。途中に足しても番号は自動で直る。', dl: '<b>dl</b> = 用語（dt）と説明（dd）のセット。<b>料金表・よくある質問</b>向き。' };
+    function html(e = (v) => v) {
+      if (S.t === 'dl') return '<dl>\n' + S.items.map((x) => `  <dt>${e(x)}</dt>\n  <dd>${e(x)}の説明</dd>`).join('\n') + '\n</dl>';
+      return `<${S.t}>\n` + S.items.map((x, i) => `  <li>${e(x)}` + (S.nest && i === 0 ? `\n    <${S.t}>\n      <li>${e(x)}の補足</li>\n    </${S.t}>\n  ` : '') + '</li>').join('\n') + `\n</${S.t}>`;
     }
     const draw = () => {
-      const src = html(); stage.innerHTML = src; cd.replaceChildren(code(src, 'html', { file: 'list.html', color: BASIC_C }));
+      const src = html(); stage.innerHTML = html(esc); cd.replaceChildren(code(src, 'html', { file: 'list.html', color: BASIC_C }));
       chips.replaceChildren(...S.items.map((x, i) => h('span', x, h('button', { title: '削除', onclick: () => { S.items.splice(i, 1); draw(); } }, '✕'))));
       note.innerHTML = NOTE[S.t]; kinds.forEach((b) => b.classList.toggle('on', b.dataset.v === S.t)); nestBtn.style.display = S.t === 'dl' ? 'none' : '';
     };
@@ -261,7 +262,7 @@
       {
         t: '準備チェック', lead: '研修前に必要なものを確認しましょう。タップでチェック（ブラウザに保存されます）。',
         render(el) {
-          const items = [['💻', 'パソコン', '充電器も忘れずに'], ['🐙', 'GitHub アカウント', '研修用の Organization に参加'], ['🧰', 'Visual Studio Code', 'テキストエディタ'], ['💬', 'Zoom / Slack', '質問はいつでも気軽に'], ['🤖', 'ChatGPT', '調べ学習の相棒']];
+          const items = [['💻', 'パソコン', '充電器も忘れずに'], ['🐙', 'GitHub アカウント', '研修用の Organization に参加'], ['🧰', 'Visual Studio Code', 'テキストエディタ'], ['💬', 'Zoom / Slack', '質問はいつでも気軽に']];
           const saved = store.get('prep', {});
           const list = h('div', { class: 'col' });
           const pg = h('div', { style: { height: '10px', background: 'var(--line)', borderRadius: '6px', overflow: 'hidden', marginTop: '16px' } }, h('i', { style: { display: 'block', height: '100%', width: '0%', background: 'linear-gradient(90deg,var(--basic),var(--ts))', transition: 'width .5s' } }));
@@ -280,18 +281,397 @@
 
   /* ================= html ================= */
   const anat = [
-    { s: '<p', p: ['name', 'start'] }, { s: ' ', p: ['start'] }, { s: 'class', p: ['attr', 'aname', 'start'] }, { s: '=', p: ['attr', 'start'] },
-    { s: '"title"', p: ['attr', 'aval', 'start'] }, { s: '>', p: ['start'] }, { s: 'コンテンツ', p: ['content'] }, { s: '</p>', p: ['end', 'name2'] },
+    { s: '<a', p: ['name', 'start'] }, { s: ' ', p: ['start'] }, { s: 'href', p: ['attr', 'aname', 'start'] }, { s: '=', p: ['attr', 'start'] },
+    { s: '"/reserve"', p: ['attr', 'aval', 'start'] }, { s: '>', p: ['start'] }, { s: '予約する', p: ['content'] }, { s: '</a>', p: ['end', 'name2'] },
   ];
   const partInfo = {
     el: ['要素 (element)', 'var(--basic)', '開始タグ〜閉じタグまで全部ひっくるめて「要素」', null],
     start: ['開始タグ', 'var(--ts)', 'ここから始まるよ、の合図。ブラウザへの命令', 'start'],
-    attr: ['属性', 'var(--team)', '要素に付ける追加情報。「名前="値"」の形', 'attr'],
-    aname: ['属性名', 'var(--pink)', '何の情報か（class, id, src, href …）', 'aname'],
+    attr: ['属性', 'var(--team)', '要素に付ける追加情報。ここでは「リンク先はどこ？」を渡している', 'attr'],
+    aname: ['属性名', 'var(--pink)', '何の情報か（リンク先なら href、画像なら src、目印なら class …）', 'aname'],
     aval: ['属性値', 'var(--violet)', '情報の中身。"" で囲んで書くのが基本', 'aval'],
     content: ['コンテンツ', 'var(--vue)', '画面に表示される中身', 'content'],
     end: ['閉じタグ', 'var(--ts)', 'ここで終わり。<b>/</b>が付く', 'end'],
   };
+
+  /* ============================================================
+     html/2  HTML は「木」 — ページ ↔ 木 を行き来して、実際の使われ方まで見る
+  ============================================================ */
+  style('tr2', `
+  .tr2-wrap{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}
+  .tr2-pane{border:1px solid var(--line);border-radius:10px;background:var(--card);overflow:hidden}
+  .tr2-hd{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line);font-weight:800;font-size:.875rem}
+  .tr2-hd .ic{width:16px;height:16px;color:var(--c,var(--basic))}.tr2-hd small{margin-left:auto;font-weight:600;color:var(--mute);font-size:.75rem}
+  .tr2-prev{display:block;width:100%;height:230px;border:0;background:#fff}
+  .tr2-tree{padding:10px 12px;font:.8125rem/1.5 var(--mono);max-height:520px;overflow:auto}
+  .tr2-n{margin-left:14px;border-left:1px dashed var(--line);padding-left:8px;position:relative}.tr2-tree>.tr2-n{margin-left:0;border:0;padding-left:0}
+  .tr2-row{display:flex;align-items:center;gap:6px;padding:1px 4px;border-radius:6px;cursor:default;width:fit-content;max-width:100%}
+  .tr2-row .nm{padding:0 .45em;border-radius:6px;border:1px solid color-mix(in srgb,var(--d) 55%,transparent);background:color-mix(in srgb,var(--d) 14%,transparent);color:var(--text);font-weight:700}
+  .tr2-row.tx .nm{border-style:dashed;background:transparent;font-weight:400;color:var(--mute)}
+  .tr2-row .cl{color:var(--mute);font-size:.75rem}
+  .tr2-row .txt{padding:.05em .55em;border-radius:6px;background:color-mix(in srgb,var(--d) 22%,var(--bg2));border:1px dashed color-mix(in srgb,var(--d) 70%,transparent);font-weight:700;color:var(--text)}
+  .tr2-row .nm.cls{opacity:.75;font-weight:500}
+  .tr2-row.cls-row{opacity:.8}.tr2-row.cls-row .nm{background:transparent;border-style:dotted;font-weight:500}
+  .tr2-row .act{display:none;gap:3px;margin-left:4px}.tr2-row:hover .act,.tr2-row.hl .act{display:inline-flex}
+  .tr2-row .act button{all:unset;cursor:pointer;width:20px;height:20px;border-radius:6px;display:grid;place-items:center;color:var(--mute);border:1px solid var(--line);background:var(--bg2)}
+  .tr2-row .act button:hover{color:var(--text);border-color:var(--c,var(--basic))}.tr2-row .act .ic{width:12px;height:12px}
+  .tr2-row.hl{background:color-mix(in srgb,var(--pink) 20%,transparent);outline:1px solid var(--pink)}
+  .tr2-row.hit .nm{box-shadow:0 0 0 2px var(--ok)}
+  .tr2-tools{display:grid;gap:12px;margin-top:14px}
+  .tr2-use{border:1px solid var(--line);border-radius:10px;background:var(--card);padding:12px 14px;display:grid;gap:8px}
+  .tr2-use h4{display:flex;align-items:center;gap:8px;font-size:.9375rem;font-weight:900}.tr2-use h4 .ic{width:18px;height:18px;color:var(--c)}
+  .tr2-use p{color:var(--mute);font-size:.875rem;line-height:1.7;margin:0}
+  .tr2-sel{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .tr2-sel input{flex:1;min-width:140px;font:700 .875rem var(--mono);padding:.4em .8em;border-radius:8px;border:1px solid var(--line);background:var(--bg2);color:var(--text)}
+  .tr2-chip{all:unset;cursor:pointer;font:700 .75rem var(--mono);padding:.25em .7em;border-radius:6px;border:1px solid var(--line);background:var(--bg2);transition:.15s}.tr2-chip:hover{border-color:var(--c,var(--basic));color:var(--c,var(--basic))}
+  .tr2-res{font-weight:800;font-size:.875rem;min-height:1.4em}.tr2-res.ok{color:var(--ok)}.tr2-res.bad{color:var(--bad)}
+  .tr2-cmp{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .tr2-cmp>div{border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:.8125rem/1.6 var(--mono);background:var(--bg2)}
+  .tr2-cmp b{display:block;font:800 .75rem var(--font);color:var(--mute);margin-bottom:2px}
+  .br-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.br-src{margin:0;padding:10px 12px;border-radius:8px;background:var(--code);color:#d8dcff;font:.8125rem/1.7 var(--mono);white-space:pre-wrap;min-height:84px}.br-prev{width:100%;height:110px;border:1px solid var(--line);border-radius:8px;background:#fff}.br-cap{font-size:.875rem;line-height:1.7;padding:8px 12px;border-radius:8px;border:1px solid var(--line)}.br-cap.ok{border-color:var(--ok)}.br-cap.bad{border-color:var(--bad)}.tr2-chip.on{border-color:var(--c,var(--basic));color:var(--text);background:color-mix(in srgb,var(--basic) 14%,var(--bg2))}@media (max-width:700px){.br-grid{grid-template-columns:1fr}}
+  .lb2{display:grid;gap:4px;font-weight:700}.lb2 small{color:var(--mute);font-weight:400}
+  .tr2-cmp .bad{border-color:var(--bad)}.tr2-cmp .bad b{color:var(--bad)}.tr2-cmp .ok{border-color:var(--ok)}.tr2-cmp .ok b{color:var(--ok)}
+  @media (max-width:900px){.tr2-wrap{grid-template-columns:1fr}.tr2-cmp{grid-template-columns:1fr}}
+  `);
+
+  const TREE_INIT = '<article class="card">\n  <h2>オンライン相談</h2>\n  <p>初回 <b>30分</b> 無料</p>\n  <ul>\n    <li>ビデオ通話OK</li>\n    <li>土日も対応</li>\n  </ul>\n  <button>予約する</button>\n</article>\n';
+  const TREE_CSS = 'body{font-family:system-ui,"Hiragino Sans",sans-serif;margin:12px;line-height:1.6;color:#223}.card{border:1px solid #cdd6e4;border-radius:10px;padding:10px 14px;max-width:320px}h2{font-size:17px;margin:.1em 0 .3em}ul{margin:.4em 0;padding-left:1.3em}button{background:#e8590c;color:#fff;border:0;border-radius:8px;padding:6px 16px;font:700 13px system-ui}.kn-hl{outline:3px solid #ff6b9d!important;outline-offset:2px;background:rgba(255,107,157,.18)!important}.kn-hit{outline:3px solid #34c77b!important;outline-offset:2px}';
+  const VOID = new Set(['br', 'hr', 'img', 'input', 'meta', 'link']);
+  /* DOM → 読みやすい HTML 文字列（インデント付き） */
+  function prettyHTML(nodes, d = 0) {
+    const pad = '  '.repeat(d), out = [];
+    nodes.forEach((n) => {
+      if (n.nodeType === 3) { const t = n.textContent.replace(/\s+/g, ' ').trim(); if (t) out.push(pad + t.replace(/</g, '&lt;')); return; }
+      if (n.nodeType !== 1) return;
+      const tg = n.tagName.toLowerCase();
+      const attrs = [...n.attributes].filter((a) => !/^data-kn/.test(a.name) && !(a.name === 'class' && /kn-(hl|hit)/.test(a.value) && !a.value.replace(/kn-(hl|hit)/g, '').trim())).map((a) => ` ${a.name}="${a.value.replace(/\s*kn-(hl|hit)/g, '')}"`).join('');
+      if (VOID.has(tg)) { out.push(`${pad}<${tg}${attrs}>`); return; }
+      const kids = [...n.childNodes];
+      const onlyInline = kids.every((k) => k.nodeType === 3 || (k.nodeType === 1 && /^(b|i|strong|em|span|a|code|small)$/i.test(k.tagName) && k.children.length === 0));
+      if (onlyInline) out.push(`${pad}<${tg}${attrs}>${kids.map((k) => (k.nodeType === 3 ? k.textContent.replace(/\s+/g, ' ').replace(/</g, '&lt;') : k.outerHTML)).join('').trim()}</${tg}>`);
+      else out.push(`${pad}<${tg}${attrs}>`, prettyHTML(kids, d + 1), `${pad}</${tg}>`);
+    });
+    return out.filter((x) => x !== '').join('\n');
+  }
+
+  function treeScene(el) {
+    const I = K.W.icon;
+    const colors = ['var(--basic)', 'var(--ts)', 'var(--vue)', 'var(--team)', 'var(--pink)', 'var(--violet)'];
+    let curDoc = null, rowOf = new Map(), elOf = new Map(), lockEd = false;
+    const tree = h('div', { class: 'tr2-tree' });
+    const prev = h('iframe', { class: 'tr2-prev', sandbox: 'allow-same-origin', title: 'ページ' });
+    const result = h('div', { class: 'tr2-res' });
+
+    function drawTree() {
+      rowOf = new Map(); elOf = new Map();
+      const mk = (n, d) => {
+        if (n.nodeType === 3) {
+          const t = n.textContent.trim(); if (!t) return null;
+          const row = h('div', { class: 'tr2-row tx' }, h('span', { class: 'nm' }, '“' + (t.length > 12 ? t.slice(0, 12) + '…' : t) + '”'));
+          row.style.setProperty('--d', 'var(--mute)');
+          return h('div', { class: 'tr2-n' }, row);
+        }
+        if (n.nodeType !== 1) return null;
+        const raw = [...n.childNodes];
+        const tg = n.tagName.toLowerCase();
+        const isVoid = /^(img|input|br|hr|meta|link)$/.test(tg);
+        const textOnly = !isVoid && raw.length > 0 && raw.every((k) => k.nodeType === 3) && n.textContent.trim() !== '';
+        const kids = textOnly ? [] : raw.map((c) => mk(c, d + 1)).filter(Boolean);
+        const cls = n.getAttribute('class');
+        const act = h('span', { class: 'act' },
+          h('button', { title: 'このノードをコピー（兄弟として追加）', onclick: (e) => { e.stopPropagation(); const c = n.cloneNode(true); n.after(c); sync(); } }, I('copy-plus')),
+          h('button', { title: 'このノードを消す', onclick: (e) => { e.stopPropagation(); n.remove(); sync(); } }, I('trash-2')));
+        const row = h('div', { class: 'tr2-row', style: { '--d': colors[d % colors.length] } }, h('span', { class: 'nm' }, '<' + tg + '>'), cls ? h('span', { class: 'cl' }, '.' + cls.split(/\s+/)[0]) : null,
+          textOnly ? h('span', { class: 'txt' }, n.textContent.replace(/\s+/g, ' ').trim()) : null,
+          textOnly ? h('span', { class: 'nm cls' }, '</' + tg + '>') : null, act);
+        row.addEventListener('mouseenter', () => mark(n, true)); row.addEventListener('mouseleave', () => mark(n, false));
+        rowOf.set(n, row);
+        const closeRow = !textOnly && !isVoid ? h('div', { class: 'tr2-row cls-row', style: { '--d': colors[d % colors.length] } }, h('span', { class: 'nm' }, '</' + tg + '>')) : null;
+        if (closeRow) { closeRow.addEventListener('mouseenter', () => mark(n, true)); closeRow.addEventListener('mouseleave', () => mark(n, false)); (rowOf.get(n) || row); }
+        return h('div', { class: 'tr2-n' }, row, ...kids, closeRow);
+      };
+      const body = h('div', { class: 'tr2-n' }, (() => { const r = h('div', { class: 'tr2-row', style: { '--d': 'var(--mute)' } }, h('span', { class: 'nm' }, 'body')); return r; })(), ...[...curDoc.body.childNodes].map((c) => mk(c, 0)).filter(Boolean));
+      tree.replaceChildren(body);
+    }
+    const pathOf = (n, root) => { const p = []; for (let x = n; x && x !== root; x = x.parentElement) p.unshift([...x.parentElement.children].indexOf(x)); return p; };
+    const walkTo = (p, root) => { let x = root; for (const i of p) x = x && x.children[i]; return x; };
+    function mark(n, on, fromPage) { // n は 木側(curDoc)のノード。fromPage のときは iframe 側の要素
+      const d = prev.__d; if (!d || !curDoc) return;
+      const tn = fromPage ? walkTo(pathOf(n, d.body), curDoc.body) : n;
+      const pe = fromPage ? n : walkTo(pathOf(n, curDoc.body), d.body);
+      const r = tn && rowOf.get(tn); if (r) r.classList.toggle('hl', on);
+      if (pe && pe.classList) pe.classList.toggle('kn-hl', on);
+    }
+
+    function loadPrev(html) {
+      prev.onload = () => {
+        const d = prev.contentDocument; if (!d) return;
+        // 画面側 → 木（ホバー）
+        d.body.addEventListener('mouseover', (e) => { if (e.target !== d.body) mark(e.target, true, true); });
+        d.body.addEventListener('mouseout', (e) => { if (e.target !== d.body) mark(e.target, false, true); });
+        prev.__d = d; runSelector(false);
+      };
+      prev.srcdoc = `<!doctype html><meta charset="utf-8"><style>${TREE_CSS}</style><body>${html}</body>`;
+    }
+    function parse(html) { curDoc = new DOMParser().parseFromString('<body>' + html + '</body>', 'text/html'); }
+    let lastHtml = '';
+    function draw(v, fromTree) { lastHtml = v; parse(v); drawTree(); loadPrev(v); }
+    const ed = K.W.codeEditor(TREE_INIT, 'html', (v) => { if (!lockEd) draw(v); });
+    ed.style.minHeight = '250px'; ed.style.maxHeight = '300px';
+    function sync() { // 木の操作 → エディタを書き換える
+      const src = prettyHTML([...curDoc.body.childNodes]);
+      lockEd = true; ed.set(src + '\n'); lockEd = false; draw(src);
+    }
+
+    /* ---- 使われ方 ① CSS セレクタ ---- */
+    const selIn = h('input', { value: '.card li', spellcheck: 'false', 'aria-label': 'CSS セレクタ' });
+    function runSelector(msg = true) {
+      const d = prev.__d; if (!d || !curDoc) return;
+      d.querySelectorAll('.kn-hit').forEach((x) => x.classList.remove('kn-hit'));
+      rowOf.forEach((r) => r.classList.remove('hit'));
+      let hits = [];
+      try { hits = [...d.body.querySelectorAll(selIn.value.trim() || ':not(*)')]; } catch { result.className = 'tr2-res bad'; result.textContent = 'セレクタの書き方が正しくありません'; return; }
+      // d の要素 → curDoc の対応ノードを「位置」で引く
+      const path = (n) => { const p = []; for (let x = n; x && x !== d.body; x = x.parentElement) p.unshift([...x.parentElement.children].indexOf(x)); return p; };
+      const find = (p) => { let x = curDoc.body; for (const i of p) x = x && x.children[i]; return x; };
+      hits.forEach((x) => { x.classList.add('kn-hit'); const n = find(path(x)); const r = n && rowOf.get(n); if (r) r.classList.add('hit'); });
+      result.className = 'tr2-res ' + (hits.length ? 'ok' : 'bad');
+      result.textContent = hits.length ? `${hits.length} 個にヒット（画面は緑の枠、木は緑の囲み）` : 'ヒットなし：木にその形の枝がありません';
+    }
+    selIn.addEventListener('input', () => runSelector());
+    const chips = ['li', '.card li', '.card > button', 'h2 + p', 'li:nth-child(2)', 'b'].map((s) => h('button', { class: 'tr2-chip', onclick: () => { selIn.value = s; runSelector(); } }, s));
+
+    /* ---- 使われ方 ② JavaScript（木を書き換える → 画面が変わる） ---- */
+    const JS = [
+      ['見出しを変える', "document.querySelector('h2').textContent = '無料相談の予約'", (d) => { const t = d.querySelector('h2'); if (t) t.textContent = '無料相談の予約'; }],
+      ['項目を1つ足す', "const li = document.createElement('li')\nli.textContent = '夜間もOK'\ndocument.querySelector('ul').append(li)", (d) => { const u = d.querySelector('ul'); if (u) { const li = d.createElement('li'); li.textContent = '夜間もOK'; u.append(li); } }],
+      ['ボタンを消す', "document.querySelector('button').remove()", (d) => { const b = d.querySelector('button'); if (b) b.remove(); }],
+    ];
+    const jsCode = h('pre', { style: { display: 'block', margin: 0, whiteSpace: 'pre-wrap', border: '1px solid var(--line)', borderRadius: '8px', padding: '8px 10px', background: 'var(--code)', color: '#d8dcff', font: '.8125rem/1.6 var(--mono)' } }, JS[0][1]);
+    let jsI = 0;
+    const jsBtns = JS.map(([t], i) => h('button', { class: 'tr2-chip', onclick: () => { jsI = i; jsCode.textContent = JS[i][1]; jsBtns.forEach((b, k) => b.classList.toggle('on', k === i)); } }, t));
+    const runJs = h('button', { class: 'btn primary', style: { '--c': 'var(--ts)' }, onclick: () => { JS[jsI][2](curDoc); sync(); } }, I('play'), '実行する');
+    const resetBtn = h('button', { class: 'btn ghost', onclick: () => { lockEd = true; ed.set(TREE_INIT); lockEd = false; draw(TREE_INIT); } }, I('rotate-ccw'), '元に戻す');
+
+    /* ---- 使われ方 ③ わざと壊す ---- */
+    const BREAK = [
+      { t: '閉じタグを忘れる', src: '<ul>\n  <li>ビデオ通話OK\n  <li>土日も対応\n</ul>\n<p>初回 30分 無料</p>', exp: 'li が2つ並ぶ', got: '<li> は自動で閉じられて並ぶ。ここは助かる…でも <b>閉じ忘れが大きな枠で起きると</b>、下の p まで飲み込まれる。' },
+      { t: 'p の中に div', src: '<p>お知らせ\n  <div>初回無料</div>\n</p>', exp: 'p の子に div', got: '<p> の中に <div> は置けない。ブラウザが p を勝手に閉じ、<div> は<b>外の兄弟</b>になる。余分な空 <code>&lt;p&gt;</code> もできる。' },
+      { t: 'ul の外に li', src: '<ul>\n  <li>A</li>\n</ul>\n<li>B</li>', exp: 'li は2つとも ul の中', got: '最後の <li> は ul の<b>外</b>。リストの中身として扱われず、読み上げでも「リスト 1項目」と言われる。' },
+    ];
+    const brkOut = h('div', { class: 'tr2-cmp' });
+    const brk = BREAK.map((b) => h('button', { class: 'tr2-chip', onclick: () => {
+      lockEd = true; ed.set(b.src + '\n'); lockEd = false; draw(b.src);
+      brkOut.replaceChildren(h('div', { class: 'ok' }, h('b', 'あなたの意図'), b.exp), h('div', { class: 'bad' }, h('b', 'ブラウザの木（右上を見よう）'), h('span', { html: b.got })));
+    } }, b.t));
+
+    const use = (ic, c, title, ...kids) => h('div', { class: 'tr2-use', style: { '--c': c } }, h('h4', I(ic), title), ...kids);
+    el.append(
+      h('div', { class: 'tr2-wrap' },
+        h('div', { class: 'tr2-pane' }, h('div', { class: 'tr2-hd', style: { '--c': 'var(--ts)' } }, I('file-code'), 'HTML（書き換えてみよう）'), ed,
+          h('div', { class: 'tr2-hd', style: { '--c': 'var(--vue)', borderTop: '1px solid var(--line)' } }, I('monitor'), 'ページ', h('small', 'カーソルを乗せると、木と連動')), prev),
+        h('div', { class: 'tr2-pane' }, h('div', { class: 'tr2-hd', style: { '--c': 'var(--basic)' } }, I('git-fork'), 'DOM ツリー', h('small', '行にカーソル → ページで光る / コピー・削除もできる')), tree)),
+      h('div', { class: 'tr2-tools' },
+        use('crosshair', 'var(--pink)', 'ほんとうの使われ方 ① CSS は、木をたどって「当てる相手」を探す',
+          h('p', { html: '「このボタンだけ赤く」「リストの2番目だけ太く」。CSS は<b>セレクタ</b>で木の中の相手を探します。書き換えて、ヒットする相手を見よう。' }),
+          h('div', { class: 'tr2-sel' }, h('code', 'セレクタ'), selIn), h('div', { class: 'tr2-sel' }, chips), result),
+        use('braces', 'var(--ts)', 'ほんとうの使われ方 ② JavaScript は、木を書き換えて画面を変える',
+          h('p', { html: '押したら文字が変わる・項目が増える。実は <b>JS が木を書き換えている</b>だけ。ボタンで試すと、木・ページ・HTML が一緒に変わります。' }),
+          h('div', { class: 'tr2-sel' }, jsBtns), jsCode, h('div', { class: 'row' }, runJs, resetBtn)),
+        use('triangle-alert', 'var(--bad)', 'ほんとうの使われ方 ③ 書き方を間違えると、木が思った形にならない',
+          h('p', { html: '見た目は何となく表示されても、<b>木の形が変わる</b>と CSS も JS も読み上げも狂います。わざと壊して、木を見てみよう。' }),
+          h('div', { class: 'tr2-sel' }, brk), brkOut),
+        h('p', { class: 'tr2-use', style: { color: 'var(--mute)', fontSize: '.875rem' } }, I('search'), h('span', { html: '本物のページでも同じ木が見られます。<b>F12 → Elements タブ</b>がこの木そのもの。ホバーでページが光り、右クリックの「検証」で一発。' }))));
+    draw(TREE_INIT);
+    jsBtns[0].classList.add('on');
+  }
+
+  /* ============================================================
+     html/3  なぜ意味のあるタグ？ — 同じ見た目を「ロボットの目」で解析する
+  ============================================================ */
+  style('sm2', `
+  .an-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+  .an-tab{all:unset;cursor:pointer;display:flex;align-items:center;gap:.5em;padding:.5em 1em;border-radius:8px;font-weight:800;font-size:.875rem;background:var(--card);border:1px solid var(--line);transition:.2s}
+  .an-tab .ic{width:16px;height:16px;color:var(--c)}.an-tab.on{border-color:var(--c);background:color-mix(in srgb,var(--c) 16%,var(--card))}
+  .an-story{display:flex;gap:10px;align-items:flex-start;padding:10px 14px;border-radius:10px;background:color-mix(in srgb,var(--bad) 9%,var(--card));border:1px solid color-mix(in srgb,var(--bad) 40%,var(--line));font-size:.875rem;line-height:1.7;margin-bottom:12px}
+  .an-story .ic{width:18px;height:18px;color:var(--bad);flex:none;margin-top:3px}
+  .an-grid{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:14px;align-items:start}
+  .an-pane{border:1px solid var(--line);border-radius:10px;background:var(--card);overflow:hidden}
+  .an-hd{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line);font-weight:800;font-size:.875rem}.an-hd .ic{width:16px;height:16px;color:var(--c,var(--ts))}.an-hd small{margin-left:auto;color:var(--mute);font-weight:600;font-size:.75rem}
+  .an-mode{display:flex;gap:6px;padding:8px 12px;border-bottom:1px solid var(--line)}
+  .an-mode button{all:unset;cursor:pointer;flex:1;text-align:center;padding:.4em .6em;border-radius:8px;font-weight:800;font-size:.8125rem;border:1px solid var(--line);color:var(--mute);transition:.2s}
+  .an-mode button.on.div{color:var(--bad);border-color:var(--bad);background:color-mix(in srgb,var(--bad) 12%,transparent)}.an-mode button.on.sem{color:var(--ok);border-color:var(--ok);background:color-mix(in srgb,var(--ok) 12%,transparent)}
+  .an-prev{display:block;width:100%;height:290px;border:0;background:#fff}
+  .an-bar{display:flex;gap:8px;align-items:center;padding:8px 12px;border-top:1px solid var(--line);flex-wrap:wrap}.an-bar .say{flex:1;min-width:150px;font-size:.8125rem;font-weight:700;color:var(--mute)}.an-bar .say.bad{color:var(--bad)}.an-bar .say.ok{color:var(--ok)}
+  .an-cards{display:grid;gap:12px}
+  .an-card{border:1px solid var(--line);border-radius:10px;background:var(--card);padding:10px 12px;display:grid;gap:8px}
+  .an-card h4{display:flex;align-items:center;gap:8px;font-size:.875rem;font-weight:900}.an-card h4 .ic{width:16px;height:16px;color:var(--c)}.an-card h4 small{margin-left:auto;font-weight:700;color:var(--mute);font-size:.75rem}
+  .an-lm{display:flex;gap:6px;flex-wrap:wrap}.an-lm span{font:800 .75rem var(--mono);padding:.2em .6em;border-radius:6px;border:1px solid var(--ok);color:var(--ok);background:color-mix(in srgb,var(--ok) 10%,transparent)}
+  .an-none{font-size:.8125rem;font-weight:800;color:var(--bad);display:flex;gap:6px;align-items:center}.an-none .ic{width:15px;height:15px}
+  .an-ol{display:grid;gap:2px;font-size:.8125rem}.an-ol div{padding:1px 0}.an-ol .h1{font-weight:900}.an-ol .h2{padding-left:14px;font-weight:700}.an-ol .h3{padding-left:28px}
+  .an-ol .lv{font:800 .6875rem var(--mono);color:var(--mute);margin-right:6px}
+  .an-read{display:grid;gap:3px;max-height:190px;overflow:auto;font-size:.8125rem}
+  .an-read div{display:flex;gap:8px;align-items:baseline;animation:anIn .35s both}.an-read .rl{flex:none;font:800 .6875rem var(--mono);padding:.1em .5em;border-radius:5px;border:1px solid var(--ok);color:var(--ok);min-width:5.2em;text-align:center}
+  .an-read .rl.x{border-color:var(--bad);color:var(--bad)}.an-read .rl.n{border-style:dashed;border-color:var(--line);color:var(--mute)}
+  @keyframes anIn{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:none}}
+  .an-serp{border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:var(--bg2)}.an-serp .u{font-size:.75rem;color:var(--mute)}.an-serp .t{font-size:1rem;font-weight:800;color:#5b9dff;margin:2px 0}.an-serp .d{font-size:.8125rem;line-height:1.6}
+  .an-serp .d.bad{color:var(--bad)}.an-serp mark{background:color-mix(in srgb,var(--bad) 28%,transparent);color:inherit;border-radius:3px}
+  .an-toc{display:grid;gap:2px;font-size:.8125rem}.an-toc div{padding-left:calc(var(--i,0)*14px)}.an-toc a{color:var(--ts);font-weight:700}
+  .an-score{border:1px solid var(--line);border-radius:10px;background:var(--card);margin-top:14px;overflow:hidden}
+  .an-score table{width:100%;border-collapse:collapse;font-size:.8125rem}.an-score th,.an-score td{padding:7px 12px;text-align:left;border-top:1px solid var(--line)}.an-score th{font-weight:700;color:var(--mute);border-top:0;background:var(--bg2)}
+  .an-score td.d{color:var(--bad);font-weight:800}.an-score td.s{color:var(--ok);font-weight:900}.an-score td.k{font-weight:700}
+  @media (max-width:900px){.an-grid{grid-template-columns:1fr}.an-prev{height:250px}.an-score table{font-size:.75rem}.an-score th,.an-score td{padding:6px 8px}}
+  `);
+
+  const AN_CSS = '*{box-sizing:border-box}body{margin:0;font:14px/1.7 system-ui,"Hiragino Sans",sans-serif;color:#223;background:#fff}.hd{display:flex;align-items:center;gap:16px;padding:10px 14px;background:#1f3a5f;color:#fff}.hd .logo{font-weight:800;color:#fff;text-decoration:none;margin-right:auto}.nv{display:flex;gap:12px}.nv a,.nv .lnk{color:#cfe3ff;text-decoration:none;cursor:pointer;font-size:13px}.mn{padding:12px 14px;max-width:640px}.h1,h1{font-size:20px;font-weight:800;margin:.2em 0}.h2,h2{font-size:16px;font-weight:800;margin:.9em 0 .25em;color:#1f3a5f}p{margin:.3em 0}.btn,button.btn{display:inline-block;padding:7px 18px;border-radius:8px;background:#e8590c;color:#fff;font:700 14px system-ui;border:0;cursor:pointer;margin-top:6px}.ft{padding:9px 14px;background:#eef2f7;color:#556;font-size:12px}.ft a,.ft .lnk{color:#556;margin-left:8px;cursor:pointer}.meta{color:#667;font-size:12px}.side{border:1px dashed #b8c4d6;border-radius:8px;padding:6px 12px;margin:10px 14px;font-size:13px}.side a,.side .lnk{display:block;color:#1f5fbf;cursor:pointer}.lb,label{display:block;font-weight:700;font-size:13px;margin:.6em 0 .15em}input[type=text],input[type=email],input:not([type]){width:100%;padding:6px 9px;border:1px solid #b8c4d6;border-radius:6px;font:inherit}fieldset{border:0;padding:0;margin:.6em 0}legend,.lg{font-weight:700;font-size:13px;padding:0}.opt,label.opt{display:inline-block;margin-right:12px;font-size:13px;font-weight:400}ol{margin:.3em 0;padding-left:1.4em}[data-kn]{outline:2px solid #5b9dff;outline-offset:2px;position:relative}[data-kn]::after{content:attr(data-kn);position:absolute;top:-11px;left:-9px;min-width:17px;height:17px;border-radius:9px;background:#5b9dff;color:#fff;font:800 10px/17px system-ui;text-align:center;z-index:2}[data-kn].cur{outline-color:#ff6b9d;background:rgba(255,107,157,.18)}[data-kn].cur::after{background:#ff6b9d}[data-kx]{outline:2px dashed #e5484d;outline-offset:2px;position:relative}[data-kx]::after{content:"×";position:absolute;top:-11px;left:-9px;width:17px;height:17px;border-radius:9px;background:#e5484d;color:#fff;font:800 11px/17px system-ui;text-align:center;z-index:2}';
+  const AN_SC = [
+    { k: 'book', ic: 'calendar-check', c: 'var(--ts)', t: '相談予約ページ', title: 'オンライン相談を予約する | さくら相談室',
+      story: '<b>div だけで作ると：</b>キーボードや読み上げで使う人は「予約する」ボタンに<b>たどり着けません</b>（クリックしか受け付けないため）。予約が取れず、そのまま機会損失に。',
+      sem: '<header class="hd">\n  <a class="logo" href="/">さくら相談室</a>\n  <nav class="nv"><a href="/">ホーム</a><a href="/price">料金</a><a href="/faq">よくある質問</a></nav>\n</header>\n<main class="mn">\n  <h1>オンライン相談を予約する</h1>\n  <p>初回30分は無料。自宅からビデオ通話で相談できます。</p>\n  <section>\n    <h2>相談の流れ</h2>\n    <ol><li>日時を選んで予約</li><li>届いたURLでビデオ通話</li><li>見積りを確認して依頼</li></ol>\n  </section>\n  <section>\n    <h2>料金</h2>\n    <p>初回無料。2回目以降は30分 5,500円です。</p>\n  </section>\n  <button class="btn" type="button">予約する</button>\n</main>\n<footer class="ft"><small>© さくら相談室</small><a href="/privacy">プライバシー</a></footer>',
+      div: '<div class="hd">\n  <div class="logo">さくら相談室</div>\n  <div class="nv"><div class="lnk" onclick="go(\'/\')">ホーム</div><div class="lnk" onclick="go(\'/price\')">料金</div><div class="lnk" onclick="go(\'/faq\')">よくある質問</div></div>\n</div>\n<div class="mn">\n  <div class="h1">オンライン相談を予約する</div>\n  <div>初回30分は無料。自宅からビデオ通話で相談できます。</div>\n  <div class="h2">相談の流れ</div>\n  <div>① 日時を選んで予約</div><div>② 届いたURLでビデオ通話</div><div>③ 見積りを確認して依頼</div>\n  <div class="h2">料金</div>\n  <div>初回無料。2回目以降は30分 5,500円です。</div>\n  <div class="btn" onclick="book()">予約する</div>\n</div>\n<div class="ft">© さくら相談室<span class="lnk" onclick="go(\'/privacy\')">プライバシー</span></div>' },
+    { k: 'article', ic: 'newspaper', c: 'var(--vue)', t: '記事ページ', title: '賃貸の退去費用、どこまで払う？ | さくらコラム',
+      story: '<b>div だけで作ると：</b>検索結果に出る説明文が<b>メニューの文字だらけ</b>になり、クリックされません。見出しがないので、長い記事の<b>目次も自動では作れません</b>。',
+      sem: '<header class="hd">\n  <a class="logo" href="/">さくらコラム</a>\n  <nav class="nv"><a href="/">記事一覧</a><a href="/about">運営について</a></nav>\n</header>\n<main class="mn">\n  <article>\n    <h1>賃貸の退去費用、どこまで払う？</h1>\n    <p class="meta">読了 4 分</p>\n    <p>退去時の請求で迷いやすいポイントを3つにまとめました。</p>\n    <h2>原状回復の考え方</h2>\n    <p>普通に住んでできた傷みは、基本的に貸主の負担です。</p>\n    <h2>請求書のチェック項目</h2>\n    <p>単価と数量、経過年数による減額が入っているかを見ます。</p>\n    <h2>払う前に相談すべきケース</h2>\n    <p>金額が敷金を大きく超えるときは、支払う前に相談を。</p>\n  </article>\n</main>\n<aside class="side"><a href="/a">敷金は戻る？</a><a href="/b">更新料は払うべき？</a></aside>\n<footer class="ft"><small>© さくらコラム</small></footer>',
+      div: '<div class="hd">\n  <div class="logo">さくらコラム</div>\n  <div class="nv"><div class="lnk" onclick="go(\'/\')">記事一覧</div><div class="lnk" onclick="go(\'/about\')">運営について</div></div>\n</div>\n<div class="mn">\n  <div class="h1">賃貸の退去費用、どこまで払う？</div>\n  <div class="meta">読了 4 分</div>\n  <div>退去時の請求で迷いやすいポイントを3つにまとめました。</div>\n  <div class="h2">原状回復の考え方</div>\n  <div>普通に住んでできた傷みは、基本的に貸主の負担です。</div>\n  <div class="h2">請求書のチェック項目</div>\n  <div>単価と数量、経過年数による減額が入っているかを見ます。</div>\n  <div class="h2">払う前に相談すべきケース</div>\n  <div>金額が敷金を大きく超えるときは、支払う前に相談を。</div>\n</div>\n<div class="side"><div class="lnk" onclick="go(\'/a\')">敷金は戻る？</div><div class="lnk" onclick="go(\'/b\')">更新料は払うべき？</div></div>\n<div class="ft">© さくらコラム</div>' },
+    { k: 'form', ic: 'file-pen-line', c: 'var(--pink)', t: '申込フォーム', title: '無料相談の申込み | さくら相談室',
+      story: '<b>div だけで作ると：</b>入力欄に<b>名前が付かず</b>、読み上げは「入力欄」としか言えません。ラベルをクリックしても入力欄が選ばれず、<b>入力ミスと離脱</b>が増えます。',
+      sem: '<header class="hd"><a class="logo" href="/">さくら相談室</a></header>\n<main class="mn">\n  <h1>無料相談の申込み</h1>\n  <form>\n    <label for="nm">お名前</label>\n    <input id="nm" name="name" autocomplete="name">\n    <label for="ml">メールアドレス</label>\n    <input id="ml" type="email" name="mail">\n    <fieldset>\n      <legend>相談したい内容</legend>\n      <label class="opt"><input type="radio" name="k" checked> 家族・相続</label>\n      <label class="opt"><input type="radio" name="k"> 仕事・お金</label>\n    </fieldset>\n    <button class="btn" type="submit">申し込む</button>\n  </form>\n</main>\n<footer class="ft"><small>© さくら相談室</small></footer>',
+      div: '<div class="hd"><div class="logo">さくら相談室</div></div>\n<div class="mn">\n  <div class="h1">無料相談の申込み</div>\n  <div class="lb">お名前</div>\n  <input placeholder="山田 太郎">\n  <div class="lb">メールアドレス</div>\n  <input placeholder="you@example.com">\n  <div class="lg">相談したい内容</div>\n  <div><span class="opt">○ 家族・相続</span><span class="opt">○ 仕事・お金</span></div>\n  <div class="btn" onclick="send()">申し込む</div>\n</div>\n<div class="ft">© さくら相談室</div>' },
+  ];
+  const NATIVE = 'a[href],button:not([disabled]),input:not([type=hidden]),select,textarea,summary,[tabindex]:not([tabindex="-1"])';
+  const txt = (n) => (n.textContent || '').replace(/\s+/g, ' ').trim();
+  function accName(n, doc) {
+    const aria = n.getAttribute('aria-label'); if (aria) return { name: aria, ok: true };
+    if (n.id) { const l = doc.querySelector(`label[for="${n.id}"]`); if (l) return { name: txt(l), ok: true }; }
+    const w = n.closest('label'); if (w) { const t = txt(w); if (t) return { name: t, ok: true }; }
+    const ph = n.getAttribute('placeholder'); if (ph) return { name: ph, ok: false, ph: true };
+    return { name: '', ok: false };
+  }
+  function analyze(html) {
+    const doc = new DOMParser().parseFromString('<body>' + html + '</body>', 'text/html'), b = doc.body;
+    const LM = [['header', 'バナー'], ['nav', 'ナビゲーション'], ['main', 'メイン'], ['aside', '補足'], ['footer', 'フッター情報'], ['form', 'フォーム']];
+    const landmarks = []; LM.forEach(([tg, jp]) => b.querySelectorAll(tg).forEach(() => landmarks.push(jp)));
+    const headings = [...b.querySelectorAll('h1,h2,h3,h4,h5,h6')].map((x) => ({ lv: +x.tagName[1], text: txt(x) }));
+    const radios = new Set();
+    const tab = [...b.querySelectorAll(NATIVE)].filter((x) => { if (x.type === 'radio') { if (radios.has(x.name)) return false; radios.add(x.name); } return true; });
+    const clickOnly = [...b.querySelectorAll('[onclick]')].filter((x) => !x.matches(NATIVE));
+    const inputs = [...b.querySelectorAll('input:not([type=hidden]),select,textarea')].map((x) => Object.assign({ el: x }, accName(x, doc)));
+    // 読み上げ台本（文書順）
+    const script = [];
+    const walk = (n) => {
+      [...n.childNodes].forEach((c) => {
+        if (c.nodeType === 3) { const t = c.textContent.replace(/\s+/g, ' ').trim(); if (t) script.push({ role: '', text: t }); return; }
+        if (c.nodeType !== 1) return;
+        const tg = c.tagName.toLowerCase();
+        if (tg === 'header') { script.push({ role: 'バナー', text: '' }); walk(c); return; }
+        if (tg === 'nav') { script.push({ role: 'ナビ', text: '' }); walk(c); return; }
+        if (tg === 'main') { script.push({ role: 'メイン', text: '' }); walk(c); return; }
+        if (tg === 'aside') { script.push({ role: '補足', text: '' }); walk(c); return; }
+        if (tg === 'footer') { script.push({ role: 'フッター', text: '' }); walk(c); return; }
+        if (/^h[1-6]$/.test(tg)) { script.push({ role: '見出し' + tg[1], text: txt(c) }); return; }
+        if (tg === 'a' && c.hasAttribute('href')) { script.push({ role: 'リンク', text: txt(c) }); return; }
+        if (tg === 'button') { script.push({ role: 'ボタン', text: txt(c) }); return; }
+        if (tg === 'input') { const a = accName(c, doc); script.push({ role: c.type === 'radio' ? 'ラジオ' : '入力欄', text: a.ok ? a.name : '（名前なし）', bad: !a.ok }); return; }
+        if (tg === 'label' && c.querySelector('input')) { walk(c); return; }
+        if (tg === 'label') { return; }
+        if (c.matches('[onclick]')) { script.push({ role: '（文字）', text: txt(c), x: true }); return; }
+        if (tg === 'li') { script.push({ role: '項目', text: txt(c) }); return; }
+        if (tg === 'legend') { script.push({ role: 'グループ', text: txt(c) }); return; }
+        if (/^(p|div|span|small|section|article|form|fieldset|ol|ul|time)$/.test(tg) && c.children.length) { walk(c); return; }
+        const t = txt(c); if (t) script.push({ role: '', text: t });
+      });
+    };
+    walk(b);
+    const main = b.querySelector('main');
+    const total = txt(b).length, mainLen = main ? txt(main).length : 0;
+    const desc = main ? txt(main.querySelector('p') || main) : txt(b);
+    return { landmarks, headings, tab, clickOnly, inputs, script, main: !!main, share: total ? Math.round((mainLen / total) * 100) : 0, desc, flat: txt(b), h1: (headings.find((x) => x.lv === 1) || {}).text || '' };
+  }
+
+  function semanticScene(el) {
+    const I = K.W.icon;
+    const st = { sc: 0, mode: 'div', tabI: -1 };
+    const AN = AN_SC.map((s) => ({ div: analyze(s.div), sem: analyze(s.sem) }));
+    const tabsEl = h('div', { class: 'an-tabs' });
+    const story = h('div', { class: 'an-story' });
+    const prev = h('iframe', { class: 'an-prev', sandbox: 'allow-same-origin', title: 'ページ' });
+    const say = h('div', { class: 'say' }), modeEl = h('div', { class: 'an-mode' });
+    const cards = h('div', { class: 'an-cards' }), score = h('div', { class: 'an-score' });
+    const codeBox = h('div', { style: { marginTop: '10px' } });
+
+    const tabBtn = h('button', { class: 'btn', onclick: () => stepTab() }, I('keyboard'), 'Tab キーを押す');
+    const readBtn = h('button', { class: 'btn', onclick: () => draw(true) }, I('volume-2'), '読み上げを聞く');
+    function mark() { // Tab 順の番号を画面に表示
+      const d = prev.contentDocument; if (!d) return;
+      const s = AN_SC[st.sc], doc = d.body;
+      doc.querySelectorAll('[data-kn],[data-kx]').forEach((x) => { x.removeAttribute('data-kn'); x.removeAttribute('data-kx'); x.classList.remove('cur'); });
+      const radios = new Set(); let n = 0;
+      doc.querySelectorAll(NATIVE).forEach((x) => { if (x.type === 'radio') { if (radios.has(x.name)) return; radios.add(x.name); } n++; x.setAttribute('data-kn', String(n)); });
+      doc.querySelectorAll('[data-onclick]').forEach((x) => { if (!x.matches(NATIVE)) x.setAttribute('data-kx', '1'); });
+      st.tabN = n;
+    }
+    function stepTab() {
+      const d = prev.contentDocument; if (!d) return;
+      const a = AN[st.sc][st.mode];
+      if (!a.tab.length) { say.className = 'say bad'; say.textContent = 'Tab を押しても、どこにも止まらない…（×印は、クリックしか受け付けない部品）'; return; }
+      st.tabI = (st.tabI + 1) % (a.tab.length + 1);
+      d.querySelectorAll('.cur').forEach((x) => x.classList.remove('cur'));
+      if (st.tabI === a.tab.length) { say.className = 'say'; say.textContent = '一周しました。最初に戻る'; return; }
+      const e = d.querySelector(`[data-kn="${st.tabI + 1}"]`); if (e) { e.classList.add('cur'); e.scrollIntoView({ block: 'nearest' }); }
+      const t = a.tab[st.tabI]; const nm = t.matches('input') ? (accName(t, new DOMParser().parseFromString('<body>' + AN_SC[st.sc][st.mode] + '</body>', 'text/html')).name || '名前なし') : txt(t);
+      say.className = 'say ok'; say.textContent = `Tab ${st.tabI + 1} 回目：${nm || '（名前なし）'}`;
+    }
+    function load() {
+      const s = AN_SC[st.sc];
+      prev.onload = () => { mark(); };
+      prev.srcdoc = `<!doctype html><meta charset="utf-8"><title>${s.title}</title><style>${AN_CSS}</style><body>${s[st.mode].replace(/ onclick=/g, ' data-onclick=')}</body>`;
+    }
+    function draw(speak) {
+      const s = AN_SC[st.sc], A = AN[st.sc][st.mode], isD = st.mode === 'div';
+      tabsEl.replaceChildren(...AN_SC.map((x, i) => h('button', { class: 'an-tab' + (i === st.sc ? ' on' : ''), style: { '--c': x.c }, onclick: () => { st.sc = i; st.tabI = -1; say.textContent = ''; say.className = 'say'; load(); draw(); } }, I(x.ic), x.t)));
+      story.replaceChildren(I('triangle-alert'), h('div', { html: s.story }));
+      modeEl.replaceChildren(
+        h('button', { class: 'div' + (isD ? ' on' : ''), onclick: () => { st.mode = 'div'; st.tabI = -1; say.textContent = ''; say.className = 'say'; load(); draw(); } }, 'div だけで作った'),
+        h('button', { class: 'sem' + (!isD ? ' on' : ''), onclick: () => { st.mode = 'sem'; st.tabI = -1; say.textContent = ''; say.className = 'say'; load(); draw(); } }, '意味のあるタグで作った'));
+      codeBox.replaceChildren(code(s[st.mode], 'html', { file: 'index.html', color: isD ? 'var(--bad)' : 'var(--ok)' }));
+      // --- 読み上げ ---
+      const lm = A.landmarks.length ? h('div', { class: 'an-lm' }, A.landmarks.map((x) => h('span', x))) : h('div', { class: 'an-none' }, I('circle-x'), 'ジャンプ先が 0 個（上から全部読むしかない）');
+      const outline = A.headings.length ? h('div', { class: 'an-ol' }, A.headings.map((x) => h('div', { class: 'h' + Math.min(3, x.lv) }, h('span', { class: 'lv' }, 'H' + x.lv), x.text))) : h('div', { class: 'an-none' }, I('circle-x'), '見出しが 0 個（飛んで読めない）');
+      const lines = A.script.slice(0, 14);
+      const read = h('div', { class: 'an-read' }, lines.map((l, i) => h('div', { style: { animationDelay: (speak ? i * 0.12 : 0) + 's' } }, h('span', { class: 'rl' + (l.x || l.bad ? ' x' : l.role ? '' : ' n') }, l.role || '文字'), h('span', l.text))));
+      const c1 = h('div', { class: 'an-card', style: { '--c': 'var(--ts)' } }, h('h4', I('volume-2'), '読み上げ（スクリーンリーダー）', h('small', '目の不自由な人・運転中の人も使う')), h('div', { class: 'label' }, 'ジャンプできる場所（ランドマーク）'), lm, h('div', { class: 'label' }, '見出しの一覧（これで飛べる）'), outline, h('div', { class: 'label' }, '読み上げの台本（先頭から）'), read);
+      // --- 検索 ---
+      const snip = isD ? A.flat.slice(0, 70) : A.desc.slice(0, 70);
+      const c2 = h('div', { class: 'an-card', style: { '--c': 'var(--vue)' } }, h('h4', I('search'), '検索エンジン', h('small', 'ロボットが読んで、検索結果の説明文にする')),
+        h('div', { class: 'an-serp' }, h('div', { class: 'u' }, 'sakura.example › ' + s.k), h('div', { class: 't' }, s.title), h('div', { class: 'd' + (isD ? ' bad' : '') }, isD ? [h('mark', snip), '…'] : snip + '…')),
+        h('div', { class: 'an-none', style: { color: isD ? 'var(--bad)' : 'var(--ok)' } }, I(isD ? 'circle-x' : 'circle-check'), isD ? `本文がどこか分からず、先頭の文字（メニュー等）を拾う。h1：${A.h1 ? A.h1 : 'なし'}` : `<main> の本文だけを拾えた（本文は全体の ${A.share}%）。h1：${A.h1}`));
+      // --- 目次 ---
+      const toc = A.headings.filter((x) => x.lv >= 2);
+      const c3 = h('div', { class: 'an-card', style: { '--c': 'var(--basic)' } }, h('h4', I('list-tree'), '自動の目次', h('small', '見出しタグがあれば、ツールが作ってくれる')),
+        toc.length ? h('div', { class: 'an-toc' }, toc.map((x) => h('div', { style: { '--i': x.lv - 2 } }, h('a', x.text)))) : h('div', { class: 'an-none' }, I('circle-x'), s.k === 'form' ? 'このページに目次は要らないが、見出し（h1）がないと「何のページか」も伝わらない' : '見出しが無いので目次を作れない。手で書き続けることになる'));
+      // --- キーボード ---
+      const nTab = A.tab.length, nGoal = AN[st.sc].sem.tab.length;
+      const c4 = h('div', { class: 'an-card', style: { '--c': 'var(--pink)' } }, h('h4', I('keyboard'), 'キーボード（Tab キー）', h('small', 'マウスを使えない人・手が離せない人')),
+        h('div', { class: 'an-none', style: { color: nTab >= nGoal ? 'var(--ok)' : 'var(--bad)' } }, I(nTab >= nGoal ? 'circle-check' : 'circle-x'), `Tab で届く操作：${nTab} / ${nGoal}　`, h('span', { style: { color: 'var(--mute)', fontWeight: 600 } }, A.clickOnly.length ? `（画面の × の ${A.clickOnly.length} か所は届かない）` : '（左の青い番号の順に止まる）')));
+      cards.replaceChildren(c1, c2, c3, c4);
+      // --- スコア ---
+      const D = AN[st.sc].div, S = AN[st.sc].sem;
+      const row = (lbl2, d, sm, k) => h('tr', null, h('td', { class: 'k' }, lbl2), h('td', { class: 'd' }, d), h('td', { class: 's' }, sm));
+      const okIn = (a) => a.inputs.length ? `${a.inputs.filter((x) => x.ok).length} / ${a.inputs.length}` : '—';
+      score.replaceChildren(h('div', { class: 'an-hd', style: { '--c': 'var(--ok)' } }, I('scale'), 'ロボットに伝わる情報（見た目は同じなのに）'),
+        h('table', null, h('thead', null, h('tr', null, h('th', '項目'), h('th', 'div だけ'), h('th', '意味のあるタグ'))), h('tbody', null,
+          row('ジャンプできる場所', D.landmarks.length + ' 個', S.landmarks.length + ' 個'),
+          row('見出し（飛べる・目次になる）', D.headings.length + ' 個', S.headings.length + ' 個'),
+          row('Tab で届く操作', `${D.tab.length} / ${S.tab.length}`, `${S.tab.length} / ${S.tab.length}`),
+          row('名前が読める入力欄', okIn(D), okIn(S)),
+          row('本文（main）を特定', D.main ? 'できる' : 'できない', S.main ? 'できる' : 'できない'))));
+    }
+    el.append(tabsEl, story, h('div', { class: 'an-grid' },
+      h('div', { class: 'an-pane' }, h('div', { class: 'an-hd', style: { '--c': 'var(--ts)' } }, I('monitor'), '見た目（どちらも同じ）', h('small', '青い番号 = Tab の順番')), modeEl, prev,
+        h('div', { class: 'an-bar' }, tabBtn, readBtn, say), h('div', { style: { padding: '0 12px 12px' } }, codeBox)),
+      cards), score);
+    load(); draw();
+  }
 
   K.reg({
     id: 'html', track: 'basic', title: 'HTML', sub: 'ページの骨組みをつくる', emoji: '🧱',
@@ -328,7 +708,7 @@
         },
       },
       {
-        t: 'タグの解剖', lead: '下のパーツを<b>ホバー / クリック</b>してみよう。コードのどこが何なのかが光ります。',
+        t: 'タグの解剖', lead: '予約ボタンのリンク1つで、パーツの名前を覚えよう。<b>ホバー / クリック</b>で光ります。その下で、わざと書き間違えて<b>画面がどうなるか</b>も見てみよう。',
         render(el) {
           const box = h('div', { class: 'anat' });
           const toks = anat.map((t) => h('span', { class: 'tk', html: K.W.esc(t.s) }));
@@ -350,36 +730,32 @@
           toks.forEach((tk, i) => tk.addEventListener('mouseenter', () => { const k = anat[i].p[anat[i].p.length - 1 === 0 ? 0 : 0]; lit(({ name: 'start', name2: 'end' })[k] || k); }));
           box.addEventListener('mouseleave', () => lit(null));
           el.append(box, parts, info);
-          el.append(h('div', { class: 'card', style: { marginTop: '18px' } }, quiz({
-            q: '閉じタグ <code class="i">&lt;/p&gt;</code> を書き忘れると？', options: ['エラーで何も表示されない', 'ブラウザが推測して表示するが、意図しない崩れが起きやすい', '自動で正しく補完されて問題ない'], answer: 1,
-            why: 'HTMLは寛容ですが、思わぬレイアウト崩れの元。必ず閉じよう。',
-          })));
+          /* 壊してみよう：書き間違いが、画面でどうなるか */
+          const BR = [
+            { t: '正しく書く', src: '<a href="/reserve">予約する</a>\n<p>初回30分は無料です。</p>', cap: '予約するは<b>リンク</b>になり、押すと予約ページへ。Tab キーでも選べる。', ok: 1 },
+            { t: '閉じタグを忘れる', src: '<a href="/reserve">予約する\n<p>初回30分は無料です。</p>', cap: 'エラーは出ない。でも下の文章まで<b>全部リンクになる</b>（青い下線）。押すつもりのない所も予約ページへ飛ぶ。' },
+            { t: 'href を書かない', src: '<a>予約する</a>\n<p>初回30分は無料です。</p>', cap: '見た目は文字のまま。<b>押しても何も起きない</b>。Tab キーでも止まらず、読み上げも「リンク」と言わない。' },
+            { t: '属性名の打ち間違い', src: '<a hrf="/reserve">予約する</a>\n<p>初回30分は無料です。</p>', cap: '<code>href</code> を <code>hrf</code> と打つと、ブラウザは<b>黙って無視</b>。エラーも出ないので、気づくまでに時間がかかる。' },
+            { t: '"" を忘れる', src: '<a href="/reserve>予約する</a>\n<p>初回30分は無料です。</p>', cap: '属性値の閉じ <code>"</code> が無いと、<b>以降の文字が全部、値の一部</b>に。予約するが消えて、リンクも壊れる。' },
+          ];
+          const bsrc = h('pre', { class: 'br-src' }), bcap = h('div', { class: 'br-cap' });
+          const bprev = h('iframe', { class: 'br-prev', sandbox: 'allow-same-origin', title: '結果' });
+          const bbtns = BR.map((b, i) => h('button', { class: 'tr2-chip' + (i === 0 ? ' on' : ''), onclick: () => showBr(i) }, b.t));
+          function showBr(i) {
+            const b = BR[i]; bbtns.forEach((x, k) => x.classList.toggle('on', k === i));
+            bsrc.textContent = b.src; bcap.className = 'br-cap' + (b.ok ? ' ok' : ' bad'); bcap.innerHTML = b.cap;
+            bprev.srcdoc = '<meta charset="utf-8"><style>body{font:14px/1.7 system-ui,sans-serif;margin:12px;color:#223}a{color:#1f5fbf}</style>' + b.src;
+          }
+          showBr(0);
+          el.append(h('div', { class: 'tr2-use', style: { marginTop: '18px', '--c': 'var(--bad)' } }, h('h4', K.W.icon('triangle-alert'), '壊してみよう：書き間違いは、画面でどうなる？'),
+            h('p', { html: 'HTML は間違えても<b>エラーを出さず</b>、静かに壊れます。だから「どこが何か」を知っておくのが大事。' }),
+            h('div', { class: 'tr2-sel' }, bbtns),
+            h('div', { class: 'br-grid' }, bsrc, bprev), bcap));
         },
       },
       {
-        t: 'HTML は「木」', tag: 'DOM', lead: 'ブラウザはHTMLを読んで<b>木構造（DOMツリー）</b>に変換します。左のコードを書き換えると、右の木がリアルタイムで育ちます。',
-        render(el) {
-          const init = '<h1>私の自己紹介</h1>\n<p>名前は <b>Lam</b> です。</p>\n<ul>\n  <li>好きな色: 青</li>\n  <li>趣味: コード</li>\n</ul>\n';
-          const tree = h('div', { class: 'tree' });
-          const prev = h('iframe', { style: { width: '100%', height: '150px', border: '1px solid var(--line)', borderRadius: '8px', background: '#fff' }, sandbox: '' });
-          const colors = ['var(--basic)', 'var(--ts)', 'var(--vue)', 'var(--team)', 'var(--pink)', 'var(--violet)'];
-          function node(n, d) {
-            if (n.nodeType === 3) { const t = n.textContent.trim(); return t ? h('div', { class: 'tn tx' }, h('span', { class: 'nm' }, '“' + (t.length > 14 ? t.slice(0, 14) + '…' : t) + '”')) : null; }
-            if (n.nodeType !== 1) return null;
-            const kids = [...n.childNodes].map((c) => node(c, d + 1)).filter(Boolean);
-            return h('div', { class: 'tn', style: { '--d': colors[d % colors.length] } }, h('span', { class: 'nm' }, '<' + n.tagName.toLowerCase() + '>'), kids.length ? h('div', { class: 'kids' }, kids) : null);
-          }
-          function draw(v) {
-            const doc = new DOMParser().parseFromString('<body>' + v + '</body>', 'text/html');
-            tree.replaceChildren(h('div', { class: 'tn', style: { '--d': 'var(--mute)' } }, h('span', { class: 'nm' }, 'body'), h('div', { class: 'kids' }, [...doc.body.childNodes].map((c) => node(c, 0)).filter(Boolean))));
-            prev.srcdoc = '<body style="font-family:sans-serif;margin:10px">' + v;
-          }
-          const ed = K.W.codeEditor(init, 'html', draw);
-          ed.style.borderRadius = '14px'; ed.style.minHeight = '330px';
-          el.append(h('div', { class: 'split' }, h('div', { class: 'col' }, lbl('HTML（編集できるよ）'), ed, prev), h('div', { class: 'col' }, lbl('DOMツリー'), h('div', { class: 'card' }, tree))));
-          draw(init);
-          el.append(h('p', { class: 'lead', style: { marginTop: '14px' }, html: '💡 試そう：<code class="i">&lt;li&gt;</code> を1つ増やす／<code class="i">&lt;ul&gt;</code> を <code class="i">&lt;ol&gt;</code> に変える。<b>親子関係</b>＝インデントの深さ、に注目！' }));
-        },
+        t: 'HTML は「木」', tag: 'DOM', lead: 'ブラウザはHTMLを読んで<b>木構造（DOMツリー）</b>に変換します。<b>ページの部品</b>と<b>木の枝</b>は1対1。カーソルを乗せると、どちらでも相手が光ります。',
+        render: treeScene,
       },
       {
         t: 'ページの骨組み', lead: 'ほとんどのサイトはこの形。「次へ」で組み立て、<b>色の付いた部品にカーソル</b>を乗せるとコードが光ります。',
@@ -419,16 +795,22 @@
         render(el) {
           const svg = "data:image/svg+xml;utf8," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="120" height="70"><defs><linearGradient id="g"><stop stop-color="#ff6b9d"/><stop offset="1" stop-color="#5b9dff"/></linearGradient></defs><rect width="120" height="70" rx="6" fill="url(#g)"/><text x="60" y="42" text-anchor="middle" fill="#fff" font-size="22" font-family="sans-serif">img</text></svg>');
           const Z = [
-            ['h1', '見出し', '<h1>大見出し</h1>', 'var(--ts)'], ['p', '段落', '<p>これは段落です。</p>', 'var(--basic)'], ['a', 'リンク', '<a href="#">リンクをクリック</a>', 'var(--pink)'],
-            ['img', '画像', `<img src="${svg}" alt="サンプル画像">`, 'var(--violet)'], ['ul', 'リスト', '<ul><li>りんご</li><li>みかん</li></ul>', 'var(--team)'],
-            ['table', '表', '<table><tr><th>名前</th><th>点</th></tr><tr><td>Lam</td><td>100</td></tr></table>', 'var(--vue)'], ['button', 'ボタン', '<button>押してね</button>', 'var(--ts)'], ['input', '入力欄', '<input type="text" placeholder="入力してね">', 'var(--basic)'],
+            ['h1', '見出し', '<h1>オンライン相談のご案内</h1>', 'var(--ts)', 'ページの題名。<b>1ページに1つ</b>。検索結果のタイトルや読み上げのジャンプ先になる'],
+            ['p', '段落', '<p>初回30分は無料。自宅からビデオ通話で相談できます。</p>', 'var(--basic)', '文章のまとまり。改行ではなく<b>段落</b>で区切ると、読み上げも自然に区切る'],
+            ['a', 'リンク', '<a href="#">料金を見る</a>', 'var(--pink)', '別ページへ移動。<b>href が無いと、ただの文字</b>。Tab キーでも選べる'],
+            ['img', '画像', `<img src="${svg}" alt="相談室の外観">`, 'var(--violet)', '<b>alt（代わりの文章）</b>が必須。読み上げ・画像が出ない時・検索に効く'],
+            ['ul', 'リスト', '<ul><li>初回30分は無料</li><li>ビデオ通話OK</li><li>土日も対応</li></ul>', 'var(--team)', '特長・メニューの並び。読み上げが<b>「リスト 3項目」</b>と数を教える'],
+            ['table', '表', '<table><tr><th>相談時間</th><th>料金</th></tr><tr><td>30分</td><td>5,500円</td></tr></table>', 'var(--vue)', '縦横の<b>データ</b>用（レイアウトには使わない）。見出しセル th で意味が伝わる'],
+            ['button', 'ボタン', '<button>予約する</button>', 'var(--ts)', '押して<b>何かを実行</b>（送信・開く）。リンクとは役目がちがう。Tab・Enter で使える'],
+            ['input', '入力欄', '<input type="text" placeholder="お名前">', 'var(--basic)', 'ユーザーの入力。本当は <b>label とセット</b>にするのが正解（フォームの回で）'],
           ];
           const stage = h('div', { class: 'stage' });
           const cd = h('div');
           const list = [];
           const redraw = () => { cd.replaceChildren(code(list.length ? list.map((i) => Z[i][2].replace(/src="data:[^"]+"/, 'src="photo.png"')).join('\n') : '<!-- ここにHTMLが増えていく -->', 'html', { file: 'index.html', color: 'var(--basic)' })); };
+          const useBox = h('div', { class: 'st-cap', style: { minHeight: '3.2em' } }, 'カードを押すと、そのタグを使う場面が出ます');
           const zoo = h('div', { class: 'zoo' }, Z.map(([t, jp, , c], i) => h('button', { style: { '--c': c }, onclick: () => {
-            list.push(i);
+            list.push(i); useBox.innerHTML = '<b>&lt;' + t + '&gt; の使いどころ</b>：' + Z[i][4];
             const pc = h('div', { class: 'pc' }, h('em', '<' + t + '>'));
             pc.insertAdjacentHTML('beforeend', Z[i][2]);
             stage.append(pc); redraw(); requestAnimationFrame(() => stage.scrollTo({ top: stage.scrollHeight, behavior: 'smooth' }));
@@ -436,50 +818,83 @@
           const clr = h('button', { class: 'btn ghost', style: { justifySelf: 'start' }, onclick: () => { list.length = 0; stage.replaceChildren(); redraw(); } }, K.W.icon('trash-2'), 'クリア');
           cd.style.cssText = 'display:flex;flex-direction:column;flex:1;min-height:0';
           el.append(h('div', { class: 'split tagzoo' },
-            h('div', { class: 'col' }, lbl('タグを選ぶ（クリックで追加）'), zoo, h('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' } }, h('span', { style: { color: 'var(--mute)', fontSize: '.875rem', fontWeight: 700 } }, '積み上げたタグ → 右の結果と下のHTMLにも出る'), clr), lbl('できあがる HTML'), cd),
+            h('div', { class: 'col' }, lbl('タグを選ぶ（クリックで追加）'), zoo, useBox, h('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' } }, h('span', { style: { color: 'var(--mute)', fontSize: '.875rem', fontWeight: 700 } }, '積み上げたタグ → 右の結果と下のHTMLにも出る'), clr), lbl('できあがる HTML'), cd),
             h('div', { class: 'col' }, lbl('結果'), stage)));
           redraw();
         },
       },
       { t: 'リスト：ul / ol / dl', tag: 'list', lead: '種類を切り替えて、<b>見た目とコード</b>の違いを確かめよう。項目の追加・削除・入れ子もできます。', render: listScene },
       {
-        t: 'フォーム：データを送る', tag: 'form', lead: '入力欄に書くと、サーバーに送られるデータ（<b>名前=値</b> の組）がリアルタイムで変わります。<b>送信</b>を押すと封筒が飛んでいきます。',
+        t: 'フォーム：データを送る', tag: 'form', lead: '相談の申込フォームを作りながら、<b>label・type・name</b> の3つを付けたり外したりして、実際に何が困るのか確かめよう。<b>送信</b>で封筒が飛びます。',
         render(el) {
-          const data = { name: '', email: '', password: '' };
-          const inputs = {};
-          const fm = h('form', { class: 'fm', onsubmit: (e) => { e.preventDefault(); send(); } },
-            [['name', 'お名前', 'text'], ['email', 'メール', 'email'], ['password', 'パスワード', 'password']].map(([k, jp, ty]) =>
-              h('label', jp, h('small', `name="${k}" type="${ty}"`), inputs[k] = h('input', { type: ty, name: k, placeholder: jp, oninput: (e) => { data[k] = e.target.value; show(); } }))),
-            h('button', { class: 'btn primary', type: 'submit', style: { justifyContent: 'center' } }, '送信 (submit)'));
-          const out = h('pre');
-          const srv = h('div', { class: 'srv' }, h('div', h('div', { style: { fontSize: '2rem' } }, '🖥️'), h('b', 'サーバー'), out));
-          const env = h('div', { class: 'env' }, '✉️');
-          const grid = h('div', { class: 'fgrid' }, fm, h('div'), srv, env);
+          const I = K.W.icon;
+          const st = { label: true, email: true, name: true };
+          const data = { name: '', email: '', topic: '' };
+          const FIELDS = [['name', 'お名前', 'text', '山田 太郎'], ['email', 'メールアドレス', 'email', 'you@example.com'], ['topic', 'ご相談内容', 'text', '例：賃貸の退去費用について']];
+          const fmBox = h('div'), out = h('pre'), codeBox = h('div'), warn = h('div', { class: 'st-cap', style: { minHeight: '3.2em', marginTop: '12px' } });
+          const srv = h('div', { class: 'srv' }, h('div', h('div', { style: { marginBottom: '6px' } }, I('server', { size: '2rem' })), h('b', 'サーバー'), out));
+          const env = h('div', { class: 'env' }, I('mail', { size: '1.6rem' }));
+          const grid = h('div', { class: 'fgrid' }, fmBox, h('div'), srv, env);
           const reqLine = h('div', { class: 'st-cap', style: { marginTop: '14px' } });
-          function show() { out.textContent = 'POST /signup\n\n' + Object.entries({ ...data, password: data.password ? '●'.repeat(data.password.length) : '' }).map(([k, v]) => k + '=' + (k === 'password' ? v : encodeURIComponent(v))).join('&'); }
+          const tog = (key, on, off, ic) => { const b = h('button', { class: 'tr2-chip', onclick: () => { st[key] = !st[key]; build(); } }); b.__t = { key, on, off, ic }; return b; };
+          const tgs = [tog('label', 'label を付けた', 'label を付けない'), tog('email', 'type="email"', 'type="text"'), tog('name', 'name を付けた', 'name を付けない')];
+          const tgBar = h('div', { class: 'tr2-sel', style: { margin: '6px 0 12px' } }, tgs);
+          function show() {
+            const sent = FIELDS.filter(([k]) => k !== 'name' || st.name).map(([k]) => k + '=' + encodeURIComponent(data[k]));
+            const lost = !st.name ? ['お名前（name が無いので届かない）'] : [];
+            out.textContent = 'POST /apply\n\n' + sent.join('&') + (lost.length ? '\n\n× ' + lost[0] : '');
+          }
+          function hint() {
+            const em = fmBox.querySelector('input[name=email]');
+            if (!em) return;
+            const bad = data.email && !em.checkValidity();
+            warn.className = 'st-cap' + (bad ? ' bad' : '');
+            warn.innerHTML = bad ? '<b>ブラウザが止めてくれる</b>：メールアドレスの形ではありません。送信ボタンを押しても、サーバーには届きません（type="email" のおかげ）。' : (st.email ? '<b>type="email"</b>：メールアドレスの形かどうかを、ブラウザが自動でチェック。「abc」と打ってみよう。' : '<b>type="text"</b>：何を打っても通ってしまう。入力ミスのメールが、そのままサーバーへ。');
+          }
+          function build() {
+            tgs.forEach((b) => { const { key, on, off } = b.__t; b.textContent = st[key] ? on : off; b.classList.toggle('on', st[key]); });
+            const fm = h('form', { class: 'fm', onsubmit: (e) => { e.preventDefault(); send(); } },
+              FIELDS.map(([k, jp, ty, ph], n) => {
+                const id = 'fm-' + k, type = k === 'email' && !st.email ? 'text' : ty;
+                const inp = h('input', { type, id, placeholder: ph, value: data[k], oninput: (e) => { data[k] = e.target.value; show(); hint(); } });
+                if (st.name || k !== 'name') inp.name = k;
+                return st.label ? h('label', { for: id }, jp, h('small', `for="${id}"`), inp) : h('div', { class: 'lb2' }, jp, h('small', 'label なし'), inp);
+              }),
+              h('button', { class: 'btn primary', type: 'submit', style: { justifyContent: 'center' } }, '送信 (submit)'));
+            fmBox.replaceChildren(fm);
+            const lines = ['<form action="/apply" method="POST">'];
+            FIELDS.forEach(([k, jp, ty]) => {
+              const type = k === 'email' && !st.email ? 'text' : ty, nm = st.name || k !== 'name' ? ` name="${k}"` : '';
+              if (st.label) lines.push(`  <label for="fm-${k}">${jp}</label>`);
+              else lines.push(`  <div>${jp}</div>`);
+              lines.push(`  <input type="${type}" id="fm-${k}"${nm}>`);
+            });
+            lines.push('  <button type="submit">送信</button>', '</form>');
+            codeBox.replaceChildren(code(lines.join('\n'), 'html', { file: 'apply.html', color: 'var(--basic)' }));
+            show(); hint();
+            reqLine.innerHTML = st.label ? '<b>label</b>：項目名の文字を押しても、入力欄が選ばれる（スマホで特に大事）。読み上げも「お名前、入力欄」と名前を言える。' : '<b>label なし</b>：「お名前」の文字を押しても何も起きない。読み上げは「入力欄」としか言えない。';
+          }
           async function send() {
-            const a = fm.getBoundingClientRect(), b = srv.getBoundingClientRect(), g = grid.getBoundingClientRect();
+            const a = fmBox.getBoundingClientRect(), b = srv.getBoundingClientRect(), g = grid.getBoundingClientRect();
             env.style.opacity = 1;
             await env.animate([{ transform: `translate(${a.width - 30}px,0) scale(.6)`, opacity: 0 }, { transform: `translate(${a.width}px,-30px) scale(1.2)`, opacity: 1, offset: .3 }, { transform: `translate(${b.left - g.left}px,-10px) scale(.8)`, opacity: 1 }], { duration: 900, easing: 'ease-in-out' }).finished;
             env.style.opacity = 0; srv.classList.add('got');
-            reqLine.innerHTML = '✅ サーバーが受け取りました！ <b>name 属性</b>がキー、入力値がバリューになります。';
+            reqLine.innerHTML = st.name ? '<b>name 属性</b>がキー、入力値がバリューになってサーバーに届きました。' : '<b>name が無い項目は、お名前の欄に書いても届きません</b>。画面では入力できているのに、データが空になる、よくある事故です。';
             setTimeout(() => srv.classList.remove('got'), 1400);
           }
-          show();
-          reqLine.innerHTML = '👆 入力して「送信」を押してみよう。<b>name 属性</b>が無いと、そのデータは送られません。';
-          el.append(grid, reqLine);
-          el.append(code('<form action="/signup" method="POST">\n  <label for="name">お名前</label>\n  <input type="text" id="name" name="name">\n  <input type="submit" value="送信">\n</form>', 'html', { file: 'form.html', color: 'var(--basic)', hi: [1, 3, 4] }));
+          el.append(h('div', { class: 'label' }, '3つのスイッチで、書き方を変えてみよう'), tgBar, grid, warn, reqLine, codeBox);
+          build();
         },
       },
       { t: '作ってみよう：企画と公開', tag: 'PROJECT', lead: 'スライドの「簡単なWebサイトを作ってみよう」。左を埋めると、右に<b>企画書サイト</b>が育ちます。', render: planProject },
       {
         t: '実践：自己紹介ページ', tag: 'PRACTICE', lead: '右のプレビューを見ながら、<b>3か所</b>だけ書き足そう（目安 5分）。✓が3つ付いたらクリア！',
-        hint: '<p>慣れてきたら、こんなものも足してみよう（ミッションには入っていません）。</p><ul style="line-height:1.9"><li>画像：<code>&lt;img src="…" alt="説明"&gt;</code>（alt は必ず書く）</li><li>表：<code>&lt;table&gt;&lt;tr&gt;&lt;th&gt;…&lt;/th&gt;&lt;/tr&gt;&lt;/table&gt;</code></li><li>見出しの下に <code>&lt;h2&gt;</code> をもう1つ</li></ul>',
+        hint: '<p>慣れてきたら、こんなものも足してみよう（ミッションには入っていません）。</p><ul style="line-height:1.9"><li>画像：<code>&lt;img src="…" alt="説明"&gt;</code>（alt は必ず書く）</li><li>表：<code>&lt;table&gt;&lt;tr&gt;&lt;th&gt;…&lt;/th&gt;&lt;/tr&gt;&lt;/table&gt;</code></li><li>見出しの下に <code>&lt;h2&gt;</code> をもう1つ</li></ul><p style="color:var(--mute);font-size:.875rem">チャレンジは3段階（初級・中級・上級）。中級はフォーム、上級はページ内ジャンプ。</p>',
         render(el) {
           el.append(playground({
             title: 'HTML', mode: 'web',
-            solution: { 'index.html': '<!-- 自己紹介ページ（答えの一例） -->\n<h1>私の自己紹介</h1>\n<p>はじめまして！</p>\n<p>趣味はコードを書くことです。</p>\n\n<h2>好きなもの</h2>\n<ul>\n  <li>好きな色: 青</li>\n  <li>好きな食べ物: ラーメン</li>\n  <li>趣味: コード</li>\n</ul>\n\n<h2>リンク</h2>\n<a href="https://github.com/">研修リポジトリ</a>\n\n<!-- 任意チャレンジ：画像と表 -->\n<img src="https://placehold.co/160x100" alt="好きな風景">\n<table border="1">\n  <tr><th>曜日</th><th>予定</th></tr>\n  <tr><td>月</td><td>HTML / CSS</td></tr>\n</table>\n' },
-            files: [{ name: 'index.html', lang: 'html', code: '<!-- 自己紹介ページを完成させよう -->\n<h1>私の自己紹介</h1>\n<p>はじめまして！</p>\n\n<!-- ① 段落をもう1つ。趣味などを <p> と </p> ではさんで書く -->\n\n\n<h2>好きなもの</h2>\n<!-- ② リスト：<ul> の中に <li>…</li> を3つ -->\n<ul>\n\n</ul>\n\n<h2>リンク</h2>\n<!-- ③ リンク：<a href="https://…">文字</a> -->\n\n<!-- 任意チャレンジ：画像（<img>）と表（<table>）を足してみよう -->\n' }],
+            solution: { 'index.html': '<!-- 自己紹介ページ（答えの一例） -->\n<h1>私の自己紹介</h1>\n<p>はじめまして！</p>\n<p>趣味はコードを書くことです。</p>\n\n<h2>好きなもの</h2>\n<ul>\n  <li>好きな色: 青</li>\n  <li>好きな食べ物: ラーメン</li>\n  <li>趣味: コード</li>\n</ul>\n\n<h2>リンク</h2>\n<a href="https://github.com/">研修リポジトリ</a>\n\n<!-- 任意チャレンジ：画像と表 -->\n<img src="https://placehold.co/160x100" alt="好きな風景">\n<table border="1">\n  <tr><th>曜日</th><th>予定</th></tr>\n  <tr><td>月</td><td>HTML / CSS</td></tr>\n</table>\n\n<!-- 中級：フォーム -->\n<form action="/signup" method="POST">\n  <label for="nick">ニックネーム</label>\n  <input type="text" id="nick" name="nick">\n  <button type="submit">送信</button>\n</form>\n\n<!-- 上級：ページ内ジャンプ -->\n<nav>\n  <a href="#likes">好きなもの</a>\n  <a href="#links">リンク</a>\n</nav>\n<h2 id="likes">好きなもの（ジャンプ先）</h2>\n<h2 id="links">リンク（ジャンプ先）</h2>\n' },
+            files: [{ name: 'index.html', lang: 'html', code: '<!-- 自己紹介ページを完成させよう -->\n<h1>私の自己紹介</h1>\n<p>はじめまして！</p>\n\n<!-- ① 段落をもう1つ。趣味などを <p> と </p> ではさんで書く -->\n\n\n<h2>好きなもの</h2>\n<!-- ② リスト：<ul> の中に <li>…</li> を3つ -->\n<ul>\n\n</ul>\n\n<h2>リンク</h2>\n<!-- ③ リンク：<a href="https://…">文字</a> -->\n\n<!-- 任意チャレンジ（初級）：画像（<img>）と表（<table>）\n     中級：フォーム　上級：ページ内ジャンプ -->\n' }],
             tasks: (v, c) => {
               const d = c.doc && c.doc();
               const q = (s) => (d ? d.querySelectorAll(s).length : 0);
@@ -488,7 +903,9 @@
                 { label: '段落（<p>）が2つ以上ある', ok: q('p') >= 2, hint: ['段落は <code>&lt;p&gt;</code> と <code>&lt;/p&gt;</code> ではさんで書く。①のコメントの下に書こう。', '<code>&lt;p&gt;趣味はコードを書くことです。&lt;/p&gt;</code> のように1行書けば OK。'], answer: { code: '<p>趣味はコードを書くことです。</p>', lang: 'html', mode: 'append' } },
                 { label: 'リスト（<ul> か <ol>）に、項目（<li>）が3つ以上ある', ok: q('ul li, ol li') >= 3, hint: ['<code>&lt;ul&gt;</code> の中に、項目ごとに <code>&lt;li&gt;…&lt;/li&gt;</code> を書く。', '<code>&lt;li&gt;</code> を3行。<code>&lt;ul&gt;</code> と <code>&lt;/ul&gt;</code> の「間」に書くよ。'], answer: { code: '<ul>\n  <li>好きな色: 青</li>\n  <li>好きな食べ物: ラーメン</li>\n  <li>趣味: コード</li>\n</ul>', lang: 'html', mode: 'append' } },
                 { label: 'リンク（<a href="…">）が1つある', ok: link, hint: ['リンクは <code>&lt;a href="行き先のURL"&gt;表示する文字&lt;/a&gt;</code> の形。', '例：<code>&lt;a href="https://example.com"&gt;リンク&lt;/a&gt;</code>'], answer: { code: '<a href="https://github.com/">研修リポジトリ</a>', lang: 'html', mode: 'append' } },
-                { optional: true, label: '画像（<img>、alt 付き）と、2行の表（<table>）を足す', ok: (() => { if (!d) return false; const im = [...d.querySelectorAll('img')].some((i) => (i.getAttribute('alt') || '').trim() && (i.getAttribute('src') || '').trim()); const tb = [...d.querySelectorAll('table')].some((t) => t.querySelectorAll('tr').length >= 2 && t.querySelector('tr td, tr th')); return im && tb; })(), hint: ['画像は <code>&lt;img src="画像のURL" alt="説明"&gt;</code>。alt（説明文）を必ず付ける。', '表は <code>&lt;table&gt;</code> の中に、行 <code>&lt;tr&gt;</code> を2つ。行の中は <code>&lt;th&gt;</code>（見出し）や <code>&lt;td&gt;</code>（データ）。'], answer: { code: '<img src="https://placehold.co/160x100" alt="好きな風景">\n<table border="1">\n  <tr><th>曜日</th><th>予定</th></tr>\n  <tr><td>月</td><td>HTML / CSS</td></tr>\n</table>', lang: 'html', mode: 'append' } },
+                { optional: true, level: 1, label: '画像（<img>、alt 付き）と、2行の表（<table>）を足す', ok: (() => { if (!d) return false; const im = [...d.querySelectorAll('img')].some((i) => (i.getAttribute('alt') || '').trim() && (i.getAttribute('src') || '').trim()); const tb = [...d.querySelectorAll('table')].some((t) => t.querySelectorAll('tr').length >= 2 && t.querySelector('tr td, tr th')); return im && tb; })(), hint: ['画像は <code>&lt;img src="画像のURL" alt="説明"&gt;</code>。alt（説明文）を必ず付ける。', '表は <code>&lt;table&gt;</code> の中に、行 <code>&lt;tr&gt;</code> を2つ。行の中は <code>&lt;th&gt;</code>（見出し）や <code>&lt;td&gt;</code>（データ）。'], answer: { code: '<img src="https://placehold.co/160x100" alt="好きな風景">\n<table border="1">\n  <tr><th>曜日</th><th>予定</th></tr>\n  <tr><td>月</td><td>HTML / CSS</td></tr>\n</table>', lang: 'html', mode: 'append' } },
+                { optional: true, level: 2, label: 'フォームを作る：<label for> と <input id> をペアにして、送信ボタンも付ける', ok: (() => { if (!d) return false; const fs = [...d.querySelectorAll('form')]; const lab = fs.some((f) => [...f.querySelectorAll('label[for]')].some((l) => { const i = d.getElementById(l.getAttribute('for')); return !!i && f.contains(i) && /^(input|select|textarea)$/i.test(i.tagName); })); const sub = fs.some((f) => f.querySelector('input[type=submit], button:not([type=button]):not([type=reset])')); return lab && sub; })(), hint: ['入れ物は <code>&lt;form&gt;</code>。中に、ラベルと入力欄をペアで置く。', '<code>&lt;label for="nick"&gt;</code> の <code>for</code> と、<code>&lt;input id="nick"&gt;</code> の <code>id</code> を<b>同じ名前</b>にする。最後に <code>&lt;button type="submit"&gt;送信&lt;/button&gt;</code>。'], answer: { code: '<form action="/signup" method="POST">\n  <label for="nick">ニックネーム</label>\n  <input type="text" id="nick" name="nick">\n  <button type="submit">送信</button>\n</form>', lang: 'html', mode: 'append' } },
+                { optional: true, level: 3, label: 'ページ内ジャンプ：<nav> にリンク（href="#…"）を2つ作り、飛び先の見出しに id を付ける', ok: (() => { if (!d) return false; const hs = [...d.querySelectorAll('nav a[href^="#"]')].map((a) => a.getAttribute('href')).filter((x) => x.length > 1).filter((x) => { const t = d.getElementById(x.slice(1)); return !!t && /^H[1-6]$/.test(t.tagName); }); return new Set(hs).size >= 2; })(), hint: ['ページの中へ飛ぶリンクは <code>&lt;a href="#名前"&gt;</code>。<code>#</code> が目印。', '飛び先の見出しに <code>id="名前"</code> を付ける（<code>&lt;h2 id="likes"&gt;</code>）。リンクは <code>&lt;nav&gt;</code> でまとめる。'], answer: { code: '<nav>\n  <a href="#likes">好きなもの</a>\n  <a href="#links">リンク</a>\n</nav>\n<h2 id="likes">好きなもの（ジャンプ先）</h2>\n<h2 id="links">リンク（ジャンプ先）</h2>', lang: 'html', mode: 'append' } },
               ];
             },
           }));
@@ -517,40 +934,14 @@
   `);
   const sceneSemantic = {
     t: 'なぜ意味のあるタグ？', tag: 'semantic',
-    lead: '<b>見た目は同じ</b>の2つのページ。でも「ロボットの目」で見ると世界が違います。切り替えて<b>ジャンプ</b>を押してみよう。',
+    lead: '<b>見た目は同じ</b>の2つのページ。でも読み上げ・検索エンジン・キーボードから見ると、<b>使えるか使えないか</b>が変わります。切り替えて、右の結果と一番下の表を見比べよう。',
     why: {
       problem: '<code>&lt;div&gt;</code> だけで作ると、見た目は同じでも<b>どこが本文か誰にも分からない</b>',
       idea: '見た目ではなく<b>「役割」を表すタグ</b>を選ぶ → 読み上げ・検索エンジンが構造を理解できる',
       answer: '<code>header</code> / <code>nav</code> / <code>main</code> / <code>footer</code>',
       when: [['ページの上部（ロゴ・見出し）', '&lt;header&gt;'], ['メニュー', '&lt;nav&gt;'], ['主役の内容（1ページに1つ）', '&lt;main&gt;'], ['役割のない枠・CSS の都合だけ', '&lt;div&gt;']],
     },
-    render(el) {
-      const REG = [['header', 'サイトの顔', 'var(--ts)', 'ヘッダー'], ['nav', 'メニュー', 'var(--basic)', 'ナビ'], ['main', '主役の内容', 'var(--vue)', '本文'], ['footer', '足元', 'var(--pink)', 'フッター']];
-      const SRC = {
-        div: REG.map(([, t]) => `<div class="box">${t}</div>`).join('\n'),
-        sem: REG.map(([tg, t]) => `<${tg}>${t}</${tg}>`).join('\n'),
-      };
-      let mode = 'div';
-      const I = K.W.icon;
-      const tabs = ['div', 'sem'].map((k) => h('button', { class: 'sm-tab', style: { '--c': k === 'div' ? 'var(--team)' : 'var(--ok)' }, onclick: () => { mode = k; msg.className = 'sm-msg'; msg.replaceChildren(); draw(); } }, k === 'div' ? 'div だけ' : '意味つきタグ'));
-      const regs = REG.map(([, t, c]) => h('div', { class: 'sm-r', style: { '--rc': c } }, t));
-      const page = h('div', { class: 'sm-page' }, regs);
-      const cd = h('div'), list = h('div', { style: { display: 'grid', gap: '6px' } });
-      const msg = h('div', { class: 'sm-msg' });
-      const jump = h('button', { class: 'btn primary', style: { '--c': 'var(--ts)', justifyContent: 'center' }, onclick: () => {
-        if (mode === 'div') { msg.className = 'sm-msg bad'; msg.replaceChildren(I('circle-x'), '本文が見つからない…全部ただの div。上から順に読むしかない'); }
-        else { regs[2].classList.remove('pulse'); void regs[2].offsetWidth; regs[2].classList.add('pulse'); msg.className = 'sm-msg ok'; msg.replaceChildren(I('circle-check'), '<main> へ一発ジャンプ！ 検索エンジンも「ここが本文」と理解'); }
-      } }, I('bot'), 'スクリーンリーダー：本文へジャンプ');
-      function draw() {
-        tabs.forEach((t, i) => t.classList.toggle('on', (i === 0) === (mode === 'div')));
-        cd.replaceChildren(code(SRC[mode], 'html', { file: 'index.html', color: mode === 'div' ? 'var(--team)' : 'var(--ok)' }));
-        list.replaceChildren(...REG.map(([tg, t, , jp]) => h('div', { class: 'sm-row' }, h('span', { class: 'tg' }, mode === 'div' ? '<div>' : '<' + tg + '>'), h('span', { class: 'mn' + (mode === 'div' ? ' q' : '') }, mode === 'div' ? '？（役割は不明）' : jp + '（' + t + '）'))));
-      }
-      el.append(h('div', { class: 'sm-tabs' }, tabs), h('div', { class: 'sm-wrap' },
-        h('div', { class: 'col' }, lbl('見た目（どちらも同じ）'), page, cd),
-        h('div', { class: 'sm-robot' }, h('div', { class: 'hd' }, I('bot'), 'ロボットの目（読み上げ・検索）'), list, jump, msg)));
-      draw();
-    },
+    render: semanticScene,
   };
 
   (function attachHtml() {
@@ -582,7 +973,7 @@
           answer: '6日間の計画表（日付クリックでジャンプ）',
           pv: BG('map-pin-off', '今どこ？'),
           iv: F(['calendar|日ごとのテーマ', 'map|地図にする']),
-          av: CH(['16日 HTML・CSS', '17日 TS', '19日 Vue', '25日 発表']),
+          av: CH(['1日目 HTML・CSS', '2日目 TS', '4日目 Vue', '6日目 発表']),
         },
         '講義のゴール': {
           problem: 'いきなり難しいことから始めて<b>挫折</b>しがち',
@@ -604,7 +995,7 @@
         '準備チェック': {
           problem: '当日に環境が無くて、<b>最初の30分</b>が消える',
           idea: '前日までに<b>チェックリスト</b>で済ませておく',
-          answer: 'PC / GitHub / VS Code / Zoom・Slack / ChatGPT',
+          answer: 'PC / GitHub / VS Code / Zoom・Slack',
           pv: F([warn('laptop', '当日'), bad('download', '設定中…'), bad('clock', '30分消える')]),
           iv: F(['calendar-check|前日に', 'list-checks|確認', 'smile|当日はラク']),
           av: CH(['PC', 'GitHub', 'VS Code', 'Slack']),
@@ -621,11 +1012,11 @@
           av: C('<h1>Hi</h1>\n<link rel="stylesheet" href="a.css">\n<script src="a.js"></script>', { ok: [1, 2, 3] }),
         },
         'タグの解剖': {
-          problem: 'ブラウザは「<b>どこからどこまでが見出し？</b>」を推測できない',
+          problem: 'ブラウザは「<b>どこからどこまでがリンク？</b>」を推測できない。書き間違えても<b>エラーは出ず</b>、静かに壊れる',
           idea: '開始タグと閉じタグで<b>範囲をはさみ</b>、属性で追加情報を渡す',
           answer: '<code>&lt;要素 属性="値"&gt;中身&lt;/要素&gt;</code>',
           when: [['範囲と種類を伝える', 'タグ（要素名）'], ['追加情報（リンク先・目印）', '属性（href, class, src …）']],
-          pv: C('私の自己紹介\n名前は Lam です。\n', { err: [1, 2] }),
+          pv: C('予約する\n初回30分は無料です。\n', { err: [1, 2] }),
           iv: F(['brackets|開始タグ', 'type|中身', 'brackets|閉じタグ'], null, 'はさんで範囲を伝える'),
           av: C('<a href="/home">Home</a>', { ok: [1] }),
         },
@@ -634,7 +1025,7 @@
           idea: 'HTML は<b>親子関係の木</b>。インデントの深さ＝木の深さ',
           answer: 'DOM ツリー（ブラウザが作る構造）',
           when: [['要素の中に別の要素', '子（入れ子）'], ['同じ階層に並ぶ', '兄弟']],
-          pv: C('<ul>\n  <li>りんご\n</ul>', { err: [2] }),
+          pv: C('<ul>\n  <li>初回30分は無料\n</ul>', { err: [2] }),
           iv: F(['file|body', 'corner-down-right|ul', 'corner-down-right|li'], null, '親 → 子の木'),
           av: BG('network', 'ブラウザが木にして扱う'),
         },
@@ -662,9 +1053,9 @@
           idea: '「リスト」という<b>意味</b>を付ければ、記号や番号はブラウザが自動で付ける',
           answer: '<code>ul</code> / <code>ol</code> / <code>dl</code> と <code>li</code>',
           when: [['順番に意味なし（買い物リスト）', 'ul'], ['順番に意味あり（手順・ランキング）', 'ol'], ['用語と説明のセット', 'dl']],
-          pv: C('・りんご\n・みかん\n・ぶどう', { err: [1, 2, 3], lang: 'text' }),
+          pv: C('・初回30分は無料\n・ビデオ通話OK\n・土日も対応', { err: [1, 2, 3], lang: 'text' }),
           iv: F(['list|リストと伝える', 'wand-sparkles|記号は自動']),
-          av: C('<ul>\n  <li>りんご</li>\n</ul>', { ok: [1, 2, 3] }),
+          av: C('<ul>\n  <li>初回30分は無料</li>\n</ul>', { ok: [1, 2, 3] }),
         },
         'フォーム：データを送る': {
           problem: '利用者の入力を<b>サーバーに渡す</b>方法が必要',
@@ -706,8 +1097,8 @@
       html: {
         'HTML・CSS・JS の役割': { idea: '<b>役割ごとに分ける</b>：形（HTML）・見た目（CSS）・動き（JS）' },
         'タグの解剖': { idea: '始まりと終わりのタグで<b>「ここからここまで」</b>を示す。細かい設定は属性で足す' },
-        'HTML は「木」': { lead: 'ブラウザは HTML を読んで、<b>木の形（DOM ツリー）</b>にして覚えます。左を書き換えると、右の木もすぐ変わります。', problem: 'タグの入れ方を間違えると<b>表示が崩れる</b>。CSS や JS も効かなくなる', idea: 'タグは「<b>親の中に子が入る</b>」形。字下げの深さ＝木の深さ', answer: 'DOM ツリー（ブラウザが頭の中に作る木）' },
-        'なぜ意味のあるタグ？': { lead: '見た目は同じ2つのページ。でも、ロボット（読み上げ・検索）から見ると全然ちがいます。切り替えて、ジャンプを押してみよう。', problem: '<code>&lt;div&gt;</code> だけだと、見た目は同じでも<b>「どこが本文か」を機械が分からない</b>', idea: '<b>「何の部分か」</b>を表すタグを選ぶ。読み上げソフトや検索エンジンにも伝わる' },
+        'HTML は「木」': { lead: 'ブラウザは HTML を読んで、<b>木の形（DOM ツリー）</b>にして覚えます。ページの部品と木の枝は1対1。<b>カーソルを乗せる</b>と、どちらでも相手が光ります。', problem: '「ボタンだけ赤くしたいのに効かない」「JS が要素を見つけられない」。原因は<b>タグの入れ方（木の形）</b>のことが多い', idea: 'タグは「<b>親の中に子が入る</b>」形。字下げの深さ＝木の深さ。CSS も JS もこの木をたどって相手を探す', answer: '<b>DOM ツリー</b>：CSS・JS・開発者ツールが見ている、ページの本当の姿' },
+        'なぜ意味のあるタグ？': { lead: '見た目は同じ2つのページ。でも、読み上げ・検索エンジン・キーボードから見ると<b>使えるか使えないか</b>が変わります。切り替えて、右の結果と一番下の表を見比べよう。', problem: '<code>&lt;div&gt;</code> だけだと、見た目は同じでも<b>予約ボタンにキーボードで届かない・検索の説明文がメニューだらけ・目次が作れない</b>', idea: '<b>「何の部分か」</b>を表すタグを選ぶだけで、読み上げのジャンプ・検索の説明文・自動の目次・Tab 操作が最初から働く', answer: '<code>header / nav / main</code>・<code>h1〜h3</code>・<code>button</code>・<code>a</code>・<code>label</code>' },
         'ページの骨組み': { lead: 'ほとんどのサイトはこの形。「次へ」で組み立てよう。色の付いた部品にカーソルを乗せると、コードが光ります。', problem: '部品の置き場所がページごとにバラバラで、<b>探しにくい</b>' },
         'よく使うタグ図鑑': { idea: '<b>「何を書きたいか」</b>から、タグを選ぶ' },
         'リスト：ul / ol / dl': { problem: '「・」や番号を<b>手で打つ</b>と、項目を増やすたびに直すことになる', idea: '<b>「これはリスト」</b>と伝えれば、記号や番号はブラウザが付けてくれる' },
@@ -728,8 +1119,8 @@
     });
     over('intro', '学習計画表', {
       problem: '今どこか分からず迷う', idea: '日ごとの地図を先に見る', answer: '6日間の計画表',
-      pv: cd('memo.txt', 'text', '16日 ？\n17日 ？\n19日 ？  ← 何をやる？', { err: [1, 2, 3], keys: { 3: 'plan' } }),
-      iv: cd('地図', 'text', '16日 HTML / CSS / Git\n17日 TypeScript\n19日 Vue.js\n25日 発表', { idea: [1, 2, 3, 4], keys: { 1: 'plan' } }),
+      pv: cd('memo.txt', 'text', '1日目 ？\n2日目 ？\n4日目 ？  ← 何をやる？', { err: [1, 2, 3], keys: { 3: 'plan' } }),
+      iv: cd('地図', 'text', '1日目 HTML / CSS / Git\n2日目 TypeScript\n4日目 Vue.js\n6日目 発表', { idea: [1, 2, 3, 4], keys: { 1: 'plan' } }),
       av: cd('schedule', 'text', '16 月 HTML/CSS・CUI・Git\n17 火 TypeScript\n19 木 Vue.js\n25 月 発表', { ok: [4], keys: { 4: 'plan' } }),
     });
     over('intro', '講義のゴール', {
@@ -758,16 +1149,16 @@
       av: cd('index.html', 'html', '<h1>Hi</h1>\n<link rel="stylesheet"\n      href="a.css">\n<script src="a.js"></script>', { ok: [2, 3, 4], keys: { 1: 'role' } }),
     });
     over('html', 'タグの解剖', {
-      problem: 'どこまでが見出しか不明', idea: 'タグで範囲をはさむ', answer: '<code>&lt;a href&gt;…&lt;/a&gt;</code>',
-      pv: cd('index.html', 'text', '私の自己紹介\n名前は Lam です。', { err: [1, 2], keys: { 1: 'tag' } }),
-      iv: cd('index.html', 'html', '<h1 class="title">\n  私の紹介\n</h1>', { idea: [1, 3], keys: { 1: 'tag' } }),
+      problem: 'どこまでがリンクか不明', idea: 'タグで範囲をはさむ', answer: '<code>&lt;a href&gt;…&lt;/a&gt;</code>',
+      pv: cd('index.html', 'text', '予約する\n初回30分は無料です。', { err: [1, 2], keys: { 1: 'tag' } }),
+      iv: cd('index.html', 'html', '<a href="/reserve">\n  予約する\n</a>', { idea: [1, 3], keys: { 1: 'tag' } }),
       av: cd('index.html', 'html', '<a href="/home">Home</a>\n<img src="me.png" alt="私">', { ok: [1, 2], keys: { 1: 'tag' } }),
     });
     over('html', 'HTML は「木」', {
       problem: '閉じ忘れで表示が崩れる', idea: '親の中に子が入る「木」', answer: 'ブラウザが木にして扱う',
-      pv: cd('index.html', 'html', '<ul>\n  <li>りんご\n</ul>', { err: [2], keys: { 2: 'tree' } }),
-      iv: cd('DOM ツリー', 'text', 'ul\n├ li  りんご\n├ li  みかん\n└ li  ぶどう', { idea: [2, 3, 4], keys: { 1: 'tree' } }),
-      av: cd('index.html', 'html', '<ul>\n  <li>りんご</li>\n  <li>みかん</li>\n</ul>', { ok: [2, 3], keys: { 2: 'tree' } }),
+      pv: cd('index.html', 'html', '<ul>\n  <li>初回30分は無料\n</ul>', { err: [2], keys: { 2: 'tree' } }),
+      iv: cd('DOM ツリー', 'text', 'ul\n├ li  初回30分は無料\n├ li  ビデオ通話OK\n└ li  土日も対応', { idea: [2, 3, 4], keys: { 1: 'tree' } }),
+      av: cd('index.html', 'html', '<ul>\n  <li>初回30分は無料</li>\n  <li>ビデオ通話OK</li>\n</ul>', { ok: [2, 3], keys: { 2: 'tree' } }),
     });
     over('html', 'なぜ意味のあるタグ？', {
       problem: 'どこが本文か機械に伝わらない', idea: '役割を表すタグを選ぶ', answer: 'header / nav / main',
@@ -789,9 +1180,9 @@
     });
     over('html', 'リスト：ul / ol / dl', {
       problem: '「・」を手で打つと崩れる', idea: '「リスト」と伝える', answer: 'ul / ol と li',
-      pv: cd('index.html', 'text', '・りんご\n・みかん\n・ぶどう', { err: [1, 2, 3], keys: { 1: 'list' } }),
-      iv: cd('index.html', 'html', '<ul>\n  <li>りんご</li>\n</ul>\n<!-- 「・」は自動で付く -->', { idea: [1, 2], keys: { 1: 'list' } }),
-      av: cd('index.html', 'html', '<ul>\n  <li>りんご</li>\n  <li>みかん</li>\n</ul>\n<ol><li>手順1</li></ol>', { ok: [1, 5], keys: { 1: 'list' } }),
+      pv: cd('index.html', 'text', '・初回30分は無料\n・ビデオ通話OK\n・土日も対応', { err: [1, 2, 3], keys: { 1: 'list' } }),
+      iv: cd('index.html', 'html', '<ul>\n  <li>初回30分は無料</li>\n</ul>\n<!-- 「・」は自動で付く -->', { idea: [1, 2], keys: { 1: 'list' } }),
+      av: cd('index.html', 'html', '<ul>\n  <li>初回30分は無料</li>\n  <li>ビデオ通話OK</li>\n</ul>\n<ol><li>手順1</li></ol>', { ok: [1, 5], keys: { 1: 'list' } }),
     });
     over('html', 'フォーム：データを送る', {
       problem: '入力しても届かない', idea: 'name を付けてまとめて送る', answer: 'form + input の name',

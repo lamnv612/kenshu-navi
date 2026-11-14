@@ -62,43 +62,43 @@
   reg({
     id: 'x-vue-api', title: 'API 呼び出し', sub: 'loading / error / data の3状態', emoji: '🌐',
     gh: [gh('vuejs/11_api', 'vuejs/11_api')],
-    meta: { cat: 'vue', day: '24日(火)', when: 'Life Cycle の後・Vue Router の前（onMounted を学んだ直後）', mins: 15, order: 30, level: '応用', after: 'vue-life', why: 'スライドに無いが、実務の画面は必ず「通信中・失敗・成功」を扱う' },
+    meta: { cat: 'vue', day: '5日目', when: 'Life Cycle の後・Vue Router の前（onMounted を学んだ直後）', mins: 15, order: 30, level: '応用', after: 'vue-life', why: 'スライドに無いが、実務の画面は必ず「通信中・失敗・成功」を扱う' },
     scenes: [
       {
-        t: 'fetch と3つの状態', ref: [{"title": "ステータス早見", "icon": "table", "html": "<table class=\"vref\"><thead><tr><th>番号</th><th>意味</th></tr></thead><tbody><tr><td>200</td><td>成功</td></tr><tr><td>404</td><td>見つからない</td></tr><tr><td>500</td><td>サーバーの失敗</td></tr><tr><td><code>res.ok</code></td><td>200番台のとき true</td></tr></tbody></table>"}], why: {"pv": {"k": "code", "file": "Posts.vue", "lang": "ts", "text": "const res = await fetch(url)\nposts.value = await res.json()\n// 遅い・失敗 → 真っ白のまま", "err": [3], "keys": {"1": "state"}}, "iv": {"k": "code", "file": "Posts.vue", "lang": "ts", "text": "const loading = ref(true)\nconst error = ref(null)\nconst data = ref(null)\n// 1つだけ表示する", "idea": [1, 2, 3], "keys": {"1": "state"}}, "av": {"k": "code", "file": "Posts.vue", "lang": "ts", "text": "try { data.value = await load() }\ncatch (e) { error.value = e }\nfinally { loading.value = false }", "ok": [1, 2, 3], "keys": {"3": "state"}}, "problem": "通信は遅く、失敗もする", "idea": "<b>読込中・エラー・成功</b>の1つだけ表示", "answer": "loading / error / data + try / catch", "when": [["初回表示のデータ", "onMounted で取得"], ["ボタンで更新", "クリックで fetchPosts"], ["入力に合わせて何度も取得", "watch + デバウンス"]]}, tag: 'API', lead: '通信は<b>遅い</b>し、<b>失敗</b>もする。だから画面は「読み込み中 / エラー / 成功」を切り替える。スライダーとスイッチで試そう。',
+        t: 'fetch と3つの状態', ref: [{"title": "ステータス早見", "icon": "table", "html": "<table class=\"vref\"><thead><tr><th>番号</th><th>意味</th></tr></thead><tbody><tr><td>200</td><td>成功</td></tr><tr><td>404</td><td>見つからない</td></tr><tr><td>500</td><td>サーバーの失敗</td></tr><tr><td><code>res.ok</code></td><td>200番台のとき true</td></tr></tbody></table>"}], why: {"pv": {"k": "code", "file": "Cases.vue", "lang": "ts", "text": "const res = await fetch('/api/cases')\ncases.value = await res.json()\n// 遅い・失敗・0件 → 真っ白のまま", "err": [3], "keys": {"1": "state"}}, "iv": {"k": "code", "file": "Cases.vue", "lang": "ts", "text": "const loading = ref(true)\nconst error = ref(null)\nconst data = ref(null)\n// 1つだけ表示する", "idea": [1, 2, 3], "keys": {"1": "state"}}, "av": {"k": "code", "file": "Cases.vue", "lang": "ts", "text": "try { data.value = await load() }\ncatch (e) { error.value = e }\nfinally { loading.value = false }", "ok": [1, 2, 3], "keys": {"3": "state"}}, "problem": "通信は遅く、失敗もする", "idea": "<b>読込中・エラー・成功</b>の1つだけ表示", "answer": "loading / error / data + try / catch", "when": [["初回表示のデータ", "onMounted で取得"], ["ボタンで更新", "クリックで fetchCases"], ["入力に合わせて何度も取得", "watch + デバウンス"]]}, tag: 'API', lead: '通信は<b>遅い</b>し、<b>失敗</b>もする。だから画面は「読み込み中 / エラー / 成功」を切り替える。スライダーとスイッチで試そう。',
         render(el, ctx) {
-          const src = `const fetchPosts = async () => {
+          const src = `const fetchCases = async () => {
   loading.value = true
   error.value = null
   try {
     const res = await fetch(url)
     if (!res.ok) throw new Error(\`HTTP \${res.status}\`)
-    posts.value = await res.json()
+    cases.value = await res.json()
   } catch (err) {
     error.value = err.message
   } finally {
     loading.value = false
   }
 }
-onMounted(fetchPosts)`;
-          const pre = code(src, 'ts', { dim: true, color: C, file: 'fetchPosts.ts' });
-          const titles = ['sunt aut facere', 'qui est esse', 'ea molestias quasi', 'eum et est occaecati', 'nesciunt quas odio'];
-          const S = { loading: false, error: null, posts: [], count: 0 };
-          const chips = { loading: chip(''), error: chip(''), posts: chip(''), count: chip('') };
-          const br = ['v-if="loading"', 'v-else-if="error"', 'v-else-if="posts.length"'].map((t) => h('span', t));
+onMounted(fetchCases)`;
+          const pre = code(src, 'ts', { dim: true, color: C, file: 'fetchCases.ts' });
+          const titles = ['未払い残業代の相談', '契約書チェックの依頼', '交通事故の示談', '相続の手続き', '近隣トラブルの相談'];
+          const S = { loading: false, error: null, cases: [], count: 0 };
+          const chips = { loading: chip(''), error: chip(''), cases: chip(''), count: chip('') };
+          const br = ['v-if="loading"', 'v-else-if="error"', 'v-else-if="cases.length"'].map((t) => h('span', t));
           const view = h('div', { class: 'xv-ui' });
           let latency = 1.2, mode = 'ok', busy = false, alive = true;
           const prev = {};
           function paint() {
-            const vals = { loading: 'loading: ' + S.loading, error: 'error: ' + (S.error ? '"' + S.error + '"' : 'null'), posts: 'posts: [' + S.posts.length + ']', count: 'fetch ' + S.count + '回目' };
+            const vals = { loading: 'loading: ' + S.loading, error: 'error: ' + (S.error ? '"' + S.error + '"' : 'null'), cases: 'cases: [' + S.cases.length + ']', count: 'fetch ' + S.count + '回目' };
             for (const k in chips) { chips[k].textContent = vals[k]; if (prev[k] !== undefined && prev[k] !== vals[k]) flash(chips[k]); prev[k] = vals[k]; }
             chips.loading.classList.toggle('on', S.loading);
-            const b = S.loading ? 0 : S.error ? 1 : S.posts.length ? 2 : -1;
+            const b = S.loading ? 0 : S.error ? 1 : S.cases.length ? 2 : -1;
             br.forEach((e, i) => e.classList.toggle('on', i === b));
             view.replaceChildren(...(S.loading ? [h('div', { class: 'sk' }), h('div', { class: 'sk' }), h('div', { class: 'sk' }), h('div', { style: { color: '#889', fontSize: '.75rem' } }, 'データを取得中…')]
               : S.error ? [h('div', { class: 'err' }, '⚠ エラー: ' + S.error)]
-                : S.posts.length ? S.posts.map((p, i) => h('div', { class: 'post', style: { animationDelay: i * 60 + 'ms' } }, h('b', '#' + p.id + ' '), p.title))
-                  : [h('div', { style: { color: '#999' } }, 'データがありません')]));
+                : S.cases.length ? S.cases.map((p, i) => h('div', { class: 'post', style: { animationDelay: i * 60 + 'ms' } }, h('b', '#' + p.id + ' '), p.title))
+                  : [h('div', { style: { color: '#999' } }, '相談はまだありません')]));
           }
           async function run() {
             if (busy) return; busy = true; go.disabled = true;
@@ -109,27 +109,26 @@ onMounted(fetchPosts)`;
             if (!alive) return;
             if (mode === 'net') { await hi([5]); await hi([8, 9]); S.error = 'Failed to fetch'; }
             else if (mode === '500') { await hi([5, 6]); await hi([8, 9]); S.error = 'HTTP 500'; }
-            else { await hi([5, 6, 7]); S.posts = titles.map((t, i) => ({ id: i + 1, title: t })); }
+            else { await hi([5, 6, 7]); S.cases = titles.map((t, i) => ({ id: i + 1, title: t })); }
             await hi([11]); S.loading = false; paint(); await sleep(500); pre.setHi([]);
             busy = false; go.disabled = false;
           }
-          const go = h('button', { class: 'xv-btn big', onclick: run }, '▶ データを取得（fetchPosts）');
+          const go = h('button', { class: 'xv-btn big', onclick: run }, '▶ データを取得（fetchCases）');
           const lat = h('input', { type: 'range', min: 3, max: 30, value: 12, oninput: (e) => { latency = e.target.value / 10; lt.textContent = latency.toFixed(1) + ' 秒'; } });
           const lt = h('b', '1.2 秒');
           const modes = [['ok', '成功 200'], ['500', 'サーバー 500'], ['net', '通信エラー']];
           const mb = modes.map(([k, t]) => h('button', { class: 'xv-btn' + (k === 'ok' ? ' on' : ''), onclick: () => { mode = k; mb.forEach((b, i) => b.classList.toggle('on', modes[i][0] === k)); } }, t));
           el.append(sp(
-            pane(pre, h('div', { class: 'xv-row' }, chip('onMounted(fetchPosts)'), chip('try / catch / finally'))),
-            pane(h('div', { class: 'xv-row' }, chips.loading, chips.error, chips.posts, chips.count),
+            pane(pre, h('div', { class: 'xv-row' }, chip('onMounted(fetchCases)'), chip('try / catch / finally'))),
+            pane(h('div', { class: 'xv-row' }, chips.loading, chips.error, chips.cases, chips.count),
               h('div', { class: 'xv-branch' }, br), view,
               h('div', { class: 'xv-range' }, '遅さ', lat, lt), h('div', { class: 'xv-row' }, '結果：', mb), go)));
           paint();
-          pickQuiz(el, '使い分けクイズ', [['「読み込み中」の表示を出さないと、どうなる？', ['ユーザーが固まったと思って、何度も押してしまう', '特に問題ない', 'エラーになる'], 0, '待っていることを見せる。ボタンを押せなくするのもセットで。'], ['一覧を最初に1回取得する定番の場所は？', ['onMounted', 'computed', 'template の中'], 0, '初回取得は onMounted。入力に合わせて何度も取るなら watch。']]);
           return () => { alive = false; };
         },
       },
       {
-        t: 'リクエストの旅', why: {"pv": {"k": "code", "file": "Posts.vue", "lang": "ts", "text": "btn.onclick = async () => {\n  const r = await fetch(url)\n  show(r)   // いつ何が起きた？\n}", "err": [2, 3], "keys": {"1": "req"}}, "iv": {"k": "code", "file": "流れ", "lang": "ts", "text": "① loading = true\n② await fetch(url)  // 送信→待つ\n③ data = await res.json()\n④ finally: loading = false", "idea": [2], "keys": {"2": "req"}}, "av": {"k": "code", "file": "Posts.vue", "lang": "ts", "text": "loading.value = true\nawait fetch(url)\nloading.value = false", "ok": [1, 2, 3], "keys": {"2": "req"}}, "problem": "クリックから表示まで、見えない", "idea": "順に追う：<b>待つ → 送る → 結果</b>", "answer": "async / await と状態の切替", "when": [["成功（200）", "res.ok → データを代入"], ["失敗（500・通信エラー）", "throw → catch → エラー表示"]]}, tag: 'flow', lead: '「次へ」で、クリックから画面が変わるまでを追う。右上のスイッチで、失敗した場合も見られる。',
+        t: 'リクエストの旅', why: {"pv": {"k": "code", "file": "Cases.vue", "lang": "ts", "text": "btn.onclick = async () => {\n  const r = await fetch(url)\n  show(r)   // いつ何が起きた？\n}", "err": [2, 3], "keys": {"1": "req"}}, "iv": {"k": "code", "file": "流れ", "lang": "ts", "text": "① loading = true\n② await fetch(url)  // 送信→待つ\n③ data = await res.json()\n④ finally: loading = false", "idea": [2], "keys": {"2": "req"}}, "av": {"k": "code", "file": "Cases.vue", "lang": "ts", "text": "loading.value = true\nawait fetch(url)\nloading.value = false", "ok": [1, 2, 3], "keys": {"2": "req"}}, "problem": "クリックから表示まで、見えない", "idea": "順に追う：<b>待つ → 送る → 結果</b>", "answer": "async / await と状態の切替", "when": [["成功（200）", "res.ok → データを代入"], ["失敗（500・通信エラー）", "throw → catch → エラー表示"]]}, tag: 'flow', lead: '「次へ」で、クリックから画面が変わるまでを追う。右上のスイッチで、失敗した場合も見られる。',
         render(el) {
           let fail = false, api, ui, st;
           const mk = (cls, x, t, c) => h('div', { class: 'xv-node', style: { left: x + '%', top: '30%', '--nc': c, fontSize: '.875rem' } }, t);
@@ -143,52 +142,64 @@ onMounted(fetchPosts)`;
           const tgl = h('button', { class: 'xv-btn', onclick: () => { fail = !fail; tgl.classList.toggle('on', fail); tgl.textContent = fail ? '失敗ルート ON (500)' : '失敗ルート OFF'; api.go(api.cur); } }, '失敗ルート OFF');
           const view = h('div', { class: 'xv-ui', style: { minHeight: '120px' } });
           const hiList = [[], [2, 3], [5], [5], [6, 8, 9], [11]];
-          const pre = code('async () => {\n  loading.value = true\n  error.value = null\n  try {\n    const res = await fetch(url)\n    if (!res.ok) throw new Error(...)\n    posts.value = await res.json()\n  } catch (err) {\n    error.value = err.message\n  } finally {\n    loading.value = false\n  }\n}', 'ts', { dim: true, color: C });
+          const pre = code('async () => {\n  loading.value = true\n  error.value = null\n  try {\n    const res = await fetch(url)\n    if (!res.ok) throw new Error(...)\n    cases.value = await res.json()\n  } catch (err) {\n    error.value = err.message\n  } finally {\n    loading.value = false\n  }\n}', 'ts', { dim: true, color: C });
           const steps = [
             { say: '<b>クリック</b>：ユーザーが「取得」ボタンを押した。' },
             { say: '<b>loading = true</b>：まず画面を「読み込み中」にする（スケルトン表示）。' },
             { say: '<b>リクエスト送信</b>：fetch が サーバーへ。ここから先は待つしかない。' },
             { say: '<b>サーバーが処理中</b>：データを探している。その間も画面は止まらない（非同期）。' },
-            { say: fail ? '<b>500 が返った</b>：res.ok が false → throw → <b>catch</b> に飛ぶ。' : '<b>200 が返った</b>：res.ok が true → json() を posts に代入。' },
+            { say: fail ? '<b>500 が返った</b>：res.ok が false → throw → <b>catch</b> に飛ぶ。' : '<b>200 が返った</b>：res.ok が true → json() を cases に代入。' },
             { say: '<b>finally</b>：成功でも失敗でも必ず loading=false。画面が結果に切り替わる。' },
           ];
           function paintAt(i) {
             nUI.classList.toggle('hit', i === 0 || i === 5); nJS.classList.toggle('hit', i === 1 || i === 2 || i === 4); nSv.classList.toggle('hit', i === 3);
             const pos = [18, 18, 82, 82, 50, 18][i];
-            pk.style.left = pos + '%'; pk.textContent = ['click', 'loading', 'GET /posts', '…DB', fail ? '500' : '200 OK', fail ? 'エラー表示' : '一覧表示'][i];
+            pk.style.left = pos + '%'; pk.textContent = ['click', 'loading', 'GET /cases', '…DB', fail ? '500' : '200 OK', fail ? 'エラー表示' : '一覧表示'][i];
             pk.style.setProperty('--pc', i === 4 && fail || i === 5 && fail ? '#ff6b7a' : i === 4 || i === 5 ? '#4ade80' : 'var(--vue)');
-            state.replaceChildren(chip('loading: ' + (i >= 1 && i < 5)), chip('error: ' + (i === 5 && fail ? '"HTTP 500"' : 'null')), chip('posts: ' + (i === 5 && !fail ? 5 : 0)));
-            view.replaceChildren(...(i >= 1 && i < 5 ? [h('div', { class: 'sk' }), h('div', { class: 'sk' })] : i === 5 ? (fail ? [h('div', { class: 'err' }, '⚠ HTTP 500')] : [h('div', { class: 'post' }, h('b', '#1 '), 'sunt aut facere'), h('div', { class: 'post' }, h('b', '#2 '), 'qui est esse')]) : [h('div', { style: { color: '#999' } }, '（まだ何も表示されていない）')]));
+            state.replaceChildren(chip('loading: ' + (i >= 1 && i < 5)), chip('error: ' + (i === 5 && fail ? '"HTTP 500"' : 'null')), chip('cases: ' + (i === 5 && !fail ? 5 : 0)));
+            view.replaceChildren(...(i >= 1 && i < 5 ? [h('div', { class: 'sk' }), h('div', { class: 'sk' })] : i === 5 ? (fail ? [h('div', { class: 'err' }, '⚠ HTTP 500')] : [h('div', { class: 'post' }, h('b', '#1 '), '未払い残業代の相談'), h('div', { class: 'post' }, h('b', '#2 '), '契約書チェックの依頼')]) : [h('div', { style: { color: '#999' } }, '（まだ何も表示されていない）')]));
             pre.setHi(i === 4 ? (fail ? [6, 8, 9] : [6, 7]) : i === 5 ? [10, 11] : hiList[i]);
           }
           el.append(h('div', { class: 'xv-row', style: { justifyContent: 'flex-end', marginBottom: '8px' } }, tgl));
           el.append(stepper({
             color: C, steps,
             init(vis, a) { api = a; vis.append(sp(h('div', { class: 'col', style: { display: 'grid', gap: '12px' } }, stage, view), pre)); },
-            update(i, s) { s.say = steps[i].say; paintAt(i); },
+            update(i, s) { s.say = i === 4 ? (fail ? '<b>500 が返った</b>：res.ok が false → throw → <b>catch</b> に飛ぶ。' : '<b>200 が返った</b>：res.ok が true → json() を cases に代入。') : steps[i].say; paintAt(i); },
           }));
         },
       },
       {
         t: '実践：3状態の画面を作る', tag: 'PRACTICE', lead: "ニセの API（fakeFetch）で、失敗しても止まらない画面にしよう。TODO コメントを書き換える。",
         render(el, ctx) {
-          K.vueTools.practice(el, ctx, { title: "API", starter: {"index.html": "<div id=\"app\">\n  <button @click=\"fetchPosts(false)\" :disabled=\"loading\">取得</button>\n  <button @click=\"fetchPosts(true)\" :disabled=\"loading\">わざと失敗</button>\n  <p v-if=\"loading\">読み込み中…</p>\n  <!-- ② 失敗したときの表示を足す -->\n  <ul v-else>\n    <li v-for=\"p in posts\" :key=\"p.id\">{{ p.title }}</li>\n  </ul>\n</div>", "main.js": "const { createApp, ref, onMounted } = Vue\n\n// ニセの API：0.8秒後に返事。fail が true なら失敗する\nconst fakeFetch = (fail) => new Promise((resolve, reject) => {\n  setTimeout(() => {\n    if (fail) reject(new Error('通信エラー'))\n    else resolve([{ id: 1, title: 'りんご' }, { id: 2, title: 'みかん' }])\n  }, 800)\n})\n\ncreateApp({\n  setup() {\n    const posts = ref([])\n    const loading = ref(false)\n    const error = ref(null)\n\n    const fetchPosts = async (fail) => {\n      loading.value = true\n      // ① ここを try / catch / finally で包む\n      posts.value = await fakeFetch(fail)\n      loading.value = false\n    }\n\n    // ③ 最初に1回、自動で取得する（onMounted）\n    return { posts, loading, error, fetchPosts }\n  },\n}).mount('#app')"}, steps: [
-      Object.assign({"file": "main.js", "label": "「わざと失敗」を押しても、「読み込み中…」のまま止まらない（try / catch / finally）", "hint": ["失敗しても必ず「読み込み中」を終わらせたい。<code>try / catch / finally</code> が使える。", "<code>finally { loading.value = false }</code> を忘れずに。catch では <code>error.value = e.message</code>。"], "edits": [["      // ① ここを try / catch / finally で包む\n      posts.value = await fakeFetch(fail)\n      loading.value = false\n", "      error.value = null\n      try {\n        posts.value = await fakeFetch(fail)\n      } catch (e) {\n        error.value = e.message\n      } finally {\n        loading.value = false\n      }\n"]]}, { ok: (R) => R.m1 }),
+          K.vueTools.practice(el, ctx, { title: "API", starter: {"index.html": "<div id=\"app\">\n  <button @click=\"fetchCases(false)\" :disabled=\"loading\">取得</button>\n  <button @click=\"fetchCases(true)\" :disabled=\"loading\">わざと失敗</button>\n  <p v-if=\"loading\">読み込み中…</p>\n  <!-- ② 失敗したときの表示を足す -->\n  <ul v-else>\n    <li v-for=\"c in cases\" :key=\"c.id\">{{ c.title }}</li>\n  </ul>\n</div>", "main.js": "const { createApp, ref, onMounted } = Vue\n\n// ニセの API：0.8秒後に返事。fail が true なら失敗する\nconst fakeFetch = (fail) => new Promise((resolve, reject) => {\n  setTimeout(() => {\n    if (fail) reject(new Error('通信エラー'))\n    else resolve([{ id: 1, title: '未払い残業代の相談' }, { id: 2, title: '契約書チェックの依頼' }])\n  }, 800)\n})\n\ncreateApp({\n  setup() {\n    const cases = ref([])\n    const loading = ref(false)\n    const error = ref(null)\n\n    const fetchCases = async (fail) => {\n      loading.value = true\n      // ① ここを try / catch / finally で包む\n      cases.value = await fakeFetch(fail)\n      loading.value = false\n    }\n\n    // ③ 最初に1回、自動で取得する（onMounted）\n    return { cases, loading, error, fetchCases }\n  },\n}).mount('#app')"}, steps: [
+      Object.assign({"file": "main.js", "label": "「わざと失敗」を押しても、「読み込み中…」のまま止まらない（try / catch / finally）", "hint": ["失敗しても必ず「読み込み中」を終わらせたい。<code>try / catch / finally</code> が使える。", "<code>finally { loading.value = false }</code> を忘れずに。catch では <code>error.value = e.message</code>。"], "edits": [["      // ① ここを try / catch / finally で包む\n      cases.value = await fakeFetch(fail)\n      loading.value = false\n", "      error.value = null\n      try {\n        cases.value = await fakeFetch(fail)\n      } catch (e) {\n        error.value = e.message\n      } finally {\n        loading.value = false\n      }\n"]]}, { ok: (R) => R.m1 }),
       Object.assign({"file": "index.html", "label": "失敗したら、画面に「エラー」と出る（v-else-if）", "hint": ["error があるときの表示を、<code>v-if</code> の仲間 <code>v-else-if</code> で足す。", "<code>&lt;p v-else-if=\"error\"&gt;エラー：{{ error }}&lt;/p&gt;</code>"], "edits": [["  <!-- ② 失敗したときの表示を足す -->\n", "  <p v-else-if=\"error\">エラー：{{ error }}</p>\n"]]}, { ok: (R) => R.m2 }),
-      Object.assign({"file": "main.js", "label": "ページを開くと、自動で一覧が出る（onMounted）", "hint": ["表示された直後に動かすのは <code>onMounted</code>。", "<code>onMounted(() => fetchPosts(false))</code>"], "edits": [["    // ③ 最初に1回、自動で取得する（onMounted）\n", "    onMounted(() => fetchPosts(false))\n"]]}, { ok: (R) => R.m3 }),
-      Object.assign({"file": "index.html", "label": "エラーのとき「もう一度」ボタンを出し、押すと取得し直す", "hint": ["エラー表示の中にボタンを置く。2つ並べるときは <code>&lt;div&gt;</code> で包む。", "<code>&lt;button @click=\"fetchPosts(false)\"&gt;もう一度&lt;/button&gt;</code>"], "edits": [["  <p v-else-if=\"error\">エラー：{{ error }}</p>\n", "  <div v-else-if=\"error\">\n    <p>エラー：{{ error }}</p>\n    <button @click=\"fetchPosts(false)\">もう一度</button>\n  </div>\n"]], "optional": true}, { ok: (R) => R.o1 }),
+      Object.assign({"file": "main.js", "label": "ページを開くと、自動で一覧が出る（onMounted）", "hint": ["表示された直後に動かすのは <code>onMounted</code>。", "<code>onMounted(() => fetchCases(false))</code>"], "edits": [["    // ③ 最初に1回、自動で取得する（onMounted）\n", "    onMounted(() => fetchCases(false))\n"]]}, { ok: (R) => R.m3 }),
+      Object.assign({"file": "index.html", "label": "エラーのとき「もう一度」ボタンを出し、押すと取得し直す", "hint": ["エラー表示の中にボタンを置く。2つ並べるときは <code>&lt;div&gt;</code> で包む。", "<code>&lt;button @click=\"fetchCases(false)\"&gt;もう一度&lt;/button&gt;</code>"], "edits": [["  <p v-else-if=\"error\">エラー：{{ error }}</p>\n", "  <div v-else-if=\"error\">\n    <p>エラー：{{ error }}</p>\n    <button @click=\"fetchCases(false)\">もう一度</button>\n  </div>\n"]], "optional": true, "level": 1}, { ok: (R) => R.o1 }),
+      Object.assign({"file": "index.html", "label": "取得中は、ボタンの文字が「取得中…」に変わる", "hint": ["ボタンの中身も <code>{{ }}</code> で式にできる。<code>loading</code> が true のときだけ文字を変えたい。", "<code>{{ loading ? '取得中…' : '取得' }}</code>（三項演算子：条件 ? 真のとき : 偽のとき）"], "edits": [["  <button @click=\"fetchCases(false)\" :disabled=\"loading\">取得</button>\n", "  <button @click=\"fetchCases(false)\" :disabled=\"loading\">{{ loading ? '取得中…' : '取得' }}</button>\n"]], "optional": true, "level": 2}, { ok: (R) => R.o2 }),
+      Object.assign({"file": "main.js", "label": "失敗したら、自動で最大 3 回までやり直す（それでもだめならエラー）", "hint": ["やり直しは繰り返し（<code>for</code>）で書ける。失敗は <code>catch</code> で受け、最後の回だけもう一度 <code>throw</code> する。", "<code>fetchWithRetry</code> という関数を作り（<code>for</code> + <code>try { return await fakeFetch(fail) } catch (e) { if (i === times) throw e }</code>）、<code>cases.value = await fetchWithRetry(fail)</code> に変える。"], "edits": [["    const fetchCases = async (fail) => {\n", "    const fetchWithRetry = async (fail, times = 3) => {\n      for (let i = 1; i <= times; i++) {\n        try {\n          return await fakeFetch(fail)\n        } catch (e) {\n          if (i === times) throw e\n        }\n      }\n    }\n\n    const fetchCases = async (fail) => {\n"], ["        cases.value = await fakeFetch(fail)\n", "        cases.value = await fetchWithRetry(fail)\n"]], "optional": true, "level": 3}, { ok: (R) => R.o3 }),
     ], probe: async (win, doc) => {
       const wait = (ms) => new Promise((r) => setTimeout(r, ms));
       const out = {};
+      const txt = () => doc.getElementById('app').textContent;
+      const until = async (f, ms) => { const t0 = Date.now(); while (Date.now() - t0 < ms) { if (f()) return Date.now() - t0; await wait(60); } return -1; };
       await wait(1200);
       out.m3 = doc.querySelectorAll('li').length >= 1;
       const btns = doc.querySelectorAll('button');
+      if (btns[0] && !btns[0].disabled) {
+        btns[0].click(); await wait(120);
+        const during = btns[0].textContent;
+        await until(() => !txt().includes('読み込み中'), 4000); await wait(60);
+        out.o2 = during.includes('取得中') && !btns[0].textContent.includes('取得中');
+      }
       if (btns[1] && !btns[1].disabled) {
-        btns[1].click(); await wait(1500);
-        const t = doc.getElementById('app').textContent;
-        out.m1 = !t.includes('読み込み中'); out.m2 = t.includes('エラー');
+        const t0 = Date.now(); btns[1].click(); await wait(100);
+        const settled = await until(() => !txt().includes('読み込み中'), 6000);
+        const el = Date.now() - t0;
+        out.m1 = settled >= 0; out.m2 = txt().includes('エラー');
+        out.o3 = settled >= 0 && el > 1900 && txt().includes('エラー');
         const retry = [...doc.querySelectorAll('button')].find((b) => b.textContent.includes('もう一度'));
-        if (retry) { retry.click(); await wait(1500); out.o1 = doc.querySelectorAll('li').length >= 1 && !doc.getElementById('app').textContent.includes('エラー'); }
+        if (retry) { retry.click(); await wait(100); await until(() => !txt().includes('読み込み中'), 4000); out.o1 = doc.querySelectorAll('li').length >= 1 && !txt().includes('エラー'); }
       } else { out.m1 = false; out.m2 = false; }
       return out;
     } });
@@ -201,15 +212,15 @@ onMounted(fetchPosts)`;
   reg({
     id: 'x-vue-slots', title: 'スロット (Slots)', sub: '部品に「穴」を空ける', emoji: '🧩',
     gh: [gh('99_bonus/Slots.md', 'vuejs/99_bonus/Slots.md'), gh('03_props', 'vuejs/03_props')],
-    meta: { cat: 'vue', day: '19日(木)', when: 'コンポーネント(props/emit)の直後、時間が余ったら', mins: 10, order: 31, level: '応用', after: 'vue-comp', why: 'props では渡せない「見た目（HTML）」を、使う人が差し込める' },
+    meta: { cat: 'vue', day: '4日目', when: 'コンポーネント(props/emit)の直後、時間が余ったら', mins: 10, order: 31, level: '応用', after: 'vue-comp', why: 'props では渡せない「見た目（HTML）」を、使う人が差し込める' },
     scenes: [
       {
-        t: '穴あきカード', ref: [{"title": "slot の書き方", "icon": "table", "html": "<table class=\"vref\"><thead><tr><th>書き方</th><th>意味</th></tr></thead><tbody><tr><td><code>&lt;slot /&gt;</code></td><td>何も名前がない穴（default）</td></tr><tr><td><code>&lt;slot name=\"header\" /&gt;</code></td><td>名前付きの穴</td></tr><tr><td><code>#header</code></td><td>名前付きの穴に入れる</td></tr><tr><td><code>&lt;slot&gt;代わり&lt;/slot&gt;</code></td><td>何も入らないときの表示</td></tr></tbody></table>"}], why: {"pv": {"k": "code", "file": "Page.vue", "lang": "html", "text": "<Card title=\"見出し\" />\n// 見出しにボタンを入れたい…\n// props は文字しか渡せない", "err": [2, 3], "keys": {"1": "slot"}}, "iv": {"k": "code", "file": "Card.vue", "lang": "html", "text": "<div class=\"card\">\n  <slot name=\"header\" />\n  <slot />\n</div>", "idea": [2], "keys": {"2": "slot"}}, "av": {"k": "code", "file": "Page.vue", "lang": "html", "text": "<Card>\n  <template #header>\n    <button>編集</button>\n  </template>\n</Card>", "ok": [2, 3], "keys": {"2": "slot"}}, "problem": "props では自由な中身を渡せない", "idea": "部品は<b>穴だけ</b>。中身は使う人が入れる", "answer": "<b>&lt;slot&gt;</b>（名前付きも可）", "when": [["文字・数値などのデータ", "props"], ["HTML・部品そのもの（見た目）", "slot"], ["複数の場所に差し込む", "名前付き slot"]]}, tag: 'slot', lead: '部品に<b>穴（slot）</b>を空けておくと、使う人が中身を入れられる。パーツを選んで、穴をクリック（ドラッグも可）。',
+        t: '穴あきカード', ref: [{"title": "slot の書き方", "icon": "table", "html": "<table class=\"vref\"><thead><tr><th>書き方</th><th>意味</th></tr></thead><tbody><tr><td><code>&lt;slot /&gt;</code></td><td>何も名前がない穴（default）</td></tr><tr><td><code>&lt;slot name=\"header\" /&gt;</code></td><td>名前付きの穴</td></tr><tr><td><code>#header</code></td><td>名前付きの穴に入れる</td></tr><tr><td><code>&lt;slot&gt;代わり&lt;/slot&gt;</code></td><td>何も入らないときの表示</td></tr></tbody></table>"}], why: {"pv": {"k": "code", "file": "Page.vue", "lang": "html", "text": "<CaseCard title=\"労働問題\" />\n// 見出しに「緊急」バッジを入れたい…\n// props は文字しか渡せない", "err": [2, 3], "keys": {"1": "slot"}}, "iv": {"k": "code", "file": "Card.vue", "lang": "html", "text": "<div class=\"card\">\n  <slot name=\"header\" />\n  <slot />\n</div>", "idea": [2], "keys": {"2": "slot"}}, "av": {"k": "code", "file": "Page.vue", "lang": "html", "text": "<Card>\n  <template #header>\n    <button>編集</button>\n  </template>\n</Card>", "ok": [2, 3], "keys": {"2": "slot"}}, "problem": "props では自由な中身を渡せない", "idea": "部品は<b>穴だけ</b>。中身は使う人が入れる", "answer": "<b>&lt;slot&gt;</b>（名前付きも可）", "when": [["文字・数値などのデータ", "props"], ["HTML・部品そのもの（見た目）", "slot"], ["複数の場所に差し込む", "名前付き slot"]]}, tag: 'slot', lead: '部品に<b>穴（slot）</b>を空けておくと、使う人が中身を入れられる。パーツを選んで、穴をクリック（ドラッグも可）。',
         render(el) {
           const parts = [
-            ['title', '見出し', '<h3 style="margin:0">春の新商品</h3>'], ['img', '画像', '<div style="height:42px;border-radius:8px;background:linear-gradient(135deg,#ff6b9d,#5b9dff)"></div>'],
-            ['text', '本文', '<p style="margin:0;font-size:.875rem">やさしい甘さの限定ドリンク。</p>'], ['btn', 'ボタン', '<button style="padding:.2em 1em;border-radius:6px;border:0;background:#2fd4a4;font-weight:800">購入</button>'],
-            ['note', '注意書き', '<small style="color:#a66">※数量限定</small>'],
+            ['title', '見出し', '<h3 style="margin:0">労働問題の相談</h3>'], ['img', '画像', '<div style="height:42px;border-radius:8px;background:linear-gradient(135deg,#ff6b9d,#5b9dff)"></div>'],
+            ['text', '本文', '<p style="margin:0;font-size:.875rem">未払い残業代について、弁護士に相談できます。</p>'], ['btn', 'ボタン', '<button style="padding:.2em 1em;border-radius:6px;border:0;background:#2fd4a4;font-weight:800">相談する</button>'],
+            ['note', '注意書き', '<small style="color:#a66">※初回の相談は予約制</small>'],
           ];
           const holes = { header: null, default: null, footer: null };
           const meta = { header: ['<slot name="header">', 'var(--ts)', '#header'], default: ['<slot />', 'var(--vue)', '(default)'], footer: ['<slot name="footer">', 'var(--pink)', '#footer'] };
@@ -245,14 +256,13 @@ onMounted(fetchPosts)`;
           }
           el.append(sp(pane(lbl('パーツ（クリックで選択 / ドラッグ）'), pal, lbl('Card の中身（穴）'), card, h('small', { style: { color: 'var(--mute)' } }, '埋めた穴をクリックすると空に戻ります')), pane(codeBox)));
           draw();
-          pickQuiz(el, '使い分けクイズ：props？ slot？', [['カードの<b>見出しの文字だけ</b>を変えたい。', ['props', 'slot', 'emit'], 0, 'ただのデータ（文字）は props が簡単。'], ['カードの中に、ボタンや画像など<b>自由な HTML</b> を入れたい。', ['props', 'slot', 'emit'], 1, '見た目（HTML・部品）を差し込むのが slot。']]);
         },
       },
       {
-        t: 'スコープ付きスロット', why: {"pv": {"k": "code", "file": "Page.vue", "lang": "html", "text": "// 子 FruitList が items を持つ\n// 親は見せ方を変えたい\n<FruitList />  <!-- 見えない -->", "err": [3], "keys": {"3": "scope"}}, "iv": {"k": "code", "file": "FruitList.vue", "lang": "html", "text": "<li v-for=\"item in items\">\n  <slot :item=\"item\" />\n</li>", "idea": [2], "keys": {"2": "scope"}}, "av": {"k": "code", "file": "Page.vue", "lang": "html", "text": "<FruitList v-slot=\"{ item }\">\n  <b>{{ item.name }}</b>\n</FruitList>", "ok": [1, 2], "keys": {"1": "scope"}}, "problem": "データは子、見せ方は親が決めたい", "idea": "子が slot で<b>データを渡す</b>", "answer": "<b>v-slot=\"{ item }\"</b>", "when": [["描き方を使い手に任せたい", "スコープ付き slot"], ["見た目が固定", "普通の v-for"]]}, tag: 'scoped', lead: 'データは子が持っているけれど、<b>見せ方は親が決めたい</b>とき。子が slot にデータを渡し、親が受け取る。',
+        t: 'スコープ付きスロット', why: {"pv": {"k": "code", "file": "Page.vue", "lang": "html", "text": "// 子 CaseList が items を持つ\n// 親は見せ方を変えたい\n<CaseList />  <!-- 見えない -->", "err": [3], "keys": {"3": "scope"}}, "iv": {"k": "code", "file": "CaseList.vue", "lang": "html", "text": "<li v-for=\"item in items\">\n  <slot :item=\"item\" />\n</li>", "idea": [2], "keys": {"2": "scope"}}, "av": {"k": "code", "file": "Page.vue", "lang": "html", "text": "<CaseList v-slot=\"{ item }\">\n  <b>{{ item.name }}</b>\n</CaseList>", "ok": [1, 2], "keys": {"1": "scope"}}, "problem": "データは子、見せ方は親が決めたい", "idea": "子が slot で<b>データを渡す</b>", "answer": "<b>v-slot=\"{ item }\"</b>", "when": [["描き方を使い手に任せたい", "スコープ付き slot"], ["見た目が固定", "普通の v-for"]]}, tag: 'scoped', lead: 'データは子が持っているけれど、<b>見せ方は親が決めたい</b>とき。子が slot にデータを渡し、親が受け取る。',
         render(el) {
           let style_ = 0;
-          const items = ['りんご', 'みかん', 'ぶどう'];
+          const items = ['労働問題', '契約トラブル', '交通事故'];
           const emo = ['🍎', '🍊', '🍇'];
           const pc = h('div', { class: 'xv-pane', style: { '--c': 'var(--ts)' } });
           const cc = h('div', { class: 'xv-pane' });
@@ -263,13 +273,13 @@ onMounted(fetchPosts)`;
           const tg = [0, 1].map((i) => h('button', { class: 'xv-btn' + (i === 0 ? ' on' : ''), onclick: () => { style_ = i; tg.forEach((b, j) => b.classList.toggle('on', j === i)); api.go(api.cur); } }, ['バッジ風', '太字リスト'][i]));
           let api;
           const draw = (n) => {
-            parentCode.replaceChildren(code(`<FruitList v-slot="{ item }">\n  ${style_ === 0 ? '<span class="badge">{{ item }}</span>' : '<b>◆ {{ item }}</b>'}\n</FruitList>`, 'html', { color: 'var(--ts)', dim: true, file: '親', hi: n >= 2 ? [1, 2] : [] }));
-            childCode.replaceChildren(code('<ul>\n  <li v-for="item in items">\n    <slot :item="item" />\n  </li>\n</ul>', 'html', { color: C, dim: true, file: '子 FruitList.vue', hi: n >= 1 ? [3] : n === 0 ? [2] : [] }));
+            parentCode.replaceChildren(code(`<CaseList v-slot="{ item }">\n  ${style_ === 0 ? '<span class="badge">{{ item }}</span>' : '<b>◆ {{ item }}</b>'}\n</CaseList>`, 'html', { color: 'var(--ts)', dim: true, file: '親', hi: n >= 2 ? [1, 2] : [] }));
+            childCode.replaceChildren(code('<ul>\n  <li v-for="item in items">\n    <slot :item="item" />\n  </li>\n</ul>', 'html', { color: C, dim: true, file: '子 CaseList.vue', hi: n >= 1 ? [3] : n === 0 ? [2] : [] }));
             pk.forEach((p, i) => { p.style.opacity = n === 1 ? 1 : 0; p.style.top = n === 1 ? 14 + i * 16 + '%' : '50%'; p.style.left = n === 1 ? '50%' : '75%'; });
             out.replaceChildren(...(n >= 3 ? items.map((t, i) => h('div', { class: 'xv-fruit', style: { animation: 'pop .4s both', animationDelay: i * 90 + 'ms' } }, style_ === 0 ? h('span', { class: 'xv-badge' }, emo[i] + ' ' + t) : h('b', '◆ ' + t))) : n === 0 ? items.map((t) => h('div', { class: 'xv-fruit', style: { opacity: .5 } }, '(データだけ) ' + t)) : [h('div', { style: { color: 'var(--mute)' } }, n === 1 ? '…パケットが親へ' : '親が見た目を決定中…')]));
           };
           const steps = [
-            { say: '子 <b>FruitList</b> は items データだけ持っている。見た目はまだ決まっていない。' },
+            { say: '子 <b>CaseList</b> は items データだけ持っている。見た目はまだ決まっていない。' },
             { say: '<b>&lt;slot :item="item" /&gt;</b>：子が「これ使って」と、データを slot に渡す。' },
             { say: '親が <b>v-slot="{ item }"</b> で受け取り、描き方を決める。（下のボタンで変更！）' },
             { say: '子の <b>v-for</b> が回るたび、親のテンプレートで描かれる → 完成。' },
@@ -289,7 +299,9 @@ onMounted(fetchPosts)`;
       Object.assign({"file": "index.html", "label": "見出しの穴（header）に、自分の見出しが入る", "hint": ["名前付きの穴に入れるのは <code>&lt;template #名前&gt;</code>。", "<code>&lt;template #header&gt;はじめての Slot&lt;/template&gt;</code>"], "edits": [["    <!-- ① 見出しの穴に入れる：<template #header>…</template> -->\n", "    <template #header>はじめての Slot</template>\n"]]}, { ok: (R, d) => { const e = d && d.querySelector('header'); const t = e ? e.textContent.trim() : ''; return !!t && t !== '（見出しなし）'; } }),
       Object.assign({"file": "index.html", "label": "本文の穴に、文章が入る", "hint": ["名前のない穴（default）には、そのまま書けばよい。", "<code>&lt;p&gt;ここは本文です。&lt;/p&gt;</code> を <code>&lt;my-card&gt;</code> の中に書く。"], "edits": [["    <!-- ② 本文の穴には、そのまま文章を書く -->\n", "    <p>ここは本文（default）です。</p>\n"]]}, { ok: (R, d) => { const e = d && d.querySelector('section'); return !!e && e.textContent.trim().length > 0; } }),
       Object.assign({"file": "index.html", "label": "フッターの穴（footer）に、文字が入る", "hint": ["header と同じ書き方。名前だけ変える。", "<code>&lt;template #footer&gt;© 研修ナビ&lt;/template&gt;</code>"], "edits": [["    <!-- ③ フッターの穴に入れる：<template #footer>…</template> -->\n", "    <template #footer>© 研修ナビ</template>\n"]]}, { ok: (R, d) => { const e = d && d.querySelector('footer'); return !!e && e.textContent.trim().length > 0; } }),
-      Object.assign({"file": "index.html", "label": "フッターに「👍 回数」ボタンを入れる（slot の中でも親のデータが使える）", "hint": ["slot に入れた中身は「親」の持ち物。親の <code>n</code> がそのまま使える（js に n が用意してある）。", "フッターを <code>&lt;button @click=\"n++\"&gt;👍 {{ n }}&lt;/button&gt;</code> にする。"], "edits": [["    <template #footer>© 研修ナビ</template>\n", "    <template #footer>\n      <button @click=\"n++\">👍 {{ n }}</button>\n    </template>\n"]], "optional": true}, { ok: (R) => R.o1 }),
+      Object.assign({"file": "index.html", "label": "フッターに「お気に入り 回数」ボタンを入れる（slot の中でも親のデータが使える）", "hint": ["slot に入れた中身は「親」の持ち物。親の <code>n</code> がそのまま使える（js に n が用意してある）。", "フッターを <code>&lt;button @click=\"n++\"&gt;お気に入り {{ n }}&lt;/button&gt;</code> にする。"], "edits": [["    <template #footer>© 研修ナビ</template>\n", "    <template #footer>\n      <button @click=\"n++\">お気に入り {{ n }}</button>\n    </template>\n"]], "optional": true, "level": 1}, { ok: (R) => R.o1 }),
+      Object.assign({"file": "index.html", "label": "本文の穴に、v-for で「初回相談・オンライン・夜間」の 3 項目リストを入れる", "hint": ["穴に入れる中身にも、ふつうのテンプレートが書ける。繰り返しは <code>v-for</code>。", "<code>&lt;ul&gt;&lt;li v-for=\"s in ['初回相談', 'オンライン', '夜間']\" :key=\"s\"&gt;{{ s }}&lt;/li&gt;&lt;/ul&gt;</code> を、本文の <code>&lt;p&gt;</code> の代わりに置く。"], "edits": [["    <p>ここは本文（default）です。</p>\n", "    <ul>\n      <li v-for=\"s in ['初回相談', 'オンライン', '夜間']\" :key=\"s\">{{ s }}</li>\n    </ul>\n"]], "optional": true, "level": 2}, { ok: (R, d) => { const e = d && d.querySelector('section'); return !!e && e.querySelectorAll('li').length === 3; } }),
+      Object.assign({"file": "index.html", "label": "カードを v-for で 3 枚並べ、見出しに「労働問題」「契約トラブル」「交通事故」と出す", "hint": ["<code>&lt;my-card&gt;</code> 自体に <code>v-for</code> を付ける。穴の中でも、ループの変数が使える。", "<code>&lt;my-card v-for=\"t in ['労働問題', '契約トラブル', '交通事故']\" :key=\"t\"&gt;</code> にして、見出しの穴を <code>&lt;template #header&gt;{{ t }}&lt;/template&gt;</code> にする。"], "edits": [["  <my-card>\n", "  <my-card v-for=\"t in ['労働問題', '契約トラブル', '交通事故']\" :key=\"t\">\n"], ["    <template #header>はじめての Slot</template>\n", "    <template #header>{{ t }}</template>\n"]], "optional": true, "level": 3}, { ok: (R, d) => { const hs = d ? [...d.querySelectorAll('header')].map((x) => x.textContent.trim()) : []; return hs.length === 3 && hs[0] === '労働問題' && hs[1] === '契約トラブル' && hs[2] === '交通事故'; } }),
     ], probe: async (win, doc) => {
       const nt = async () => { await win.Vue.nextTick(); await new Promise((r) => setTimeout(r, 40)); };
       const out = {};
@@ -316,25 +328,26 @@ onMounted(fetchPosts)`;
   reg({
     id: 'x-vue-dynamic', title: '動的コンポーネントと v-bind', sub: ':is / :class / :style / v-bind', emoji: '🔀',
     gh: [gh('99_bonus/DynamicComponents.md', 'vuejs/99_bonus/DynamicComponents.md'), gh('99_bonus/v-bind.md', 'vuejs/99_bonus/v-bind.md'), gh('07_css-binding', 'vuejs/07_css-binding')],
-    meta: { cat: 'vue', day: '19日(木)', when: '基礎（:class バインド）の直後。タブ UI を作るとき', mins: 10, order: 32, level: '応用', after: 'vue-basics', why: 'v-if の連打より <component :is> のほうが短く安全。v-bind の全パターンも整理' },
+    meta: { cat: 'vue', day: '4日目', when: '基礎（:class バインド）の直後。タブ UI を作るとき', mins: 10, order: 32, level: '応用', after: 'vue-basics', why: 'v-if の連打より <component :is> のほうが短く安全。v-bind の全パターンも整理' },
     scenes: [
       {
-        t: '<component :is> で切り替え', ref: [{"title": "KeepAlive のメモ", "icon": "book-open", "html": "<table class=\"vref\"><thead><tr><th>書き方</th><th>意味</th></tr></thead><tbody><tr><td><code>&lt;KeepAlive&gt;</code></td><td>切り替えても状態を覚える</td></tr><tr><td><code>include=\"Profile\"</code></td><td>覚える部品を絞る</td></tr><tr><td><code>max=\"3\"</code></td><td>覚える数の上限</td></tr></tbody></table>"}], why: {"pv": {"k": "code", "file": "App.vue", "lang": "html", "text": "<A v-if=\"tab == 1\" />\n<B v-else-if=\"tab == 2\" />\n<C v-else-if=\"tab == 3\" />", "err": [1, 2, 3], "keys": {"2": "is"}}, "iv": {"k": "code", "file": "App.vue", "lang": "ts", "text": "const current = shallowRef(TabA)\n// current を変えれば部品も変わる", "idea": [1], "keys": {"1": "is"}}, "av": {"k": "code", "file": "App.vue", "lang": "html", "text": "<button @click=\"current = TabB\">\n<component :is=\"current\" />", "ok": [2], "keys": {"2": "is"}}, "problem": "タブが増えるたび v-if を書き足す", "idea": "<b>出す部品を変数</b>にする", "answer": "<b>&lt;component :is&gt;</b>", "when": [["同じ場所で切り替えるタブ・ウィザード", "component :is"], ["URL を伴う画面切替", "Router"], ["入力途中を残したい", "KeepAlive"]]}, tag: ':is', lead: 'タブを切り替えて、<b>KeepAlive</b> の ON / OFF を比べよう。プロフィール欄に文字を入れてから切り替えると…？',
+        t: '<component :is> で切り替え', ref: [{"title": "KeepAlive のメモ", "icon": "book-open", "html": "<table class=\"vref\"><thead><tr><th>書き方</th><th>意味</th></tr></thead><tbody><tr><td><code>&lt;KeepAlive&gt;</code></td><td>切り替えても状態を覚える</td></tr><tr><td><code>include=\"Profile\"</code></td><td>覚える部品を絞る</td></tr><tr><td><code>max=\"3\"</code></td><td>覚える数の上限</td></tr></tbody></table>"}], why: {"pv": {"k": "code", "file": "App.vue", "lang": "html", "text": "<StepProfile v-if=\"step == 1\" />\n<StepPlan v-else-if=\"step == 2\" />\n<StepConfirm v-else-if=\"step == 3\" />", "err": [1, 2, 3], "keys": {"2": "is"}}, "iv": {"k": "code", "file": "App.vue", "lang": "ts", "text": "const current = shallowRef(StepProfile)\n// current を変えれば部品も変わる", "idea": [1], "keys": {"1": "is"}}, "av": {"k": "code", "file": "App.vue", "lang": "html", "text": "<button @click=\"current = StepPlan\">\n<component :is=\"current\" />", "ok": [2], "keys": {"2": "is"}}, "problem": "タブが増えるたび v-if を書き足す", "idea": "<b>出す部品を変数</b>にする", "answer": "<b>&lt;component :is&gt;</b>", "when": [["同じ場所で切り替えるタブ・ウィザード", "component :is"], ["URL を伴う画面切替", "Router"], ["入力途中を残したい", "KeepAlive"]]}, tag: ':is', lead: 'タブを切り替えて、<b>KeepAlive</b> の ON / OFF を比べよう。プロフィール欄に文字を入れてから切り替えると…？',
         render(el) {
           let cur = 0, keep = false, mounted = 0, unmounted = 0;
-          const names = ['Profile', 'Posts', 'Settings'];
+          const names = ['Profile', 'Cases', 'Settings'];
           const cache = {};
           const make = (i) => {
             mounted++;
             if (i === 0) return h('div', null, h('label', 'お名前 ', h('input', { placeholder: '入力してみて' })), h('div', { class: 'cnt' }, '← この入力はこの部品の state'));
-            if (i === 1) return h('div', null, ['記事 A', '記事 B', '記事 C'].map((t) => h('div', '・' + t)));
+            if (i === 1) return h('div', null, ['未払い残業代の相談', '契約書チェックの依頼', '交通事故の示談'].map((t) => h('div', '・' + t)));
             const cb = h('input', { type: 'checkbox' }); return h('div', null, h('label', cb, ' 通知を受け取る'));
           };
           const view = h('div', { class: 'xv-dview' });
           const log = h('div', { class: 'xv-row' });
           const tabs = h('div', { class: 'xv-tabs' }, names.map((n, i) => h('button', { onclick: () => sw(i) }, n)));
           const codeBox = h('div');
-          function sw(i) {
+          function sw(i, force) {
+            if (!force && i === cur && view.firstChild) return;   // 同じタブを押しても何も起きない（Vue も作り直さない）
             const old = view.firstChild;
             if (old && cur !== undefined) { if (keep) { cache[cur] = old; } else unmounted++; }
             cur = i; view.replaceChildren();
@@ -346,17 +359,16 @@ onMounted(fetchPosts)`;
             log.replaceChildren(chip('mounted ×' + mounted), chip('unmounted ×' + unmounted), chip(keep ? '状態は保持される' : '切替で state が消える'));
             codeBox.replaceChildren(code(`<script setup>\nconst current = shallowRef(${names[cur]})\n</script>\n\n<template>\n${keep ? '  <KeepAlive>\n    <component :is="current" />\n  </KeepAlive>' : '  <component :is="current" />'}\n</template>`, 'html', { color: C, file: 'Tabs.vue', hi: keep ? [6, 7, 8] : [6] }));
           }
-          const kb = h('button', { class: 'xv-btn', onclick: () => { keep = !keep; kb.classList.toggle('on', keep); kb.textContent = keep ? 'KeepAlive ON' : 'KeepAlive OFF'; mounted = 0; unmounted = 0; Object.keys(cache).forEach((k) => delete cache[k]); sw(cur); } }, 'KeepAlive OFF');
+          const kb = h('button', { class: 'xv-btn', onclick: () => { keep = !keep; kb.classList.toggle('on', keep); kb.textContent = keep ? 'KeepAlive ON' : 'KeepAlive OFF'; mounted = 0; unmounted = 0; Object.keys(cache).forEach((k) => delete cache[k]); sw(cur, true); } }, 'KeepAlive OFF');
           el.append(sp(pane(h('div', { class: 'xv-row' }, kb), h('div', { class: 'xv-ui', style: { minHeight: '0', padding: '10px' } }, tabs, view), log), pane(codeBox, h('div', { class: 'xv-row' }, chip('用途: タブ'), chip('ウィザード（段階入力）'), chip('ページ切替は Router')))));
           sw(0);
-          pickQuiz(el, '使い分けクイズ', [['タブが 10 個に増えそう。表示切替の書き方は？', ['v-if / v-else-if を 10 本', '<code>&lt;component :is&gt;</code> 1 か所', 'どれも同じ'], 1, '部品名を変数にすれば、タブが増えても表示のコードは増えない。'], ['タブを切り替えても、入力途中の文字を残したい。', ['KeepAlive で包む', 'v-show を使うしかない', '不可能'], 0, 'KeepAlive は、入力途中の状態も覚えておく。']]);
         },
       },
       {
-        t: 'v-bind をぜんぶ', why: {"pv": {"k": "code", "file": "Btn.vue", "lang": "ts", "text": ":class=\"'btn ' + (a ? 'on' : '')\"\n// スペース・typo でミス", "err": [1, 2], "keys": {"1": "obj"}}, "iv": {"k": "code", "file": "Btn.vue", "lang": "ts", "text": ":class=\"{ on: a, big: b }\"\n// true のキーだけ class に付く", "idea": [1], "keys": {"1": "obj"}}, "av": {"k": "code", "file": "Btn.vue", "lang": "html", "text": "<button :class=\"{ on: isActive }\"\n        :style=\"{ color }\"\n        v-bind=\"attrs\">", "ok": [1, 2, 3], "keys": {"1": "obj"}}, "problem": "class を文字でつなぐとミスしやすい", "idea": "<b>オブジェクト</b>で書く。true だけ付く", "answer": ":class / :style / v-bind", "when": [["条件で付け外し", "オブジェクト構文"], ["固定の見た目", "普通の class"], ["属性をまとめて渡す", "v-bind=\"obj\""]]}, tag: 'v-bind', lead: 'スイッチを動かすと、見た目とコードが同時に変わる。class・style・属性をまとめて渡す <code>v-bind="obj"</code> も試そう。',
+        t: 'v-bind をぜんぶ', why: {"pv": {"k": "code", "file": "Btn.vue", "lang": "ts", "text": ":class=\"'btn ' + (isUrgent ? 'urgent' : '')\"\n// スペース・typo でミス", "err": [1, 2], "keys": {"1": "obj"}}, "iv": {"k": "code", "file": "Btn.vue", "lang": "ts", "text": ":class=\"{ urgent: isUrgent, big: isBig }\"\n// true のキーだけ class に付く", "idea": [1], "keys": {"1": "obj"}}, "av": {"k": "code", "file": "Btn.vue", "lang": "html", "text": "<button :class=\"{ on: isActive }\"\n        :style=\"{ color }\"\n        v-bind=\"attrs\">", "ok": [1, 2, 3], "keys": {"1": "obj"}}, "problem": "class を文字でつなぐとミスしやすい", "idea": "<b>オブジェクト</b>で書く。true だけ付く", "answer": ":class / :style / v-bind", "when": [["条件で付け外し", "オブジェクト構文"], ["固定の見た目", "普通の class"], ["属性をまとめて渡す", "v-bind=\"obj\""]]}, tag: 'v-bind', lead: 'スイッチを動かすと、見た目とコードが同時に変わる。class・style・属性をまとめて渡す <code>v-bind="obj"</code> も試そう。',
         render(el) {
           const S = { active: true, error: false, size: 'md', color: '#2fd4a4', attrs: false };
-          const btn = h('button', { class: 'xv-vb' }, '送信');
+          const btn = h('button', { class: 'xv-vb', title: '押してみよう', onclick: () => { if (btn.disabled) return; btn.textContent = '送信しました ✔'; btn.animate && btn.animate([{ transform: 'scale(.9)' }, { transform: 'none' }], { duration: 260 }); setTimeout(() => { btn.textContent = '送信'; }, 900); } }, '送信');
           const codeBox = h('div');
           const tg = (k, t) => { const b = h('button', { class: 'xv-btn' + (S[k] ? ' on' : ''), onclick: () => { S[k] = !S[k]; b.classList.toggle('on', S[k]); draw(); } }, t); return b; };
           const sizes = ['sm', 'md', 'lg'].map((z) => h('button', { class: 'xv-btn' + (z === 'md' ? ' on' : ''), onclick: () => { S.size = z; sizes.forEach((b) => b.classList.toggle('on', b.textContent === z)); draw(); } }, z));
@@ -381,19 +393,29 @@ onMounted(fetchPosts)`;
       Object.assign({"file": "index.html", "label": "最初に「Home」の画面が出る", "hint": ["表示する部品を切り替えるのは <code>&lt;component :is=\"…\"&gt;</code>。tabs[current] を渡す。", "<code>&lt;component :is=\"tabs[current]\"&gt;&lt;/component&gt;</code>"], "edits": [["  <!-- ① ここに <component :is=\"...\"> を書く -->\n", "  <component :is=\"tabs[current]\"></component>\n"]]}, { ok: (R) => R.m1 }),
       Object.assign({"file": "index.html", "label": "「About」ボタンを押すと「About」に切り替わる", "hint": ["ボタンは current を書き換える。:is が current についていけば OK。", "① が書けていれば、自動で切り替わる。"], "edits": []}, { ok: (R) => R.m2 }),
       Object.assign({"file": "index.html", "label": "「Home」ボタンで「Home」に戻る", "hint": ["About のときと同じ仕組み。", "① が書けていれば、自然に戻れる。"], "edits": []}, { ok: (R) => R.m3 }),
-      Object.assign({"file": "index.html", "label": "Home の入力欄に書いた文字が、タブを往復しても消えない（KeepAlive）", "hint": ["切り替えるたびに部品は作り直される。作り直さずに「覚えておく」部品があった。", "<code>&lt;keep-alive&gt;</code> で <code>&lt;component&gt;</code> を包む。"], "edits": [["  <component :is=\"tabs[current]\"></component>\n", "  <keep-alive>\n    <component :is=\"tabs[current]\"></component>\n  </keep-alive>\n"]], "optional": true}, { ok: (R) => R.o1 }),
+      Object.assign({"file": "index.html", "label": "Home の入力欄に書いた文字が、タブを往復しても消えない（KeepAlive）", "hint": ["切り替えるたびに部品は作り直される。作り直さずに「覚えておく」部品があった。", "<code>&lt;keep-alive&gt;</code> で <code>&lt;component&gt;</code> を包む。"], "edits": [["  <component :is=\"tabs[current]\"></component>\n", "  <keep-alive>\n    <component :is=\"tabs[current]\"></component>\n  </keep-alive>\n"]], "optional": true, "level": 1}, { ok: (R) => R.o1 }),
+      Object.assign({"file": "index.html", "label": "今開いているタブのボタンだけに class を付ける（:class）", "hint": ["ボタンの class を、<code>current</code> と比べて出し入れする。<code>:class</code> にはオブジェクトが書ける。", "<code>:class=\"{ active: current === name }\"</code> をボタンに足す。（見た目は <code>.active { font-weight: bold }</code> など）"], "edits": [["  <button v-for=\"(c, name) in tabs\" :key=\"name\" @click=\"current = name\">{{ name }}</button>\n", "  <button v-for=\"(c, name) in tabs\" :key=\"name\" @click=\"current = name\" :class=\"{ active: current === name }\">{{ name }}</button>\n"]], "optional": true, "level": 2}, { ok: (R) => R.o2 }),
+      Object.assign({"file": "main.js", "label": "「Settings」タブを足す。「通知」にチェックを入れて、タブを往復しても残る", "hint": ["タブは <code>tabs</code> に部品を足すだけで増える（表示側のコードは触らない）。チェックが残るのは KeepAlive のおかげ。", "<code>const Settings = { template: '&lt;div&gt;&lt;h2&gt;Settings&lt;/h2&gt;&lt;label&gt;&lt;input type=\"checkbox\"&gt; 通知&lt;/label&gt;&lt;/div&gt;' }</code> を作り、<code>tabs = { Home, About, Settings }</code> にする。"], "edits": [["const About = { template: '<div><h2>About</h2></div>' }\n", "const About = { template: '<div><h2>About</h2></div>' }\nconst Settings = { template: '<div><h2>Settings</h2><label><input type=\"checkbox\"> 通知</label></div>' }\n"], ["    const tabs = { Home, About }\n", "    const tabs = { Home, About, Settings }\n"]], "optional": true, "level": 3}, { ok: (R) => R.o3 }),
     ], probe: async (win, doc) => {
       const nt = async () => { await win.Vue.nextTick(); await new Promise((r) => setTimeout(r, 40)); };
       const out = {};
       const h2 = () => (doc.querySelector('h2') ? doc.querySelector('h2').textContent : '');
       const btn = (t) => [...doc.querySelectorAll('button')].find((b) => b.textContent.trim() === t);
       out.m1 = h2().includes('Home');
+      const cls = (t) => (btn(t) ? btn(t).className.trim() : '');
+      const homeOn = !!cls('Home') && !cls('About');
       if (btn('About')) {
         const inp = doc.querySelector('input');
         if (inp) { inp.value = 'abc'; inp.dispatchEvent(new win.Event('input', { bubbles: true })); }
         btn('About').click(); await nt(); out.m2 = h2().includes('About');
+        out.o2 = homeOn && !!cls('About') && !cls('Home');
         if (out.m2 && btn('Home')) { btn('Home').click(); await nt(); out.m3 = h2().includes('Home');
-          const i2 = doc.querySelector('input'); out.o1 = !!i2 && i2.value === 'abc'; }
+          const i2 = doc.querySelector('input'); out.o1 = !!i2 && i2.value === 'abc';
+          if (btn('Settings')) {
+            btn('Settings').click(); await nt();
+            const cb = doc.querySelector('input[type=checkbox]');
+            if (cb) { cb.click(); await nt(); btn('Home').click(); await nt(); btn('Settings').click(); await nt(); const cb2 = doc.querySelector('input[type=checkbox]'); out.o3 = !!cb2 && cb2.checked === true; }
+          } }
       }
       return out;
     } });
@@ -419,14 +441,14 @@ onMounted(fetchPosts)`;
   reg({
     id: 'x-vue-composables', title: 'Composables と VueUse', sub: 'ロジックを部品から切り出す', emoji: '🧰',
     gh: [gh('99_bonus/Composables.md', 'vuejs/99_bonus/Composables.md'), gh('99_bonus/VueUse.md', 'vuejs/99_bonus/VueUse.md'), gh('99_bonus/Async.md', 'vuejs/99_bonus/Async.md')],
-    meta: { cat: 'vue', day: '24日(火)', when: 'Computed / Watcher の後、チーム開発の前', mins: 15, order: 33, level: '応用', after: 'vue-life', why: '同じロジックのコピペをやめる。実務の Vue ではよく使う' },
+    meta: { cat: 'vue', day: '5日目', when: 'Computed / Watcher の後、チーム開発の前', mins: 15, order: 33, level: '応用', after: 'vue-life', why: '同じロジックのコピペをやめる。実務の Vue ではよく使う' },
     scenes: [
       {
-        t: 'コピペをやめよう', ref: [{"title": "composable のルール", "icon": "book-open", "html": "<table class=\"vref\"><thead><tr><th>ルール</th><th>例</th></tr></thead><tbody><tr><td>名前は use で始める</td><td><code>useCounter</code></td></tr><tr><td>ref を返す</td><td>状態も一緒に共有できる</td></tr><tr><td>後片付けは onUnmounted</td><td>タイマー・リスナー</td></tr></tbody></table>"}], why: {"pv": {"k": "code", "file": "3つの部品", "lang": "ts", "text": "// A.vue  const count = ref(0) …\n// B.vue  const count = ref(0) …\n// C.vue  const count = ref(0) …", "err": [1, 2, 3], "keys": {"2": "use"}}, "iv": {"k": "code", "file": "useCounter.ts", "lang": "ts", "text": "export function useCounter() {\n  const count = ref(0)\n  const inc = () => count.value++\n  return { count, inc }\n}", "idea": [1, 4], "keys": {"1": "use"}}, "av": {"k": "code", "file": "A.vue / B.vue / C.vue", "lang": "ts", "text": "// どの部品でも1行\nconst { count, inc } = useCounter()", "ok": [2], "keys": {"2": "use"}}, "problem": "同じ処理を3部品にコピペ", "idea": "<b>ロジックだけ</b>を関数に切り出す", "answer": "<b>composable</b>（useXxx）", "when": [["状態 + ロジックを共有", "composable"], ["見た目も含めて共有", "コンポーネント"], ["状態を持たない計算", "普通の関数"]]}, tag: 'composable', lead: '3つの部品に、同じコードがある…。「次へ」で、1か所にまとめて<b>差し込む</b>流れを見よう。',
+        t: 'コピペをやめよう', ref: [{"title": "composable のルール", "icon": "book-open", "html": "<table class=\"vref\"><thead><tr><th>ルール</th><th>例</th></tr></thead><tbody><tr><td>名前は use で始める</td><td><code>useCounter</code></td></tr><tr><td>ref を返す</td><td>状態も一緒に共有できる</td></tr><tr><td>後片付けは onUnmounted</td><td>タイマー・リスナー</td></tr></tbody></table>"}], why: {"pv": {"k": "code", "file": "3つの部品", "lang": "ts", "text": "// 見積.vue  const count = ref(0) …\n// 予約.vue  const count = ref(0) …\n// お気に入り.vue  const count = ref(0) …", "err": [1, 2, 3], "keys": {"2": "use"}}, "iv": {"k": "code", "file": "useCounter.ts", "lang": "ts", "text": "export function useCounter() {\n  const count = ref(0)\n  const inc = () => count.value++\n  return { count, inc }\n}", "idea": [1, 4], "keys": {"1": "use"}}, "av": {"k": "code", "file": "A.vue / B.vue / C.vue", "lang": "ts", "text": "// どの部品でも1行\nconst { count, inc } = useCounter()", "ok": [2], "keys": {"2": "use"}}, "problem": "同じ処理を3部品にコピペ", "idea": "<b>ロジックだけ</b>を関数に切り出す", "answer": "<b>composable</b>（useXxx）", "when": [["状態 + ロジックを共有", "composable"], ["見た目も含めて共有", "コンポーネント"], ["状態を持たない計算", "普通の関数"]]}, tag: 'composable', lead: '3つの部品に、同じコードがある…。「次へ」で、1か所にまとめて<b>差し込む</b>流れを見よう。',
         render(el) {
           let step = 0;
           const logic = 'const count = ref(0)\nconst inc = () => count.value++';
-          const cmps = ['ProductCard', 'CartItem', 'LikeButton'].map((n, i) => {
+          const cmps = ['見積の数量', '予約の人数', 'お気に入り数'].map((n, i) => {
             const cnt = h('b', '0'); let c = 0;
             const dup = h('div', { class: 'xv-dup' }, logic);
             const use = h('div', { class: 'xv-dup gone' }, 'const { count, inc } = useCounter()');
@@ -436,10 +458,10 @@ onMounted(fetchPosts)`;
           const plug = h('div', { class: 'xv-plug', style: { opacity: .15, transform: 'scale(.9)' } }, 'composables/useCounter.ts', h('pre', { class: 'code', style: { textAlign: 'left', marginTop: '8px', fontSize: '.75rem', padding: '8px 12px' } }, 'export function useCounter() {\n  const count = ref(0)\n  const inc = () => count.value++\n  return { count, inc }\n}'));
           const row = h('div', { style: { display: 'grid', gridTemplateColumns: 'repeat(3,minmax(0,1fr))', gap: '10px' } }, cmps.map((c) => c.box));
           const steps = [
-            { say: '3つの部品が、<b>それぞれ同じロジック</b>を書いている。' },
-            { say: '同じコードが3つ…。直すときは <b>3か所</b>。バグの温床。' },
+            { say: '見積の数量・予約の人数・お気に入り数。<b>どの部品も同じカウントのロジック</b>をコピペして書いている。' },
+            { say: '「<b>上限は10まで</b>」に直したいとき、<b>3か所</b>を直すことになる。1か所直し忘れると、そこだけバグ。' },
             { say: '同じ部分を <b>useCounter()</b> という関数にまとめる。名前は <b>use</b> で始めるのが決まり。' },
-            { say: '各部品は <b>1行で呼ぶだけ</b>。状態は部品ごとに独立（+1 を押してみて！）。' },
+            { say: '各部品は <b>1行で呼ぶだけ</b>。上限の修正は <b>useCounter の1か所</b>だけ。状態は部品ごとに独立（+1 を押してみて！）。' },
           ];
           el.append(stepper({
             color: C, steps,
@@ -452,7 +474,7 @@ onMounted(fetchPosts)`;
         },
       },
       {
-        t: 'useMouse とクリーンアップ', why: {"pv": {"k": "code", "file": "useMouse.ts", "lang": "ts", "text": "window.addEventListener('move', f)\n// 部品を消しても…\n// f は動き続ける（メモリ漏れ）", "err": [1, 3], "keys": {"1": "clean"}}, "iv": {"k": "code", "file": "useMouse.ts", "lang": "ts", "text": "onMounted(() => {\n  window.addEventListener(…)\n})\nonUnmounted(() => {\n  window.removeEventListener(…)\n})", "idea": [4, 5, 6], "keys": {"5": "clean"}}, "av": {"k": "code", "file": "useMouse.ts", "lang": "ts", "text": "onUnmounted(() => {\n  window.removeEventListener(…)\n})\n// 始めた人が片付ける", "ok": [1, 2, 3], "keys": {"2": "clean"}}, "problem": "消し忘れで動き続ける", "idea": "<b>始めた人が片付ける</b>", "answer": "<b>onUnmounted</b> で解除", "when": [["addEventListener・タイマー", "必ず onUnmounted で解除"], ["ref の変化だけ", "自動で片付く"]]}, tag: 'onUnmounted', lead: '同じ composable を何か所で使っても、それぞれ別々に動く。部品を消すとき、<b>onUnmounted</b> で片付けないと…？',
+        t: 'useMouse とクリーンアップ', why: {"pv": {"k": "code", "file": "useMouse.ts", "lang": "ts", "text": "window.addEventListener('mousemove', f)\n// モーダルを閉じても…\n// f は動き続ける（メモリ漏れ）", "err": [1, 3], "keys": {"1": "clean"}}, "iv": {"k": "code", "file": "useMouse.ts", "lang": "ts", "text": "onMounted(() => {\n  window.addEventListener(…)\n})\nonUnmounted(() => {\n  window.removeEventListener(…)\n})", "idea": [4, 5, 6], "keys": {"5": "clean"}}, "av": {"k": "code", "file": "useMouse.ts", "lang": "ts", "text": "onUnmounted(() => {\n  window.removeEventListener(…)\n})\n// 始めた人が片付ける", "ok": [1, 2, 3], "keys": {"2": "clean"}}, "problem": "消し忘れで動き続ける", "idea": "<b>始めた人が片付ける</b>", "answer": "<b>onUnmounted</b> で解除", "when": [["addEventListener・タイマー", "必ず onUnmounted で解除"], ["ref の変化だけ", "自動で片付く"]]}, tag: 'onUnmounted', lead: '同じ composable を何か所で使っても、それぞれ別々に動く。部品を消すとき、<b>onUnmounted</b> で片付けないと…？',
         render(el, ctx) {
           let leak = false, listeners = 0, leaked = 0, uid = 0;
           const pad = h('div', { class: 'xv-pad' }, h('i', { style: { left: '50%', top: '50%' } }));
@@ -508,7 +530,6 @@ onMounted(fetchPosts)`;
           }
           el.append(sp(pane(lbl('よく使う composable'), grid, stage), pane(cd, h('div', { class: 'xv-row' }, chip('npm i @vueuse/core'), chip('Tree-shaking 対応'), chip('TypeScript 完全対応')))));
           show(keys[0]);
-          pickQuiz(el, '使い分けクイズ：どこに書く？', [['3つの部品で<b>状態 + ロジック</b>（カウンター）を共有したい。', ['composable（useCounter）', 'コンポーネント', '普通の関数'], 0, '状態（ref）を持つロジックは composable。'], ['見た目も含めて使い回したい（ボタン部品）。', ['composable', 'コンポーネント', 'VueUse'], 1, '見た目（テンプレート）があるならコンポーネント。'], ['税込金額を計算するだけ（状態なし）。', ['composable', 'コンポーネント', '普通の関数（utils）'], 2, '状態がない計算は、ふつうの関数で十分。']]);
         },
       },
     ],
@@ -524,23 +545,23 @@ onMounted(fetchPosts)`;
   reg({
     id: 'x-vue-state', title: '部品どうしの通信', sub: 'props/emit · Event Bus · 共有ステート', emoji: '📦',
     gh: [gh('99_bonus/EventBus.md', 'vuejs/99_bonus/EventBus.md'), gh('03_props', 'vuejs/03_props'), gh('04_model', 'vuejs/04_model')],
-    meta: { cat: 'vue', day: '24日(火)', when: 'コンポーネント復習の後 / チーム開発前の設計相談で', mins: 10, order: 34, level: '応用', after: 'vue-comp', why: 'props を何段も渡さずに済む方法を知る' },
+    meta: { cat: 'vue', day: '5日目', when: 'コンポーネント復習の後 / チーム開発前の設計相談で', mins: 10, order: 34, level: '応用', after: 'vue-comp', why: 'props を何段も渡さずに済む方法を知る' },
     scenes: [
       {
-        t: '誰が誰に話しかける？', ref: [{"title": "Pinia の最小コード", "icon": "database", "html": "<pre class=\"code\" style=\"margin:0\">export const useCart = defineStore('cart', () => {\n  const count = ref(0)\n  const add = () => count.value++\n  return { count, add }\n})</pre>"}], why: {"pv": {"k": "code", "file": "Card.vue", "lang": "html", "text": "<Header :badge=\"n\" />\n  <!-- props を何段も中継… -->\n<Card @add=\"$emit('add')\" />", "err": [2, 3], "keys": {"1": "store"}}, "iv": {"k": "code", "file": "stores/cart.ts", "lang": "ts", "text": "export const useCart =\n  defineStore('cart', () => {\n    const n = ref(0)\n    return { n }\n  })", "idea": [3, 4], "keys": {"3": "store"}}, "av": {"k": "code", "file": "Header / Card", "lang": "ts", "text": "const cart = useCart()  // Header\ncart.n++                // Card", "ok": [1, 2], "keys": {"1": "store"}}, "problem": "離れた部品で状態をどう共有する？", "idea": "<b>共通の置き場</b>を1つ作る", "answer": "props/emit・Bus・<b>共有ステート</b>", "when": [["親子の近い関係", "props / emit"], ["離れた部品が同じ状態を読む", "共有ステート（Pinia）"], ["一回きりの通知", "Event Bus（off を忘れずに）"]]}, tag: 'pattern', lead: '「カードの<b>カート追加</b> → ヘッダーのバッジ +1」。方式を選んで ▶ を押すと、データの通り道が変わる。',
+        t: '誰が誰に話しかける？', ref: [{"title": "Pinia の最小コード", "icon": "database", "html": "<pre class=\"code\" style=\"margin:0\">export const useNotice = defineStore('notice', () => {\n  const count = ref(0)\n  const read = () => count.value--\n  return { count, read }\n})</pre>"}], why: {"pv": {"k": "code", "file": "NoticeItem.vue", "lang": "html", "text": "<AppHeader :unread=\"n\" />\n  <!-- props を何段も中継… -->\n<NoticeItem @read=\"$emit('read')\" />", "err": [2, 3], "keys": {"1": "store"}}, "iv": {"k": "code", "file": "stores/notice.ts", "lang": "ts", "text": "export const useNotice =\n  defineStore('notice', () => {\n    const n = ref(0)\n    return { n }\n  })", "idea": [3, 4], "keys": {"3": "store"}}, "av": {"k": "code", "file": "Header / NoticeItem", "lang": "ts", "text": "const notice = useNotice()  // Header\nnotice.n--                // 通知ページ", "ok": [1, 2], "keys": {"1": "store"}}, "problem": "離れた部品で状態をどう共有する？", "idea": "<b>共通の置き場</b>を1つ作る", "answer": "props/emit・Bus・<b>共有ステート</b>", "when": [["親子の近い関係", "props / emit"], ["離れた部品が同じ状態を読む", "共有ステート（Pinia）"], ["一回きりの通知", "Event Bus（off を忘れずに）"]]}, tag: 'pattern', lead: '「通知アイテムを<b>既読にする</b> → ヘッダーの未読バッジが変わる」。方式を選んで ▶ を押すと、データの通り道が変わる。',
         render(el, ctx) {
-          const N = { App: [50, 9, 'var(--ts)'], Header: [16, 34, 'var(--pink)'], Main: [72, 34, 'var(--ts)'], List: [60, 58, 'var(--ts)'], Cart: [90, 58, 'var(--ts)'], Card: [60, 86, 'var(--vue)'], Hub: [28, 66, 'var(--team)'] };
+          const N = { App: [50, 9, 'var(--ts)'], Header: [16, 34, 'var(--pink)'], Main: [72, 34, 'var(--ts)'], NoticeList: [60, 58, 'var(--ts)'], Sidebar: [90, 58, 'var(--ts)'], NoticeItem: [60, 86, 'var(--vue)'], Hub: [28, 66, 'var(--team)'] };
           const P = {
-            props: { label: 'props / emit', path: ['Card', 'List', 'Main', 'App', 'Header'], hub: null, tags: ['4回の受け渡し', 'つながり: 強い', '追いやすい'], tips: ['親子の道のりを全部通る（バケツリレー）', 'emit ×3 → props ×1。中継する部品も修正が必要'], lc: 'var(--ts)' },
-            bus: { label: 'Event Bus (mitt)', path: ['Card', 'Hub', 'Header'], hub: 'Event Bus', tags: ['2回', 'つながり: 弱い', 'たどりにくい'], tips: ['emit("cart:add") → bus → on("cart:add")', 'onUnmounted で off() を忘れずに'], lc: 'var(--team)' },
-            store: { label: '共有ステート (Pinia)', path: ['Card', 'Hub', 'Header'], hub: 'Store (Pinia)', tags: ['2回', 'つながり: 弱い', 'DevToolsで追える'], tips: ['Card: store.add() で書く / Header: store.count を読む', '「状態」を共有するならこれが基本'], lc: '#2fd4a4' },
+            props: { label: 'props / emit', path: ['NoticeItem', 'NoticeList', 'Main', 'App', 'Header'], hub: null, tags: ['4回の受け渡し', 'つながり: 強い', '追いやすい'], tips: ['親子の道のりを全部通る（バケツリレー）', 'emit ×3 → props ×1。中継する部品も修正が必要'], lc: 'var(--ts)' },
+            bus: { label: 'Event Bus (mitt)', path: ['NoticeItem', 'Hub', 'Header'], hub: 'Event Bus', tags: ['2回', 'つながり: 弱い', 'たどりにくい'], tips: ['emit("notice:read") → bus → on("notice:read")', 'onUnmounted で off() を忘れずに'], lc: 'var(--team)' },
+            store: { label: '共有ステート (Pinia)', path: ['NoticeItem', 'Hub', 'Header'], hub: 'Store (Pinia)', tags: ['2回', 'つながり: 弱い', 'DevToolsで追える'], tips: ['NoticeItem: store.read() で書く / Header: store.count を読む', '「状態」を共有するならこれが基本'], lc: '#2fd4a4' },
           };
           let pat = 'props', running = false, n = 0, alive = true;
           const stage = h('div', { class: 'xv-stage xv-tree' });
           const svg = h('div');
           const els = {};
           Object.entries(N).forEach(([k, [x, y, c]]) => { const e = h('div', { class: 'xv-node', style: { left: x + '%', top: y + '%', '--nc': c } }, k); els[k] = e; stage.append(e); });
-          const badge = h('span', { class: 'xv-chip', style: { marginLeft: '6px' } }, 'cart 0');
+          const badge = h('span', { class: 'xv-chip', style: { marginLeft: '6px' } }, '既読 0');
           els.Header.append(badge);
           const pkt = h('div', { class: 'xv-pkt', style: { opacity: 0, '--pc': 'var(--vue)' } }, '');
           stage.append(pkt);
@@ -548,15 +569,15 @@ onMounted(fetchPosts)`;
           const tags = h('div', { class: 'xv-row' });
           const cd = h('div');
           const codes = {
-            props: '// Card\nemit(\'add\', item)\n// List / Main … 中継して emit\n// App → <Header :count="count" />',
-            bus: '// Card\nbus.emit(\'cart:add\', item)\n// Header\nbus.on(\'cart:add\', () => count.value++)\nonUnmounted(() => bus.off(...))',
-            store: '// stores/cart.ts\nexport const useCart = defineStore(\'cart\', () => {\n  const count = ref(0)\n  const add = () => count.value++\n  return { count, add }\n})\n// Card: cart.add()   Header: cart.count',
+            props: '// NoticeItem\nemit(\'read\', id)\n// NoticeList / Main … 中継して emit\n// App → <Header :unread="unread" />',
+            bus: '// NoticeItem\nbus.emit(\'notice:read\', item)\n// Header\nbus.on(\'notice:read\', () => count.value++)\nonUnmounted(() => bus.off(...))',
+            store: '// stores/notice.ts\nexport const useNotice = defineStore(\'notice\', () => {\n  const count = ref(0)\n  const read = () => count.value--\n  return { count, read }\n})\n// NoticeItem: notice.read()   Header: notice.count',
           };
           function draw() {
             const p = P[pat];
             Object.entries(els).forEach(([k, e]) => { if (k === 'Hub') { e.style.display = p.hub ? '' : 'none'; e.firstChild.textContent = p.hub || ''; e.style.setProperty('--nc', pat === 'bus' ? 'var(--team)' : '#2fd4a4'); } });
             const pts = p.path.map((k) => N[k].slice(0, 2));
-            const lines = Object.entries({ App: ['Header', 'Main'], Main: ['List', 'Cart'], List: ['Card'] }).flatMap(([a, bs]) => bs.map((b) => `<line x1="${N[a][0]}" y1="${N[a][1]}" x2="${N[b][0]}" y2="${N[b][1]}"/>`)).join('');
+            const lines = Object.entries({ App: ['Header', 'Main'], Main: ['NoticeList', 'Sidebar'], NoticeList: ['NoticeItem'] }).flatMap(([a, bs]) => bs.map((b) => `<line x1="${N[a][0]}" y1="${N[a][1]}" x2="${N[b][0]}" y2="${N[b][1]}"/>`)).join('');
             svg.innerHTML = `<svg viewBox="0 0 100 100" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%">${lines}<path d="M ${pts.map((q) => q.join(' ')).join(' L ')}" style="--lc:${p.lc}"/></svg>`;
             tags.replaceChildren(...p.tags.map(chip));
             info.innerHTML = p.tips.map((t) => '・' + t).join('<br>');
@@ -569,15 +590,15 @@ onMounted(fetchPosts)`;
             let from = p.path[0]; pkt.style.transition = 'none'; pkt.style.left = N[from][0] + '%'; pkt.style.top = N[from][1] + '%'; void pkt.offsetWidth; pkt.style.transition = '';
             for (let i = 0; i < p.path.length; i++) {
               const k = p.path[i]; pkt.style.left = N[k][0] + '%'; pkt.style.top = N[k][1] + '%';
-              pkt.textContent = pat === 'props' ? (i === p.path.length - 1 ? 'props:count' : 'emit:add') : pat === 'bus' ? (i === 1 ? 'cart:add' : 'add') : (i === 1 ? 'state' : 'add');
+              pkt.textContent = pat === 'props' ? (i === p.path.length - 1 ? 'props:unread' : 'emit:read') : pat === 'bus' ? (i === 1 ? 'notice:read' : 'read') : (i === 1 ? 'state' : 'read');
               await sleep(620); if (!alive) return;
               els[k].classList.add('hit'); setTimeout(() => els[k].classList.remove('hit'), 500);
             }
-            n++; badge.textContent = 'cart ' + n; flash(badge);
+            n++; badge.textContent = '既読 ' + n; flash(badge);
             await sleep(500); pkt.style.opacity = 0; running = false; go.disabled = false;
           }
-          const go = h('button', { class: 'xv-btn big', onclick: play }, '▶ 「カートに入れる」');
-          const sel = Object.entries(P).map(([k, v]) => h('button', { class: 'xv-btn' + (k === 'props' ? ' on' : ''), onclick: () => { if (running) return; pat = k; n = 0; badge.textContent = 'cart 0'; sel.forEach((b, i) => b.classList.toggle('on', Object.keys(P)[i] === k)); draw(); } }, v.label));
+          const go = h('button', { class: 'xv-btn big', onclick: play }, '▶ 「通知を既読にする」');
+          const sel = Object.entries(P).map(([k, v]) => h('button', { class: 'xv-btn' + (k === 'props' ? ' on' : ''), onclick: () => { if (running) return; pat = k; n = 0; badge.textContent = '既読 0'; sel.forEach((b, i) => b.classList.toggle('on', Object.keys(P)[i] === k)); draw(); } }, v.label));
           el.append(h('div', { class: 'xv-row', style: { marginBottom: '10px' } }, sel, go));
           el.append(sp(pane(stage, tags), pane(info, cd)));
           draw();
@@ -585,7 +606,7 @@ onMounted(fetchPosts)`;
         },
       },
       {
-        t: '使い分けクイズ', why: {"pv": {"k": "code", "file": "どれ？", "lang": "ts", "text": "// 状態? 通知? 近い? 遠い?\n// props / Bus / Pinia …\n// 現場でどれを選ぶ？", "err": [3], "keys": {"2": "pick"}}, "iv": {"k": "code", "file": "選び方", "lang": "ts", "text": "親子で近い     → props / emit\n離れて読む     → Pinia\n離れて一回通知 → Event Bus", "idea": [1, 2, 3], "keys": {"2": "pick"}}, "av": {"k": "code", "file": "例", "lang": "ts", "text": "const cart = useCart()\n<Child :title=\"t\" @add=\"onAdd\" />\nbus.emit('saved')", "ok": [1, 2, 3], "keys": {"1": "pick"}}, "problem": "違いは分かった。現場で選べる？", "idea": "<b>近さ・読む人数・通知か状態か</b>", "answer": "迷ったら props/emit → 増えたら共有", "when": [["親子 1 回", "props"], ["多くの画面が読む状態", "共有ステート"], ["離れた一回きりの通知", "Event Bus"]]}, lead: '場面に合う方式を選ぼう。',
+        t: '使い分けクイズ', why: {"pv": {"k": "code", "file": "どれ？", "lang": "ts", "text": "// 状態? 通知? 近い? 遠い?\n// props / Bus / Pinia …\n// 現場でどれを選ぶ？", "err": [3], "keys": {"2": "pick"}}, "iv": {"k": "code", "file": "選び方", "lang": "ts", "text": "親子で近い     → props / emit\n離れて読む     → Pinia\n離れて一回通知 → Event Bus", "idea": [1, 2, 3], "keys": {"2": "pick"}}, "av": {"k": "code", "file": "例", "lang": "ts", "text": "const notice = useNotice()\n<Child :title=\"t\" @add=\"onAdd\" />\nbus.emit('saved')", "ok": [1, 2, 3], "keys": {"1": "pick"}}, "problem": "違いは分かった。現場で選べる？", "idea": "<b>近さ・読む人数・通知か状態か</b>", "answer": "迷ったら props/emit → 増えたら共有", "when": [["親子 1 回", "props"], ["多くの画面が読む状態", "共有ステート"], ["離れた一回きりの通知", "Event Bus"]]}, lead: '場面に合う方式を選ぼう。',
         render(el) {
           el.append(h('div', { class: 'card', style: { display: 'grid', gap: '18px' } },
             quiz({ q: '親 → 子 に1回だけ値を渡す。いちばん素直なのは？', options: ['props', 'Event Bus', 'Pinia'], answer: 0, why: '親子の関係なら props / emit が基本。' }),
@@ -619,10 +640,10 @@ onMounted(fetchPosts)`;
   reg({
     id: 'x-vue-render', title: 'SPA / SSR / SSG / ISR と Nuxt', sub: '描画のタイミングを選ぶ', emoji: '🚀',
     gh: [gh('99_bonus/SPA・SSR・SSG・ISR.md', 'vuejs/99_bonus/SPA・SSR・SSG・ISR.md'), gh('99_bonus/Nuxt.md', 'vuejs/99_bonus/Nuxt.md')],
-    meta: { cat: 'vue', day: '25日(水)', when: '開発の合間 / 発表前の「次に学ぶこと」として', mins: 15, order: 35, level: '応用', after: 'vue-router', why: '今回作る SPA の「次のステップ」。Nuxt が何を助けてくれるか分かる' },
+    meta: { cat: 'vue', day: '6日目', when: '開発の合間 / 発表前の「次に学ぶこと」として', mins: 15, order: 35, level: '応用', after: 'vue-router', why: '今回作る SPA の「次のステップ」。Nuxt が何を助けてくれるか分かる' },
     scenes: [
       {
-        t: '誰がいつ HTML を作る？', ref: [{"title": "4方式の比較表", "icon": "table", "html": "<table class=\"vref\"><thead><tr><th></th><th>SPA</th><th>SSR</th><th>SSG</th><th>ISR</th></tr></thead><tbody><tr><td>HTML を作る人</td><td>ブラウザ</td><td>サーバー</td><td>ビルド時</td><td>ビルド時 + 裏で作り直し</td></tr><tr><td>検索（SEO）</td><td>△</td><td>◎</td><td>◎</td><td>◎</td></tr><tr><td>内容の新しさ</td><td>最新</td><td>最新</td><td>ビルド時点</td><td>少し遅れる</td></tr></tbody></table>"}], why: {"pv": {"k": "code", "file": "SPA の HTML", "lang": "html", "text": "<!-- 最初に届く HTML -->\n<div id=\"app\"></div>\n<!-- 中身は空 → 検索に見えない -->", "err": [2, 3], "keys": {"2": "html"}}, "iv": {"k": "code", "file": "方式", "lang": "ts", "text": "SPA : ブラウザが作る\nSSR : サーバーが毎回作る\nSSG : ビルド時に作っておく", "idea": [1, 2, 3], "keys": {"2": "html"}}, "av": {"k": "code", "file": "SSR の HTML", "lang": "html", "text": "<div id=\"app\">\n  <h1>商品一覧</h1> …", "ok": [1, 2], "keys": {"1": "html"}}, "problem": "SPA は最初が空で検索に弱い", "idea": "<b>誰が・いつ</b> HTML を作るか選ぶ", "answer": "<b>SPA / SSR / SSG / ISR</b>", "when": [["ログイン後の管理画面", "SPA"], ["毎回内容が変わる + SEO", "SSR"], ["ほぼ更新しない + 速さ", "SSG"], ["更新はあるが速さも欲しい", "ISR"]]}, tag: 'rendering', lead: '方式を選んで ▶ を押そう。ブラウザ・CDN・サーバーのやりとりと、<b>画面がいつ見えるか</b>を比べる。',
+        t: '誰がいつ HTML を作る？', ref: [{"title": "4方式の比較表", "icon": "table", "html": "<table class=\"vref\"><thead><tr><th></th><th>SPA</th><th>SSR</th><th>SSG</th><th>ISR</th></tr></thead><tbody><tr><td>HTML を作る人</td><td>ブラウザ</td><td>サーバー</td><td>ビルド時</td><td>ビルド時 + 裏で作り直し</td></tr><tr><td>検索（SEO）</td><td>△</td><td>◎</td><td>◎</td><td>◎</td></tr><tr><td>内容の新しさ</td><td>最新</td><td>最新</td><td>ビルド時点</td><td>少し遅れる</td></tr></tbody></table>"}], why: {"pv": {"k": "code", "file": "SPA の HTML", "lang": "html", "text": "<!-- 最初に届く HTML -->\n<div id=\"app\"></div>\n<!-- 中身は空 → 検索に見えない -->", "err": [2, 3], "keys": {"2": "html"}}, "iv": {"k": "code", "file": "方式", "lang": "ts", "text": "SPA : ブラウザが作る\nSSR : サーバーが毎回作る\nSSG : ビルド時に作っておく", "idea": [1, 2, 3], "keys": {"2": "html"}}, "av": {"k": "code", "file": "SSR の HTML", "lang": "html", "text": "<div id=\"app\">\n  <h1>料金プラン</h1> …", "ok": [1, 2], "keys": {"1": "html"}}, "problem": "SPA は最初が空で検索に弱い", "idea": "<b>誰が・いつ</b> HTML を作るか選ぶ", "answer": "<b>SPA / SSR / SSG / ISR</b>", "when": [["ログイン後の管理画面", "SPA"], ["毎回内容が変わる + SEO", "SSR"], ["ほぼ更新しない + 速さ", "SSG"], ["更新はあるが速さも欲しい", "ISR"]]}, tag: 'rendering', lead: '方式を選んで ▶ を押そう。ブラウザ・CDN・サーバーのやりとりと、<b>画面がいつ見えるか</b>を比べる。',
         render(el, ctx) {
           let mode = 'SPA', raf = 0, t0 = 0, playing = false;
           const T = 1000, DUR = 4200, LANES = ['ブラウザ', 'CDN', 'サーバー'];
@@ -660,10 +681,10 @@ onMounted(fetchPosts)`;
         },
       },
       {
-        t: 'Nuxt が自動でやること', ref: [{"title": "主なフォルダ", "icon": "folder-tree", "html": "<table class=\"vref\"><thead><tr><th>場所</th><th>役割</th></tr></thead><tbody><tr><td><code>pages/</code></td><td>ファイル = URL</td></tr><tr><td><code>components/</code></td><td>自動で読み込み</td></tr><tr><td><code>server/api/</code></td><td>自分の API</td></tr><tr><td><code>nuxt.config.ts</code></td><td>設定</td></tr></tbody></table>"}], why: {"pv": {"k": "code", "file": "router.ts", "lang": "ts", "text": "// 1ページごとに登録…\n{ path: '/about', component: … }\n// SSR もデータ取得も自前", "err": [1, 2, 3], "keys": {"2": "file"}}, "iv": {"k": "code", "file": "Nuxt", "lang": "sh", "text": "pages/\n├─ index.vue   → /\n└─ about.vue   → /about", "idea": [3], "keys": {"3": "file"}}, "av": {"k": "code", "file": "Nuxt", "lang": "sh", "text": "pages/about.vue  →  /about\n# routeRules で方式を選ぶ", "ok": [1], "keys": {"1": "file"}}, "problem": "SSR・ルーティングを全部自作は大変", "idea": "<b>ファイルを置くだけ</b>で URL ができる", "answer": "<b>Nuxt</b>（ファイル = URL）", "when": [["SEO・初回の速さが重要", "Nuxt"], ["社内ツール・管理画面", "Vite + Vue（SPA）で十分"]]}, tag: 'Nuxt', lead: '<b>Nuxt</b> は Vue に、ページ移動・SSR/SSG・データ取得を全部足したもの。ファイルを選ぶと URL が決まり、ページごとに方式も選べる。',
+        t: 'Nuxt が自動でやること', ref: [{"title": "主なフォルダ", "icon": "folder-tree", "html": "<table class=\"vref\"><thead><tr><th>場所</th><th>役割</th></tr></thead><tbody><tr><td><code>pages/</code></td><td>ファイル = URL</td></tr><tr><td><code>components/</code></td><td>自動で読み込み</td></tr><tr><td><code>server/api/</code></td><td>自分の API</td></tr><tr><td><code>nuxt.config.ts</code></td><td>設定</td></tr></tbody></table>"}], why: {"pv": {"k": "code", "file": "router.ts", "lang": "ts", "text": "// 1ページごとに登録…\n{ path: '/price', component: … }\n// SSR もデータ取得も自前", "err": [1, 2, 3], "keys": {"2": "file"}}, "iv": {"k": "code", "file": "Nuxt", "lang": "sh", "text": "pages/\n├─ index.vue   → /\n└─ price.vue   → /price", "idea": [3], "keys": {"3": "file"}}, "av": {"k": "code", "file": "Nuxt", "lang": "sh", "text": "pages/price.vue  →  /price\n# routeRules で方式を選ぶ", "ok": [1], "keys": {"1": "file"}}, "problem": "SSR・ルーティングを全部自作は大変", "idea": "<b>ファイルを置くだけ</b>で URL ができる", "answer": "<b>Nuxt</b>（ファイル = URL）", "when": [["SEO・初回の速さが重要", "Nuxt"], ["社内ツール・管理画面", "Vite + Vue（SPA）で十分"]]}, tag: 'Nuxt', lead: '<b>Nuxt</b> は Vue に、ページ移動・SSR/SSG・データ取得を全部足したもの。ファイルを選ぶと URL が決まり、ページごとに方式も選べる。',
         render(el) {
-          const files = [['pages/index.vue', '/'], ['pages/about.vue', '/about'], ['pages/posts/[id].vue', '/posts/:id']];
-          const modes = ['/', '/about', '/posts/:id'].map(() => 'ssr');
+          const files = [['pages/index.vue', '/'], ['pages/price.vue', '/price'], ['pages/cases/[id].vue', '/cases/:id']];
+          const modes = ['/', '/price', '/cases/:id'].map(() => 'ssr');
           const rules = { ssr: 'ssr: true', ssg: 'prerender: true', isr: 'isr: 60', spa: 'ssr: false' };
           const names = { ssr: 'SSR', ssg: 'SSG', isr: 'ISR', spa: 'SPA' };
           let sel = 0;
@@ -711,15 +732,15 @@ onMounted(fetchPosts)`;
   reg({
     id: 'x-vue-workflow', title: '開発フローとコードの書き方', sub: 'Issue → PR → Merge · Prettier · コメント', emoji: '🧭',
     gh: [gh('99_bonus/DevelopmenWorkflow.md', 'vuejs/99_bonus/DevelopmenWorkflow.md'), gh('99_bonus/prettier.md', 'vuejs/99_bonus/prettier.md'), gh('99_bonus/CommentCode.md', 'vuejs/99_bonus/CommentCode.md')],
-    meta: { cat: 'vue', day: '25日(水)', when: 'チーム開発（開発）の開始前 15 分', mins: 15, order: 36, level: '入門', after: 'vue-test', why: 'チーム開発の「進め方」と、読みやすいコードの約束事（整形・コメント）' },
+    meta: { cat: 'vue', day: '6日目', when: 'チーム開発（開発）の開始前 15 分', mins: 15, order: 36, level: '入門', after: 'vue-test', why: 'チーム開発の「進め方」と、読みやすいコードの約束事（整形・コメント）' },
     scenes: [
       {
-        t: '1 つの機能ができるまで', ref: [{"title": "コミットメッセージの頭", "icon": "table", "html": "<table class=\"vref\"><thead><tr><th>頭</th><th>意味</th></tr></thead><tbody><tr><td><code>feat:</code></td><td>新しい機能</td></tr><tr><td><code>fix:</code></td><td>バグ修正</td></tr><tr><td><code>docs:</code></td><td>文書</td></tr><tr><td><code>refactor:</code></td><td>整理（動きは同じ）</td></tr><tr><td><code>test:</code></td><td>テスト</td></tr><tr><td><code>chore:</code></td><td>雑用</td></tr></tbody></table>"}], why: {"pv": {"k": "code", "file": "ターミナル", "lang": "sh", "text": "$ git checkout main\n$ vim App.vue   # 直接編集\n$ git push      # 全員に影響", "err": [2, 3], "keys": {"3": "flow"}}, "iv": {"k": "code", "file": "ターミナル", "lang": "sh", "text": "$ git switch -c feat/cart\n$ git commit -m \"feat: cart\"\n$ git push -u origin feat/cart", "idea": [1], "keys": {"1": "flow"}}, "av": {"k": "code", "file": "GitHub", "lang": "sh", "text": "feat/cart → PR → Review → main\n  ✓ テスト通過  ✓ 承認", "ok": [1, 2], "keys": {"1": "flow"}}, "problem": "main に直接書くと壊れる", "idea": "<b>小さく分けて、確認してから</b>取り込む", "answer": "Branch → PR → Review → Merge", "when": [["新機能", "feat/ ブランチ"], ["バグ修正", "fix/ ブランチ"], ["ちょっとした修正", "小さな PR でも省略しない"]]}, tag: 'workflow', lead: 'Issue からマージまでを<b>1周</b>する。「テスト失敗」をオンにすると、戻って直す流れも見られる。',
+        t: '1 つの機能ができるまで', ref: [{"title": "コミットメッセージの頭", "icon": "table", "html": "<table class=\"vref\"><thead><tr><th>頭</th><th>意味</th></tr></thead><tbody><tr><td><code>feat:</code></td><td>新しい機能</td></tr><tr><td><code>fix:</code></td><td>バグ修正</td></tr><tr><td><code>docs:</code></td><td>文書</td></tr><tr><td><code>refactor:</code></td><td>整理（動きは同じ）</td></tr><tr><td><code>test:</code></td><td>テスト</td></tr><tr><td><code>chore:</code></td><td>雑用</td></tr></tbody></table>"}], why: {"pv": {"k": "code", "file": "ターミナル", "lang": "sh", "text": "$ git checkout main\n$ vim App.vue   # 直接編集\n$ git push      # 全員に影響", "err": [2, 3], "keys": {"3": "flow"}}, "iv": {"k": "code", "file": "ターミナル", "lang": "sh", "text": "$ git checkout -b feat/search\n$ git commit -m \"feat: 案件検索\"\n$ git push -u origin feat/search", "idea": [1], "keys": {"1": "flow"}}, "av": {"k": "code", "file": "GitHub", "lang": "sh", "text": "feat/search → PR → Review → main\n  ✓ テスト通過  ✓ 承認", "ok": [1, 2], "keys": {"1": "flow"}}, "problem": "main に直接書くと壊れる", "idea": "<b>小さく分けて、確認してから</b>取り込む", "answer": "Branch → PR → Review → Merge", "when": [["新機能", "feat/ ブランチ"], ["バグ修正", "fix/ ブランチ"], ["ちょっとした修正", "小さな PR でも省略しない"]]}, tag: 'workflow', lead: 'Issue からマージまでを<b>1周</b>する。「テスト失敗」をオンにすると、戻って直す流れも見られる。',
         render(el) {
           let fail = false, api;
           const stp = [
             ['Issue', 'clipboard-list', '# Issue #12  ログイン画面を作る\n# 担当: 自分 / 期限: 明日', '機能の目的と<b>受け入れ条件</b>を決める。'],
-            ['Branch', 'git-branch', '$ git switch -c feat/login', 'main から<b>作業用ブランチ</b>を切る。main には直接書かない。'],
+            ['Branch', 'git-branch', '$ git checkout -b feat/login', 'main から<b>作業用ブランチ</b>を切る。main には直接書かない。'],
             ['Code', 'pencil', '$ git add .\n$ git commit -m "feat: add login form"', '小さく書いて<b>こまめにコミット</b>。メッセージは feat: / fix: / docs: から始める。'],
             ['Format', 'sparkles', '$ npm run lint\n$ npx prettier --write src/', '<b>ESLint</b>（バグの種）と <b>Prettier</b>（見た目）を通す。保存時に自動でもOK。'],
             ['Test', 'flask-conical', '$ npm run test:unit', '壊していないか<b>自動で確認</b>。ここが赤ならコードに戻る。'],
@@ -739,23 +760,23 @@ onMounted(fetchPosts)`;
               nodes.forEach((n, k) => { n.classList.toggle('done', k < i); n.classList.toggle('cur', k === i && !(fail && i === 4)); n.classList.toggle('bad', fail && i === 4 && k === 4); });
               if (fail && i === 4) nodes[2].classList.add('cur');
               const lines = []; for (let k = 0; k <= i; k++) { const t = stp[k][2]; lines.push(...t.split('\n').map((l) => [l.startsWith('$') ? 'p' : l.startsWith('#') || l.startsWith('💬') ? 'm' : 'g', l])); }
-              if (fail && i >= 4) { const idx = lines.findIndex(([, l]) => l === '$ npm run test:unit'); lines.splice(idx + 1, 0, ['r', '✖ login.spec.ts  1 failed'], ['r', '  → Code に戻って修正（↩）']); }
+              if (fail && i >= 4) { const idx = lines.findIndex(([, l]) => l === '$ npm run test:unit'); lines.splice(idx + 1, 0, ['r', '✖ login.spec.ts  1 failed'], ['r', '  → Code に戻って修正（↩）']); if (i >= 5) lines.splice(idx + 3, 0, ['p', '$ npm run test:unit   # 直して再実行'], ['g', '✔ login.spec.ts  passed']); }
               term.replaceChildren(...lines.slice(-9).map(([c, l]) => h('div', { class: c }, l)));
             },
           }));
         },
       },
       {
-        t: 'Prettier：保存で整う', ref: [{"title": "設定ファイルのメモ", "icon": "settings", "html": "<table class=\"vref\"><thead><tr><th>項目</th><th>意味</th></tr></thead><tbody><tr><td><code>semi</code></td><td>行末に ; を付ける</td></tr><tr><td><code>singleQuote</code></td><td>文字を ' で囲む</td></tr><tr><td><code>tabWidth</code></td><td>インデントの幅</td></tr></tbody></table>"}], why: {"pv": {"k": "code", "file": "App.ts", "lang": "ts", "text": "const a='x' ;\nif(a){return}\nfunction f( ){}", "err": [1, 2, 3], "keys": {"1": "fmt"}}, "iv": {"k": "code", "file": ".prettierrc", "lang": "ts", "text": "// 保存すると自動で整形\n{ \"semi\": false,\n  \"singleQuote\": true }", "idea": [2, 3], "keys": {"2": "fmt"}}, "av": {"k": "code", "file": "App.ts", "lang": "ts", "text": "const a = 'x'\nif (a) return\nfunction f() {}", "ok": [1, 2, 3], "keys": {"1": "fmt"}}, "problem": "書き方がバラバラで差分が荒れる", "idea": "<b>整形は機械</b>に任せる", "answer": "<b>Prettier</b>（整形）+ <b>ESLint</b>", "when": [["見た目（空白・引用符・セミコロン）", "Prettier"], ["バグの種（未使用変数など）", "ESLint"]]}, tag: 'Prettier', lead: '人によってバラバラな書き方も、<b>保存すると全員同じ見た目</b>になる。右のオプションを変えて確かめよう。',
+        t: 'Prettier：保存で整う', ref: [{"title": "設定ファイルのメモ", "icon": "settings", "html": "<table class=\"vref\"><thead><tr><th>項目</th><th>意味</th></tr></thead><tbody><tr><td><code>semi</code></td><td>行末に ; を付ける</td></tr><tr><td><code>singleQuote</code></td><td>文字を ' で囲む</td></tr><tr><td><code>tabWidth</code></td><td>インデントの幅</td></tr></tbody></table>"}], why: {"pv": {"k": "code", "file": "App.ts", "lang": "ts", "text": "const fee=1000 ;\nif(fee){return}\nfunction calcTotal( ){}", "err": [1, 2, 3], "keys": {"1": "fmt"}}, "iv": {"k": "code", "file": ".prettierrc", "lang": "ts", "text": "// 保存すると自動で整形\n{ \"semi\": false,\n  \"singleQuote\": true }", "idea": [2, 3], "keys": {"2": "fmt"}}, "av": {"k": "code", "file": "App.ts", "lang": "ts", "text": "const fee = 1000\nif (fee) return\nfunction calcTotal() {}", "ok": [1, 2, 3], "keys": {"1": "fmt"}}, "problem": "書き方がバラバラで差分が荒れる", "idea": "<b>整形は機械</b>に任せる", "answer": "<b>Prettier</b>（整形）+ <b>ESLint</b>", "when": [["見た目（空白・引用符・セミコロン）", "Prettier"], ["バグの種（未使用変数など）", "ESLint"]]}, tag: 'Prettier', lead: '人によってバラバラな書き方も、<b>保存すると全員同じ見た目</b>になる。右のオプションを変えて確かめよう。',
         render(el) {
           const O = { semi: false, single: true, tab: 2 };
-          const messy = 'const name="Taro" ;const age = 25\nfunction greet(n:string){return "Hello, "+n}\nconst user={name,age,greet}';
+          const messy = 'const status="受付中" ;const qty = 2\nfunction calcTotal(price:number,n:number){return price*n}\nconst order={status,qty,calcTotal}';
           const out = h('div'), rc = h('div'), left = h('div');
           left.append(code(messy, 'ts', { color: '#ff6b7a', file: 'Before（バラバラ）' }));
-          left.append(h('div', { style: { height: '10px' } }), code('if(user){console.log( "ok" )}\nelse{ return }', 'ts', { color: '#ff6b7a', file: 'Before（別の人のコード）' }), h('div', { style: { height: '10px' } }), h('div', { class: 'xv-row' }, ['空白・改行', '引用符', 'セミコロン', 'インデント'].map((t) => chip('✔ ' + t + ' をそろえる'))));
+          left.append(h('div', { style: { height: '10px' } }), code('if(order.status==="受付中"){notify( order )}\nelse{ return }', 'ts', { color: '#ff6b7a', file: 'Before（別の人のコード）' }), h('div', { style: { height: '10px' } }), h('div', { class: 'xv-row' }, ['空白・改行', '引用符', 'セミコロン', 'インデント'].map((t) => chip('✔ ' + t + ' をそろえる'))));
           const fmt = () => {
             const q = (s) => O.single ? "'" + s + "'" : '"' + s + '"', sm = O.semi ? ';' : '', ind = ' '.repeat(O.tab);
-            return `const name = ${q('Taro')}${sm}\nconst age = 25${sm}\nfunction greet(n: string) {\n${ind}return ${q('Hello, ')} + n${sm}\n}\nconst user = { name, age, greet }${sm}`;
+            return `const status = ${q('受付中')}${sm}\nconst qty = 2${sm}\nfunction calcTotal(price: number, n: number) {\n${ind}return price * n${sm}\n}\nconst order = { status, qty, calcTotal }${sm}`;
           };
           function run() {
             out.replaceChildren(code(fmt(), 'ts', { color: C, file: 'After（Prettier 実行後）' }));
@@ -765,34 +786,37 @@ onMounted(fetchPosts)`;
           const tg = (k, t) => { const b = h('button', { class: 'xv-btn' + (O[k] ? ' on' : ''), onclick: () => { O[k] = !O[k]; b.classList.toggle('on', O[k]); run(); } }, t); return b; };
           const tabs = [2, 4].map((n) => h('button', { class: 'xv-btn' + (n === 2 ? ' on' : ''), onclick: () => { O.tab = n; tabs.forEach((b) => b.classList.toggle('on', b.textContent === n + ' スペース')); run(); } }, n + ' スペース'));
           const save = h('button', { class: 'xv-btn big', onclick: run }, '💾 保存（Prettier 実行）');
-          el.append(sp(pane(left, h('div', { class: 'xv-row' }, chip('ESLint = バグの種を探す'), chip('Prettier = 見た目を揃える'))), pane(out, h('div', { class: 'xv-row' }, save, tg('semi', 'semi ;'), tg('single', "singleQuote '"), tabs), rc)));
+          el.append(sp(pane(left, h('div', { class: 'xv-row' }, chip('ESLint = バグの種を探す'), chip('Prettier = 見た目を揃える')), h('div', { class: 'xv-row', style: { marginTop: '8px' } }, chip('PR の差分：整形前 +6 −6 → 整形後 +1 −1'), chip('書式の違いが消えて、本当の変更だけ見える'))), pane(out, h('div', { class: 'xv-row' }, save, tg('semi', 'semi ;'), tg('single', "singleQuote '"), tabs), rc)));
           run();
-          pickQuiz(el, '使い分けクイズ：Prettier？ ESLint？', [['セミコロン・引用符・インデントをそろえたい。', ['Prettier', 'ESLint', 'どちらも不要'], 0, '見た目をそろえるのは Prettier（整形）。'], ['使っていない変数や、未定義の変数を見つけたい。', ['Prettier', 'ESLint', 'どちらも不要'], 1, 'バグになりそうな所を探すのは ESLint。']]);
         },
       },
       {
         t: 'コメント：「なぜ」を書く', ref: [{"title": "JSDoc のタグ", "icon": "table", "html": "<table class=\"vref\"><thead><tr><th>タグ</th><th>意味</th></tr></thead><tbody><tr><td><code>@param</code></td><td>引数の説明</td></tr><tr><td><code>@returns</code></td><td>戻り値の説明</td></tr><tr><td><code>@example</code></td><td>使い方の例</td></tr></tbody></table>"}], why: {"pv": {"k": "code", "file": "Form.ts", "lang": "ts", "text": "i++  // i を 1 増やす\nbtn.disabled = true", "err": [1, 2], "keys": {"2": "why"}}, "iv": {"k": "code", "file": "考え方", "lang": "ts", "text": "// 「何を」はコードで分かる\n// 見て分からない「なぜ」を書く", "idea": [2], "keys": {"2": "why"}}, "av": {"k": "code", "file": "Form.ts", "lang": "ts", "text": "// 二重送信を防ぐため無効化\nbtn.disabled = true", "ok": [1], "keys": {"1": "why"}}, "problem": "無駄な説明も、無言も読みにくい", "idea": "分からない<b>「なぜ」</b>だけ書く", "answer": "<b>「なぜ」コメント</b> + JSDoc", "when": [["「何を」", "命名でコードを読みやすく"], ["「なぜ」", "コメントに書く"], ["関数の使い方", "JSDoc"]]}, tag: 'comment', lead: 'コードを見れば分かる「何を」より、見ても分からない<b>「なぜ」</b>を書く。4つのコメントは、良い？ 悪い？',
         render(el) {
           const Q = [
-            ['// i を 1 増やす\ni++', false, 'コードを読めば分かる「何を」。ノイズになる。'],
-            ['// 二重送信を防ぐため、通信中はボタンを無効化する\nbtn.disabled = true', true, '「なぜ」が書いてある。後から読む人が助かる。'],
-            ['/**\n * 税込み価格を返す\n * @param price 税抜き価格（円）\n */\nfunction withTax(price: number) {}', true, 'JSDoc は VS Code でホバー表示される。関数の説明に最適。'],
-            ['// TODO: 後で直す\nfetchAll()', false, '誰が・いつ・何を？が不明。「// TODO(lam): #123 ページング対応」のように。'],
+            { t: '「何を」だけ書いたコメント', src: 'i++', start: '// i を 1 増やす', ok: (t) => !/増や/.test(t), hint: 'コードを読めば分かる説明はノイズ。消そう（空にする）。' },
+            { t: '「なぜ」が無いコード', src: 'btn.disabled = true', start: '', ok: (t) => /^\s*\/\//.test(t) && /(ため|ので|防)/.test(t), hint: '「〜を防ぐため」のように、理由を // で書く。' },
+            { t: '説明が無い関数', src: 'function withTax(price: number) {}', start: '', ok: (t) => /\/\*\*/.test(t) && /@param/.test(t), hint: '/** … */ の中に説明と @param price を書く（ホバーで表示される）。' },
+            { t: '誰も直さない TODO', src: 'fetchAll()', start: '// TODO: 後で直す', ok: (t) => /TODO\([^)]+\)\s*:?\s*#\d+/.test(t), hint: '「// TODO(名前): #123 内容」の形にする。' },
           ];
-          let score = 0, answered = 0;
-          const res = h('div', { class: 'st-cap' }, '4 問すべて答えよう');
-          const cards = Q.map(([src, good, why], i) => {
-            const fb = h('div', { style: { minHeight: '1.4em', fontSize: '.875rem', color: 'var(--mute)' } });
-            const row = h('div', { class: 'opt' });
-            const mk = (lbl_, val, ic) => h('button', { class: 'xv-btn', onclick: () => {
-              if (row.dataset.done) return; row.dataset.done = 1; answered++;
-              const ok = val === good; if (ok) score++;
-              fb.innerHTML = (ok ? '✅ 正解！ ' : '❌ おしい。') + why; fb.style.color = ok ? 'var(--ok)' : 'var(--bad)';
-              row.querySelectorAll('button').forEach((b) => b.classList.remove('on')); row.querySelectorAll('button')[val ? 0 : 1].classList.add('on');
-              if (answered === Q.length) { res.innerHTML = '結果 <b>' + score + ' / ' + Q.length + '</b>' + (score === Q.length ? ' — 完璧！' : ''); if (score === Q.length) K.W.celebrate(); }
-            } }, ic + lbl_);
-            row.append(mk('良い', true, '👍 '), mk('悪い', false, '👎 '));
-            return h('div', { class: 'xv-pane xv-cm' }, code(src, 'ts', { color: C }), row, fb);
+          let okN = 0;
+          const res = h('div', { class: 'st-cap' }, '4つのコードを直そう（0 / 4）');
+          const mark = new Set();
+          const cards = Q.map((q, i) => {
+            const ta = h('textarea', { class: 'xv-ta', rows: q.start.split('\n').length > 1 ? 4 : 2, spellcheck: 'false', placeholder: 'ここにコメントを書く', style: { width: '100%', font: '700 .875rem var(--mono)', padding: '.5em .8em', borderRadius: '8px', border: '1px solid var(--line)', background: 'var(--code)', color: '#d8dcff', resize: 'vertical' } });
+            ta.value = q.start;
+            const fb = h('div', { style: { minHeight: '1.4em', fontSize: '.875rem', color: 'var(--mute)' } }, q.hint);
+            const chk = () => {
+              const ok = q.ok(ta.value);
+              fb.replaceChildren(h('span', ok ? 'これなら後から読む人が助かる' : q.hint)); fb.style.color = ok ? 'var(--ok)' : 'var(--mute)';
+              card.style.borderColor = ok ? 'var(--ok)' : '';
+              ok ? mark.add(i) : mark.delete(i);
+              res.innerHTML = '4つのコードを直そう（<b>' + mark.size + ' / ' + Q.length + '</b>）' + (mark.size === Q.length ? ' — 完璧！' : '');
+              if (mark.size === Q.length && !res.dataset.done) { res.dataset.done = 1; K.W.celebrate(); }
+            };
+            ta.addEventListener('input', chk);
+            const card = h('div', { class: 'xv-pane xv-cm' }, h('div', { class: 'label' }, q.t), ta, code(q.src, 'ts', { color: C }), fb);
+            return card;
           });
           el.append(h('div', { class: 'xv-split' }, cards), h('div', { style: { height: '12px' } }), res);
         },

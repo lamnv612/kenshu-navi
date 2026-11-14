@@ -94,7 +94,6 @@
       init(vis) { vis.append(lane); },
       update(n) { const [, zi, ic] = steps[n]; zs.forEach((e, k) => e.classList.toggle('now', k === zi)); pkt.style.left = `calc(${zi * 20 + 10}% - 16px)`; pkt.replaceChildren(I(ic)); pkt.style.background = Z[zi].c; },
     }), lbl('気になる場所をタップ'), det));
-    window.setTimeout(() => zs[1].classList.add('now'), 0);
   }
 
   /* ============ 2. 開発の流れ ============ */
@@ -108,7 +107,7 @@
         chips: [['terminal', 'CUI・Vim', 'cuivim', '基礎'], ['layout', 'HTML', 'html', '基礎'], ['palette', 'CSS', 'css', '基礎'], ['braces', 'TypeScript', 'ts-basic', 'TypeScript'], ['layout-template', 'Vue 基礎', 'vue-basics', 'Vue.js']] },
       { n: '確認', s: '試す', ic: 'flask-conical', c: 'var(--pink)', role: '動くか、壊れていないかを機械にも確かめさせる。', lang: 'sh', text: '$ npm run test\n ✓ Todo を追加できる\n ✓ 空文字は追加しない\n 2 passed',
         chips: [['flask-conical', '単体テスト', 'ts-test', 'TypeScript'], ['flask-conical', 'Vue のテスト', 'vue-test', 'Vue.js']] },
-      { n: '共有', s: 'みんなで', ic: 'git-pull-request', c: 'var(--vue)', role: '変更を履歴に残し、仲間に見てもらう。', lang: 'sh', text: '$ git switch -c feat/todo\n$ git commit -m "ToDo を追加"\n$ git push -u origin HEAD\n→ Pull Request を作る',
+      { n: '共有', s: 'みんなで', ic: 'git-pull-request', c: 'var(--vue)', role: '変更を履歴に残し、仲間に見てもらう。', lang: 'sh', text: '$ git checkout -b feat/todo\n$ git commit -m "ToDo を追加"\n$ git push -u origin HEAD\n→ Pull Request を作る',
         chips: [['git-branch', 'Git・GitHub', 'git', '基礎']] },
       { n: '公開', s: '届ける', ic: 'rocket', c: 'var(--basic)', role: 'ファイルをまとめて、誰でも見られる場所に置く。', lang: 'sh', text: '$ npm run build\n→ dist/ ができる\n→ サーバーに置く',
         chips: [['trophy', '成果発表', 'demo', 'チーム開発']] },
@@ -164,4 +163,9 @@
     { t: 'Webアプリの地図', tag: '全体像', lead: 'ボタンを1回押すと、何が起きる？ <b>▶ で旅を見て</b>、気になる場所を<b>タップ</b>しよう。', render: mapScene },
     { t: '開発の流れ', tag: 'プロセス', lead: 'アプリは「作って終わり」じゃない。<b>7つの段階</b>をぐるぐる回る。各段階をタップすると、使う道具が出ます。', render: flowScene },
     { t: '地図に当てはめよう', tag: 'QUIZ', lead: '8つの名前を、<b>どこで使うか</b>に仕分けしよう。', render: quizScene });
+
+  /* 一時的に非表示にするシーン。元に戻すときは配列を [] にする */
+  const HIDDEN = ['Webアプリの地図', '開発の流れ', '地図に当てはめよう', 'この研修で作るもの'];
+  L.scenes = L.scenes.filter((sc) => !HIDDEN.includes(sc.t));
+  L.noTest = HIDDEN.length > 0; // テストは非表示にした地図・開発の流れの内容なので、一緒に隠す
 })();

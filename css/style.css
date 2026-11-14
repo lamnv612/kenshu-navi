@@ -774,11 +774,11 @@ a.btn{text-decoration:none}
 .rm-e{font-size:1.1rem}
 .rm-node small{font-size:.7rem;font-weight:700;text-align:center;line-height:1.25;color:var(--mute);max-width:88px}.rm-node.done small{color:var(--text)}
 .bd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:12px}
-.bd{display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px 8px;border-radius:10px;border:1px dashed var(--line);color:var(--mute);text-align:center}
+.me-bd{display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px 8px;border-radius:10px;border:1px dashed var(--line);color:var(--mute);text-align:center}
 .bd-i{display:grid;place-items:center;width:52px;height:52px;border-radius:50%;background:var(--card2)}.bd-i .ic{width:24px;height:24px}
-.bd small{font-size:.72rem;font-weight:800;line-height:1.3}
-.bd.on{border-style:solid;border-color:#fbbf24;background:color-mix(in srgb,#fbbf24 10%,var(--card));color:var(--text)}
-.bd.on .bd-i{background:linear-gradient(135deg,#fbbf24,#f97316);color:#2b1a00;box-shadow:0 0 18px #fbbf2466;animation:pop .6s both}
+.me-bd small{font-size:.72rem;font-weight:800;line-height:1.3}
+.me-bd.on{border-style:solid;border-color:#fbbf24;background:color-mix(in srgb,#fbbf24 10%,var(--card));color:var(--text)}
+.me-bd.on .bd-i{background:linear-gradient(135deg,#fbbf24,#f97316);color:#2b1a00;box-shadow:0 0 18px #fbbf2466;animation:pop .6s both}
 @media(max-width:760px){.me-hero{padding:16px}.me-ringbox{width:120px;height:120px}.rm-node{width:78px}}
 
 .rm-row.x .rm-node::before{display:none}
@@ -870,3 +870,224 @@ a.btn{text-decoration:none}
 .v-prev{margin:6px 14px 14px;padding:10px 14px;border-radius:8px;border:1px dashed var(--line);background:var(--card2)}
 .v-prev>small{display:block;color:var(--mute);font-size:var(--fs-xs);font-weight:800;margin-bottom:6px;letter-spacing:.06em}
 .v-prev-body{display:flex;align-items:center;gap:18px;flex-wrap:wrap}.v-prev-body span{font-weight:800;display:flex;align-items:baseline;gap:.4em}.v-prev-body em{font-style:normal;color:var(--mute);font-size:var(--fs-sm)}
+
+/* ===== チャレンジのレベル（初級・中級・上級） ===== */
+.task .lv{display:inline-flex;align-items:center;gap:2px;margin-right:.6em;padding:.05em .55em;border-radius:6px;border:1px solid var(--line);font-size:var(--fs-xs);font-weight:800;color:var(--mute);vertical-align:middle;white-space:nowrap}
+.task .lv .ic{width:.9em;height:.9em;margin-right:0}.task .lv1 .ic{color:var(--ok)}.task .lv2 .ic{color:var(--team)}.task .lv3 .ic{color:var(--bad)}
+
+
+/* ===== fo1: 実行結果パネル（intro / html / cuivim / git / css の図） ===== */
+.fo1-out{margin-top:12px;border:1px solid var(--line);border-radius:8px;background:var(--code);color:#d8dcff;overflow:hidden}
+.fo1-hd{display:flex;align-items:center;gap:8px;padding:6px 10px;border-bottom:1px solid rgba(255,255,255,.1);font-size:var(--fs-xs);color:#aab2dd}
+.fo1-hd .ic{width:14px;height:14px}.fo1-hd b{flex:1;font-weight:800;letter-spacing:.06em}
+.fo1-run{padding:.15em .7em;font-size:var(--fs-xs);color:#d8dcff;border-color:rgba(255,255,255,.2)}
+.fo1-body{margin:0;padding:10px 14px;min-height:5.4em;font:.8125rem/1.7 var(--mono);white-space:pre-wrap;word-break:break-word}
+.fo1-body .fo1-cmd{display:block;color:#9be58b;font-weight:700}
+.fo1-body .fo1-ln{display:block;animation:fo1in .35s both}
+@keyframes fo1in{from{opacity:0;transform:translateY(4px)}}
+.cg-file[hidden]{display:none!important}  /* fo1: hidden なファイル札が残って見えていた */
+:root[data-theme=spec] .fo1-out{background:var(--code)}
+
+/* ===== fo4-*: flow + 出力パネル（team-tools / extra-basic のデモ） ===== */
+.fo4-split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:12px;align-items:start;margin-top:12px}
+.fo4-col{display:flex;flex-direction:column;gap:8px;min-width:0}
+.fo4-term{border-radius:8px;background:var(--code);color:#e8ebff;font:.8rem/1.6 var(--mono);padding:10px 14px;min-height:150px;max-height:260px;overflow:auto}
+.fo4-term p{margin:0;white-space:pre-wrap;word-break:break-all}
+.fo4-term .c{color:#fff;font-weight:700}.fo4-term .m{color:#8b93b8}
+.fo4-term p.new{animation:fo4in .35s both}
+@keyframes fo4in{from{opacity:0;transform:translateX(-6px)}}
+.fo4-g{width:100%;height:auto;display:block;border-radius:8px;background:var(--card);border:1px solid var(--line)}
+.fo4-g .ln{stroke:var(--line);stroke-width:2;fill:none}.fo4-g .main{stroke:var(--mute)}
+.fo4-g .cm{fill:var(--card2);stroke:var(--mute);stroke-width:2}
+.fo4-g .br{stroke:var(--c,var(--team));stroke-width:2.5;fill:none}.fo4-g .cb{fill:var(--c,var(--team));stroke:none}
+.fo4-g text{fill:var(--mute);font:700 10px var(--font)}.fo4-g .tx{fill:var(--text)}
+.fo4-g .hid{opacity:0;transition:opacity .5s}.fo4-g .hid.on{opacity:1}
+.fo4-g .dash{stroke-dasharray:4 4;stroke:var(--mute);fill:none;stroke-width:1.5}
+.fo4-pr{border:1px solid var(--line);border-radius:8px;background:var(--card);padding:10px 12px;display:grid;gap:8px;animation:fo4in .4s both}
+.fo4-pr .h{display:flex;align-items:center;gap:8px;font-weight:800;flex-wrap:wrap}.fo4-pr .h .ic{color:var(--ok)}
+.fo4-pr .st{margin-left:auto;font-size:.72rem;padding:.1em .6em;border-radius:6px;border:1px solid var(--ok);color:var(--ok);font-weight:800}
+.fo4-pr.merged .st,.fo4-pr.merged .h .ic{border-color:var(--violet);color:var(--violet)}
+.fo4-chk{display:flex;gap:6px;align-items:center;font-size:.8rem;color:var(--mute);font-weight:700}.fo4-chk .ic{color:var(--ok);width:1em;height:1em}
+.fo4-ctl{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.fo4-slide{border-radius:8px;border:1px solid var(--line);background:var(--card);padding:14px 16px;display:grid;gap:8px;min-height:120px;align-content:center;animation:fo4in .4s both}
+.fo4-slide b{font-size:1.05rem}.fo4-slide small{color:var(--mute);font-weight:700}
+.fo4-bars{display:flex;align-items:flex-end;gap:5px;height:56px}.fo4-bars i{flex:1;background:var(--c,var(--team));border-radius:3px 3px 0 0;transition:height .35s;min-height:4px}
+.fo4-clock{font:800 1.1rem var(--mono);color:var(--text)}.fo4-clock small{color:var(--mute);font-size:.75rem}
+.fo4-cur{display:flex;gap:4px;flex-wrap:wrap;align-items:center}.fo4-cur i{width:10px;height:18px;border-radius:2px;background:var(--line);transition:.25s}.fo4-cur i.on{background:var(--pink)}
+.fo4-note{padding:8px 12px;border-radius:8px;border:1px solid var(--line);background:var(--card);font-weight:800;font-size:.875rem}
+@media(max-width:760px){.fo4-split{grid-template-columns:1fr}}
+
+
+/* ===== fo2: flow + 実際の出力（TypeScript の図）===== */
+.fo2-enum{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:stretch}
+.fo2-enum>.p{padding:14px;border-radius:10px;border:1px solid var(--line);background:var(--card);display:grid;gap:10px;align-content:start}
+.fo2-enum>.p:last-child{align-content:center}
+.fo2-bot .tsx-dpad .ic{width:1.3em;height:1.3em}
+.fo2-enum>.p>.btn{justify-self:center}
+.fo2-enum pre.code{margin:0}
+.fo2-cmp{display:grid;grid-template-columns:1fr 1fr;gap:8px}.fo2-cmp .tsx-res{margin:0;font-size:var(--fs-xs)}
+.fo2-bot{display:flex;gap:24px;align-items:center;justify-content:center;flex-wrap:wrap}
+.fo2-bot .tsx-grid{width:176px}.fo2-bot .tsx-dpad{grid-template-columns:repeat(3,48px);grid-template-rows:repeat(3,48px)}
+.fo2-out{min-height:3.4em;padding:.6em .9em;border-radius:8px;background:var(--code);color:#cfd5ff;font:700 var(--fs-sm)/1.7 var(--mono);display:grid;align-content:center}
+.fo2-out .mu{color:#8e96c4}.fo2-out.e{color:#ff9aa5;border:1px solid var(--bad)}.fo2-out.ok{border:1px solid var(--ok)}
+@media(max-width:900px){.fo2-enum{grid-template-columns:1fr}}
+@media(max-width:480px){.fo2-cmp{grid-template-columns:1fr}}
+
+.fo4-pr.fo4-wait{opacity:.55;border-style:dashed;animation:none}.fo4-pr.fo4-wait .st{border-color:var(--line);color:var(--mute)}.fo4-pr.fo4-wait .h .ic{color:var(--mute)}
+.fo4-term{min-height:190px}
+@media(max-width:560px){.fo4-fl{padding:10px 8px;gap:2px}.fo4-fl .tt-ar{display:none}.fo4-fl .tt-fn{font-size:.62rem;padding:.6em .2em;overflow-wrap:anywhere}.fo4-fl .tt-fn b{font-size:1.1rem}.fo4-fl .tt-fn.on{transform:translateY(-3px) scale(1.04)}}
+
+/* ===== fo3-: Vue「流れ + 出力」デモ（vue.js / extra-vue.js の共通部品） ===== */
+.fo3-flow{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:18px;align-items:center;padding:16px;border-radius:10px;background:var(--card);border:1px solid var(--line)}
+.fo3-out{border:1px dashed var(--line);border-radius:8px;background:var(--card2);padding:10px 14px}
+.fo3-out>small,.fo3-ctl>small,.fo3-vm small{display:block;color:var(--mute);font-size:var(--fs-xs);font-weight:800;letter-spacing:.06em;margin-bottom:4px}
+.fo3-out-body{display:flex;align-items:center;justify-content:center;min-height:44px;gap:12px}
+.fo3-big{font:900 1.5rem var(--mono);line-height:1.2;overflow-wrap:anywhere;text-align:center}
+.fo3-row{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap}.fo3-row span{font-weight:800;display:flex;align-items:baseline;gap:.4em}
+.fo3-hint{color:var(--mute);font-size:var(--fs-sm)!important;text-align:center;display:block;margin:0!important;letter-spacing:0!important;font-weight:600!important}
+.fo3-ctl{display:grid;gap:2px}.fo3-note{min-height:1.5em;text-align:center;font-weight:800;color:var(--bad)}
+.fo3-vm{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:12px;align-items:center}
+.fo3-vm-t{display:grid;gap:6px;justify-items:center}
+.fo3-tag{font:700 .68rem var(--mono);padding:.15em .6em;border-radius:6px;border:1px solid var(--line);color:var(--mute);white-space:nowrap;transition:.25s}
+.fo3-tag.on{border-color:var(--vue);color:var(--text);background:var(--card)}
+.fo3-vm-p{text-align:center}.fo3-vm-c .v-in{width:100%}
+@media(max-width:760px){.fo3-flow{grid-template-columns:1fr}.fo3-vm{grid-template-columns:1fr}.fo3-vm-t{grid-auto-flow:column;justify-content:center}}
+.fo4-c{justify-content:center}
+.fo2-out .er{color:#ff9aa5}
+.fo2-ctl{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 12px;font:700 var(--fs-md) var(--mono)}
+.fo2-in{padding:.45em .7em;border-radius:6px;border:1px solid var(--line);background:var(--card);color:var(--text);font:700 var(--fs-sm) var(--mono);width:9em;min-width:0}
+.fo2-in:focus{outline:2px solid var(--violet)}
+.fo2-in:disabled{opacity:.5}
+.fo2-k{color:var(--mute)}
+:root[data-theme=spec] .tt-seg div.on{background:var(--card);color:var(--text);box-shadow:none;border-bottom:3px solid var(--sc)}
+.fo4-cur i{width:14px;height:22px}
+.cg-zone{min-height:132px}  /* fo1: 4つの場所を低く（空白を減らす） */
+@media(max-width:760px){.cg-zones{grid-template-columns:repeat(2,1fr)}.cg-zone{min-height:112px}}
+.fo2-panel{display:grid;gap:10px;margin-top:14px;padding:12px 14px;border-radius:10px;border:1px dashed var(--line);background:var(--card2)}
+.fo2-panel pre.code{margin:0}
+.fo2-2{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:stretch}
+.fo2-2>.fo2-out{align-content:center}
+@media(max-width:700px){.fo2-2{grid-template-columns:1fr}}
+.fo2-ctl .btn small{color:var(--mute);font-weight:700}
+.fo2-ctl .btn.primary small{color:inherit;opacity:.85}
+.cg-box{min-height:290px}                          /* fo1: ボックスモデルの結果枠を低く */
+.split>.col>.cg-pos,.split>.col>.cg-fx,.split>.col>.cg-box{flex:1 1 auto}
+.fo2-flow{display:flex;align-items:stretch;gap:8px}
+.fo2-flow .fo2-arrow{align-self:center;color:var(--mute);display:grid}
+.fo2-node{flex:1;min-width:0;display:grid;gap:2px;text-align:center;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--card);transition:.3s}
+.fo2-node b{font-size:var(--fs-sm)}.fo2-node small{color:var(--mute);font:700 var(--fs-xs) var(--mono);min-height:1.2em;overflow-wrap:anywhere}
+.fo2-node.on{border-color:var(--c,var(--ts));outline:2px solid color-mix(in srgb,var(--c,var(--ts)) 45%,transparent)}
+.fo2-node.ok{border-color:var(--ok)}.fo2-node.bad{border-color:var(--bad)}
+@media(max-width:600px){.fo2-node{padding:6px 4px}.fo2-node b{font-size:var(--fs-xs)}.fo2-flow{gap:4px}}
+.fo3-fill{display:flex;flex-direction:column}.fo3-fill>pre.code{flex:1;margin:0}
+.cg-term{height:260px}  /* fo1: ターミナルを低くして右のフォルダ木と高さをそろえる */
+.split>.col>.tree,.split>.col>.card:has(>.tree){flex:1 1 auto}
+.fo1-grow{flex:1 1 auto;display:flex;flex-direction:column}.fo1-grow>pre.code{flex:1;margin:0}
+.gap-stack{min-height:270px}                         /* fo1: z-index の図を右の列と同じ高さに */
+.gap-dsp{min-height:240px}                           /* fo1: display の結果枠を左の列と同じ高さに */
+/* fo4: 2列デモは上そろえ。ブラウザ枠は相手の列の高さまで伸ばして、空白を作らない */
+.split.xb-st{align-items:stretch}
+.split.xb-st>*{justify-content:flex-start}
+.split.xb-st>*>.xb-brw{flex:1;display:flex;flex-direction:column}
+.split.xb-st>*>.xb-brw>.pg{flex:1}
+.st-vis:empty{display:none}  /* fo1: 中身のない図の枠が空白として残っていた（git ブランチ） */
+.tsx-tree .kids .tsx-cls.off{opacity:.25;transform:none;border-style:dashed}
+.fo2-2>.col{align-content:start}
+/* fo4: クイズの枚数に合わせて列を決める（3問なら3列、4問なら2×2）。片側だけ空く状態を作らない */
+@media(min-width:901px){.fo4-q3{grid-template-columns:repeat(3,minmax(0,1fr))!important}.fo4-q1{grid-template-columns:minmax(0,640px)!important;justify-content:center}}
+.split .cg-term{height:250px}                           /* fo1: style タグより強く指定 */
+.split>.col>.cg-tree{flex:1 1 auto;min-height:200px}
+.fo4-q1,.fo4-q2,.fo4-q3,.fo4-q4{align-items:stretch!important}
+@media(max-width:760px){.st-vis .cg-zones{grid-template-columns:repeat(2,minmax(0,1fr))}.st-vis .cg-zone{min-height:104px}.st-vis .cg-zone h4{font-size:var(--fs-sm)}}
+@media(max-width:760px){.cg-ssh{min-height:250px}.cg-ssh .k{top:176px!important}}
+/* fo4: 2列は上そろえ（カードの中身を縦中央にしない）。ラベルの高さが左右でそろう */
+.split.fo4-top>*,.split.fo4-top>.card,.split.fo4-top>.col>.card{justify-content:flex-start;align-content:flex-start}
+.split>.col>.gap-ol{flex:1 1 auto}  /* fo1: リストの結果枠を左の列の高さまで広げる */
+.fo2-mod{display:grid;grid-template-columns:minmax(0,1fr) 90px minmax(0,1fr);gap:10px;align-items:start}
+@media(max-width:700px){.fo2-mod{grid-template-columns:minmax(0,1fr)}.fo2-mod .xt-lanex{display:none}}
+.fo4-stack{display:grid;gap:16px}
+.fo4-stack .xb-dev{max-width:100%}
+
+/* ===== r2b-: round 2 balance (TypeScript lessons) ===== */
+.r2b-top{align-items:start}
+.r2b-tgs{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px}
+
+/* ===== r2c: vue / extra-vue 2巡目（バランス調整） ===== */
+.v-term{justify-content:flex-start!important}                       /* ターミナルは上から出力 */
+.v-log:empty::before{content:"（まだログはありません）";color:var(--mute);font-size:var(--fs-xs)}
+.st-cap.r2c-cap{display:flex;align-items:flex-start;gap:.2em}.st-cap.r2c-cap>span{flex:1;min-width:0}
+.r2b-fillcol{display:flex;flex-direction:column;gap:12px}.r2b-fillcol>.gap-inst{flex:1;align-content:start}
+
+/* ===== r2d-: round 2 — balance / compactness (team-tools, extra-basic, intro-map) ===== */
+/* two-column demos: align to the top. app.js balance() sets inline centring, so !important is needed. .grow panels keep their own centring */
+.split.fo4-top>*:not(.grow){justify-content:flex-start!important;align-content:flex-start!important}
+.split.fo4-top>.card,.split.fo4-top>.col>.card{justify-content:flex-start!important;align-content:flex-start!important}
+/* a form label with an icon: icon + text on one line */
+.r2d-lt{display:flex;align-items:center;gap:.4em}
+/* empty state for lists (e.g. 発表順 before the draw) */
+.r2d-ph{display:flex;align-items:center;justify-content:center;gap:.5em;margin:0;padding:22px 14px;border:1px dashed var(--line);border-radius:8px;color:var(--mute);font-weight:700;font-size:var(--fs-sm);text-align:center}
+.r2d-ph .ic{width:1.2em;height:1.2em}
+/* checklist box: the tick only shows when it is checked */
+.check .bx .ic{opacity:0;transition:opacity .25s}.check.ok .bx .ic{opacity:1}
+/* PR card sits under both columns */
+.st-vis>div:has(>.fo4-pr){margin-top:12px}
+@media(max-width:700px){
+  .scene .xb-pipe{grid-template-columns:repeat(3,minmax(0,1fr))}.scene .xb-stg{min-height:140px}
+  .scene .tt-seg{height:auto;min-height:46px}.scene .tt-seg div{white-space:normal;text-align:center;font-size:.68rem;line-height:1.25;padding:4px 2px;overflow-wrap:anywhere}
+  .scene .tt-wall{height:300px}
+}
+/* 設計図テーマ・ライトの細部：見えない/読めない所を直す */
+:root:is([data-theme=light],[data-theme=spec]) .tsx-grid i{border:1px solid var(--line)}
+:root[data-theme=spec] .tsx-bl:not(.inh){color:#fff}
+:root[data-theme=spec] .tp-layer,:root[data-theme=spec] .tp-layer b,:root[data-theme=spec] .tp-layer small{color:#fff}
+
+/* ---- 確認テスト ---- */
+.tst-top{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.tst-n{font-weight:800;font-size:.875rem;color:var(--mute)}
+.tst-lv{display:inline-flex;align-items:center;gap:3px;font-size:.75rem;font-weight:800;padding:.1em .6em;border-radius:6px;border:1px solid var(--line);color:var(--mute)}
+.tst-lv .ic{width:11px;height:11px;fill:currentColor}
+.tst-lv.lv1{color:var(--ok)}.tst-lv.lv2{color:var(--accent,#d9a400)}.tst-lv.lv3{color:var(--bad)}
+.tst-bar{flex:1 1 100%;height:4px;border-radius:4px;background:var(--line);overflow:hidden}
+.tst-bar i{display:block;height:100%;background:var(--c,var(--ok));transition:width .3s}
+.tst-q{font-weight:800;line-height:1.7;margin-bottom:12px}
+.tst-opts{display:grid;gap:8px}
+.tst-opts .opt{all:unset;cursor:pointer;padding:.7em 1em;border-radius:8px;border:1px solid var(--line);background:var(--card);font-weight:700;line-height:1.5;transition:.2s}
+.tst-opts:not(.locked) .opt:hover{background:var(--card2)}
+.tst-opts .opt.ok{background:color-mix(in srgb,var(--ok) 22%,transparent);border-color:var(--ok)}
+.tst-opts .opt.bad{background:color-mix(in srgb,var(--bad) 22%,transparent);border-color:var(--bad)}
+.tst-opts.locked .opt{cursor:default}
+.tst-note{display:flex;gap:8px;align-items:flex-start;min-height:1.4em;margin-top:10px;font-size:.875rem;line-height:1.6;color:var(--mute)}
+.tst-note .ic{width:18px;height:18px;flex:none;margin-top:2px}
+.tst-note.ok .ic{color:var(--ok)}.tst-note.bad .ic{color:var(--bad)}
+.tst-res{text-align:center;padding:10px 0 16px}
+.tst-score{display:flex;align-items:baseline;justify-content:center;gap:6px;font-size:1rem}
+.tst-score .ic{width:28px;height:28px;align-self:center;color:var(--ok)}
+.tst-score b{font-size:2.4rem}
+.tool-ico.tst-done{color:var(--ok)}
+.tool-ico.tst-perfect{color:var(--ok);box-shadow:inset 0 0 0 1px var(--ok)}
+
+.modal.wide{width:min(1180px,100%);max-height:94vh}.modal.wide .modal-body{padding:12px}
+.tool-ico.tst-done{color:var(--ok)}
+
+.rail-final{all:unset;cursor:pointer;display:flex;align-items:center;gap:.5em;margin:10px 0 0;padding:.55em .8em;border-radius:8px;border:1px dashed var(--line);font-weight:800;font-size:.875rem;color:var(--mute);transition:.2s}.rail-final:hover{border-color:var(--c,var(--ts));color:var(--text)}.rail-final .ic{width:16px;height:16px}.rail-final.tst-done{color:var(--ok);border-color:var(--ok)}
+
+/* 用語ツールチップ（コード・ラベルの用語に乗せると説明） */
+.gl{cursor:help;text-decoration:underline dotted color-mix(in srgb,var(--mute) 70%,transparent);text-underline-offset:3px}
+.gl:hover,.gl:focus-visible{text-decoration-color:var(--ts);background:color-mix(in srgb,var(--ts) 14%,transparent);border-radius:4px;outline:0}
+.gl-tip{--gk:var(--ts);position:fixed;z-index:400;display:none;width:max-content;overflow:hidden;border-radius:10px;background:var(--bg2);color:var(--text);border:1px solid color-mix(in srgb,var(--gk) 45%,var(--line));box-shadow:0 18px 44px -14px rgba(0,0,0,.65),0 0 0 3px color-mix(in srgb,var(--gk) 10%,transparent);font:.8125rem/1.7 var(--font);pointer-events:none}
+.gl-tip.k-css{--gk:var(--pink)}.gl-tip.k-tag{--gk:var(--ts)}.gl-tip.k-attr{--gk:var(--team)}.gl-tip.k-word{--gk:var(--violet)}
+.gl-h{display:flex;align-items:center;gap:.6em;padding:.55em .9em;background:color-mix(in srgb,var(--gk) 16%,transparent);border-bottom:1px solid color-mix(in srgb,var(--gk) 30%,transparent)}
+.gl-k{font:800 .9375rem var(--mono);color:var(--gk)}
+.gl-kind{margin-left:auto;font:800 .6875rem var(--font);letter-spacing:.04em;padding:.1em .6em;border-radius:6px;color:var(--gk);border:1px solid color-mix(in srgb,var(--gk) 50%,transparent)}
+.gl-s{padding:.55em .9em;border-top:1px solid var(--line)}.gl-h+.gl-s{border-top:0}
+.gl-l{display:block;font:800 .625rem var(--font);letter-spacing:.12em;color:var(--mute);margin-bottom:.15em}
+.gl-m{font-weight:700;color:var(--text)}
+.gl-c{margin:.1em 0 0;padding:.55em .75em;border-radius:6px;background:var(--code);color:#d8dcff;font:.75rem/1.65 var(--mono);white-space:pre-wrap}
+.gl-sr{background:color-mix(in srgb,var(--warn,#ffb454) 10%,transparent);border-left:3px solid var(--warn,#ffb454)}.gl-sr .gl-l{color:var(--warn,#ffb454)}
+.gl-rt{color:var(--text);opacity:.92}
+
+.rail-fold{all:unset;box-sizing:border-box;width:100%;cursor:pointer;display:flex;align-items:center;gap:.5em;padding:.5em .6em;border-radius:8px;font-weight:800;font-size:.875rem;color:var(--text);transition:.2s}
+.rail-fold:hover{background:var(--card2)}.rail-fold .ic:first-child{color:var(--violet)}
+.rail-fold span{flex:1}.rail-fold em{font:700 .6875rem var(--mono);font-style:normal;padding:0 .5em;border-radius:6px;border:1px solid var(--line);color:var(--mute)}
+.rail-fold .ic:last-child{width:16px;height:16px;transition:transform .2s;color:var(--mute)}.rail-fold.on .ic:last-child{transform:rotate(180deg)}
+.rail-xl{display:grid;gap:6px;margin-top:6px}.rail-xl[hidden]{display:none}

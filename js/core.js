@@ -59,7 +59,7 @@
 
   /* line-addressable code block. opts: {file, hi:[lines(1-based)], dim, color} */
   function code(text, lang, opts = {}) {
-    const pre = h('pre', { class: 'code' + (opts.dim ? ' dim' : ''), 'data-file': opts.file || null });
+    const pre = h('pre', { class: 'code' + (opts.dim ? ' dim' : ''), 'data-file': opts.file || null, 'data-lang': lang || null });
     if (opts.color) pre.style.setProperty('--c', opts.color);
     const lines = text.replace(/\n$/, '').split('\n').map((l) => h('span', { class: 'ln', html: hl(l, lang) || '&nbsp;' }));
     pre.append(...lines);
@@ -257,6 +257,7 @@ declare function Boolean(v:any):boolean;
     }
     function runWeb() {
       con.innerHTML = '';
+      if (!iframe) { evalTasks(); return; }
       iframe.srcdoc = buildDoc();
     }
     async function runTS(execute) {
@@ -285,17 +286,19 @@ declare function Boolean(v:any):boolean;
       const nOk = req.filter((t) => t.ok).length;
       tasksBox.append(h('div', { class: 'mission-head' }, icon('list-checks'), h('b', 'ミッション'), h('span', { class: 'mission-n' }, nOk + ' / ' + req.length), h('i', { class: 'mission-bar' }, h('u', { style: { width: (req.length ? (nOk / req.length) * 100 : 0) + '%' } }))));
       const hopt = { fallback: o.solution ? () => showSolution() : null, use: (tt) => { const f = o.files.find((x) => x.lang === (tt.answer.lang || x.lang)) || o.files[0]; if (tt.answer.mode === 'append') eds[f.name].set(eds[f.name].get() + '\n' + tt.answer.code); else eds[f.name].set(tt.answer.code); } };
-      const row = (t) => h('div', { class: 'task' + (t.ok ? ' ok' : '') + (t.optional ? ' opt' : '') }, h('i', t.ok ? '✓' : ''), h('span', { class: 'task-l' }, t.label), hintButton(t, hopt));
+      const LV = ['初級', '中級', '上級'];
+      const lvChip = (t) => { const n = Math.min(3, Math.max(1, t.level || 1)); return h('span', { class: 'lv lv' + n, title: 'チャレンジ ' + LV[n - 1] }, Array.from({ length: n }, () => icon('star')), LV[n - 1]); };
+      const row = (t) => h('div', { class: 'task' + (t.ok ? ' ok' : '') + (t.optional ? ' opt' : '') }, h('i', t.ok ? '✓' : ''), h('span', { class: 'task-l' }, t.level && (!t.optional || opt.length > 1) ? lvChip(t) : null, t.label), hintButton(t, hopt));
       req.forEach((t) => tasksBox.append(row(t)));
       if (opt.length) {
         tasksBox.append(h('div', { class: 'mission-opt-head' }, h('span', { class: 'opt-badge' }, '任意'), h('b', 'チャレンジ'), h('small', 'もっと挑戦したい人だけ。やらなくても OK')));
-        opt.forEach((t) => tasksBox.append(row(t)));
+        opt.slice().sort((x, y) => (x.level || 1) - (y.level || 1)).forEach((t) => tasksBox.append(row(t)));
       }
       if (req.length && req.every((t) => t.ok) && !doneFired) { doneFired = true; celebrate(); o.onDone && o.onDone(); }
     }
     function schedule() {
       clearTimeout(timer);
-      timer = setTimeout(() => { mode === 'ts' ? runTS(false) : runWeb(); }, mode === 'ts' ? 450 : 300);
+      timer = setTimeout(() => { mode === 'ts' ? runTS(false) : mode === 'text' ? evalTasks() : runWeb(); }, mode === 'ts' ? 450 : 300);
     }
     function onMsg(e) {
       if (!e.data || !e.data.kenshu || !iframe || e.source !== iframe.contentWindow) return;
@@ -306,13 +309,15 @@ declare function Boolean(v:any):boolean;
       iframe = h('iframe', { sandbox: 'allow-scripts allow-same-origin', title: 'preview' });
       iframe.addEventListener('load', () => evalTasks());
       outEl = h('div', { class: 'out' }, iframe, con);
+    } else if (mode === 'text') {
+      outEl = h('div', { class: 'out term', style: { background: 'var(--code)' } }, h('div', { style: { padding: '14px 16px', fontSize: '.875rem', lineHeight: 1.8, flex: 1 }, html: o.note || '左のエディタに書くと、下のミッションが自動でチェックされます。' }));
     } else {
       outEl = h('div', { class: 'out term', style: { background: 'var(--code)' } },
         h('div', { style: { padding: '14px 16px', color: '#8e97c4', fontSize: '.875rem', flex: 1 } }, '💡 コードを書くと、型チェックが自動で走ります。', h('br'), '▶ 実行 で結果（console.log）を確認できます。'),
         con);
     }
     body.append(edBox, outEl);
-    const runBtn = h('button', { class: 'btn primary', onclick: () => (mode === 'ts' ? runTS(true) : runWeb()) }, '▶ 実行');
+    const runBtn = mode === 'text' ? null : h('button', { class: 'btn primary', onclick: () => (mode === 'ts' ? runTS(true) : runWeb()) }, '▶ 実行');
     const resetBtn = h('button', { class: 'btn ghost', onclick: () => { o.files.forEach((f) => eds[f.name].set(f.code)); doneFired = false; } }, '⟲ リセット');
     const solBtn = o.solution ? h('button', { class: 'btn ghost', title: 'まず自分で試してから見よう', onclick: () => showSolution() }, icon('key-round'), '答えを見る') : null;
     function showSolution() {
@@ -334,7 +339,7 @@ declare function Boolean(v:any):boolean;
     if (o.height) edBox.firstChild.style.minHeight = o.height + 'px';
     root.cleanup = () => window.removeEventListener('message', onMsg);
     if (K.ctx) K.ctx.cleanups.push(root.cleanup);
-    setTimeout(() => (mode === 'ts' ? runTS(false) : runWeb()), 30);
+    setTimeout(() => (mode === 'ts' ? runTS(false) : mode === 'text' ? evalTasks() : runWeb()), 30);
     evalTasks();
     return root;
   }
@@ -470,13 +475,15 @@ declare function Boolean(v:any):boolean;
     const body = h('div', { class: 'modal-body' });
     const c = typeof o.content === 'function' ? o.content() : o.content;
     if (typeof c === 'string') body.innerHTML = c; else if (c) body.append(c);
-    const panel = h('div', { class: 'modal' + (o.narrow ? ' narrow' : ''), role: 'dialog', 'aria-modal': 'true' },
+    const panel = h('div', { class: 'modal' + (o.narrow ? ' narrow' : '') + (o.wide ? ' wide' : ''), role: 'dialog', 'aria-modal': 'true' },
       h('div', { class: 'modal-head' }, o.icon ? icon(o.icon) : null, h('b', o.title || ''), h('button', { class: 'modal-x', title: '閉じる (Esc)', onclick: () => close() }, icon('x'))), body);
     back.append(panel); document.body.append(back);
+    let gmo = null;
+    if (K.glossify) { K.glossify(body); if (window.MutationObserver) { let gt = 0; gmo = new MutationObserver(() => { cancelAnimationFrame(gt); gt = requestAnimationFrame(() => { gmo.disconnect(); K.glossify(body); gmo.observe(body, { childList: true, subtree: true, characterData: true }); }); }); gmo.observe(body, { childList: true, subtree: true, characterData: true }); } }
     const onKey = (e) => { if (e.key === 'Escape') { e.stopPropagation(); close(); } };
     window.addEventListener('keydown', onKey, true);
     requestAnimationFrame(() => back.classList.add('in'));
-    function close() { window.removeEventListener('keydown', onKey, true); back.classList.remove('in'); setTimeout(() => back.remove(), 200); }
+    function close() { gmo && gmo.disconnect(); window.removeEventListener('keydown', onKey, true); back.classList.remove('in'); setTimeout(() => back.remove(), 200); }
     return { close, el: panel };
   }
 
