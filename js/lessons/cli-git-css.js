@@ -1826,15 +1826,84 @@ style('cgk', `
     .cgz pre{margin:0;padding:10px 12px;border-radius:8px;background:var(--code);color:#d8dcff;font:.8125rem/1.7 var(--mono);white-space:pre-wrap;overflow:auto}
     .cgz pre .add{background:rgba(111,220,124,.2);display:block;border-left:3px solid var(--ok);margin-left:-12px;padding-left:9px}
     .cgz pre .bd{background:rgba(255,107,157,.16);display:block;border-left:3px solid var(--bad);margin-left:-12px;padding-left:9px}
-    .cgz .bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.cgz .cap{font-size:.8125rem;color:var(--mute);line-height:1.7}
+    .cgz .ba{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;align-items:start}@media(max-width:820px){.cgz .ba{grid-template-columns:1fr}}
+    .cgz .pane{border:2px solid var(--line);border-radius:10px;padding:10px;display:grid;gap:8px;background:var(--card2)}.cgz .pane.no{border-color:var(--bad)}.cgz .pane.yes{border-color:var(--ok)}
+    .cgz .ptag{display:flex;align-items:center;gap:.5em;font-weight:900;font-size:.875rem}.cgz .ptag .ic{width:18px;height:18px}.cgz .pane.no .ptag{color:var(--bad)}.cgz .pane.yes .ptag{color:var(--ok)}
+    .cgz .ptag small{font:600 .75rem var(--mono);color:var(--mute);margin-left:auto}
+    .cgz .bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .cgz .bar.tools .btn,.cgz .bar.tools .cgh-btn{box-sizing:border-box;height:36px;min-width:8em;padding:0 1.1em;display:inline-flex;align-items:center;justify-content:center;gap:.45em;font:800 .8125rem var(--font);border-radius:8px}
+    .cgz .bar.tools .ic{width:16px;height:16px}
+    .cgz .note{display:grid;grid-template-columns:7em minmax(0,1fr);gap:.8em;align-items:baseline;font-size:.8125rem;color:var(--mute);line-height:1.8}
+    .cgz .note .nt{justify-self:start;min-width:6.2em;text-align:center;box-sizing:border-box;padding:.05em .8em;border-radius:6px;background:var(--card);border:1px solid var(--line);font-weight:900;color:var(--text)}.cgz .cap{font-size:.8125rem;color:var(--mute);line-height:1.7}
     `);
     const BASE = 'body{margin:0;padding:14px;font:14px/1.7 system-ui,"Hiragino Sans",sans-serif;color:#1f2937;background:#fff}h2,h3{margin:0 0 .4em}p{margin:0 0 .6em}';
     const lines = (t, cls) => t.split('\n').map((l) => (l.trim().startsWith('/*+') || /\/\*\+\*\/\s*$/.test(l) ? h('span', { class: 'add' }, l.replace(/\s*\/\*\+\*\/\s*$/, '')) : /\/\*-\*\/\s*$/.test(l) ? h('span', { class: 'bd' }, l.replace(/\s*\/\*-\*\/\s*$/, '')) : l + '\n'));
     /* o: { sym, ok, html, bad, good, h, btn:[直す, 戻す], cap, act:{label, fn(doc)} } */
+    // 「なし／あり」を左右に並べて、同じ見え方の枠（点線）で比べる。
+    // オレンジの点線＝今回変えた所（+ / - の印の行を含むルール）、グレー＝ページのパーツ、黄色の面＝padding
+    function cssFacts(o) {
+      const marked = new Set(), pads = new Set();
+      [o.bad, o.good].forEach((css) => {
+        const L = css.split('\n'); let cur = null;
+        L.forEach((l) => {
+          const m = l.match(/^\s*([^{}\/@][^{}]*?)\s*\{/); if (m) cur = m[1].trim();
+          const code = l.replace(/\/\*.*?\*\//g, '');
+          if (cur && /\/\*[+-]\*\//.test(l)) cur.split(',').forEach((x) => marked.add(x.trim().replace(/::?[a-z-]+(\(.*\))?$/i, '')));
+          if (cur && /(^|[\s;{])padding(-[a-z]+)?\s*:/.test(code)) cur.split(',').forEach((x) => pads.add(x.trim().replace(/::?[a-z-]+(\(.*\))?$/i, '')));
+        });
+      });
+      return { marked: [...marked].filter(Boolean), pads: [...pads].filter(Boolean) };
+    }
+    function peekCss(o) {
+      const f = cssFacts(o);
+      const base = o.peek || ('body>*{outline:1px dashed #94a3b8;outline-offset:-1px}' + f.marked.map((x) => x + '{outline:2px dashed #f97316;outline-offset:-1px}').join(''));
+      const pad = f.pads.map((x) => x + '{background-image:linear-gradient(rgba(56,189,248,.35),rgba(56,189,248,.35)),linear-gradient(rgba(250,204,21,.75),rgba(250,204,21,.75))!important;background-clip:content-box,padding-box!important;background-repeat:no-repeat!important}').join('');
+      return { css: base + pad, hasPad: f.pads.length > 0, hasMark: f.marked.length > 0 };
+    }
+    function makeBA(o) {
+      let peekOn = o.peekOn === true;
+      const PK = peekCss(o);
+      const root = h('div', { class: 'cgz' }), sym = h('div', { class: 'sym' }, icon('circle-alert'), h('div', { html: o.sym }));
+      const mkPane = (yes) => {
+        const css = (yes ? o.good : o.bad), clean = css.replace(/\/\*[+-]\*\//g, '');
+        const fr = h('iframe', { sandbox: 'allow-same-origin', title: yes ? 'あり' : 'なし', style: { height: ((o.h || 200) + 30) + 'px' } });
+        fr.srcdoc = '<!doctype html><meta charset="utf-8"><style>' + BASE + '</style><style>' + clean + '</style><style class="v">' + (peekOn ? PK.css : '') + '</style>' + o.html;
+        const pre = h('pre'); pre.replaceChildren(...lines(css));
+        return { fr, el: h('div', { class: 'pane ' + (yes ? 'yes' : 'no') }, h('div', { class: 'ptag' }, icon(yes ? 'circle-check' : 'circle-x'), yes ? (o.yesT || '直した後（あり）') : (o.noT || '直す前（なし）'), h('small', yes ? o.yesS || '' : o.noS || '')), fr, pre) };
+      };
+      const N = mkPane(false), Y = mkPane(true);
+      const parts = [];
+      if (o.legend) parts.push(o.legend);
+      else { if (PK.hasMark) parts.push('<b style="color:#f97316">┅ オレンジの点線</b> ＝ 今回<b>変えた所</b>'); parts.push('<b style="color:#94a3b8">┅ グレーの点線</b> ＝ ページの各パーツの枠'); }
+      if (PK.hasPad) parts.push('<b style="color:#eab308">■ 黄色の面</b> ＝ <b>padding</b>（内側の余白）、<b style="color:#38bdf8">■ 水色の面</b> ＝ 中身');
+      const legend = h('div', { class: 'cap', hidden: !peekOn, html: parts.join('　') });
+      const peekBtn = h('button', { class: 'btn', type: 'button', onclick: () => { peekOn = !peekOn; apply(); } });
+      const actBtn = o.act ? h('button', { class: 'btn', type: 'button', onclick: () => { [N, Y].forEach((P) => { try { o.act.fn(P.fr.contentDocument); } catch (e) { /* ignore */ } }); } }, icon('mouse-pointer-click'), o.act.label) : null;
+      function apply() {
+        [N, Y].forEach((P) => { const d = P.fr.contentDocument, v = d && d.querySelector('style.v'); if (v) v.textContent = peekOn ? PK.css : ''; });
+        peekBtn.classList.toggle('primary', peekOn); peekBtn.replaceChildren(icon(peekOn ? 'eye-off' : 'scan'), '枠と色');
+        legend.hidden = !peekOn;
+      }
+      apply();
+      const ht = htmlToggle(o.html), htBtn = ht.firstChild;
+      ht.style.margin = '0'; htBtn.replaceChildren(icon('code'), 'HTML');
+      root.append(sym, h('div', { class: 'ba' }, N.el, Y.el), h('div', { class: 'bar tools' }, peekBtn, htBtn, actBtn), legend, ht,
+        h('div', { class: 'note' }, h('span', { class: 'nt' }, '直した結果'), h('div', { html: o.ok || '' })), h('div', { class: 'note' }, h('span', { class: 'nt' }, 'ポイント'), h('div', { html: o.cap || '' })));
+      return root;
+    }
     function make(o) {
+      if (o.ba !== false) return makeBA(o);
       let fixed = false;
       const root = h('div', { class: 'cgz' }), sym = h('div', { class: 'sym' }), frame = h('iframe', { sandbox: 'allow-same-origin', title: 'ライブページ', style: { height: (o.h || 200) + 'px' } }), pre = h('pre'), cap = h('div', { class: 'cap' });
       const toggle = h('button', { class: 'btn primary', onclick: () => { fixed = !fixed; draw(); } });
+      let peekOn = !!o.peekOn;
+      const peekBtn = o.peek ? h('button', { class: 'btn', type: 'button', onclick: () => { peekOn = !peekOn; applyPeek(); } }) : null;
+      const applyPeek = () => {
+        const dd = frame.contentDocument, v = dd && dd.getElementById('v'); if (v) v.textContent = peekOn ? o.peek : '';
+        if (peekBtn) { peekBtn.classList.toggle('primary', peekOn); peekBtn.replaceChildren(icon(peekOn ? 'eye-off' : 'scan'), peekOn ? '枠の表示を消す' : '各パーツの枠を見る'); }
+        if (legend) legend.hidden = !peekOn;
+      };
+      const legend = o.legend ? h('div', { class: 'cap', hidden: !peekOn, html: o.legend }) : null;
       const act = o.act ? h('button', { class: 'btn', onclick: () => { try { o.act.fn(frame.contentDocument); } catch (e) { /* ignore */ } } }, icon('mouse-pointer-click'), o.act.label) : null;
       function draw() {
         root.classList.toggle('fixed', fixed);
@@ -1847,15 +1916,63 @@ style('cgk', `
           els.forEach((e, i) => { const a = before[i], b = e.getBoundingClientRect(), dx = a.left - b.left, dy = a.top - b.top; if (Math.abs(dx) + Math.abs(dy) > 0.5 && e.animate) e.animate([{ transform: `translate(${dx}px,${dy}px)` }, { transform: 'none' }], { duration: 520, easing: 'cubic-bezier(.3,1.1,.4,1)' }); });
         } else {
           frame.onload = () => { frame.dataset.ready = '1'; };
-          frame.srcdoc = '<!doctype html><meta charset="utf-8"><style>' + BASE + '*{transition:background-color .45s,color .45s,border-color .45s,box-shadow .45s,opacity .45s}</style><style id="u">' + clean + '</style>' + o.html;
+          frame.srcdoc = '<!doctype html><meta charset="utf-8"><style>' + BASE + '*{transition:background-color .45s,color .45s,border-color .45s,box-shadow .45s,opacity .45s}</style><style id="u">' + clean + '</style><style id="v">' + (peekOn ? o.peek : '') + '</style>' + o.html;
         }
         pre.replaceChildren(...lines(css));
         sym.replaceChildren(icon(fixed ? 'circle-check' : 'circle-alert'), h('div', { html: fixed ? o.ok : o.sym }));
         toggle.replaceChildren(icon(fixed ? 'rotate-ccw' : 'wrench'), fixed ? '元に戻す' : '直してみる');
-        cap.innerHTML = fixed ? (o.cap || '') : '';
+        cap.innerHTML = fixed ? (o.cap || '') : (o.capBad || '');
+        applyPeek();
       }
       draw();
-      root.append(sym, h('div', { class: 'cols' }, h('div', null, lbl('ライブページ（本物の CSS で表示）'), frame), h('div', null, lbl('style.css'), htmlToggle(o.html), pre)), h('div', { class: 'bar' }, toggle, act), cap);
+      root.append(sym, h('div', { class: 'cols' }, h('div', null, lbl('ライブページ（本物の CSS で表示）'), frame), h('div', null, lbl('style.css'), htmlToggle(o.html), pre)), h('div', { class: 'bar' }, toggle, peekBtn, act), legend, cap);
+      return root;
+    }
+    /* tab 1「inline に余白」：なぜ inline-block だと押し出されるのかを、動かして確かめる */
+    style('cgx', `
+    .cgx{border:1px dashed var(--line);border-radius:10px;padding:12px;display:grid;gap:10px;background:var(--card2)}
+    .cgx .tape{font-size:.875rem;line-height:1.8}
+    .cgx .ctl{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .cgx .rng{display:flex;align-items:center;gap:.6em;font-size:.8125rem;font-weight:800;flex:1 1 220px;min-width:0}
+    .cgx .rng input{flex:1;min-width:80px;accent-color:#facc15}.cgx .rng b{font:900 .9375rem var(--mono);min-width:3.2em;text-align:right}
+    .cgx iframe{width:100%;border:1px solid var(--line);border-radius:8px;background:#fff;display:block}
+    .cgx .xwhy{padding:.7em 1em;border-radius:10px;font-size:.875rem;line-height:1.8;border:1px solid}
+    .cgx .xwhy.bad{background:color-mix(in srgb,var(--bad) 14%,transparent);border-color:var(--bad)}
+    .cgx .xwhy.ok{background:color-mix(in srgb,var(--ok) 14%,transparent);border-color:var(--ok)}
+    `);
+    function displayPlay(root) {
+      const st = { disp: 'inline', pad: 14 };
+      const PEEK = 'nav a{outline:2px dashed #f97316;outline-offset:-1px;background-image:linear-gradient(rgba(56,189,248,.35),rgba(56,189,248,.35)),linear-gradient(rgba(250,204,21,.75),rgba(250,204,21,.75))!important;background-clip:content-box,padding-box!important;background-repeat:no-repeat!important}p{outline:1px dashed #94a3b8;outline-offset:-1px}';
+      const cssNow = () => 'nav a{display:' + st.disp + ';padding:' + st.pad + 'px 18px;background:#dbeafe;margin-right:6px}';
+      const HTML = '<p>無料相談はこちらから</p><nav><a href="#">案件</a><a href="#">相談</a><a href="#">料金</a></nav><p style="margin-top:8px">ナビの下の文章</p>';
+      const frame = h('iframe', { sandbox: 'allow-same-origin', title: 'じぶんで動かす', style: { height: '230px' } });
+      let ready = false;
+      frame.addEventListener('load', () => { ready = true; });
+      frame.srcdoc = '<!doctype html><meta charset="utf-8"><style>' + BASE + '</style><style id="u">' + cssNow() + '</style><style id="v">' + PEEK + '</style>' + HTML;
+      const mkBtn = (d) => h('button', { class: 'btn', type: 'button', onclick: () => { st.disp = d; draw(); } }, 'display: ' + d);
+      const bI = mkBtn('inline'), bB = mkBtn('inline-block');
+      const val = h('b', '14px'), rng = h('input', { type: 'range', min: '0', max: '30', step: '1' });
+      rng.value = String(st.pad);
+      rng.addEventListener('input', () => { st.pad = +rng.value; draw(); });
+      const why = h('div', { class: 'xwhy' });
+      function draw() {
+        bI.classList.toggle('primary', st.disp === 'inline'); bB.classList.toggle('primary', st.disp === 'inline-block');
+        val.textContent = st.pad + 'px';
+        const d = frame.contentDocument, u = ready && d && d.getElementById('u'); if (u) u.textContent = cssNow();
+        const inl = st.disp === 'inline';
+        why.className = 'xwhy ' + (inl ? 'bad' : 'ok');
+        why.innerHTML = inl
+          ? '<b>inline：</b>リンクの背景は「塗りが外にはみ出す」だけ。<b>文字の行の高さは増えない</b>ので、上下の padding が<b>となりの文章にかぶさる</b>。'
+          : '<b>inline-block：</b>リンクが<b>本物の大きさを持つ箱</b>になる。行は箱が入る高さまで<b>広がる</b>ので、となりの文章が<b>押し出される</b>。';
+      }
+      draw();
+      const box = h('div', { class: 'cgx' },
+        lbl('じぶんで動かして確かめる'),
+        h('div', { class: 'tape', html: '<b>たとえ：</b><b>inline</b> は、蛍光ペンで文字の外まで広く塗るイメージ。<b>inline-block</b> は、行の中にカードを1枚置くイメージ。' }),
+        h('div', { class: 'ctl' }, bI, bB, h('label', { class: 'rng' }, 'padding 上下', rng, val)),
+        frame, why);
+      const ba = root.querySelector('.ba');
+      if (ba) ba.after(box); else root.append(box);
       return root;
     }
     const D = {
@@ -1902,13 +2019,16 @@ style('cgk', `
         good: '.plan {\n  box-sizing: border-box;  /*+*/\n  float: left;\n  width: 33.33%;\n  padding: 16px;\n  border: 2px solid #94a3b8;\n  background: #f1f5f9;\n}',
         cap: '初期値（content-box）は <b>width ＋ padding ＋ border</b> が実際の幅。<code>box-sizing: border-box</code> なら <b>width の中に padding と border を含める</b>ので、計算が合う。現場ではほぼ全サイトで指定する。',
       }),
-      display: () => make({
+      display: () => displayPlay(make({
+        ba: true, noT: 'display なし（a は inline のまま）', yesT: 'display: inline-block を足した', noS: '重なる', yesS: '重ならない',
+        peek: 'nav a{outline:2px dashed #f97316;outline-offset:-1px}p{outline:1px dashed #94a3b8;outline-offset:-1px}',
+        legend: '<b style="color:#f97316">┅ オレンジの点線</b> ＝ リンクの<b>見た目の範囲</b>（背景色と padding）。<b style="color:#94a3b8">┅ グレーの点線</b> ＝ 文章（p）の枠。',
         h: 190, sym: 'ナビのリンクに <code>padding</code> を付けたのに、<b>上下が上の文章に重なって</b>、押せる範囲もずれる。', ok: '<b>リンクが箱になった。</b>上下の余白が正しく効き、押しやすい範囲も広がった。',
         html: '<p>無料相談はこちらから（この文章が重なると困る）</p><nav><a href="#">案件</a><a href="#">相談</a><a href="#">料金</a></nav><p style="margin-top:8px">ナビの下の文章</p>',
         bad: 'nav a {\n  padding: 14px 18px;\n  background: #dbeafe;\n  margin-right: 6px;\n  /* a は inline → 上下の padding は\n     まわりの行を押しのけない */  /*-*/\n}',
         good: 'nav a {\n  display: inline-block;  /*+*/\n  padding: 14px 18px;\n  background: #dbeafe;\n  margin-right: 6px;\n}',
         cap: 'a や span は初期値が <code>inline</code>。<b>縦の余白や幅・高さを効かせたい</b>ときは <code>inline-block</code>（横に並べたい）か <code>block</code>（1行使う）にする。',
-      }),
+      })),
       flex: () => make({
         h: 150, sym: 'ヘッダーで、<b>ロゴは左・ログインは右</b>、<b>全部を縦の中央</b>にしたい。でも<b>全部が左に固まって</b>、高さもばらばら。', ok: '<b>きれいに並んだ。</b>親に3行書いただけ。',
         html: '<header><span class="logo">案件管理</span><nav><a>案件</a><a>相談</a><a>料金</a></nav><button>ログイン</button></header>',
@@ -2044,24 +2164,27 @@ style('cgk', `
     display: () => [
       { n: 'inline に余白', el: () => SYM.display() },
       { n: 'メニューを横に並べる', o: {
+        ba: true, noT: 'display なし（li は list-item）', yesT: 'display: inline-block を足した', noS: '縦に積む', yesS: '横に並ぶ',
+        peek: '.menu li{outline:2px dashed #f97316;outline-offset:-1px}.menu{outline:1px dashed #94a3b8;outline-offset:-1px}',
+        legend: '<b style="color:#f97316">┅ オレンジ</b> ＝ li の範囲。<b style="color:#94a3b8">┅ グレー</b> ＝ 全体（ul）の枠。なしだと li が<b>1行ずつ横いっぱい</b>に伸びている。',
         h: 150, sym: 'メニューを横に並べたいのに、<b>縦に積まれて</b>点（●）も付いている。', ok: '<b>横に並んだ。</b>点を消して、li を横に並べた。',
         html: '<ul class="menu"><li>案件</li><li>相談</li><li>料金</li></ul>',
         bad: '.menu li {\n  padding: 8px 16px;\n  background: #dbeafe;\n  /* li は初期値が list-item → 縦に積まれる */  /*-*/\n}',
         good: '.menu { list-style: none; padding: 0; }    /*+*/\n.menu li {\n  display: inline-block;   /*+*/\n  padding: 8px 16px;\n  background: #dbeafe;\n  margin-right: 6px;\n}',
         cap: 'li の初期値は <code>list-item</code>（縦に積む）。横に並べるなら <code>inline-block</code>。今は <code>display: flex</code> で並べるのが主流（次の Flexbox で）。' } },
       { n: '消す・隠す', o: {
+        ba: true, noT: 'visibility: hidden（見えないだけ）', yesT: 'display: none（場所ごと消す）', noS: '空白が残る', yesS: '詰まる',
+        peek: 'p{outline:1px dashed #94a3b8;outline-offset:-1px}',
+        legend: '<b style="color:#94a3b8">┅ グレー</b> ＝ 文章（p）の枠。<b>2つの枠のあいだの空き</b>が、エラー文があった場所。なしは空きが残り、ありは詰まる。',
         h: 200, sym: 'エラー文を非表示にしたのに、<b>空白だけ残って</b>フォームが間延びしている。', ok: '<b>詰まった。</b>場所ごと消えた。',
         html: '<p>お名前</p><div class="err">お名前が未入力です</div><p>メールアドレス</p>',
         bad: '.err {\n  color: #dc2626;\n  visibility: hidden;   /*-*/\n}',
         good: '.err {\n  color: #dc2626;\n  display: none;        /*+*/\n}',
         cap: '<code>display: none</code> は<b>場所ごと消える</b>。<code>visibility: hidden</code> は<b>見えないだけで場所は残る</b>。エラー表示の出し入れは、ふつう display で切り替える。' } },
-      { n: '画像の下の隙間', o: {
-        h: 160, sym: '画像の下に<b>謎の隙間</b>。枠にぴったり収めたいのに、数 px の余白ができる。', ok: '<b>ぴったり収まった。</b>img を block にした。',
-        html: '<div class="thumb"><img src="' + IMG(160, 60, '画像') + '"></div>',
-        bad: '.thumb { background: #f97316; width: 160px; }\n/* img は inline → 文字と同じ扱いで下に隙間 */  /*-*/',
-        good: '.thumb { background: #f97316; width: 160px; }\nimg { display: block; }   /*+*/',
-        cap: '画像は初期値が <code>inline</code>（文字の仲間）なので、<b>文字の下の余白</b>が付く。<code>display: block</code> にすると消える。現場でとてもよく出る。' } },
       { n: 'カード全体をリンクに', o: {
+        ba: true, noT: 'display なし（a は inline）', yesT: 'a に display: block', noS: '枠がずれる', yesS: '全体が押せる',
+        peek: '.card{outline:2px dashed #f97316;outline-offset:-1px}h3,p{outline:1px dashed #94a3b8;outline-offset:-1px}',
+        legend: '<b style="color:#f97316">┅ オレンジ</b> ＝ リンク（a）の範囲＝押せる所。<b style="color:#94a3b8">┅ グレー</b> ＝ 中の見出しと文章。なしだと、リンクの範囲が<b>文字の行に沿ってちぎれて</b>いる。',
         h: 190, sym: 'カード全体をリンクにしたいのに、<b>枠がずれて</b>、押せる範囲も文字の上だけ。', ok: '<b>カード全体が押せる。</b>a を block にした。',
         html: '<a class="card" href="#"><h3>無料相談</h3><p>初回30分・オンライン</p></a>',
         bad: '.card {\n  border: 1px solid #cbd5e1; border-radius: 8px;\n  padding: 12px; color: inherit; text-decoration: none;\n  /* a は inline のまま */  /*-*/\n}',
@@ -2826,18 +2949,32 @@ style('cgk', `
   function displayScene(el) {
     const S = { d: 'inline', big: false };
     const NOTE = { inline: ['inline：文章の流れに並ぶ。<b>width / height は効かない</b>。', 'ここは文字の幅だけ'], 'inline-block': ['inline-block：並ぶのに <b>width / height が効く</b>。いいとこ取り！', ''], block: ['block：<b>1行まるごと</b>使う。幅・高さも効く。', ''] };
-    const spans = ['A', 'B', 'C'].map((t) => h('span', { class: 'x' }, t));
-    const box = h('div', { class: 'gap-dsp' }, 'これは文章のなかに ', spans[0], ' と ', spans[1], ' と ', spans[2], ' が入っている例です。ブラウザは基本、文字を左から右へ並べます。');
+    const HTML = '<p>これは文章のなかに <span class="x">A</span> と <span class="x">B</span> と <span class="x">C</span> が入っている例です。ブラウザは基本、文字を左から右へ並べます。</p>';
+    /* 見やすくするための色と点線（上の CSS コードには出ない） */
+    const PEEK = 'p{outline:1px dashed #94a3b8;outline-offset:-1px;line-height:1.9}.x{outline:2px dashed #f97316;outline-offset:-1px;text-align:center;font-weight:800}.x:nth-of-type(1){background:#bfdbfe}.x:nth-of-type(2){background:#bbf7d0}.x:nth-of-type(3){background:#fde68a}';
+    const cssNow = () => '.x{display:' + S.d + ';' + (S.big ? 'width:90px;height:50px;' : '') + '}';
+    const frame = h('iframe', { sandbox: 'allow-same-origin', title: 'ライブページ', style: { width: '100%', height: '300px', border: '1px solid var(--line)', borderRadius: '8px', background: '#fff', display: 'block' } });
+    const sizeOut = h('div', { style: { font: '700 .8125rem/1.8 var(--font)', color: 'var(--mute)', marginTop: '6px' } });
+    let ready = false;
+    frame.addEventListener('load', () => { ready = true; measure(); });
+    frame.srcdoc = '<!doctype html><meta charset="utf-8"><style>html,body{margin:0}body{padding:14px;font:15px/1.9 system-ui,"Hiragino Sans",sans-serif;color:#1f2937;background:#fff}p{margin:0}</style><style id="u">' + cssNow() + '</style><style id="v">' + PEEK + '</style>' + HTML;
+    const box = h('div', null, frame, sizeOut, h('div', { style: { font: '600 .75rem/1.7 var(--font)', color: 'var(--mute)', marginTop: '4px' }, html: '<b style="color:#f97316">┅ オレンジの点線</b> ＝ A・B・C の箱。<b style="color:#94a3b8">┅ グレーの点線</b> ＝ 文章（p）の枠。' }));
+    function measure() {
+      const d = frame.contentDocument; if (!d) return;
+      const a = d.querySelector('.x'); if (!a) return; const r = a.getBoundingClientRect();
+      const w = Math.round(r.width), hh = Math.round(r.height), hit = !S.big || (w >= 88 && hh >= 48);
+      sizeOut.innerHTML = 'A の実際の大きさ：<b style="font:900 .9375rem var(--mono);color:' + (hit ? 'var(--text)' : '#ff8f9a') + '">' + w + ' × ' + hh + ' px</b>' + (S.big ? '（指定は 90 × 50' + (hit ? ' → 効いた ✓' : ' → 無視された ✗') + '）' : '');
+    }
     const note = h('div', { class: 'gap-note' }), codeBox = h('div');
     const draw = () => {
-      spans.forEach((s) => { s.style.display = S.d; s.classList.toggle('big', S.big); });
+      const d = frame.contentDocument, u = ready && d && d.getElementById('u'); if (u) { u.textContent = cssNow(); measure(); }
       note.innerHTML = NOTE[S.d][0] + (S.big && S.d === 'inline' ? ' ← 90×50 を指定しても<b>変わらない</b>！' : '');
       codeBox.replaceChildren(code(`.x {\n  display: ${S.d};` + (S.big ? '\n  width: 90px;\n  height: 50px;' : '') + '\n}', 'css', { file: 'style.css', color: BASIC }));
       btns.forEach((b) => b.classList.toggle('on', b.dataset.v === S.d));
     };
     const btns = ['inline', 'inline-block', 'block'].map((v) => h('button', { class: 'gap-chip', 'data-v': v, onclick: () => { S.d = v; draw(); } }, v));
     const sw = h('label', { class: 'row', style: { cursor: 'pointer', fontWeight: 800 } }, h('input', { type: 'checkbox', onchange: (e) => { S.big = e.target.checked; draw(); } }), 'width: 90px / height: 50px を指定');
-    el.append(h('div', { class: 'split' }, h('div', { class: 'col' }, lbl('display を選ぶ'), h('div', { class: 'gap-chips' }, btns), sw, note, codeBox), h('div', { class: 'col' }, lbl('結果（A・B・C が対象）'), box)));
+    el.append(h('div', { class: 'split' }, h('div', { class: 'col' }, lbl('display を選ぶ'), h('div', { class: 'gap-chips' }, btns), sw, note, htmlToggle('<p>\n  これは文章のなかに\n  <span class="x">A</span> と\n  <span class="x">B</span> と\n  <span class="x">C</span>\n  が入っている例です。\n</p>', { raw: true }), codeBox), h('div', { class: 'col' }, lbl('結果（本物の HTML + CSS で表示）'), box)));
     draw();
   }
 
