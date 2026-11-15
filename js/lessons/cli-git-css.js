@@ -1865,9 +1865,21 @@ style('cgk', `
         let changed = false;
         const pages = ['相談フォーム', '料金表', '案件一覧'];
         const btnOf = (c) => h('span', { style: { display: 'inline-block', background: c, color: '#fff', borderRadius: '8px', padding: '.45em 1.1em', fontWeight: 700, fontSize: '.8125rem' } }, '申込む');
-        const col = (inline) => { const box = mk(inline); const g = h('div', { style: { display: 'grid', gap: '8px' } }); box.append(g); return { box, g, inline }; };
+        const col = (inline) => { const box = mk(inline); const g = h('div', { style: { display: 'grid', gap: '8px' } }), pk = h('div'); box.append(g, pk); return { box, g, pk, inline, open: false }; };
         const A = col(true), B = col(false);
+        /* 「</> HTML」アイコンで、画面の裏にある HTML / CSS を開く（何を直しているか分かるように） */
+        const peek = (X) => {
+          const clr = (i) => (changed && (!X.inline || i === 0) ? '#2563eb' : '#ef4444');
+          const html = X.inline ? pages.map((t, i) => '<!-- ' + t + '.html -->\n<button style="background: ' + clr(i) + ';">申込む</button>').join('\n') : '<!-- 3ページとも同じ -->\n<link rel="stylesheet" href="style.css">\n<button class="btn">申込む</button>';
+          const c1 = code(html, 'html', { file: X.inline ? '3ページ分の HTML（1つずつ色を書く）' : 'index.html（3ページ共通）', color: BASIC });
+          const box = h('div', { class: 'cgh-box', hidden: !X.open }, c1);
+          if (changed && X.inline) c1.setHi([2], 'on');
+          if (!X.inline) { const c2 = code('.btn {\n  background: ' + (changed ? '#2563eb' : '#ef4444') + ';\n}', 'css', { file: 'style.css（ここ1か所だけ）', color: TS }); if (changed) c2.setHi([2], 'on'); box.append(h('div', { style: { height: '6px' } }), c2); }
+          const btn = h('button', { class: 'cgh-btn' + (X.open ? ' on' : ''), type: 'button', onclick: () => { X.open = !X.open; box.hidden = !X.open; btn.classList.toggle('on', X.open); } }, icon('code'), 'HTML');
+          return h('div', { style: { margin: '8px 0 0' } }, btn, box);
+        };
         const draw = () => {
+          [A, B].forEach((X) => X.pk.replaceChildren(peek(X)));
           [A, B].forEach((X) => X.g.replaceChildren(...pages.map((t, i) => h('div', { style: { background: '#fff', color: '#1f2937', borderRadius: '8px', padding: '8px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '.8125rem', fontWeight: 700 } }, t, btnOf(changed && (!X.inline || i === 0) ? '#2563eb' : '#ef4444')))));
           sym.replaceChildren(icon(changed ? 'circle-alert' : 'circle-help'), h('div', { html: changed ? '左は<b>1か所直しただけ</b>。残り2ページは<b>赤のまま</b>（直し忘れ）。右は style.css の1行を変えただけで<b>全ページ</b>が変わった。' : 'ブランドカラーを<b>赤 → 青</b>に変えることになった。ボタンは3ページにある。さあ、どちらが楽？' }));
           cap.innerHTML = changed ? '実際のサイトは数十ページ。<b>「1か所を直せば全部変わる」</b>のが、外部 CSS（<code>&lt;link&gt;</code>）の価値。' : '';
@@ -2274,9 +2286,11 @@ style('cgk', `
     const rungEls = RUNGS.map((r, i) => h('button', { class: 'cgs4-rung', type: 'button', onclick: () => pick(i) },
       h('div', null, h('b', r.n), h('div', { style: { fontSize: '.6875rem', color: 'var(--mute)' } }, r.d)), h('code', r.code), h('span', { class: 'cgs4-res ' + (r.win ? 'w' : 'l') }, r.win ? '勝つ → 緑' : '負ける → 赤のまま')));
     const oppCode = cssFile(OPP, { file: '前からあるルール' }); oppCode.setHi([1], 'on');
+    const l2h = h('div', { style: { marginTop: '6px' } }); let l2open = false;
     function pick(i) {
       selR = i; rungEls.forEach((e, k) => e.classList.toggle('sel', k === i));
       const r = RUNGS[i]; L2.set(r.html, r.css);
+      l2h.replaceChildren(htmlToggle(r.html, { raw: true, open: l2open, onToggle: (v) => { l2open = v; } }));
     }
     const swapA = '.btn-a { background: blue; }\n.btn-b { background: green; }';
     const swapB = '.btn-b { background: green; }\n.btn-a { background: blue; }';
@@ -2297,9 +2311,9 @@ style('cgk', `
         lbl('強い順（行を押すと、そのルールを足して試せる）'), h('div', { class: 'cgs4-axis' }, h('span', '強い ▲'), h('span', 'いつも「前からあるルール」と勝負')),
         h('div', { class: 'cgs4-lad', style: { margin: '6px 0 10px' } }, rungEls), h('div', { class: 'cgs4-axis' }, h('span', '弱い ▼'), h('span', '')),
         lbl('前からあるルール（相手）'), oppCode),
-      h('div', { class: 'col' }, lbl('ページ'), L2.box)),
+      h('div', { class: 'col' }, lbl('ページ'), L2.box, l2h)),
       h('div', { class: 'cgs4-tie', html: '<b>同じ段なら、数が多いほうが強い。</b><code>.form button</code>（クラス1＋タグ1）は <code>.btn-submit</code>（クラス1だけ）より強い。だから最初の赤が勝った。' }),
-      h('div', { class: 'split', style: { marginTop: '12px' } }, h('div', { class: 'col' }, lbl('それも同じなら？'), swapCode, h('div', { class: 'row', style: { marginTop: '8px' } }, swapBtn)), h('div', { class: 'col' }, lbl('結果'), L2b.box, swapCap)));
+      h('div', { class: 'split', style: { marginTop: '12px' } }, h('div', { class: 'col' }, lbl('それも同じなら？'), swapCode, h('div', { class: 'row', style: { marginTop: '8px' } }, swapBtn)), h('div', { class: 'col' }, lbl('結果'), L2b.box, h('div', { style: { marginTop: '6px' } }, htmlToggle(SW_HTML, { raw: true })), swapCap)));
 
     /* ---------- 3) 本物の style.css の行を消して、勝敗を確かめる ---------- */
     const L3 = live(200);
@@ -2341,7 +2355,7 @@ style('cgk', `
     const resetBtn = h('button', { class: 'btn ghost', onclick: () => { RULES.forEach((r) => { r.on = true; }); draw3(); } }, icon('rotate-ccw'), 'ぜんぶ戻す');
     const s3 = h('div', null, h('div', { class: 'split' },
       h('div', { class: 'col' }, lbl('style.css（行を押すと、その行を消す／戻す）'), h('div', { class: 'cgs4-rules' }, rows), h('div', { class: 'row', style: { marginTop: '10px' } }, resetBtn)),
-      h('div', { class: 'col' }, lbl('ページ（残った行だけで動く）'), L3.box, why3)));
+      h('div', { class: 'col' }, lbl('ページ（残った行だけで動く）'), L3.box, h('div', { style: { marginTop: '6px' } }, htmlToggle(FORM, { raw: true })), why3)));
     draw3();
 
     /* ---------- 4) 本物のエディタで直す ---------- */
@@ -2418,7 +2432,7 @@ style('cgk', `
   function htmlToggle(src, o) {
     const text = o && o.raw ? src : htmlPretty(src, 9), n = text.split('\n').length;
     const box = h('div', { class: 'cgh-box', hidden: !(o && o.open) }, code(text, 'html', { file: 'index.html', color: BASIC }));
-    const btn = h('button', { class: 'cgh-btn' + (o && o.open ? ' on' : ''), type: 'button', onclick: () => { box.hidden = !box.hidden; btn.classList.toggle('on', !box.hidden); } }, icon('code'), 'HTML（' + n + '行）');
+    const btn = h('button', { class: 'cgh-btn' + (o && o.open ? ' on' : ''), type: 'button', onclick: () => { box.hidden = !box.hidden; btn.classList.toggle('on', !box.hidden); if (o && o.onToggle) o.onToggle(!box.hidden); } }, icon('code'), 'HTML（' + n + '行）');
     return h('div', { style: { margin: '0 0 6px' } }, btn, box);
   }
 
@@ -2892,7 +2906,7 @@ style('cgk', `
     const draw = (v) => { let c; try { c = scssCompile(v); } catch (e) { c = '/* エラー */'; } out.replaceChildren(code(c || '/* ここに CSS が出る */', 'css', { file: '出力：style.css', color: TS })); frame.srcdoc = `<style>body{font-family:sans-serif;margin:12px}${c}</style><div class="card"><h3>カード</h3><button class="btn">ボタン</button></div>`; };
     const ed = K.W.codeEditor(init, 'css', draw); ed.style.borderRadius = '8px'; ed.style.minHeight = '300px';
     out.className = 'fo1-grow';
-    el.append(h('div', { class: 'split' }, h('div', { class: 'col' }, lbl('Sass / SCSS（編集OK）'), ed, lbl('見た目（結果）'), frame),
+    el.append(h('div', { class: 'split' }, h('div', { class: 'col' }, lbl('Sass / SCSS（編集OK）'), ed, lbl('見た目（結果）'), frame, h('div', { style: { marginTop: '6px' } }, htmlToggle('<div class="card">\n  <h3>カード</h3>\n  <button class="btn">ボタン</button>\n</div>', { raw: true }))),
       h('div', { class: 'col' }, lbl('コンパイル結果 = ふつうの CSS'), out, h('div', { class: 'row' }, h('span', { class: 'chip', style: { '--c': BASIC } }, '$変数：値を1か所で管理'), h('span', { class: 'chip', style: { '--c': TS } }, 'ネスト：親の中に子を書く'), h('span', { class: 'chip', style: { '--c': PINK } }, '&：親セレクタの別名')))));
     draw(init);
   }
