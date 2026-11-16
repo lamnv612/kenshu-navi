@@ -1496,23 +1496,38 @@ console.log(n.length);
         },
       },
       {
-        t: 'interface vs type', lead: '行を<b>クリック</b>すると例が出ます。迷ったら「オブジェクトは interface、それ以外は type」。',
+        t: 'interface vs type', lead: '同じお題を、2つの書き方で並べて比べよう。',
         render(el) {
+          style('ivt', `
+          .ivt-pick{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:12px}
+          .ivt-pick button{all:unset;cursor:pointer;box-sizing:border-box;text-align:center;padding:.6em .8em;border-radius:8px;border:1px solid var(--line);background:var(--card);font-weight:800;font-size:.875rem;transition:.2s;display:grid;gap:2px}
+          .ivt-pick button small{font-weight:700;color:var(--mute);font-size:.75rem}.ivt-pick button:hover{transform:translateY(-2px)}
+          .ivt-pick button.on{border-color:var(--ts);background:color-mix(in srgb,var(--ts) 18%,var(--card))}
+          .ivt-duo{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}@media(max-width:820px){.ivt-duo{grid-template-columns:1fr}}
+          .ivt-c{border:2px solid var(--c);border-radius:12px;background:var(--card);overflow:hidden;animation:tvpop .35s both}
+          .ivt-h{display:flex;align-items:center;justify-content:space-between;padding:.55em 1em;background:color-mix(in srgb,var(--c) 16%,var(--card2));font:800 .9375rem var(--mono);color:var(--c)}
+          .ivt-b{padding:.15em .8em;border-radius:999px;font:800 .8125rem var(--font);background:var(--c);color:#fff}
+          .ivt-c .ivt-code{padding:10px 12px}.ivt-n{padding:.5em 1em;font-size:.8125rem;font-weight:700;color:var(--mute);border-top:1px dashed var(--line)}
+          .ivt-v{margin-top:12px;display:flex;gap:10px;align-items:center;padding:.7em 1em;border-radius:10px;background:color-mix(in srgb,var(--ts) 12%,var(--card));border:1px solid color-mix(in srgb,var(--ts) 45%,var(--line));font-weight:800}
+          .ivt-r{margin-top:12px;display:flex;gap:10px;flex-wrap:wrap}.ivt-r div{flex:1 1 220px;padding:.6em 1em;border-radius:8px;background:var(--card2);border:1px solid var(--line);font-size:.875rem;font-weight:700;line-height:1.6}.ivt-r b{color:var(--ts)}
+          `);
           const R = [
-            ['オブジェクトの形', 'y', 'y', 'interface Consultation { title: string }\ntype Consultation = { title: string }'],
-            ['拡張（継承）', 'y', 't', 'interface Booking extends Consultation {}\ntype Booking = Consultation & { time: string }  // & で合成'],
-            ['同名でマージ', 'y', 'n', 'interface Consultation { id: number }\ninterface Consultation { note: string }  // OK\ntype Consultation = {...}; type Consultation = {...}  // ✖ 重複エラー'],
-            ['Union（A | B）', 'n', 'y', 'type Id = number | string;\n// interface では書けない'],
-            ['タプル・プリミティブの別名', 'n', 'y', 'type Row = [number, string];\ntype Fee = number;'],
+            { n: '形を決める', sub: 'いちばん基本', i: 'interface Consultation {\n  title: string;\n  fee: number;\n}', iok: 1, ino: 'オブジェクトの形はこれ', t: 'type Consultation = {\n  title: string;\n  fee: number;\n};', tok: 1, tno: '同じ形が書ける', v: '🟰 どちらでも同じ。オブジェクトは interface が定番' },
+            { n: '拡張する', sub: '項目を足す', i: 'interface Booking extends Consultation {\n  time: string;\n}', iok: 1, ino: 'extends で足す', t: 'type Booking = Consultation & {\n  time: string;\n};', tok: 1, tno: '& で合成する', v: '🟰 どちらも可。書き方（extends か &）が違うだけ' },
+            { n: '同じ名前を2回', sub: 'マージ', i: 'interface Consultation { id: number }\ninterface Consultation { note: string }\n// → id と note を両方持つ型に合体', iok: 1, ino: '自動で合体する', t: 'type Consultation = { id: number }\ntype Consultation = { note: string }\n// ✖ 重複エラー', tok: 0, tno: '同じ名前は作れない', v: '👉 マージできるのは interface だけ' },
+            { n: 'A または B', sub: 'Union', i: 'interface Id = number | string;\n// ✖ interface では書けない', iok: 0, ino: 'Union は作れない', t: 'type Id = number | string;', tok: 1, tno: '| でつなげる', v: '👉 Union は type だけ' },
+            { n: 'タプル・別名', sub: 'object 以外', i: 'interface Row = [number, string];\n// ✖ タプルは作れない', iok: 0, ino: 'object 以外は作れない', t: 'type Row = [number, string];\ntype Fee = number;', tok: 1, tno: 'タプル・数字の別名もOK', v: '👉 object 以外は type だけ' },
           ];
-          const sym = { y: ['✓', 'y'], n: ['✖', 'n'], t: ['△', 't'] };
-          const cbox = h('div', { style: { marginTop: '12px' } }, code('// 行をクリック', 'ts'));
-          const tb = h('table', { class: 'tsx-tbl', style: { '--c': 'var(--ts)' } }, h('tr', h('th'), h('th', 'interface'), h('th', 'type')));
-          R.forEach(([n, a, b, ex]) => {
-            const tr = h('tr', { onclick: () => { tb.querySelectorAll('tr').forEach((x) => x.classList.remove('on')); tr.classList.add('on'); cbox.replaceChildren(code(ex, 'ts')); } }, h('td', n), h('td', { class: sym[a][1] }, sym[a][0]), h('td', { class: sym[b][1] }, sym[b][0]));
-            tb.append(tr);
-          });
-          el.append(tb, cbox);
+          const pick = h('div', { class: 'ivt-pick' }), stage = h('div');
+          const card = (name, c, src, ok, note) => h('div', { class: 'ivt-c', style: { '--c': ok ? 'var(--ok)' : 'var(--bad)' } }, h('div', { class: 'ivt-h' }, name, h('span', { class: 'ivt-b' }, ok ? '✓ 書ける' : '✖ 書けない')), h('div', { class: 'ivt-code' }, code(src, 'ts', { color: c })), h('div', { class: 'ivt-n' }, note));
+          const show = (i) => {
+            const r = R[i];
+            pick.querySelectorAll('button').forEach((b, k) => b.classList.toggle('on', k === i));
+            stage.replaceChildren(h('div', { class: 'ivt-duo' }, card('interface', 'var(--ts)', r.i, r.iok, r.ino), card('type', 'var(--pink)', r.t, r.tok, r.tno)), h('div', { class: 'ivt-v' }, h('span', r.v)));
+          };
+          R.forEach((r, i) => pick.append(h('button', { onclick: () => show(i) }, r.n, h('small', r.sub))));
+          el.append(pick, stage, h('div', { class: 'ivt-r' }, h('div', { html: '<b>interface</b>：オブジェクトの形。あとから足したいとき' }), h('div', { html: '<b>type</b>：Union・タプル・別名など、object 以外も' }), h('div', { html: '<b>迷ったら</b>：object は interface、それ以外は type' })));
+          show(0);
         },
       },
       {
