@@ -755,10 +755,10 @@
   .tv-bx .tp{font:800 .6875rem var(--mono);padding:.1em .6em;border-radius:6px;border:1px solid var(--ts);color:var(--ts)}
   .tv-bx .sl{min-width:64px;min-height:40px;padding:6px 12px;border:2px solid var(--c,var(--ts));border-radius:8px;background:color-mix(in srgb,var(--c,var(--ts)) 12%,transparent);display:flex;align-items:center;justify-content:center;font:800 1rem var(--mono);transition:.3s}
   .tv-cells{display:flex;gap:4px}.tv-cells .sl{min-width:44px;padding:6px 8px}
-  .tv-drop{display:flex;align-items:center;gap:26px;min-height:110px;position:relative;flex-wrap:wrap}
+  .tv-drop{display:flex;align-items:flex-end;gap:26px;min-height:110px;position:relative;flex-wrap:wrap}.tv-drop .tv-chip{margin-bottom:6px}.tv-drop .tv-msg{margin-bottom:8px}
   .tv-chip{font:800 1rem var(--mono);padding:.45em 1em;border-radius:999px;background:var(--team);color:#fff;white-space:nowrap}
   .tv-chip.go{animation:tvgo 1.6s forwards}.tv-chip.ng{animation:tvng 1.6s forwards;background:var(--bad)}
-  @keyframes tvgo{0%{transform:translateX(-30px);opacity:0}25%{opacity:1;transform:none}70%{transform:translateX(70px)}100%{transform:translateX(70px) scale(.8)}}
+  @keyframes tvgo{0%{transform:translateX(-30px);opacity:0}25%{opacity:1;transform:none}70%{transform:translateX(70px)}100%{transform:translateX(70px) scale(.6);opacity:0}}
   @keyframes tvng{0%{transform:translateX(-30px);opacity:0}25%{opacity:1;transform:none}55%{transform:translateX(60px)}70%{transform:translateX(45px)}100%{transform:translateX(0) rotate(-3deg)}}
   .tv-msg{font-weight:800;font-size:.875rem;padding:.4em .9em;border-radius:8px;min-height:1.6em;transition:.3s}
   .tv-msg.ok{color:var(--ok);background:color-mix(in srgb,var(--ok) 14%,transparent)}.tv-msg.ng{color:var(--bad);background:color-mix(in srgb,var(--bad) 14%,transparent)}
@@ -774,6 +774,13 @@
   .tv-steps{margin:0;padding:0;list-style:none;display:flex;gap:8px;flex-wrap:wrap;counter-reset:s}
   .tv-steps li{counter-increment:s;display:flex;gap:.5em;align-items:flex-start;padding:.35em .8em .35em .5em;border-radius:8px;background:var(--card2);border:1px solid var(--line);font-size:.8125rem;line-height:1.6;font-weight:600}
   .tv-steps li::before{content:counter(s);flex:none;width:1.4em;height:1.4em;border-radius:50%;background:var(--ts);color:#fff;font-weight:800;font-size:.75rem;display:grid;place-items:center;margin-top:.1em}
+  .tv-pick .tv-card{all:unset;box-sizing:border-box;cursor:pointer;flex:1 1 150px;border:1px solid var(--line);border-top:3px solid var(--c);border-radius:10px;padding:10px 12px;background:var(--card2);display:grid;gap:4px;transition:.2s;color:var(--text)}
+  .tv-pick .tv-card:hover{transform:translateY(-2px)}.tv-pick .tv-card.on{background:color-mix(in srgb,var(--c) 18%,var(--card2));box-shadow:0 8px 20px -12px var(--c);border-color:var(--c)}
+  .tv-detail{display:grid;gap:12px;border-top:1px dashed var(--line);padding-top:12px}
+  .tv-dh{display:flex;align-items:center;gap:10px;font-size:1.1rem}.tv-dh b{color:var(--c);font:800 1.2rem var(--mono)}.tv-dh span:last-child{color:var(--mute);font-weight:700;font-size:.875rem}
+  .tv-dg{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:14px}@media(max-width:820px){.tv-dg{grid-template-columns:1fr}}
+  .tv-real{display:flex;gap:10px;align-items:flex-start;padding:.6em 1em;border-radius:8px;background:color-mix(in srgb,var(--ts) 10%,var(--card));border:1px solid color-mix(in srgb,var(--ts) 40%,var(--line));font-size:.875rem;line-height:1.7}
+  .tv-real .ic{flex:none;margin-top:.3em;color:var(--ts)}
   .tv-flowline{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:center;font-weight:800}
   .tv-flowline .st{padding:.5em 1em;border-radius:999px;background:color-mix(in srgb,var(--c) 18%,transparent);border:1px solid var(--c)}
   `);
@@ -789,7 +796,7 @@
       const it = items[i++ % items.length];
       chip.className = 'tv-chip'; void chip.offsetWidth; chip.textContent = it.v; chip.style.opacity = 1; chip.classList.add(it.ok ? 'go' : 'ng');
       slot.textContent = '　'; bx.style.setProperty('--c', 'var(--ts)'); msg.className = 'tv-msg'; msg.textContent = '';
-      setTimeout(() => { if (!root.isConnected) return; bx.style.setProperty('--c', it.ok ? 'var(--ok)' : 'var(--bad)'); if (it.ok) slot.textContent = it.v; msg.className = 'tv-msg ' + (it.ok ? 'ok' : 'ng'); msg.textContent = it.ok ? '✓ 入る' : '✗ 入らない（赤線）'; }, 900);
+      setTimeout(() => { if (!root.isConnected) return; bx.style.setProperty('--c', it.ok ? 'var(--ok)' : 'var(--bad)'); if (it.ok) slot.textContent = it.v; msg.className = 'tv-msg ' + (it.ok ? 'ok' : 'ng'); msg.textContent = it.ok ? (it.okMsg || '✓ 入る') : (it.ngMsg || '✗ 入らない（赤線）'); }, 900);
       setTimeout(tick, 3200);
     };
     setTimeout(tick, 100);
@@ -824,19 +831,35 @@
       h('div', { class: 'tv-card', style: { '--c': 'var(--hi, #ffb454)' } }, h('h6', h('span', { class: 'tv-big' }, '⬜'), 'undefined'), h('code', 'nickname?: string'), h('small', 'まだ入っていない')),
       h('div', { class: 'tv-card', style: { '--c': 'var(--violet)' } }, h('h6', h('span', { class: 'tv-big' }, '∅'), 'null'), h('code', 'string | null'), h('small', '「ない」と自分で示す')))),
   };
-  /* 全体マップ（最初の場面） */
+  /* 全体マップ（最初の場面）：カードを押すと、具体例が出る */
+  const TYPES = [
+    { em: '🔤', name: 'string', sub: '文字', c: 'var(--basic)', box: ['name', 'string'], code: 'let name: string = "田中";\nlet memo: string = "初回相談";', real: '名前・メールアドレス・メモなど、文章になるもの', items: [{ v: '"田中"', ok: true }, { v: '"初回相談"', ok: true }, { v: '3000', ok: false }, { v: 'true', ok: false }] },
+    { em: '🔢', name: 'number', sub: '数字', c: 'var(--ts)', box: ['fee', 'number'], code: 'let fee: number = 3000;\nlet people: number = 2;', real: '料金・人数・年齢など、計算に使うもの（"3000" は文字なので入らない）', items: [{ v: '3000', ok: true }, { v: '5000', ok: true }, { v: '"3000"', ok: false }, { v: 'true', ok: false }] },
+    { em: '✅', name: 'boolean', sub: 'はい・いいえ', c: 'var(--team)', box: ['agree', 'boolean'], code: 'let agree: boolean = true;\nlet isPublic: boolean = false;', real: '「同意する」チェック、公開／非公開のスイッチ', items: [{ v: 'true', ok: true }, { v: 'false', ok: true }, { v: '"false"', ok: false }, { v: '1', ok: false }] },
+    { em: '📚', name: '配列', sub: '同じ型が並ぶ', c: 'var(--basic)', box: ['lawyers', 'string[]'], code: 'const lawyers: string[] = ["田中", "山本"];\nlawyers.push("鈴木");   // OK\nlawyers.push(3);        // 赤線', real: '担当弁護士の一覧・相談の一覧など、同じ種類のものがいくつも', items: [{ v: '"鈴木"', ok: true, okMsg: '✓ push できる' }, { v: '"佐藤"', ok: true, okMsg: '✓ push できる' }, { v: '3', ok: false, ngMsg: '✗ 数字は入らない（赤線）' }] },
+    { em: '🧩', name: 'タプル', sub: '位置ごとに型', c: 'var(--pink)', box: ['row', '[string, number]'], code: 'const row: [string, number] = ["離婚相談", 3000];\n// 1番目は文字、2番目は数字\nrow[1] * 2;   // 料金を2倍', real: 'API が返す「題名と料金」のように、順番に意味がある1行', items: [{ v: '["離婚相談", 3000]', ok: true, okMsg: '✓ 順番も型も合っている' }, { v: '[3000, "離婚相談"]', ok: false, ngMsg: '✗ 順番が逆（赤線）' }] },
+    { em: '🗂️', name: 'オブジェクト', sub: '名前つき', c: 'var(--team)', box: ['c', 'Consultation'], code: 'interface Consultation {\n  title: string;\n  fee: number;\n}\nconst c: Consultation = { title: "相続", fee: 3000 };', real: '相談1件のように、いくつかの項目をまとめたデータ', items: [{ v: '{ title, fee: 3000 }', ok: true, okMsg: '✓ 形が合っている' }, { v: '{ title, fee: "無料" }', ok: false, ngMsg: '✗ fee は number（赤線）' }, { v: '{ title, priority: 1 }', ok: false, ngMsg: '✗ そんな項目は無い（赤線）' }] },
+    { em: '🎲', name: 'any / unknown', sub: '何でも', c: 'var(--bad)', box: ['res', 'unknown'], code: 'const res: unknown = JSON.parse(text);\n// res.toUpperCase();      // 赤線\nif (typeof res === "string") {\n  res.toUpperCase();      // OK\n}', real: '外部 API の返事など、何が来るか分からない値。any は何も守らない、unknown は確認してから使う', items: [{ v: '"tanaka"', ok: true, okMsg: '✓ 何でも入る' }, { v: 'res.toUpperCase()', ok: false, ngMsg: '✗ 確認するまで使えない（赤線）' }, { v: 'typeof で確認', ok: true, okMsg: '✓ 確認したら使える' }] },
+    { em: '🕳️', name: 'void / null / undefined', sub: '値がない', c: 'var(--violet)', box: ['n', 'string | null'], code: 'function findName(id: number): string | null {\n  return id === 1 ? "田中" : null;\n}\nconst n = findName(2);\n// n.length;   // 赤線：null かも', real: 'ログイン前の名前、検索で見つからなかった結果、あだ名が未入力…', items: [{ v: '"田中"', ok: true }, { v: 'null', ok: true, okMsg: '✓ 「ない」を示せる' }, { v: 'undefined', ok: false, ngMsg: '✗ undefined は入らない（赤線）' }] },
+  ];
   function overviewScene(el) {
-    const C = (em, name, ex, sc, c) => h('div', { class: 'tv-card', style: { '--c': c } }, h('h6', h('span', { class: 'tv-big' }, em), name), h('code', ex), h('small', '→ ' + sc));
+    const cards = h('div', { class: 'tv-row tv-pick' }), detail = h('div', { class: 'tv-detail' });
+    const show = (i) => {
+      const t = TYPES[i];
+      cards.querySelectorAll('.tv-card').forEach((x, k) => x.classList.toggle('on', k === i));
+      detail.replaceChildren(
+        h('div', { class: 'tv-dh', style: { '--c': t.c } }, h('span', { class: 'tv-big' }, t.em), h('b', t.name), h('span', '＝ ' + t.sub)),
+        h('div', { class: 'tv-dg' },
+          h('div', null, h('div', { class: 'tv-cap' }, icon('code'), 'コード'), code(t.code, 'ts', { color: t.c })),
+          h('div', null, h('div', { class: 'tv-cap' }, icon('box'), '箱に入れてみる（自動で繰り返す）'), tvDrop(t.box[0], t.box[1], t.items))),
+        h('div', { class: 'tv-real' }, icon('briefcase'), h('span', { html: '<b>こんな時に使う</b>　' + t.real })));
+    };
+    TYPES.forEach((t, i) => cards.append(h('button', { class: 'tv-card', style: { '--c': t.c }, onclick: () => show(i) }, h('h6', h('span', { class: 'tv-big' }, t.em), t.name), h('small', t.sub))));
     el.append(
-      h('div', { class: 'tv' }, h('div', { class: 'tv-cap' }, icon('map'), 'この授業で出てくる「型」の一覧'),
-        h('div', { class: 'tv-row' },
-          C('🔤', 'string', '"田中"', '文字', 'var(--basic)'), C('🔢', 'number', '3000', '数字', 'var(--ts)'), C('✅', 'boolean', 'true / false', 'はい・いいえ', 'var(--team)'),
-          C('📚', '配列', 'string[]', '同じ型が並ぶ', 'var(--basic)'), C('🧩', 'タプル', '[string, number]', '位置ごとに型', 'var(--pink)'), C('🗂️', 'オブジェクト', '{ title: string }', '名前つき', 'var(--team)'),
-          C('🎲', 'any / unknown', 'unknown', '何でも（unknown は安全）', 'var(--bad)'), C('🕳️', 'void / null / undefined', 'string | null', '値がない', 'var(--violet)'))),
+      h('div', { class: 'tv' }, h('div', { class: 'tv-cap' }, icon('pointer'), '知りたい型を押す → コードと動く例が出る'), cards, detail),
       h('div', { class: 'tv' }, h('div', { class: 'tv-cap' }, icon('route'), '学ぶ流れ'),
-        h('div', { class: 'tv-flowline' }, h('span', { class: 'st', style: { '--c': 'var(--ts)' } }, '① 型を書く'), '→', h('span', { class: 'st', style: { '--c': 'var(--bad)' } }, '② まちがえると赤線'), '→', h('span', { class: 'st', style: { '--c': 'var(--ok)' } }, '③ 直して実行')),
-        h('div', { class: 'tv-steps' }, h('li', '箱とラベル（型の書き方）'), h('li', '文字と数字のちがい'), h('li', 'const / let'), h('li', '型推論'), h('li', '配列・タプル・オブジェクト'), h('li', 'any / unknown'), h('li', 'void / null / undefined'), h('li', '実践'))),
-      tvWrap('絵で見る：型は「箱に貼るラベル」', tvDrop('age', 'number', [{ v: '20', ok: true }, { v: '"二十"', ok: false }])));
+        h('div', { class: 'tv-flowline' }, h('span', { class: 'st', style: { '--c': 'var(--ts)' } }, '① 型を書く'), '→', h('span', { class: 'st', style: { '--c': 'var(--bad)' } }, '② まちがえると赤線'), '→', h('span', { class: 'st', style: { '--c': 'var(--ok)' } }, '③ 直して実行'))));
+    show(0);
   }
 
   /* ================= ts-basic ================= */
