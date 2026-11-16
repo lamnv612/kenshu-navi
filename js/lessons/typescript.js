@@ -717,6 +717,11 @@
     return root;
   }
 
+  function tryBox(html) {
+    const parts = html.split(/[①②③④]/).map((x) => x.trim()).filter(Boolean);
+    if (/[①]/.test(html) && parts.length > 1) return h('div', { class: 'tslab-try' }, icon('lightbulb'), h('ol', { class: 'tv-steps' }, parts.map((x) => h('li', { html: x }))));
+    return h('div', { class: 'tslab-try' }, icon('lightbulb'), h('div', { html }));
+  }
   /* 「事故 → 直す」を1つずつ。tabs: [{ name, sub, story, tryIt, src, actions, coach }] */
   function labTabs(el, tabs) {
     const bar = h('div', { class: 'tsx3-tabs' }), body = h('div', { class: 'tslab' });
@@ -726,7 +731,7 @@
       body.replaceChildren(
         h('div', { class: 'tslab-story' }, icon('triangle-alert'), h('div', { html: t.story })),
         lab(t),
-        t.tryIt ? h('div', { class: 'tslab-try' }, icon('lightbulb'), h('div', { html: t.tryIt })) : null);
+        t.tryIt ? tryBox(t.tryIt) : null);
     };
     tabs.forEach((t, i) => bar.append(h('button', { class: 'tsx3-tab', onclick: () => show(i) }, t.name, t.sub ? h('small', t.sub) : null)));
     if (tabs.length > 1) el.append(bar);
@@ -735,18 +740,119 @@
   }
   const uncomment = (needle) => (s) => s.split('\n').map((l) => (l.indexOf(needle) >= 0 ? l.replace(/^(\s*)\/\/ ?/, '$1') : l)).join('\n');
 
+  /* ================= ts-basic: 絵で見る（コードと対応する図解） ================= */
+  style('tv', `
+  .tv{border:1px solid var(--line);border-radius:12px;background:var(--card);padding:14px 16px;margin:0 0 14px;display:grid;gap:12px}
+  .tv-cap{font-size:.8125rem;font-weight:800;color:var(--mute);display:flex;gap:.5em;align-items:center}
+  .tv-row{display:flex;gap:14px;flex-wrap:wrap;align-items:stretch}
+  .tv-card{flex:1 1 200px;border:1px solid var(--line);border-top:3px solid var(--c,var(--ts));border-radius:10px;padding:10px 12px;background:var(--card2);display:grid;gap:6px;align-content:start;transition:.2s}
+  .tv-card:hover{transform:translateY(-2px)}
+  .tv-card h6{margin:0;font:800 .9375rem var(--font);color:var(--c,var(--ts));display:flex;gap:.4em;align-items:center}
+  .tv-card code{font:700 .8125rem var(--mono)}.tv-card small{font-size:.75rem;color:var(--mute);font-weight:700;line-height:1.5}
+  .tv-big{font-size:1.6rem;line-height:1}
+  .tv-bx{display:inline-flex;flex-direction:column;align-items:center;gap:4px}
+  .tv-bx .nm{font:800 .6875rem var(--mono);padding:.1em .6em;border-radius:6px;background:var(--pink);color:#fff}
+  .tv-bx .tp{font:800 .6875rem var(--mono);padding:.1em .6em;border-radius:6px;border:1px solid var(--ts);color:var(--ts)}
+  .tv-bx .sl{min-width:64px;min-height:40px;padding:6px 12px;border:2px solid var(--c,var(--ts));border-radius:8px;background:color-mix(in srgb,var(--c,var(--ts)) 12%,transparent);display:flex;align-items:center;justify-content:center;font:800 1rem var(--mono);transition:.3s}
+  .tv-cells{display:flex;gap:4px}.tv-cells .sl{min-width:44px;padding:6px 8px}
+  .tv-drop{display:flex;align-items:center;gap:26px;min-height:110px;position:relative;flex-wrap:wrap}
+  .tv-chip{font:800 1rem var(--mono);padding:.45em 1em;border-radius:999px;background:var(--team);color:#fff;white-space:nowrap}
+  .tv-chip.go{animation:tvgo 1.6s forwards}.tv-chip.ng{animation:tvng 1.6s forwards;background:var(--bad)}
+  @keyframes tvgo{0%{transform:translateX(-30px);opacity:0}25%{opacity:1;transform:none}70%{transform:translateX(70px)}100%{transform:translateX(70px) scale(.8)}}
+  @keyframes tvng{0%{transform:translateX(-30px);opacity:0}25%{opacity:1;transform:none}55%{transform:translateX(60px)}70%{transform:translateX(45px)}100%{transform:translateX(0) rotate(-3deg)}}
+  .tv-msg{font-weight:800;font-size:.875rem;padding:.4em .9em;border-radius:8px;min-height:1.6em;transition:.3s}
+  .tv-msg.ok{color:var(--ok);background:color-mix(in srgb,var(--ok) 14%,transparent)}.tv-msg.ng{color:var(--bad);background:color-mix(in srgb,var(--bad) 14%,transparent)}
+  .tv-eq{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font:800 1.0625rem var(--mono)}
+  .tv-eq .tk{padding:.15em .6em;border-radius:6px;border:2px solid var(--c);color:var(--c);animation:tvpop .6s both}
+  .tv-eq .res{padding:.15em .7em;border-radius:6px;background:var(--c);color:#fff;animation:tvpop .6s .5s both}
+  @keyframes tvpop{from{transform:scale(0);opacity:0}to{transform:none;opacity:1}}
+  .tv-flow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .tv-st{padding:.5em .9em;border-radius:8px;border:2px solid var(--c);background:color-mix(in srgb,var(--c) 12%,transparent);font-weight:800;font-size:.8125rem;display:grid;gap:2px;text-align:center}
+  .tv-st small{font-weight:700;color:var(--mute)}.tv-st.dash{border-style:dashed}
+  .tv-ar{font-size:1.2rem;color:var(--mute)}
+  .tv-lock{font-size:1.4rem}.tv-cnt{animation:tvpop .4s}
+  .tv-steps{margin:0;padding:0;list-style:none;display:flex;gap:8px;flex-wrap:wrap;counter-reset:s}
+  .tv-steps li{counter-increment:s;display:flex;gap:.5em;align-items:flex-start;padding:.35em .8em .35em .5em;border-radius:8px;background:var(--card2);border:1px solid var(--line);font-size:.8125rem;line-height:1.6;font-weight:600}
+  .tv-steps li::before{content:counter(s);flex:none;width:1.4em;height:1.4em;border-radius:50%;background:var(--ts);color:#fff;font-weight:800;font-size:.75rem;display:grid;place-items:center;margin-top:.1em}
+  .tv-flowline{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:center;font-weight:800}
+  .tv-flowline .st{padding:.5em 1em;border-radius:999px;background:color-mix(in srgb,var(--c) 18%,transparent);border:1px solid var(--c)}
+  `);
+  const tvBox = (name, type, cells, c) => h('div', { class: 'tv-bx', style: { '--c': c || 'var(--ts)' } }, h('span', { class: 'nm' }, name), h('span', { class: 'tp' }, type), h('div', { class: 'tv-cells' }, cells.map((x) => h('div', { class: 'sl' }, x))));
+  const tvWrap = (cap, ...kids) => h('div', { class: 'tv' }, cap ? h('div', { class: 'tv-cap' }, icon('eye'), cap) : null, ...kids);
+  function tvDrop(box, type, items) {
+    const slot = h('div', { class: 'sl' }, '　'), chip = h('div', { class: 'tv-chip', style: { opacity: 0 } }), msg = h('div', { class: 'tv-msg' }, '');
+    const bx = h('div', { class: 'tv-bx', style: { '--c': 'var(--ts)' } }, h('span', { class: 'nm' }, box), h('span', { class: 'tp' }, type), slot);
+    const root = h('div', { class: 'tv-drop' }, chip, bx, msg);
+    let i = 0, started = false;
+    const tick = () => {
+      if (started && !root.isConnected) return; started = true;
+      const it = items[i++ % items.length];
+      chip.className = 'tv-chip'; void chip.offsetWidth; chip.textContent = it.v; chip.style.opacity = 1; chip.classList.add(it.ok ? 'go' : 'ng');
+      slot.textContent = '　'; bx.style.setProperty('--c', 'var(--ts)'); msg.className = 'tv-msg'; msg.textContent = '';
+      setTimeout(() => { if (!root.isConnected) return; bx.style.setProperty('--c', it.ok ? 'var(--ok)' : 'var(--bad)'); if (it.ok) slot.textContent = it.v; msg.className = 'tv-msg ' + (it.ok ? 'ok' : 'ng'); msg.textContent = it.ok ? '✓ 入る' : '✗ 入らない（赤線）'; }, 900);
+      setTimeout(tick, 3200);
+    };
+    setTimeout(tick, 100);
+    return root;
+  }
+  const VIZ = {
+    anatomy: () => tvWrap('絵で見る：型は「箱に貼るラベル」', tvDrop('age', 'number', [{ v: '20', ok: true }, { v: '"二十"', ok: false }, { v: '21', ok: true }])),
+    plus: () => tvWrap('絵で見る："3"（文字）と 3（数字）はちがう', h('div', { class: 'tv-row' },
+      h('div', { class: 'tv-card', style: { '--c': 'var(--bad)' } }, h('h6', '文字 + 数字'), h('div', { class: 'tv-eq', style: { '--c': 'var(--bad)' } }, h('span', { class: 'tk' }, '"3"'), '+', h('span', { class: 'tk' }, '2'), '=', h('span', { class: 'res' }, '"32"')), h('small', 'くっつくだけ')),
+      h('div', { class: 'tv-card', style: { '--c': 'var(--ok)' } }, h('h6', '数字 + 数字'), h('div', { class: 'tv-eq', style: { '--c': 'var(--ok)' } }, h('span', { class: 'tk' }, '3'), '+', h('span', { class: 'tk' }, '2'), '=', h('span', { class: 'res' }, '5')), h('small', '足し算になる')),
+      h('div', { class: 'tv-card', style: { '--c': 'var(--ts)' } }, h('h6', 'boolean'), h('div', { class: 'tv-eq', style: { '--c': 'var(--ts)' } }, h('span', { class: 'tk' }, 'true'), '/', h('span', { class: 'tk' }, 'false')), h('small', '"false" は文字。boolean ではない')))),
+    cl: () => {
+      const cnt = h('div', { class: 'sl tv-cnt' }, '0'); let k = 0; const seq = ['0', '1200', '2000', '4500'];
+      const t = setInterval(() => { if (!cnt.isConnected && k > 0) return clearInterval(t); k++; cnt.textContent = seq[k % 4]; cnt.classList.remove('tv-cnt'); void cnt.offsetWidth; cnt.classList.add('tv-cnt'); }, 1400);
+      return tvWrap('絵で見る：const は鍵つきの箱、let はふつうの箱', h('div', { class: 'tv-row' },
+        h('div', { class: 'tv-card', style: { '--c': 'var(--ok)' } }, h('h6', h('span', { class: 'tv-lock' }, '🔒'), 'const'), tvBox('TAX_RATE', 'number', ['0.1'], 'var(--ok)'), h('small', '入れ直しできない → 税率・設定値')),
+        h('div', { class: 'tv-card', style: { '--c': 'var(--ts)' } }, h('h6', h('span', { class: 'tv-lock' }, '📦'), 'let'), h('div', { class: 'tv-bx' }, h('span', { class: 'nm' }, 'total'), h('span', { class: 'tp' }, 'number'), cnt), h('small', '入れ直せる → 合計・カウンター'))));
+    },
+    infer: () => tvWrap('絵で見る：入口と出口には書く。中は TS におまかせ', h('div', { class: 'tv-flow' },
+      h('div', { class: 'tv-st', style: { '--c': 'var(--ok)' } }, '入口（引数）', h('code', 'price: number'), h('small', '書く ✏️')), h('span', { class: 'tv-ar' }, '→'),
+      h('div', { class: 'tv-st dash', style: { '--c': 'var(--mute)' } }, '関数の中', h('code', 'const sum = …'), h('small', '書かない（推論）')), h('span', { class: 'tv-ar' }, '→'),
+      h('div', { class: 'tv-st', style: { '--c': 'var(--ok)' } }, '出口（戻り値）', h('code', '): number'), h('small', '書く ✏️')))),
+    data: () => tvWrap('絵で見る：3つの「まとまり」', h('div', { class: 'tv-row' },
+      h('div', { class: 'tv-card', style: { '--c': 'var(--basic)' } }, h('h6', '配列 string[]'), tvBox('lawyers', 'string[]', ['田中', '山本', '鈴木'], 'var(--basic)'), h('small', '同じ型が好きなだけ並ぶ')),
+      h('div', { class: 'tv-card', style: { '--c': 'var(--pink)' } }, h('h6', 'タプル [string, number, boolean]'), h('div', { class: 'tv-bx' }, h('span', { class: 'nm' }, 'row'), h('span', { class: 'tp' }, '[string, number, boolean]'), h('div', { class: 'tv-cells' }, h('div', { class: 'sl', style: { '--c': 'var(--basic)' } }, '離婚相談'), h('div', { class: 'sl', style: { '--c': 'var(--pink)' } }, '3000'), h('div', { class: 'sl', style: { '--c': 'var(--team)' } }, 'true'))), h('small', '位置ごとに型が決まる')),
+      h('div', { class: 'tv-card', style: { '--c': 'var(--team)' } }, h('h6', 'オブジェクト'), h('div', { class: 'tv-bx' }, h('span', { class: 'nm' }, 'c'), h('span', { class: 'tp' }, 'Consultation'), h('div', { class: 'tv-cells' }, h('div', { class: 'sl', style: { '--c': 'var(--basic)', flexDirection: 'column', fontSize: '.75rem' } }, h('small', 'title'), '相続'), h('div', { class: 'sl', style: { '--c': 'var(--pink)', flexDirection: 'column', fontSize: '.75rem' } }, h('small', 'fee'), '3000'))), h('small', '名前つきの引き出し')))),
+    any: () => tvWrap('絵で見る：any は素通り、unknown は検問', h('div', { class: 'tv-row' },
+      h('div', { class: 'tv-card', style: { '--c': 'var(--bad)' } }, h('h6', 'any'), h('div', { class: 'tv-flow' }, h('span', { class: 'tv-chip' }, '何か'), h('span', { class: 'tv-ar' }, '→ 🚪（開けっぱなし）→'), h('span', { class: 'tv-chip', style: { background: 'var(--bad)' } }, '💥 本番で落ちる')), h('small', '赤線ゼロ。誰も気づかない')),
+      h('div', { class: 'tv-card', style: { '--c': 'var(--ok)' } }, h('h6', 'unknown'), h('div', { class: 'tv-flow' }, h('span', { class: 'tv-chip' }, '何か'), h('span', { class: 'tv-ar' }, '→ 🛂 typeof で確認 →'), h('span', { class: 'tv-chip', style: { background: 'var(--ok)' } }, '✓ 安全に使う')), h('small', '確かめるまで使えない')))),
+    nothing: () => tvWrap('絵で見る：「ない」の3種類', h('div', { class: 'tv-row' },
+      h('div', { class: 'tv-card', style: { '--c': 'var(--ts)' } }, h('h6', h('span', { class: 'tv-big' }, '🕳️'), 'void'), h('code', 'function f(): void'), h('small', '関数が何も返さない')),
+      h('div', { class: 'tv-card', style: { '--c': 'var(--hi, #ffb454)' } }, h('h6', h('span', { class: 'tv-big' }, '⬜'), 'undefined'), h('code', 'nickname?: string'), h('small', 'まだ入っていない')),
+      h('div', { class: 'tv-card', style: { '--c': 'var(--violet)' } }, h('h6', h('span', { class: 'tv-big' }, '∅'), 'null'), h('code', 'string | null'), h('small', '「ない」と自分で示す')))),
+  };
+  /* 全体マップ（最初の場面） */
+  function overviewScene(el) {
+    const C = (em, name, ex, sc, c) => h('div', { class: 'tv-card', style: { '--c': c } }, h('h6', h('span', { class: 'tv-big' }, em), name), h('code', ex), h('small', '→ ' + sc));
+    el.append(
+      h('div', { class: 'tv' }, h('div', { class: 'tv-cap' }, icon('map'), 'この授業で出てくる「型」の一覧'),
+        h('div', { class: 'tv-row' },
+          C('🔤', 'string', '"田中"', '文字', 'var(--basic)'), C('🔢', 'number', '3000', '数字', 'var(--ts)'), C('✅', 'boolean', 'true / false', 'はい・いいえ', 'var(--team)'),
+          C('📚', '配列', 'string[]', '同じ型が並ぶ', 'var(--basic)'), C('🧩', 'タプル', '[string, number]', '位置ごとに型', 'var(--pink)'), C('🗂️', 'オブジェクト', '{ title: string }', '名前つき', 'var(--team)'),
+          C('🎲', 'any / unknown', 'unknown', '何でも（unknown は安全）', 'var(--bad)'), C('🕳️', 'void / null / undefined', 'string | null', '値がない', 'var(--violet)'))),
+      h('div', { class: 'tv' }, h('div', { class: 'tv-cap' }, icon('route'), '学ぶ流れ'),
+        h('div', { class: 'tv-flowline' }, h('span', { class: 'st', style: { '--c': 'var(--ts)' } }, '① 型を書く'), '→', h('span', { class: 'st', style: { '--c': 'var(--bad)' } }, '② まちがえると赤線'), '→', h('span', { class: 'st', style: { '--c': 'var(--ok)' } }, '③ 直して実行')),
+        h('div', { class: 'tv-steps' }, h('li', '箱とラベル（型の書き方）'), h('li', '文字と数字のちがい'), h('li', 'const / let'), h('li', '型推論'), h('li', '配列・タプル・オブジェクト'), h('li', 'any / unknown'), h('li', 'void / null / undefined'), h('li', '実践'))),
+      tvWrap('絵で見る：型は「箱に貼るラベル」', tvDrop('age', 'number', [{ v: '20', ok: true }, { v: '"二十"', ok: false }])));
+  }
+
   /* ================= ts-basic ================= */
   K.reg({
     id: 'ts-basic', track: 'ts', title: '基礎文法・データ型', sub: '型の指定の方法', emoji: '📘',
     scenes: [
+      { t: '全体マップ：型の種類', tag: 'MAP', lead: '先に全体を見よう。細かいことは、次から1つずつ。', render: overviewScene },
       {
-        t: '型アノテーションの読み方', lead: '<code class="i">let age: number = 20;</code> は4つの部品でできています。読み方を覚えたら、下の<b>本物のコード</b>を書き換えて試そう。',
+        t: '型アノテーションの読み方', lead: '<code class="i">let age: number = 20;</code> は4つの部品。絵と見比べて、下のコードを書き換えてみよう。',
         render(el) {
+          el.append(VIZ.anatomy());
           const L = [['let', '箱を作る合図', 'var(--basic)'], ['age', '箱の名前（変数名）', 'var(--pink)'], [': number', '型。数字だけ入る箱にする', 'var(--ts)'], ['= 20', '最初の中身', 'var(--team)']];
           el.append(h('div', { class: 'tslab-legend' }, L.map(([c, s, col]) => h('div', { style: { '--lc': col } }, h('code', c), h('small', s)))), h('div', { style: { height: '12px' } }));
           labTabs(el, [{
             name: '申込フォームの値',
-            story: '申込フォームの「年齢」に、うっかり文字が入った。画面には <b>「二十1 歳」</b> と出る。動かすまで誰も気づけない。',
+            story: '田中さんの年齢に文字が入って、画面が「二十1 歳」になった。',
             src: `// 申込フォームの値。「変数名: 型」で、入る種類を決める
 let age: number = 20;
 let name: string = "田中";
@@ -758,17 +864,18 @@ let agree: boolean = true;
 console.log(name + "さんは来年 " + (age + 1) + " 歳");
 `,
             actions: [{ label: '事故を起こす', icon: 'bug', apply: uncomment('age = "二十"') }],
-            tryIt: '<b>やってみよう</b>　① そのまま「実行」→ 「田中さんは来年 21 歳」。② 「事故を起こす」→ <b>実行する前に赤線</b>が出る（実行すると「二十1 歳」になってしまう）。③ 直す：<code>age = 21;</code> に書き換える。',
+            tryIt: '① 実行 → 21歳　② 「事故を起こす」→ 赤線　③ <code>age = 21;</code> に直す',
           }]);
         },
       },
       {
-        t: '型の箱に値を入れよう', tag: 'string · number', lead: '入力欄から届く値は<b>いつも文字</b>。数字と思って足すと、人数も料金も狂う。本物のコードで確かめよう。',
+        t: '型の箱に値を入れよう', tag: 'string · number', lead: '入力欄から届く値は<b>いつも文字</b>。足し算が狂う様子を見よう。',
         render(el) {
+          el.append(VIZ.plus());
           labTabs(el, [
             {
               name: '人数 "3" + 2', sub: 'string と number',
-              story: '参加人数 <code>"3"</code> に 2 人を足したら、画面に <b>「32人」</b>。赤線は出ない。文字と数字の足し算は、つなぐだけになる。',
+              story: '"3" + 2 が「32人」に。赤線は出ない。',
               src: `// フォームの入力欄から届く値は、いつも「文字」
 const peopleText: string = "3";
 const extra: number = 2;
@@ -780,11 +887,11 @@ console.log(total + "人");
 // const people: number = peopleText;
 `,
               actions: [{ label: '赤線を出す', icon: 'bug', apply: uncomment('const people: number = peopleText') }],
-              tryIt: '<b>やってみよう</b>　① 「実行」→ 32人（赤線なし）。② 「赤線を出す」→ <code>string</code> は <code>number</code> の箱に入らない。③ 直す：<code>const people: number = Number(peopleText);</code> にして、<code>people + extra</code> を出力する → 5人。',
+              tryIt: '① 実行 → 32人　② 「赤線を出す」　③ <code>Number(peopleText)</code> に直す → 5人',
             },
             {
               name: '料金 3500 と "3500"', sub: 'number',
-              story: '料金 <code>"3500"</code> に手数料 500 を足したら <b>「3500500」円</b>。引用符が付くと文字になる。',
+              story: '"3500" + 500 が「3500500円」に。',
               src: `const priceText: string = "3500";   // 文字
 const priceNum: number = 3500;      // 数字
 const fee: number = 500;
@@ -792,11 +899,11 @@ const fee: number = 500;
 console.log(priceText + fee);   // 文字 + 数字
 console.log(priceNum + fee);    // 数字 + 数字
 `,
-              tryIt: '<b>やってみよう</b>　① 「実行」で、2つの出力を見比べる。② <code>priceNum</code> の行を <code>"3500"</code>（引用符付き）に変えると、赤線が出る。',
+              tryIt: '① 実行 → 2つの出力を見比べる　② <code>priceNum</code> を <code>"3500"</code> にすると赤線',
             },
             {
               name: '同意チェック "false"', sub: 'boolean',
-              story: 'チェックボックスの値を文字で持ったら、<code>"false"</code>（外したはず）なのに <b>「同意あり」</b> と判定された。文字は空でなければ true 扱い。',
+              story: 'チェックを外したのに "false" で「同意あり」に。',
               src: `// 文字で持つと、"false" でも if を通ってしまう
 const agreeText: string = "false";
 if (agreeText) {
@@ -811,18 +918,19 @@ if (agree) {
   console.log("同意なし");
 }
 `,
-              tryIt: '<b>やってみよう</b>　① 「実行」→ 上の if は通ってしまう。② <code>const agree: boolean = false;</code> を <code>"false"</code> に変えると、赤線で止まる。',
+              tryIt: '① 実行 → if を通ってしまう　② <code>agree</code> を <code>"false"</code> にすると赤線',
             },
           ]);
         },
       },
       {
-        t: 'const / let と型推論', lead: 'まず<b>const</b>で書く。あとから値を変える必要が出て<b>赤線</b>が出たら<b>let</b>に変える。本物のコードで、その理由を見よう。',
+        t: 'const / let と型推論', lead: '<b>まず const</b>。赤線が出たら <b>let</b>。',
         render(el) {
+          el.append(VIZ.cl());
           labTabs(el, [
             {
               name: 'const：変わらない値', sub: '税率',
-              story: '消費税率がどこかで書き換わり、請求書の税額が<b>0円</b>に。原因は200行先の1行。探すだけで半日かかった。',
+              story: 'どこかで税率が書き換わり、税額が0円に。',
               src: `const TAX_RATE = 0.1;   // 消費税率：ずっと同じ
 
 function withTax(price: number): number {
@@ -835,11 +943,11 @@ function withTax(price: number): number {
 console.log(withTax(1000));
 `,
               actions: [{ label: '事故を起こす', icon: 'bug', apply: uncomment('TAX_RATE = 0;') }],
-              tryIt: '<b>やってみよう</b>　① 「実行」→ 1100。② 「事故を起こす」→ <b>書いた瞬間に赤線</b>。③ <code>const</code> を <code>let</code> に変えて実行してみよう → 赤線は消えるが、出力は <b>1000</b>（税が 0 円になった）。変わらない値は const で守る。',
+              tryIt: '① 実行 → 1100　② 「事故を起こす」→ 赤線　③ <code>let</code> に変えると赤線は消えるが 1000 に（税0円）',
             },
             {
               name: 'let：変わる値', sub: '合計',
-              story: 'カートの合計金額は、商品を足すたびに変わる。<code>const</code> で作ると、足し算した瞬間に止まる。',
+              story: '合計は足すたびに変わる。const だと止まる。',
               src: `const prices = [1200, 800, 2500];   // カートの商品
 let total = 0;                      // 足していくので let
 
@@ -849,11 +957,11 @@ for (let i = 0; i < prices.length; i++) {
 
 console.log("合計", total);
 `,
-              tryIt: '<b>やってみよう</b>　① 「実行」のあと、<b>◀ ▶</b> で1行ずつ進める → <code>total</code> が 0 → 1200 → 2000 → 4500 と変わる。② <code>let total</code> を <code>const total</code> に変える → <code>total += …</code> に赤線。赤線が出たら let に直す。',
+              tryIt: '① 実行 → ◀ ▶ で1行ずつ（0→1200→2000→4500）　② <code>const total</code> に変えると赤線',
             },
             {
               name: 'const でも中身は変えられる', sub: 'カート',
-              story: '「const なのに push できた！」と混乱する人が多い。<b>const が守るのは「箱そのもの」</b>で、箱の中身ではない。',
+              story: 'const でも push できる。守るのは「箱」だけ。',
               src: `const cart = { items: ["相談 30分"], count: 1 };
 
 cart.items.push("書類確認");   // OK：中身を足す
@@ -863,11 +971,11 @@ cart.count = 2;                // OK：項目を書き換える
 console.log(cart.items, cart.count);
 `,
               actions: [{ label: '箱ごと入れ替える', icon: 'bug', apply: uncomment('cart = { items: [], count: 0 };') }],
-              tryIt: '<b>やってみよう</b>　① 「実行」→ 中身が増える（const でも OK）。② 「箱ごと入れ替える」→ <code>Cannot assign to \'cart\'</code> の赤線。<code>cart</code> という名前に別のものを入れ直すのが禁止。',
+              tryIt: '① 実行 → 中身は増える　② 「箱ごと入れ替える」→ 赤線',
             },
             {
               name: '型は書かなくても決まる', sub: '型推論',
-              story: '<code>let status = "open"</code> のあとで <code>status = 5</code> と書いても、赤線で止まる。<b>初期値から TS が型を決めている</b>から。',
+              story: '書かなくても、初期値から型が決まる。',
               src: `const tax = 0.1;        // const は値そのものが型（0.1）
 let price = 1000;       // let は「数字」という種類（number）
 const status = "open";  // 値そのもの（"open"）
@@ -880,15 +988,16 @@ let label = "受付中";   // 文字という種類（string）
 console.log(tax, price, status, label);
 `,
               actions: [{ label: '事故を起こす', icon: 'bug', apply: (s) => uncomment('price = "千円"')(uncomment('label = 5;')(s)) }],
-              tryIt: '<b>見るところ</b>　右の「TS が決めた型」：<code>tax</code> は <code>0.1</code>、<code>price</code> は <code>number</code>。点線＝書いていないのに TS が推論した型。「事故を起こす」で、推論された型に反する代入が赤線になる。',
+              tryIt: '① 右の「TS が決めた型」を見る（点線＝推論）　② 「事故を起こす」→ 赤線',
             },
           ]);
           el.append(h('div', { class: 'tsx3-rule' }, icon('lightbulb'), h('span', { html: '<b>まず const</b>。値を変える必要が出て赤線（<code>Cannot assign to …</code>）が出たら、そこで<b>let</b>に変える。迷ったら const でよい。' })));
         },
       },
       {
-        t: '型推論：どこまで書く？', tag: 'inference', lead: '型は「全部に書く」のも「全部省く」のもダメ。<b>入口（引数）と出口（戻り値）</b>には書き、中の変数は推論に任せる。本物のコードで確かめよう。',
+        t: '型推論：どこまで書く？', tag: 'inference', lead: '<b>入口（引数）と出口（戻り値）</b>には書く。中の変数は TS におまかせ。',
         render(el) {
+          el.append(VIZ.infer());
           const noise = (src) => {
             const tips = [];
             src.split('\n').forEach((l, i) => { const m = l.match(/^\s{2,}(?:const|let)\s+(\w+)\s*:\s*(\w+)\s*=\s*\S/); if (m) tips.push('L' + (i + 1) + ': <code>' + m[1] + '</code> は右辺から <code>' + m[2] + '</code> と分かる。<b>書かなくてよい</b>（ノイズ）'); });
@@ -897,7 +1006,7 @@ console.log(tax, price, status, label);
           labTabs(el, [
             {
               name: '引数に書かないと any', sub: '入口',
-              story: '請求書の小計。引数の型を省いたら <code>any</code> になり、<code>subtotal(1000, "3個")</code> が通って画面に <b>NaN</b> と出た。',
+              story: '引数の型を省いたら "3個" が通って NaN に。',
               src: `// 引数の型を書いていない
 function subtotal(price, qty) {
   return price * qty;
@@ -905,11 +1014,11 @@ function subtotal(price, qty) {
 
 console.log(subtotal(1000, "3個"));   // 文字でも通る
 `,
-              tryIt: '<b>やってみよう</b>　① 「実行」→ NaN（赤線は引数の宣言に出ている）。② <code>price: number, qty: number</code> と書く → 今度は<b>呼び出し側</b>に赤線が出て、バグが実行前に分かる。③ 呼び出しを <code>subtotal(1000, 3)</code> にして直す。',
+              tryIt: '① 実行 → NaN　② <code>price: number, qty: number</code> を書く → 呼び出し側に赤線　③ <code>subtotal(1000, 3)</code> に直す',
             },
             {
               name: '中の変数は書かない', sub: '出口と中身',
-              story: 'レビューで「型だらけで読めない」と指摘された。<b>右辺を見れば分かる型</b>まで書くと、ノイズになる。',
+              story: '型だらけで読めない。右辺で分かる型は省く。',
               src: `function subtotal(price: number, qty: number): number {
   const sum: number = price * qty;
   const label: string = "小計";
@@ -919,18 +1028,19 @@ console.log(subtotal(1000, "3個"));   // 文字でも通る
 console.log(subtotal(1000, 3));
 `,
               coach: noise,
-              tryIt: '<b>やってみよう</b>　上の2つの変数から <code>: number</code> / <code>: string</code> を消す。右の「TS が決めた型」は変わらない（点線＝推論）。<b>引数と戻り値の型は残す</b>のがルール。',
+              tryIt: '① <code>: number</code> / <code>: string</code> を消す　② 右の型は変わらない（推論）',
             },
           ]);
         },
       },
       {
-        t: '配列・タプル・オブジェクト', lead: 'データのまとまりも型で守れる。API から届く形を、本物のコードで試そう。',
+        t: '配列・タプル・オブジェクト', lead: 'データのまとまりも型で守れる。3つの形を見比べよう。',
         render(el) {
+          el.append(VIZ.data());
           labTabs(el, [
             {
               name: '配列', sub: '同じ型が並ぶ',
-              story: '担当弁護士の一覧に、うっかり数字を push した。画面の1行だけ <b>名前が数字</b>になっていた。',
+              story: '弁護士一覧に数字が混ざった。',
               src: `const lawyers: string[] = ["田中", "山本"];
 
 lawyers.push("鈴木");   // OK
@@ -939,11 +1049,11 @@ lawyers.push("鈴木");   // OK
 console.log(lawyers.length, lawyers);
 `,
               actions: [{ label: '数字を入れてみる', icon: 'bug', apply: uncomment('lawyers.push(3)') }],
-              tryIt: '<b>やってみよう</b>　① 「実行」→ 3人。② 「数字を入れてみる」→ <code>string[]</code> に数字は入らない（赤線）。',
+              tryIt: '① 実行 → 3人　② 「数字を入れてみる」→ 赤線',
             },
             {
               name: 'タプル', sub: '位置ごとに型',
-              story: 'API が返す相談の1行 <code>["離婚相談", 3000, true]</code>。<code>row[1]</code> が料金か件数か分からず、画面が落ちた。',
+              story: 'row[1] が料金か件数か分からず画面が落ちた。',
               src: `// 相談の1行：[題名, 料金, 公開中か]
 const row: [string, number, boolean] = ["離婚相談", 3000, true];
 
@@ -956,11 +1066,11 @@ console.log(row[1] * 2);   // 料金を2倍
                 { label: '料金に文字', icon: 'bug', apply: uncomment('row[1] = "無料"') },
                 { label: '順番を入れ替え', icon: 'shuffle', apply: uncomment('const bad') },
               ],
-              tryIt: '<b>やってみよう</b>　「料金に文字」「順番を入れ替え」を押して、赤線の文を読む。タプルは<b>個数・順番・型</b>まで決まっているので、row[1] がいつも料金だと保証される。',
+              tryIt: '① 「料金に文字」を押す　② 「順番を入れ替え」を押す　③ 赤線の文を読む',
             },
             {
               name: 'オブジェクト', sub: '形を決める',
-              story: '相談データの項目名を変えたのに、直し忘れた画面が1つ。何も言われず、<b>料金が空</b>で表示された。',
+              story: '項目名を変えたのに直し忘れ、料金が空に。',
               src: `interface Consultation {
   title: string;
   fee: number;
@@ -977,28 +1087,29 @@ console.log(c);
                 { label: '料金に文字', icon: 'bug', apply: uncomment('c.fee = "無料"') },
                 { label: '存在しない項目', icon: 'bug', apply: uncomment('c.priority = 1') },
               ],
-              tryIt: '<b>やってみよう</b>　2つのボタンで赤線を出して、メッセージを読む。<code>interface</code> は「このオブジェクトはこの形」という約束。外れるとすぐ赤線。',
+              tryIt: '① 2つのボタンで赤線を出す　② メッセージを読む',
             },
           ]);
         },
       },
       {
-        t: 'any と unknown', tag: 'any', lead: '外から来る値（API の返事）を <b>any</b> で受けるか、<b>unknown</b> で受けるか。本物のコードで、落ちるのと守られるのを見比べよう。',
+        t: 'any と unknown', tag: 'any', lead: '外から来る値は <b>any</b> か <b>unknown</b> か。見比べよう。',
         render(el) {
+          el.append(VIZ.any());
           labTabs(el, [
             {
               name: 'any で受ける', sub: '落ちる',
-              story: '外部 API の JSON を <code>any</code> で受けた。相手が項目名を <code>name</code> → <code>fullName</code> に変えたのに赤線は出ず、<b>本番で画面が真っ白</b>に。',
+              story: 'any で受けたら項目名の変更に気づけず、本番で真っ白。',
               src: `// 外部 API の返事。相手が項目名を変えた（name → fullName）
 const res: any = JSON.parse('{"fullName":"田中"}');
 
 console.log(res.name.toUpperCase());   // 赤線なし
 `,
-              tryIt: '<b>やってみよう</b>　「実行」→ <b>実行エラー</b>。<code>any</code> は型チェックを諦めるので、赤線が1本も出ない。誰も事前に気づけない。',
+              tryIt: '① 実行 → 実行エラー　② 赤線は1本も出ていない',
             },
             {
               name: 'unknown で受ける', sub: '守られる',
-              story: '同じ API を <code>unknown</code> で受けると、使う前に赤線で止められる。<b>確かめてから使う</b>ようになる。',
+              story: 'unknown なら使う前に止められる。',
               src: `// 何が来るか分からない → unknown で受ける
 const res: unknown = JSON.parse('"tanaka"');   // 今回は文字が来た
 
@@ -1010,18 +1121,19 @@ console.log(res.toUpperCase());   // 赤線：確かめる前は使えない
 // }
 `,
               actions: [{ label: '確かめてから使う', icon: 'shield-check', apply: () => '// 何が来るか分からない → unknown で受ける\nconst res: unknown = JSON.parse(\'"tanaka"\');   // 今回は文字が来た\n\n// 確かめてから使う：typeof で string と分かった枝の中だけ OK\nif (typeof res === "string") {\n  console.log(res.toUpperCase());\n}\n' }],
-              tryIt: '<b>やってみよう</b>　① 「実行」前に赤線（<code>\'res\' is of type \'unknown\'</code>）。② 「確かめてから使う」→ <code>typeof</code> で string と分かった枝の中だけ使える → 赤線が消える。',
+              tryIt: '① 赤線の文を読む　② 「確かめてから使う」→ 赤線が消える',
             },
           ]);
         },
       },
       {
-        t: '値がない型：void / undefined / null', tag: 'void', lead: '「値がない」にも3種類ある。ログイン前の画面で落ちる、よくある事故を本物のコードで見よう。',
+        t: '値がない型：void / undefined / null', tag: 'void', lead: '「値がない」は3種類。違いを絵で見よう。',
         render(el) {
+          el.append(VIZ.nothing());
           labTabs(el, [
             {
               name: 'void', sub: '戻り値がない',
-              story: '記録するだけの関数の結果を、変数に入れて使おうとした。<b>戻り値は無い</b>（undefined）。',
+              story: '記録だけの関数。戻り値は無い。',
               src: `function logOrder(id: number): void {
   console.log("注文 " + id + " を記録しました");
 }
@@ -1029,11 +1141,11 @@ console.log(res.toUpperCase());   // 赤線：確かめる前は使えない
 const r = logOrder(1);   // void：返す値は無い
 console.log(r);
 `,
-              tryIt: '<b>見るところ</b>　右の「TS が決めた型」：<code>logOrder()</code> は <code>void</code>、<code>r</code> も <code>void</code>。出力の2行目は <code>undefined</code>。「何かを返す関数」ではない目印。',
+              tryIt: '① 右の型：<code>r</code> は <code>void</code>　② 出力2行目は <code>undefined</code>',
             },
             {
               name: 'undefined', sub: 'まだ入っていない',
-              story: 'あだ名は<b>入力しなくてよい</b>項目。未入力の人の <code>nickname.length</code> を読んで画面が落ちた。',
+              story: '未入力のあだ名を読んで画面が落ちた。',
               src: `interface Profile {
   name: string;
   nickname?: string;   // あだ名は無いかも
@@ -1045,11 +1157,11 @@ console.log(p.nickname);           // undefined
 // console.log(p.nickname.length);  // ← 赤線になる
 `,
               actions: [{ label: 'そのまま使う', icon: 'bug', apply: uncomment('console.log(p.nickname.length)') }],
-              tryIt: '<b>やってみよう</b>　① 「実行」→ undefined。② 「そのまま使う」→ 実行前に赤線（<code>possibly \'undefined\'</code>）。直す：<code>if (p.nickname !== undefined) { … }</code>',
+              tryIt: '① 実行 → undefined　② 「そのまま使う」→ 赤線　③ <code>if (p.nickname !== undefined)</code> で直す',
             },
             {
               name: 'null', sub: '「ない」を自分で示す',
-              story: 'ログインしていない人の名前を表示しようとして <b>Cannot read properties of null</b>。見つからなかったら <code>null</code> を返す関数だった。',
+              story: '見つからないとき null が返り、画面が落ちた。',
               src: `function findName(id: number): string | null {
   return id === 1 ? "田中" : null;   // 見つからなければ null
 }
@@ -1062,13 +1174,13 @@ console.log(n.length);   // 赤線：n は null かもしれない
 //   console.log(n.length);
 // }
 `,
-              tryIt: '<b>やってみよう</b>　① 「実行」→ 実行エラー（赤線のまま動かすと落ちる）。② 直す：<code>console.log(n.length);</code> を消して、下のコメントを外す → 赤線が消えて、<code>n</code> は <code>string</code> として使える。',
+              tryIt: '① 実行 → エラー　② <code>n.length</code> を消し、下のコメントを外す → 赤線が消える',
             },
           ]);
         },
       },
       {
-        t: '実践：型エラーを全部直そう', tag: 'PRACTICE', lead: 'ミッションは3つ（1行ずつ直すだけ）。「値を直す」でも「型を広げる」でも OK。',
+        t: '実践：型エラーを全部直そう', tag: 'PRACTICE', lead: 'ミッションは3つ。1行ずつ直そう。',
         render(el) {
           el.append(tsPractice("let count: number = \"5\";                    // ① ここを直す\nconst names: string[] = [\"田中\", 3];       // ② ここを直す\nconst point: [number, number] = [10, \"20\"]; // ③ ここを直す\n\nconsole.log(count, names, point);\n", (v, c, ed) => [
             { label: '① count の赤線を消す', ok: ed && !/\bany\b/.test(nc(v)) && lineOk(v['main.ts'], /^\s*let\s+count\b/, c.errors) },
