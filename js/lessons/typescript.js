@@ -1936,8 +1936,47 @@ console.log(n.length);
           CASES.forEach((r, i) => wPick.append(h('button', { onclick: () => showW(i) }, r.n)));
           showW(0);
           const whySec = h('div', { class: 'cx-sec' }, h('h4', '🤔 ① なぜ class が要る？ いろいろな場面で比べよう'), wPick, wBody);
-          const demoH = h('div', { class: 'cx-sec' }, h('h4', '🔧 ③ 項目を足す時の違い（予約を増やす・email を足す）'));
-          el.append(whySec, blueSec, demoH,
+          const demoH = h('div', { class: 'cx-sec' }, h('h4', '🔧 ④ 項目を足す時の違い（予約を増やす・email を足す）'));
+          /* ③ 設計図から設計図を作る：親クラスと子クラス */
+          style('kds', `
+          .kd-tree{display:grid;justify-items:center;gap:8px}
+          .kd-row{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;align-items:flex-start}
+          .kd-ar{font:900 1.3rem var(--mono);color:var(--ts);transition:.5s}
+          .kd-ghost{min-width:210px;border-radius:8px;border:2px dashed var(--line);padding:1.3em 1em;text-align:center;font:800 .8rem var(--mono);color:var(--mute);transition:.5s}
+          .kd-st{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;min-height:2.6em;align-items:center}
+          .kd-st span{padding:.3em .9em;border-radius:8px;font:800 .78rem var(--mono);border:2px solid var(--c);background:color-mix(in srgb,var(--c) 18%,var(--card));animation:tvpop .4s both}
+          .kd-term{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;transition:.5s}.kd-term div{flex:1 1 200px;padding:.55em .9em;border-radius:10px;background:var(--card);border:1px solid var(--line);font-weight:700;font-size:.84rem;line-height:1.65}
+          .kd-term b{color:var(--ts)}`);
+          const kcls = (name, cc, members) => h('div', { class: 'tsx-cls', style: { '--cc': cc, minWidth: '210px' } }, h('header', name), members.map(([t, k]) => h('div', { class: k || '' }, t)));
+          const kPar = kcls('Booking（親クラス）', 'var(--team)', [['name: string'], ['people: number'], ['cancel()']]);
+          const kKid = kcls('SeminarBooking extends Booking（子クラス）', 'var(--ts)', [['name  ↑親から', 'inh'], ['people  ↑親から', 'inh'], ['cancel()  ↑親から', 'inh'], ['hall: string  ← 足した分']]);
+          const kGhost = h('div', { class: 'kd-ghost' }, '🤔 セミナー予約の設計図は…？', h('div', { style: { fontWeight: 600, fontSize: '.72rem', marginTop: '4px' } }, 'name・people・cancel() をまた書く？'));
+          const kAr = h('div', { class: 'kd-ar' }, '⬆ extends（引き継ぐ）');
+          const kSt = h('div', { class: 'kd-st' }), kTerm = h('div', { class: 'kd-term' },
+            h('div', { html: '<b>親クラス</b>：土台になる設計図（Booking）' }), h('div', { html: '<b>子クラス</b>：土台を<b>引き継いで</b>、足す分だけ書いた設計図' }), h('div', { html: '<b>extends</b>：「〜を引き継ぐ」の合図' }));
+          const KSTEP = [
+            { say: '📐 まず<b>親クラス Booking</b>。予約の設計図（name・people・cancel()）。' },
+            { say: '🖨 いつもどおり <code>new</code> でスタンプを押すと、予約（<b>b1</b>）ができる。' },
+            { say: '🤔 ここで<b>セミナー専用</b>の予約も作りたい。会場（hall）が要る。でも name・people・cancel() を<b>また全部書く</b>のは面倒…' },
+            { say: '🧒 そこで <b>extends</b>！ Booking を<b>土台</b>にした新しい設計図 <b>SeminarBooking（子クラス）</b>を作る。薄い行は<b>書かなくても持っている</b>もの。' },
+            { say: '✏️ 子クラスは<b>足す分だけ</b>書く。ここでは <b>hall</b>（会場）だけ。' },
+            { say: '🖨 子クラスの設計図からも <code>new</code> できる。s1 は name・people・hall を持ち、<b>親の cancel() もそのまま使える</b>。' },
+          ];
+          const kidSec = h('div', { class: 'cx-sec' }, h('h4', '🧒 ③ 設計図から設計図を作る：親クラスと子クラス'),
+            stepper({ color: 'var(--ts)', interval: 3600, steps: KSTEP,
+              init(vis) { vis.append(h('div', { class: 'kd-tree' }, kPar, kAr, h('div', { class: 'kd-row' }, kGhost, kKid), kSt), kTerm); },
+              update(n) {
+                kAr.style.opacity = n >= 3 ? 1 : 0;
+                kGhost.style.display = n >= 3 ? 'none' : (n >= 2 ? '' : 'none'); kKid.style.display = n >= 3 ? '' : 'none';
+                const rows = kKid.querySelectorAll('div');
+                rows.forEach((r, k) => { r.style.transition = '.5s'; r.style.opacity = k === 3 ? (n >= 4 ? 1 : 0) : (n >= 3 ? .55 : 0); });
+                kTerm.style.opacity = n >= 3 ? 1 : 0;
+                kSt.replaceChildren();
+                if (n >= 1) kSt.append(h('span', { style: { '--c': 'var(--team)' } }, 'b1 : Booking  ("田中", 2)'));
+                if (n >= 5) kSt.append(h('span', { style: { '--c': 'var(--ts)' } }, 's1 : SeminarBooking  ("山本", 3, "A会場")'), h('span', { style: { '--c': 'var(--ok)' } }, 's1.cancel()  ✓ 親の機能も使える'));
+              } }));
+
+          el.append(whySec, blueSec, kidSec, demoH,
             h('div', { class: 'cx-ctl' }, 'name', nm, 'people', pr,
               h('button', { class: 'btn primary', onclick: add }, icon('plus'), '予約を追加'),
               h('button', { class: 'btn', onclick: addMail }, icon('mail-plus'), 'email 項目を足す'),
