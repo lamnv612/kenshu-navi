@@ -3386,6 +3386,33 @@ style('cgk', `
     render(el) {
       const F0 = { 'price.html': PRICE0, 'README.md': '# app\n' };
       const base = (sim, extra) => sim.seed(Object.assign({ commits: [{ msg: 'first commit', files: F0, push: true }] }, extra));
+      style('cgv2', `
+      .cgp{border:1px solid var(--line);border-radius:12px;background:var(--card);padding:14px 16px;margin-bottom:14px;display:grid;gap:12px}
+      .cgp>b{font-size:.9375rem;display:flex;align-items:center;gap:.5em}
+      .cgp-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px}
+      .cgp-c{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--card2);display:grid;gap:4px;transition:.2s}
+      .cgp-c:hover{transform:translateY(-2px);border-color:var(--c)}
+      .cgp-c code{font:800 .8125rem var(--mono);color:var(--c)}.cgp-c span{font-size:.8125rem;line-height:1.6}
+      .cgp-h{display:flex;align-items:center;gap:0;flex-wrap:wrap;padding:6px 2px}
+      .cgp-h .cgv-n span{max-width:120px}
+      .cgp-tag{font:800 .6875rem var(--mono);padding:.1em .6em;border-radius:6px;background:var(--pink);color:#fff;margin-bottom:4px;animation:cgpbob 1.4s ease-in-out infinite}
+      .cgp-tag.p{background:var(--mute)}
+      @keyframes cgpbob{50%{transform:translateY(-4px)}}
+      `);
+      const cmd = (c, code, txt, col) => h('div', { class: 'cgp-c', style: { '--c': col } }, h('code', code), h('span', { html: txt }));
+      const nd = (l, k, tag, tc) => h('div', { class: 'cgv-n ' + k }, tag ? h('div', { class: 'cgp-tag ' + (tc || '') }, tag) : h('div', { style: { height: '22px' } }), h('i'), h('span', l));
+      el.append(h('div', { class: 'cgp' },
+        h('b', icon('lightbulb'), 'まず、よく使う簡単なコマンド（これだけ知っていれば読めます）'),
+        h('div', { class: 'cgp-g' },
+          cmd(0, 'git status', '<b>いまの状態</b>を見る。変更したファイルは？', BASIC),
+          cmd(0, 'git log --oneline', '<b>履歴</b>（commit の一覧）を 1 行ずつ見る', TS),
+          cmd(0, 'git diff', '<b>何を変えたか</b>を見る', VIO),
+          cmd(0, 'git add ファイル', '<b>commit に入れる</b>ファイルを選ぶ（ステージ）', TEAM),
+          cmd(0, 'git commit -m "説明"', '選んだ変更を<b>1 つの記録</b>として保存（自分の PC の中だけ）', PINK),
+          cmd(0, 'git push', '記録を <b>GitHub に送る</b>。送るとみんなにも見える', 'var(--ok)')),
+        h('div', { class: 'cgp-h' },
+          nd('first commit', 'base', 'HEAD~2', 'p'), h('div', { class: 'cgv-l' }), nd('前の commit', 'base', 'HEAD~1', 'p'), h('div', { class: 'cgv-l' }), nd('いちばん新しい commit', 'ok', 'HEAD'),
+          h('div', { style: { marginLeft: '16px', fontSize: '.8125rem', lineHeight: 1.7, flex: '1 1 260px' }, html: '<b>HEAD</b> ＝「いま自分がいる場所」（＝最新の commit）。<b>HEAD~1</b> ＝ ひとつ前。<b>ハッシュ</b>（f1bbcd8 のような英数字）＝ commit の名札。' }))));
       el.append(GX.tabs([
         { t: 'メッセージの誤字', sub: 'push 前 · amend', ic: 'pencil', c: TS, cfg: {
           story: '料金表に「相談」を追加して commit した。直後に、<b>メッセージの誤字（typoo）</b>に気づいた。まだ push していない。',
