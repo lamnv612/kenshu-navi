@@ -732,18 +732,19 @@
   function lab(o) {
     const root = h('div', { class: 'tslab-grid' });
     let ts = null, rr = null, step = -1, stale = false, timer = 0, token = 0;
-    const ed = codeEditor(o.src, 'ts', () => { stale = true; paintOut(); clearTimeout(timer); timer = setTimeout(check, 350); });
+    let pl = null;
+    const ed = codeEditor(o.src, 'ts', () => { clearInterval(pl); stale = true; paintOut(); clearTimeout(timer); timer = setTimeout(check, 350); });
     { const nl = o.src.split('\n').length; ed.style.minHeight = (o.height || Math.min(430, 34 + nl * 24)) + 'px'; ed.style.maxHeight = '430px'; }
     const chk = h('div', { class: 'bd2' }), inf = h('div', { class: 'bd2' }), out = h('div', { class: 'bd2' });
     const lbl2 = h('em', ''), stepLbl = h('span', { class: 'tslab-note' });
     const curLine = (n) => ed.querySelectorAll('pre .ln').forEach((x, i) => x.classList.toggle('tslab-cur', i === n - 1));
     const prev = h('button', { class: 'btn ghost', title: '1つ前の行へ', onclick: () => go(step - 1) }, icon('chevron-left'));
     const next = h('button', { class: 'btn ghost', title: '次の行へ', onclick: () => go(step + 1) }, icon('chevron-right'));
-    const runBtn = h('button', { class: 'btn primary', onclick: () => run() }, icon('play'), '実行');
+    const runBtn = h('button', { class: 'btn primary', onclick: () => run(false) }, icon('play'), '実行');
     const bar = h('div', { class: 'tslab-bar' }, runBtn, prev, next, stepLbl, h('span', { class: 'sp' }),
       ...(o.actions || []).map((a) => h('button', { class: 'btn', onclick: () => { ed.set(a.apply(ed.get())); stale = true; check().then(run); } }, icon(a.icon || 'zap'), a.label)),
-      h('button', { class: 'btn ghost', title: 'はじめの状態に戻す', onclick: () => { ed.set(o.src); check().then(run); } }, icon('rotate-ccw'), 'もどす'));
-    function go(i) { if (!rr || !rr.snaps.length) return; step = Math.max(0, Math.min(rr.snaps.length - 1, i)); stale = false; paintOut(); }
+      h('button', { class: 'btn ghost', title: 'はじめの状態に戻す', onclick: () => { ed.set(o.src); check().then(() => run(true)); } }, icon('rotate-ccw'), 'もどす'));
+    function go(i) { clearInterval(pl); if (!rr || !rr.snaps.length) return; step = Math.max(0, Math.min(rr.snaps.length - 1, i)); stale = false; paintOut(); }
     function paintOut() {
       out.replaceChildren(); out.classList.toggle('tslab-stale', stale && !!rr);
       if (!rr) { out.append(h('div', { class: 'tslab-note' }, '「実行」を押すと、変数の中身と出力がここに出ます')); stepLbl.textContent = ''; curLine(0); return; }
@@ -775,9 +776,14 @@
       const it = inferTypes(ts, src);
       inf.replaceChildren(it.length ? h('div', { class: 'tslab-chips' }, it.map((x) => h('span', { class: 'tslab-chip ' + (x.written ? 'w' : 'inf'), title: 'L' + x.line }, x.name, ': ', h('b', x.type), h('i', x.written ? '自分で書いた' : '自動で決まった')))) : h('div', { class: 'tslab-note' }, '（変数がありません）'));
     }
-    async function run() {
-      try { ts = ts || await K.W.loadTS(); } catch (e) { return; }
-      rr = execute(ts, ed.get()); stale = false; step = rr.snaps.length - 1; paintOut();
+    async function run(instant) {
+      try { ts = ts || await K.W.loadTS(); } catch (e) { out.replaceChildren(h('div', { class: 'tslab-note' }, 'TypeScript を読み込めません（オフライン？）')); return; }
+      clearInterval(pl);
+      rr = execute(ts, ed.get()); stale = false;
+      const last = rr.snaps.length - 1;
+      if (instant === true || last <= 0) { step = Math.max(last, 0); paintOut(); return; }
+      step = 0; paintOut();   // 1行目から1行ずつ動かして見せる
+      pl = setInterval(() => { if (step >= last) { clearInterval(pl); return; } step++; paintOut(); }, 650);
     }
     root.append(
       h('div', { class: 'tslab-ed' }, h('div', { class: 'tslab-h' }, icon('pencil'), '① コード（書き換えてOK）'), ed, bar),
@@ -786,7 +792,7 @@
         h('details', { class: 'tslab-box tslab-more' }, h('summary', icon('tag'), '🔍 くわしく：変数の型（TS が見ているもの）'), inf),
         h('div', { class: 'tslab-box' }, h('h5', icon('terminal'), '③ 実行結果（動かしたらこうなった）'), out)));
     paintOut();
-    check().then(run);
+    check().then(() => run(true));
     root.ed = ed;
     return root;
   }
