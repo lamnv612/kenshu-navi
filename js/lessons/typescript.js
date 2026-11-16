@@ -942,7 +942,7 @@
     data: () => tvWrap('絵で見る：3つの「まとまり」', h('div', { class: 'tv-row' },
       h('div', { class: 'tv-card', style: { '--c': 'var(--basic)' } }, h('h6', '配列 string[]'), tvBox('lawyers', 'string[]', ['田中', '山本', '鈴木'], 'var(--basic)'), h('small', '同じ型が好きなだけ並ぶ')),
       h('div', { class: 'tv-card', style: { '--c': 'var(--pink)' } }, h('h6', 'タプル [string, number, boolean]'), h('div', { class: 'tv-bx' }, h('span', { class: 'nm' }, 'row'), h('span', { class: 'tp' }, '[string, number, boolean]'), h('div', { class: 'tv-cells' }, h('div', { class: 'sl', style: { '--c': 'var(--basic)' } }, '離婚相談'), h('div', { class: 'sl', style: { '--c': 'var(--pink)' } }, '3000'), h('div', { class: 'sl', style: { '--c': 'var(--team)' } }, 'true'))), h('small', '位置ごとに型が決まる')),
-      h('div', { class: 'tv-card', style: { '--c': 'var(--team)' } }, h('h6', 'オブジェクト'), h('div', { class: 'tv-bx' }, h('span', { class: 'nm' }, 'c'), h('span', { class: 'tp' }, 'Consultation'), h('div', { class: 'tv-cells' }, h('div', { class: 'sl', style: { '--c': 'var(--basic)', flexDirection: 'column', fontSize: '.75rem' } }, h('small', 'title'), '相続'), h('div', { class: 'sl', style: { '--c': 'var(--pink)', flexDirection: 'column', fontSize: '.75rem' } }, h('small', 'fee'), '3000'))), h('small', '名前つきの引き出し')))),
+      h('div', { class: 'tv-card', style: { '--c': 'var(--team)' } }, h('h6', 'オブジェクト'), h('div', { class: 'tv-bx' }, h('span', { class: 'nm' }, 'c'), h('span', { class: 'tp' }, '{ title, fee }'), h('div', { class: 'tv-cells' }, h('div', { class: 'sl', style: { '--c': 'var(--basic)', flexDirection: 'column', fontSize: '.75rem' } }, h('small', 'title'), '相続'), h('div', { class: 'sl', style: { '--c': 'var(--pink)', flexDirection: 'column', fontSize: '.75rem' } }, h('small', 'fee'), '3000'))), h('small', '名前つきの引き出し')))),
     any: () => tvWrap('絵で見る：any は素通り、unknown は検問', h('div', { class: 'tv-row' },
       h('div', { class: 'tv-card', style: { '--c': 'var(--bad)' } }, h('h6', 'any'), h('div', { class: 'tv-flow' }, h('span', { class: 'tv-chip' }, '何か'), h('span', { class: 'tv-ar' }, '→ 🚪（開けっぱなし）→'), h('span', { class: 'tv-chip', style: { background: 'var(--bad)' } }, '💥 本番で落ちる')), h('small', '赤線ゼロ。誰も気づかない')),
       h('div', { class: 'tv-card', style: { '--c': 'var(--ok)' } }, h('h6', 'unknown'), h('div', { class: 'tv-flow' }, h('span', { class: 'tv-chip' }, '何か'), h('span', { class: 'tv-ar' }, '→ 🛂 typeof で確認 →'), h('span', { class: 'tv-chip', style: { background: 'var(--ok)' } }, '✓ 安全に使う')), h('small', '確かめるまで使えない')))),
@@ -978,7 +978,7 @@
     i2: () => tvPair('絵で見る：中の変数は書かなくていい', [flow3('mid'), cap('右辺から分かる型は、書くとノイズ')], D('sum', 'number（推論）', [{ v: '3000', ok: true }, { v: '"小計"', ok: false }])),
     d1: () => tvPair('絵で見る：配列 ＝ 同じ型が並ぶ', [tvBox('lawyers', 'string[]', ['田中', '山本', '鈴木'], 'var(--basic)'), cap('好きなだけ並べられる。ただし全部 string')], D('lawyers', 'string[]', [{ v: '.push("鈴木")', ok: true, okMsg: '✓ 追加できる' }, { v: '.push(3)', ok: false, ngMsg: '✗ 数字は入らない（赤線）' }])),
     d2: () => tvPair('絵で見る：タプル ＝ 位置ごとに型が決まる', [h('div', { class: 'tv-bx' }, h('span', { class: 'nm' }, 'row'), h('span', { class: 'tp' }, '[string, number, boolean]'), h('div', { class: 'tv-cells' }, h('div', { class: 'sl', style: { '--c': 'var(--basic)' } }, '離婚相談'), h('div', { class: 'sl', style: { '--c': 'var(--pink)' } }, '3000'), h('div', { class: 'sl', style: { '--c': 'var(--team)' } }, 'true'))), cap('1番目＝題名、2番目＝料金、3番目＝公開中か')], D('row', '[string, number, boolean]', [{ v: '["離婚相談", 3000, true]', ok: true, okMsg: '✓ 順番も型も合っている' }, { v: '[3000, "離婚相談", true]', ok: false, ngMsg: '✗ 順番が逆（赤線）' }])),
-    d3: () => tvPair('絵で見る：オブジェクト ＝ 名前つきの引き出し', [h('div', { class: 'tv-bx' }, h('span', { class: 'nm' }, 'c'), h('span', { class: 'tp' }, 'Consultation'), h('div', { class: 'tv-cells' }, h('div', { class: 'sl', style: { '--c': 'var(--basic)', flexDirection: 'column', fontSize: '.75rem' } }, h('small', 'title'), '相続'), h('div', { class: 'sl', style: { '--c': 'var(--pink)', flexDirection: 'column', fontSize: '.75rem' } }, h('small', 'fee'), '3000'))), cap('項目の名前と型を決めた「形」')], D('c', 'Consultation', [{ v: '{ title, fee: 3000 }', ok: true, okMsg: '✓ 形が合っている' }, { v: 'fee: "無料"', ok: false, ngMsg: '✗ fee は number（赤線）' }, { v: 'priority: 1', ok: false, ngMsg: '✗ そんな項目は無い（赤線）' }])),
+    d3: () => tvPair('絵で見る：オブジェクト ＝ 名前つきの引き出し', [h('div', { class: 'tv-bx' }, h('span', { class: 'nm' }, 'c'), h('span', { class: 'tp' }, '{ title, fee }'), h('div', { class: 'tv-cells' }, h('div', { class: 'sl', style: { '--c': 'var(--basic)', flexDirection: 'column', fontSize: '.75rem' } }, h('small', 'title'), '相続'), h('div', { class: 'sl', style: { '--c': 'var(--pink)', flexDirection: 'column', fontSize: '.75rem' } }, h('small', 'fee'), '3000'))), cap('項目の名前と型を決めた「形」')], D('c', '{ title, fee }', [{ v: '{ title, fee: 3000 }', ok: true, okMsg: '✓ 形が合っている' }, { v: 'fee: "無料"', ok: false, ngMsg: '✗ fee は number（赤線）' }, { v: 'priority: 1', ok: false, ngMsg: '✗ そんな項目は無い（赤線）' }])),
     a1: () => tvPair('絵で見る：any は素通り（開けっぱなしの扉）', [h('div', { class: 'tv-flow' }, h('span', { class: 'tv-chip' }, '何か'), h('span', { class: 'tv-ar' }, '→ 🚪 →'), h('span', { class: 'tv-chip', style: { background: 'var(--bad)' } }, '💥 本番で落ちる')), cap('赤線ゼロ。誰も事前に気づけない')], D('res', 'any', [{ v: '"tanaka"', ok: true }, { v: 'res.name.toUpperCase()', ok: true, okMsg: '✓ 赤線なし… でも実行で落ちる 💥' }])),
     a2: () => tvPair('絵で見る：unknown は検問', [h('div', { class: 'tv-flow' }, h('span', { class: 'tv-chip' }, '何か'), h('span', { class: 'tv-ar' }, '→ 🛂 typeof →'), h('span', { class: 'tv-chip', style: { background: 'var(--ok)' } }, '✓ 安全に使う')), cap('確かめるまで使えない')], D('res', 'unknown', [{ v: '"tanaka"', ok: true, okMsg: '✓ 何でも入る' }, { v: 'res.toUpperCase()', ok: false, ngMsg: '✗ 確認するまで使えない（赤線）' }, { v: 'typeof で確認', ok: true, okMsg: '✓ 確認したら使える' }])),
     n1: () => tvPair('絵で見る：void ＝ 何も返さない', [h('div', { class: 'tv-nothing' }, h('span', { class: 'tv-big' }, '🕳️'), h('code', 'function f(): void')), cap('「実行するだけ」の関数。戻り値は使えない')], D('r', 'void', [{ v: '（何も返さない）', ok: true, okMsg: '✓ undefined になる' }, { v: 'return 1', ok: false, ngMsg: '✗ 値は返せない（赤線）' }])),
@@ -992,7 +992,7 @@
     { em: '✅', name: 'boolean', sub: 'はい・いいえ', c: 'var(--team)', box: ['agree', 'boolean'], code: 'let agree: boolean = true;\nlet isPublic: boolean = false;', real: '「同意する」チェック、公開／非公開のスイッチ', items: [{ v: 'true', ok: true }, { v: 'false', ok: true }, { v: '"false"', ok: false }, { v: '1', ok: false }] },
     { em: '📚', name: '配列', sub: '同じ型が並ぶ', c: 'var(--basic)', box: ['lawyers', 'string[]'], code: 'const lawyers: string[] = ["田中", "山本"];\nlawyers.push("鈴木");   // OK\nlawyers.push(3);        // 赤線', real: '担当弁護士の一覧・相談の一覧など、同じ種類のものがいくつも', items: [{ v: '"鈴木"', ok: true, okMsg: '✓ push できる' }, { v: '"佐藤"', ok: true, okMsg: '✓ push できる' }, { v: '3', ok: false, ngMsg: '✗ 数字は入らない（赤線）' }] },
     { em: '🧩', name: 'タプル', sub: '位置ごとに型', c: 'var(--pink)', box: ['row', '[string, number]'], code: 'const row: [string, number] = ["離婚相談", 3000];\n// 1番目は文字、2番目は数字\nrow[1] * 2;   // 料金を2倍', real: 'API が返す「題名と料金」のように、順番に意味がある1行', items: [{ v: '["離婚相談", 3000]', ok: true, okMsg: '✓ 順番も型も合っている' }, { v: '[3000, "離婚相談"]', ok: false, ngMsg: '✗ 順番が逆（赤線）' }] },
-    { em: '🗂️', name: 'オブジェクト', sub: '名前つき', c: 'var(--team)', box: ['c', 'Consultation'], code: 'interface Consultation {\n  title: string;\n  fee: number;\n}\nconst c: Consultation = { title: "相続", fee: 3000 };', real: '相談1件のように、いくつかの項目をまとめたデータ', items: [{ v: '{ title, fee: 3000 }', ok: true, okMsg: '✓ 形が合っている' }, { v: '{ title, fee: "無料" }', ok: false, ngMsg: '✗ fee は number（赤線）' }, { v: '{ title, priority: 1 }', ok: false, ngMsg: '✗ そんな項目は無い（赤線）' }] },
+    { em: '🗂️', name: 'オブジェクト', sub: '名前つき', c: 'var(--team)', box: ['c', '{ title, fee }'], code: 'const c: {\n  title: string;\n  fee: number;\n} = { title: "相続", fee: 3000 };', real: '相談1件のように、いくつかの項目をまとめたデータ', items: [{ v: '{ title, fee: 3000 }', ok: true, okMsg: '✓ 形が合っている' }, { v: '{ title, fee: "無料" }', ok: false, ngMsg: '✗ fee は number（赤線）' }, { v: '{ title, priority: 1 }', ok: false, ngMsg: '✗ そんな項目は無い（赤線）' }] },
     { em: '🎲', name: 'any / unknown', sub: '何でも', c: 'var(--bad)', box: ['res', 'unknown'], code: 'const res: unknown = JSON.parse(text);\n// res.toUpperCase();      // 赤線\nif (typeof res === "string") {\n  res.toUpperCase();      // OK\n}', real: '外部 API の返事など、何が来るか分からない値。any は何も守らない、unknown は確認してから使う', items: [{ v: '"tanaka"', ok: true, okMsg: '✓ 何でも入る' }, { v: 'res.toUpperCase()', ok: false, ngMsg: '✗ 確認するまで使えない（赤線）' }, { v: 'typeof で確認', ok: true, okMsg: '✓ 確認したら使える' }] },
     { em: '🕳️', name: 'void / null / undefined', sub: '値がない', c: 'var(--violet)', box: ['n', 'string | null'], code: 'function findName(id: number): string | null {\n  return id === 1 ? "田中" : null;\n}\nconst n = findName(2);\n// n.length;   // 赤線：null かも', real: 'ログイン前の名前、検索で見つからなかった結果、あだ名が未入力…', items: [{ v: '"田中"', ok: true }, { v: 'null', ok: true, okMsg: '✓ 「ない」を示せる' }, { v: 'undefined', ok: false, ngMsg: '✗ undefined は入らない（赤線）' }] },
   ];
@@ -1298,14 +1298,12 @@ console.log(row[1] * 2);
               tryIt: '① 「料金に文字」を押す　② 「順番を入れ替え」を押す　③ 赤線の文を読む',
             },
             {
-              name: 'オブジェクト', viz: VZ.d3, point: 'オブジェクト：項目名と型の「形」を interface で決める', sub: '形を決める',
+              name: 'オブジェクト', viz: VZ.d3, point: 'オブジェクト：項目名と型の「形」を { } で書く（名前を付ける方法は次のレッスン）', sub: '形を決める',
               story: '項目名を変えたのに直し忘れ、料金が空に。',
-              src: `interface Consultation {
+              src: `const c: {
   title: string;
   fee: number;
-}
-
-const c: Consultation = { title: "相続の相談", fee: 3000 };
+} = { title: "相続の相談", fee: 3000 };
 c.fee = 5000;
 
 // c.fee = "無料";      // ← 料金は number
@@ -1369,8 +1367,8 @@ console.log(res.toUpperCase());
             { n: 'catch (e) のエラー', ty: 'unknown', c: 'var(--ok)', say: '何が投げられるかは分からない（文字かもしれない）。<b>Error か確認</b>してから message を読む。', note: 'try/catch の e は unknown が安全。', src: 'try {\n  run();\n} catch (e: unknown) {\n  if (e instanceof Error) {\n    console.log(e.message);\n  }\n}' },
             { n: '何でも受ける関数', ty: 'unknown', c: 'var(--ok)', say: '中身は触らず「受け取るだけ」なら unknown。引数が何でも通るが、<b>勝手に使えない</b>ので安全。', note: 'ログ出力・保存など、中身を見ない処理向け。', src: 'function log(value: unknown) {\n  console.log("LOG:", value);\n}\n\nlog(1);\nlog("a");\nlog({ id: 1 });' },
             { n: 'JS からの移行中', ty: 'any（一時だけ）', c: 'var(--bad)', say: '大量の JS を一気に直せないときの<b>つなぎ</b>。直す場所に <code>// TODO</code> を残す。', note: '最終的には具体的な型へ。any が残るほど TS の意味が薄れる。', src: '// TODO: 型を付ける（移行中）\nconst legacy: any = oldLib.load();' },
-            { n: '型定義がないライブラリ', ty: 'any ではなく @types', c: 'var(--team)', say: 'まず <code>npm i -D @types/○○</code> を探す。無ければ最小限だけ自分で型を書く。', note: 'any を広げず、使う部分だけ型を付ける。', src: '// 1) npm install -D @types/lodash\n// 2) 無ければ自作\ninterface Lib {\n  load(): string;\n}\nconst lib = oldLib as Lib;' },
-            { n: '型が分かっている', ty: '具体的な型', c: 'var(--basic)', say: 'number や Consultation のように<b>分かるなら、それを書く</b>。any / unknown は「分からない時」だけ。', note: '迷ったら: 具体的な型 → unknown → 最後に any。', src: 'const fee: number = 3000;\nconst c: Consultation = { title: "相続", fee };' },
+            { n: '型定義がないライブラリ', ty: 'any ではなく @types', c: 'var(--team)', say: 'まず <code>npm i -D @types/○○</code> を探す。無ければ最小限だけ自分で型を書く。', note: 'any を広げず、使う部分だけ型を付ける。', src: '// 1) npm install -D @types/lodash\n// 2) 無ければ、使う部分だけ自分で型を書く\nconst lib = oldLib as { load(): string };' },
+            { n: '型が分かっている', ty: '具体的な型', c: 'var(--basic)', say: 'number や string のように<b>分かるなら、それを書く</b>。any / unknown は「分からない時」だけ。', note: '迷ったら: 具体的な型 → unknown → 最後に any。', src: 'const fee: number = 3000;\nconst c: { title: string; fee: number } = { title: "相続", fee };' },
           ];
           const pick = h('div', { class: 'au-pick' }), ans = h('div');
           const showC = (i) => {
@@ -1410,12 +1408,10 @@ console.log(r);
             {
               name: 'undefined', viz: VZ.n2, point: 'undefined：まだ入っていない。使う前に確認', sub: 'まだ入っていない',
               story: '未入力のあだ名を読んで画面が落ちた。',
-              src: `interface Profile {
+              src: `const p: {
   name: string;
   nickname?: string;
-}
-
-const p: Profile = { name: "田中" };
+} = { name: "田中" };
 console.log(p.nickname);
 
 // console.log(p.nickname.length);  // ← 赤線になる

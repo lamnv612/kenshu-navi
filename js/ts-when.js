@@ -56,24 +56,24 @@
     ['関数の引数', '書く', S, '入口は TS が推測できない。<b>必ず書く</b>。', '', 'function fee(price: number) {\n  return price * 1.1;\n}'],
     ['関数の中の変数', '書かない', O, '右辺から決まる。書くとノイズ。', '書きすぎるとコードが読みにくい。', 'function fee(price: number) {\n  const tax = price * 0.1;   // number と自動で決まる\n  return price + tax;\n}'],
     ['map / filter の引数', '書かない', O, '配列の型から<b>自動で分かる</b>。', '', 'const prices = [100, 200];\nprices.map((p) => p * 2);   // p は number'],
-    ['公開する関数の戻り値', '書く', S, '他のファイルから使う関数は、<b>戻り値を約束</b>として書いておく。', '中身を変えても、呼ぶ側が壊れにくい。', 'export function load(): Consultation[] {\n  return [];\n}'],
-    ['空の配列 / null で始める', '書く', S, '初期値から型が決まらない。<b>型を書く</b>。', '', 'const rows: Consultation[] = [];\nlet cur: Consultation | null = null;'],
-    ['API から来る値', '型を定義して書く', P, '外から来る値は TS には分からない。<b>interface を作って</b>型を付ける。', 'そのまま信じず、必要なら確認（unknown）。', 'interface Consultation { id: number; title: string }\n\nconst data: Consultation[] = await load();'],
+    ['公開する関数の戻り値', '書く', S, '他のファイルから使う関数は、<b>戻り値を約束</b>として書いておく。', '中身を変えても、呼ぶ側が壊れにくい。', 'export function load(): string[] {\n  return [];\n}'],
+    ['空の配列 / null で始める', '書く', S, '初期値から型が決まらない。<b>型を書く</b>。', '', 'const rows: string[] = [];\nlet cur: string | null = null;'],
+    ['API から来る値', '型を書く', P, '外から来る値は TS には分からない。<b>どんな形か</b>を型で書いておく。', 'そのまま信じず、必要なら確認（unknown）。型に名前を付ける方法は、あとの interface で。', 'const data: { id: number; title: string }[] = await load();'],
   ], rules: ['<b>入口（引数）</b>は書く', '<b>中の変数</b>は書かない', '<b>覚え方</b>：入口と出口に書く、中は任せる'] };
 
   G['配列・タプル・オブジェクト'] = { cases: [
-    ['相談の一覧（同じ種類がたくさん）', '配列 T[]', S, '同じ形のデータが<b>いくつも並ぶ</b>なら配列。', '一覧・検索結果・履歴など。', 'const list: Consultation[] = [\n  { id: 1, title: "相続" },\n  { id: 2, title: "離婚" },\n];'],
+    ['相談の一覧（同じ種類がたくさん）', '配列 T[]', S, '同じ形のデータが<b>いくつも並ぶ</b>なら配列。', '一覧・検索結果・履歴など。', 'const list: { id: number; title: string }[] = [\n  { id: 1, title: "相続" },\n  { id: 2, title: "離婚" },\n];'],
     ['緯度と経度（2つだけ、順番に意味）', 'タプル [A, B]', P, '<b>個数と順番が決まっている</b>少数のセット。', '3つ以上や意味が分かりにくい時は、オブジェクトにする。', 'const pos: [number, number] = [35.68, 139.76];\n// [緯度, 経度] の順'],
-    ['相談1件（項目に名前がある）', 'オブジェクト（interface）', T, '項目ごとに<b>名前</b>が付くので読みやすい。', '現場では一番よく使う形。', 'interface Consultation {\n  id: number;\n  title: string;\n}\nconst c: Consultation = { id: 1, title: "相続" };'],
-    ['名前 → 点数（キーが自由）', 'Record<string, T>', O, 'キーが決まっていない<b>辞書</b>。', 'キーが決まっているなら interface のほうが安全。', 'const score: Record<string, number> = {\n  田中: 80,\n  山本: 92,\n};'],
+    ['相談1件（項目に名前がある）', 'オブジェクト { }', T, '項目ごとに<b>名前</b>が付くので読みやすい。', '現場では一番よく使う形。型に名前を付ける方法は、次のレッスン（interface）で。', 'const c: { id: number; title: string } = {\n  id: 1,\n  title: "相続",\n};'],
+    ['名前 → 点数（キーが自由）', 'Record<string, T>', O, 'キーが決まっていない<b>辞書</b>。', 'キーが決まっているなら、普通のオブジェクト型のほうが安全。', 'const score: Record<string, number> = {\n  田中: 80,\n  山本: 92,\n};'],
   ], rules: ['<b>同じ種類</b>がたくさん → 配列', '<b>名前付きの項目</b> → オブジェクト', '<b>覚え方</b>：迷ったらオブジェクト'] };
 
   G['値がない型：void / undefined / null'] = { cases: [
-    ['何も返さない関数', 'void', T, 'ログを出す・保存する・画面を更新する関数は<b>返す値がない</b>。', '返り値を使おうとすると赤線。', 'function save(c: Consultation): void {\n  console.log("保存しました");\n}'],
-    ['探したけど見つからない', 'T | undefined', P, '配列の <code>find</code> は<b>無いときがある</b>。型にもそう出る。', '使う前に「あるか」を確認する。', 'const c = list.find((x) => x.id === 9);\n// c は Consultation | undefined\n\nconsole.log(c?.title ?? "見つかりません");'],
-    ['まだ選んでいない', 'T | null', S, '「<b>わざと空</b>」にしたい時は null。初期状態でよく使う。', 'undefined は「まだ無い」、null は「空にした」。', 'let selected: Consultation | null = null;\n\nselected = list[0];'],
-    ['なくてもいい項目', '項目名?: 型', O, '<code>?</code> を付けると<b>省略OK</b>（undefined も入る）。', 'フォームの任意入力欄など。', 'interface Consultation {\n  title: string;\n  memo?: string;   // なくてもOK\n}'],
-    ['値があるか分からない時の読み方', '?. と ??', T, '<code>?.</code> は「あれば読む」、<code>??</code> は「なければこれ」。', 'null / undefined で落ちるのを防ぐ定番。', 'const memo = c?.memo ?? "メモなし";'],
+    ['何も返さない関数', 'void', T, 'ログを出す・保存する・画面を更新する関数は<b>返す値がない</b>。', '返り値を使おうとすると赤線。', 'function save(title: string): void {\n  console.log("保存しました");\n}'],
+    ['探したけど見つからない', 'T | undefined', P, '配列の <code>find</code> は<b>無いときがある</b>。型にもそう出る。', '使う前に「あるか」を確認する。', 'const nums = [1, 2, 3];\nconst n = nums.find((x) => x > 5);\n// n は number | undefined\n\nconsole.log(n ?? "見つかりません");'],
+    ['まだ選んでいない', 'T | null', S, '「<b>わざと空</b>」にしたい時は null。初期状態でよく使う。', 'undefined は「まだ無い」、null は「空にした」。', 'let selected: string | null = null;\n\nselected = "相続";'],
+    ['なくてもいい項目', '項目名?: 型', O, '<code>?</code> を付けると<b>省略OK</b>（undefined も入る）。', 'フォームの任意入力欄など。', 'const c: { title: string; memo?: string } = {\n  title: "相続",   // memo は書かなくてもOK\n};'],
+    ['値があるか分からない時の読み方', '?. と ??', T, '<code>?.</code> は「あれば読む」、<code>??</code> は「なければこれ」。', 'null / undefined で落ちるのを防ぐ定番。', 'const user: { name?: string } = {};\n\nconsole.log(user.name?.length ?? 0);   // 0'],
   ], rules: ['<b>void</b> ＝ 返す値がない関数', '<b>undefined / null</b> ＝ 値がない状態', '<b>覚え方</b>：あるか確認してから使う'] };
 
   G['Union：どれか1つ'] = { cases: [
