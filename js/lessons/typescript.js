@@ -797,6 +797,48 @@
     return root;
   }
 
+  /* interface なし / あり の書き比べ（interface シーンの冒頭） */
+  function ifaceCompare() {
+    style('ifc', `
+    .ic-sec{margin-bottom:24px}.ic-sec>h4{font:900 1.05rem var(--font);margin-bottom:10px}
+    .ic-pick{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:12px}
+    .ic-pick button{all:unset;cursor:pointer;box-sizing:border-box;text-align:center;padding:.55em .8em;border-radius:8px;border:1px solid var(--line);background:var(--card);font-weight:800;font-size:.875rem;transition:.2s}
+    .ic-pick button:hover{transform:translateY(-2px)}.ic-pick button.on{border-color:var(--ts);background:color-mix(in srgb,var(--ts) 16%,var(--card))}
+    .ic-duo{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}@media(max-width:900px){.ic-duo{grid-template-columns:1fr}}
+    .ic-c{border:2px solid var(--c);border-radius:12px;background:var(--card);overflow:hidden}
+    .ic-h{padding:.6em 1em;background:color-mix(in srgb,var(--c) 16%,var(--card2));font-weight:900;color:var(--c)}
+    .ic-c pre.code{margin:0;border:0;border-radius:0;font-size:.82rem;min-height:170px}
+    .ic-pg{padding:.7em 1em;border-top:1px dashed var(--line);font-weight:700;font-size:.84rem;line-height:1.7}`);
+    const D = 'interface Consultation {\n  id: number;\n  title: string;\n  fee: number;\n}\n\n';
+    const CS = [
+      { n: '📋 同じ形を何回も', pain: '同じ形を<b>毎回コピペ</b>。項目を足す時は全部直す', gain: '形は<b>1か所</b>。直すのも1か所',
+        a: 'function show(c: { id: number; title: string; fee: number }) {}\nfunction save(c: { id: number; title: string; fee: number }) {}\nfunction total(c: { id: number; title: string; fee: number }) {}',
+        b: D + 'function show(c: Consultation) {}\nfunction save(c: Consultation) {}\nfunction total(c: Consultation) {}' },
+      { n: '✏️ 項目名の打ち間違い', pain: '赤線が出ない。気づくのは<b>実行したあと</b>（undefined）', gain: '書いた<b>瞬間に赤線</b>。実行前に直せる',
+        a: 'function show(c: any) {\n  return c.titel;   // ← 打ち間違い（赤線なし）\n}',
+        b: D + 'function show(c: Consultation) {\n  return c.titel;   // ✖ 赤線：titel は無い\n}' },
+      { n: '🕳️ 項目の書き忘れ', pain: 'fee が無いまま動いて、計算が <b>NaN</b> に', gain: '<b>足りない項目</b>を赤線で教えてくれる',
+        a: 'const c: any = { id: 1, title: "相続" };   // fee を書き忘れ\n\nconsole.log(c.fee * 2);   // NaN',
+        b: D + 'const c: Consultation = { id: 1, title: "相続" };\n// ✖ 赤線：fee が足りない' },
+      { n: '🔤 型の間違い', pain: '料金に <b>"無料"</b> が入っても止まらない', gain: '<code>fee</code> は number。文字を入れると<b>赤線</b>',
+        a: 'const c: any = { id: 1, title: "相続", fee: "無料" };\n\nconsole.log(c.fee + 500);   // "無料500"',
+        b: D + 'const c: Consultation = { id: 1, title: "相続", fee: "無料" };\n// ✖ 赤線：fee は number' },
+      { n: '⌨️ 入力の補完', pain: '項目名を<b>全部覚えて</b>打つしかない', gain: '<code>c.</code> と打つと、項目が<b>候補に出る</b>',
+        a: 'function show(c: any) {\n  c.   // ← 候補は出ない。何があるか分からない\n}',
+        b: D + 'function show(c: Consultation) {\n  c.   // ← id / title / fee が候補に出る\n}' },
+    ];
+    const pick = h('div', { class: 'ic-pick' }), body = h('div');
+    const show = (i) => {
+      const r = CS[i];
+      pick.querySelectorAll('button').forEach((b, k) => b.classList.toggle('on', k === i));
+      const one = (c, t, src, msg) => h('div', { class: 'ic-c', style: { '--c': c } }, h('div', { class: 'ic-h' }, t), code(src, 'ts', { color: c }), h('div', { class: 'ic-pg', html: msg }));
+      body.replaceChildren(h('div', { class: 'ic-duo' }, one('var(--bad)', '❌ interface なし', r.a, '😣 ' + r.pain), one('var(--ok)', '✅ interface あり', r.b, '😄 ' + r.gain)));
+    };
+    CS.forEach((r, i) => pick.append(h('button', { onclick: () => show(i) }, r.n)));
+    show(0);
+    return h('div', { class: 'ic-sec' }, h('h4', '🆚 interface を使わない時 / 使う時'), pick, body);
+  }
+
   function tryBox(html) {
     const parts = html.split(/[①②③④]/).map((x) => x.trim()).filter(Boolean);
     if (/[①]/.test(html) && parts.length > 1) return h('div', { class: 'tslab-try' }, icon('lightbulb'), h('ol', { class: 'tv-steps' }, parts.map((x) => h('li', { html: x }))));
@@ -1524,8 +1566,9 @@ console.log(n.length);
         },
       },
       {
-        t: 'interface：形チェッカー', tag: 'interface', lead: 'オブジェクトのプロパティを<b>ON/OFF</b>して、<code class="i">Consultation</code>（相談）の形を満たすか見てみよう。<code class="i">?</code> は省略OK。',
+        t: 'interface：形チェッカー', tag: 'interface', lead: 'オブジェクトのプロパティを<b>ON/OFF</b>して、<code class="i">Consultation</code>（相談）の形を満たすか見てみよう。まずは「なし／あり」の比較から。<code class="i">?</code> は省略OK。',
         render(el) {
+          el.append(ifaceCompare());
           const st = { name: true, color: true, price: false, priceStr: false, extra: false };
           const obj = h('div', { class: 'tsx-obj' }), msgs = h('div', { class: 'col' }), badge = h('div');
           const tgs = {};
