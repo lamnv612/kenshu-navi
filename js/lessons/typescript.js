@@ -8,8 +8,8 @@
   .tsx3-sq{text-decoration:underline wavy #ff5470;text-decoration-thickness:1.5px;text-underline-offset:5px}
   .tsx3-attempt{display:flex;gap:14px;align-items:center;justify-content:center;flex-wrap:wrap;padding:.7em 1em;border-radius:8px;background:var(--code);color:#d8dcff;font:700 1rem var(--mono);border:1px solid var(--bad)}
   .tsx3-attempt .bk{color:#ff9aa5;font-size:.875rem}
-  .tsx3-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
-  .tsx3-tab{all:unset;cursor:pointer;display:grid;gap:1px;padding:.55em 1.1em;border-radius:8px;border:1px solid var(--line);background:var(--card);transition:.2s;font-weight:800;font-size:.9rem}
+  .tsx3-tabs{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:14px}
+  .tsx3-tab{all:unset;cursor:pointer;box-sizing:border-box;text-align:center;justify-items:center;align-content:center;display:grid;gap:1px;padding:.55em 1.1em;border-radius:8px;border:1px solid var(--line);background:var(--card);transition:.2s;font-weight:800;font-size:.9rem}
   .tsx3-tab small{font-weight:600;font-size:.72rem;color:var(--mute)}
   .tsx3-tab:hover{transform:translateY(-2px)}
   .tsx3-tab.on{border-color:var(--ts);background:color-mix(in srgb,var(--ts) 18%,var(--card));box-shadow:0 8px 20px -12px var(--ts)}
@@ -579,6 +579,7 @@
   .tv-point{display:flex;gap:10px;align-items:center;padding:.7em 1em;border-radius:10px;background:color-mix(in srgb,var(--ok) 12%,var(--card));border:1px solid color-mix(in srgb,var(--ok) 50%,var(--line));font-size:.9375rem;font-weight:700;margin:10px 0}.tv-point .ic{color:var(--ok);flex:none}.tv-point b{color:var(--ok);margin-right:.4em}
   .tslab-sub{font-size:.75rem;font-weight:800;color:var(--mute);margin:8px 0 4px}
   .tslab-more summary{cursor:pointer;display:flex;gap:.5em;align-items:center;padding:.5em 1em;font-size:.8125rem;font-weight:800;color:var(--mute)}.tslab-more[open] summary{border-bottom:1px solid var(--line);margin-bottom:6px}
+  .tslab-vd summary{cursor:pointer;font-size:.75rem;font-weight:800;color:var(--mute);padding:.3em 0}
   .tslab-legend{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
   .tslab-legend>div{padding:.55em .8em;border-radius:8px;background:var(--card);border:1px solid var(--line);border-top:3px solid var(--lc);display:grid;gap:2px}
   .tslab-legend code{font:800 .9375rem var(--mono);color:var(--lc)}.tslab-legend small{color:var(--mute);font-weight:700;font-size:.75rem}
@@ -686,7 +687,7 @@
       }
       const lg = sn && !last ? rr.logs.slice(0, sn.logs) : rr.logs;
       if (lg.length) out.append(h('div', { class: 'tslab-sub' }, '📺 画面に出る結果'), h('div', { class: 'tslab-log' }, lg.map((t) => '› ' + t).join('\n')));
-      if (grid) out.append(h('div', { class: 'tslab-sub' }, '📦 変数の中身（下の < > ボタンで1行ずつ）'), grid);
+      if (grid) out.append(h('details', { class: 'tslab-vd' }, h('summary', '📦 変数の中身を見る'), grid));
       if (rr.err && last) { const g = RGLOSS.map(([re, f]) => { const m = rr.err.match(re); return m ? f(m) : ''; }).find(Boolean) || ''; out.append(h('div', { class: 'tslab-rerr' }, h('b', '💥 動かしたら落ちた'), g ? h('div', g) : null, h('small', rr.err))); }
       if (!sn && !lg.length && !rr.err) out.append(h('div', { class: 'tslab-note' }, '（出力なし）'));
       if (stale) out.append(h('div', { class: 'tslab-note' }, 'コードを変えました。「実行」で結果を更新'));
@@ -932,12 +933,10 @@
           labTabs(el, [{
             name: '申込フォームの値', viz: VZ.anatomy, point: '型は「箱のラベル」。ラベルと違う種類は入らない',
             story: '田中さんの年齢に文字が入って、画面が「二十1 歳」になった。',
-            src: `// 申込フォームの値。「変数名: 型」で、入る種類を決める
-let age: number = 20;
+            src: `let age: number = 20;
 let name: string = "田中";
 let agree: boolean = true;
 
-// 文字が入ったら？ 「事故を起こす」で有効になる
 // age = "二十";
 
 console.log(name + "さんは来年 " + (age + 1) + " 歳");
@@ -954,14 +953,12 @@ console.log(name + "さんは来年 " + (age + 1) + " 歳");
             {
               name: '人数 "3" + 2', viz: VZ.p1, point: '入力欄の値は文字。計算の前に Number() で数字にする', sub: 'string と number',
               story: '"3" + 2 が「32人」に。赤線は出ない。',
-              src: `// フォームの入力欄から届く値は、いつも「文字」
-const peopleText: string = "3";
+              src: `const peopleText: string = "3";
 const extra: number = 2;
 
 const total = peopleText + extra;
 console.log(total + "人");
 
-// 直す：文字を数字に変えて、number の箱に入れる
 // const people: number = peopleText;
 `,
               actions: [{ label: '赤線を出す', icon: 'bug', apply: uncomment('const people: number = peopleText') }],
@@ -970,25 +967,23 @@ console.log(total + "人");
             {
               name: '料金 3500 と "3500"', viz: VZ.p2, point: '引用符が付いたら文字。お金は number で持つ', sub: 'number',
               story: '"3500" + 500 が「3500500円」に。',
-              src: `const priceText: string = "3500";   // 文字
-const priceNum: number = 3500;      // 数字
+              src: `const priceText: string = "3500";
+const priceNum: number = 3500;
 const fee: number = 500;
 
-console.log(priceText + fee);   // 文字 + 数字
-console.log(priceNum + fee);    // 数字 + 数字
+console.log(priceText + fee);
+console.log(priceNum + fee);
 `,
               tryIt: '① 実行 → 2つの出力を見比べる　② <code>priceNum</code> を <code>"3500"</code> にすると赤線',
             },
             {
               name: '同意チェック "false"', viz: VZ.p3, point: '"false" は文字。はい／いいえは boolean で持つ', sub: 'boolean',
               story: 'チェックを外したのに "false" で「同意あり」に。',
-              src: `// 文字で持つと、"false" でも if を通ってしまう
-const agreeText: string = "false";
+              src: `const agreeText: string = "false";
 if (agreeText) {
   console.log("同意あり（のはずが…）");
 }
 
-// boolean なら true / false だけ
 const agree: boolean = false;
 if (agree) {
   console.log("同意あり");
@@ -1008,13 +1003,12 @@ if (agree) {
             {
               name: 'const：変わらない値', viz: VZ.c1, point: '変わらない値は const。うっかり書き換えを防げる', sub: '税率',
               story: 'どこかで税率が書き換わり、税額が0円に。',
-              src: `const TAX_RATE = 0.1;   // 消費税率：ずっと同じ
+              src: `const TAX_RATE = 0.1;
 
 function withTax(price: number): number {
   return Math.round(price * (1 + TAX_RATE));
 }
 
-// …（300行あと）…
 // TAX_RATE = 0;   // ← うっかり！
 
 console.log(withTax(1000));
@@ -1025,8 +1019,8 @@ console.log(withTax(1000));
             {
               name: 'let：変わる値', viz: VZ.c2, point: '足して変わる値は let。赤線が出たら let に変える', sub: '合計',
               story: '合計は足すたびに変わる。const だと止まる。',
-              src: `const prices = [1200, 800, 2500];   // カートの商品
-let total = 0;                      // 足していくので let
+              src: `const prices = [1200, 800, 2500];
+let total = 0;
 
 for (let i = 0; i < prices.length; i++) {
   total += prices[i];
@@ -1041,8 +1035,8 @@ console.log("合計", total);
               story: 'const でも push できる。守るのは「箱」だけ。',
               src: `const cart = { items: ["相談 30分"], count: 1 };
 
-cart.items.push("書類確認");   // OK：中身を足す
-cart.count = 2;                // OK：項目を書き換える
+cart.items.push("書類確認");
+cart.count = 2;
 
 // cart = { items: [], count: 0 };   // 箱ごと入れ替えは NG
 console.log(cart.items, cart.count);
@@ -1053,12 +1047,11 @@ console.log(cart.items, cart.count);
             {
               name: '型は書かなくても決まる', viz: VZ.c4, point: '最初の値から型は決まる。毎回は書かなくていい', sub: '型推論',
               story: '書かなくても、初期値から型が決まる。',
-              src: `const tax = 0.1;        // const は値そのものが型（0.1）
-let price = 1000;       // let は「数字」という種類（number）
-const status = "open";  // 値そのもの（"open"）
-let label = "受付中";   // 文字という種類（string）
+              src: `const tax = 0.1;
+let price = 1000;
+const status = "open";
+let label = "受付中";
 
-// 違う種類を入れると赤線。↓ 「事故を起こす」で有効になる
 // price = "千円";
 // label = 5;
 
@@ -1068,7 +1061,7 @@ console.log(tax, price, status, label);
               tryIt: '① 右の「TS が決めた型」を見る（点線＝推論）　② 「事故を起こす」→ 赤線',
             },
           ]);
-          el.append(h('div', { class: 'tsx3-rule' }, icon('lightbulb'), h('span', { html: '<b>まず const</b>。値を変える必要が出て赤線（<code>Cannot assign to …</code>）が出たら、そこで<b>let</b>に変える。迷ったら const でよい。' })));
+          el.append(h('div', { class: 'tsx3-rule' }, icon('lightbulb'), h('span', { html: '<b>迷ったら const</b>。赤線が出たら <b>let</b> に変える。' })));
         },
       },
       {
@@ -1083,12 +1076,11 @@ console.log(tax, price, status, label);
             {
               name: '引数に書かないと any', viz: VZ.i1, point: '引数には必ず型を書く。書かないと any で素通り', sub: '入口',
               story: '引数の型を省いたら "3個" が通って NaN に。',
-              src: `// 引数の型を書いていない
-function subtotal(price, qty) {
+              src: `function subtotal(price, qty) {
   return price * qty;
 }
 
-console.log(subtotal(1000, "3個"));   // 文字でも通る
+console.log(subtotal(1000, "3個"));
 `,
               tryIt: '① 実行 → NaN　② <code>price: number, qty: number</code> を書く → 呼び出し側に赤線　③ <code>subtotal(1000, 3)</code> に直す',
             },
@@ -1118,7 +1110,7 @@ console.log(subtotal(1000, 3));
               story: '弁護士一覧に数字が混ざった。',
               src: `const lawyers: string[] = ["田中", "山本"];
 
-lawyers.push("鈴木");   // OK
+lawyers.push("鈴木");
 // lawyers.push(3);     // ← 数字は入らない
 
 console.log(lawyers.length, lawyers);
@@ -1132,7 +1124,7 @@ console.log(lawyers.length, lawyers);
               src: `// 相談の1行：[題名, 料金, 公開中か]
 const row: [string, number, boolean] = ["離婚相談", 3000, true];
 
-console.log(row[1] * 2);   // 料金を2倍
+console.log(row[1] * 2);
 
 // row[1] = "無料";        // ← 2番目は number
 // const bad: [string, number, boolean] = [3000, "離婚相談", true];
@@ -1152,7 +1144,7 @@ console.log(row[1] * 2);   // 料金を2倍
 }
 
 const c: Consultation = { title: "相続の相談", fee: 3000 };
-c.fee = 5000;   // OK
+c.fee = 5000;
 
 // c.fee = "無料";      // ← 料金は number
 // c.priority = 1;      // ← そんな項目は無い
@@ -1174,22 +1166,19 @@ console.log(c);
             {
               name: 'any で受ける', viz: VZ.a1, point: 'any は検問なし。赤線が出ないので、使わない', sub: '落ちる',
               story: 'any で受けたら項目名の変更に気づけず、本番で真っ白。',
-              src: `// 外部 API の返事。相手が項目名を変えた（name → fullName）
-const res: any = JSON.parse('{"fullName":"田中"}');
+              src: `const res: any = JSON.parse('{"fullName":"田中"}');
 
-console.log(res.name.toUpperCase());   // 赤線なし
+console.log(res.name.toUpperCase());
 `,
               tryIt: '① 実行 → 実行エラー　② 赤線は1本も出ていない',
             },
             {
               name: 'unknown で受ける', viz: VZ.a2, point: '何が来るか分からない値は unknown。確認してから使う', sub: '守られる',
               story: 'unknown なら使う前に止められる。',
-              src: `// 何が来るか分からない → unknown で受ける
-const res: unknown = JSON.parse('"tanaka"');   // 今回は文字が来た
+              src: `const res: unknown = JSON.parse('"tanaka"');
 
-console.log(res.toUpperCase());   // 赤線：確かめる前は使えない
+console.log(res.toUpperCase());
 
-// 直す：typeof で確かめてから使う
 // if (typeof res === "string") {
 //   console.log(res.toUpperCase());
 // }
@@ -1211,7 +1200,7 @@ console.log(res.toUpperCase());   // 赤線：確かめる前は使えない
   console.log("注文 " + id + " を記録しました");
 }
 
-const r = logOrder(1);   // void：返す値は無い
+const r = logOrder(1);
 console.log(r);
 `,
               tryIt: '① 右の型：<code>r</code> は <code>void</code>　② 出力2行目は <code>undefined</code>',
@@ -1221,11 +1210,11 @@ console.log(r);
               story: '未入力のあだ名を読んで画面が落ちた。',
               src: `interface Profile {
   name: string;
-  nickname?: string;   // あだ名は無いかも
+  nickname?: string;
 }
 
 const p: Profile = { name: "田中" };
-console.log(p.nickname);           // undefined
+console.log(p.nickname);
 
 // console.log(p.nickname.length);  // ← 赤線になる
 `,
@@ -1236,13 +1225,12 @@ console.log(p.nickname);           // undefined
               name: 'null', viz: VZ.n3, point: 'null：「ない」を自分で示す。使う前に確認', sub: '「ない」を自分で示す',
               story: '見つからないとき null が返り、画面が落ちた。',
               src: `function findName(id: number): string | null {
-  return id === 1 ? "田中" : null;   // 見つからなければ null
+  return id === 1 ? "田中" : null;
 }
 
 const n = findName(2);
-console.log(n.length);   // 赤線：n は null かもしれない
+console.log(n.length);
 
-// 直す：null でないときだけ使う
 // if (n !== null) {
 //   console.log(n.length);
 // }
