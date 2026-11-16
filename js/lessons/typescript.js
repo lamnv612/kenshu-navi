@@ -2089,106 +2089,95 @@ console.log(n.length);
           };
           TABS.forEach((t, i) => tabs.append(h('button', { onclick: () => show(i) }, W(t.mod), h('small', t.sub))));
 
-          /* ③-0 そもそも、この3者は誰？（銀行のたとえ話・ステップ表示） */
-          style('amy', `
-          .as-map{display:grid;grid-template-columns:minmax(0,.8fr) 34px minmax(0,1.2fr);gap:0;align-items:center;padding:16px;border-radius:14px;background:var(--card);border:1px solid var(--line)}
-          @media(max-width:760px){.as-map{grid-template-columns:1fr;gap:10px}.as-ar{display:none}}
-          .as-node{padding:.8em 1em;border-radius:12px;border:2px solid var(--line);background:var(--card2);transition:.35s;display:grid;gap:2px}
-          .as-node .em{font-size:1.7rem}.as-node b{font-size:1rem}.as-node small{font:700 .75rem var(--font);color:var(--mute)}
-          .as-node.hl{border-color:var(--ts);background:color-mix(in srgb,var(--ts) 18%,var(--card2));box-shadow:0 10px 24px -14px var(--ts);transform:scale(1.02)}
-          .as-ar{text-align:center;font:900 1.3rem var(--mono);color:var(--mute)}
-          .as-bank{border:2px solid var(--team);border-radius:14px;overflow:hidden;background:var(--card2);transition:.35s}.as-bank.hl{box-shadow:0 10px 24px -14px var(--team)}
-          .as-bank>header{padding:.5em 1em;background:color-mix(in srgb,var(--team) 22%,var(--card2));font:900 .95rem var(--mono);color:var(--team);display:flex;justify-content:space-between;gap:8px}
-          .as-bank>header small{font:700 .75rem var(--font);color:var(--mute)}
-          .as-row{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:.6em 1em;border-top:1px solid var(--line);transition:.3s}
-          .as-row .d{font-size:1.3rem}.as-row b{font:800 .88rem var(--mono);display:block}.as-row small{font:700 .72rem var(--font);color:var(--mute)}
-          .as-row .tag{min-width:5.2em;text-align:center;padding:.15em .7em;border-radius:999px;font-weight:900;font-size:.78rem;opacity:0;transition:.3s;border:1px solid transparent}
-          .as-row.ok{background:color-mix(in srgb,var(--ok) 16%,transparent)}.as-row.ok .tag{opacity:1;background:var(--ok);color:#06101f}
-          .as-row.ng{background:color-mix(in srgb,var(--bad) 16%,transparent)}.as-row.ng .tag{opacity:1;background:var(--bad);color:#fff}
-          .as-side{display:grid;gap:10px}.as-ext{font:700 .78rem var(--mono);color:var(--mute);text-align:center}`);
-          const asRows = [['🌐', 'public', '窓口：deposit()', [1, 1, 1]], ['🛡️', 'protected', '事務室：branch（支店）', [1, 1, 0]], ['🔒', 'private', '金庫：balance・pin', [1, 0, 0]]];
-          // actor: 0=クラスの中, 1=子クラス, 2=外のコード
-          const asStory = [
-            { say: '🏦 <b>BankAccount ＝ 銀行の口座</b>。この口座には、<b>3種類の立場</b>の人が関わる。誰が何に触れるかを決めておかないと、大変なことになる。', actor: -1, hl: [] },
-            { say: '🌍 <b>外のコード</b> ＝ 口座を<b>使うだけ</b>の人。ATM の画面や、他のファイルのコード。お客さんは<b>窓口（public）</b>でお願いするだけで、金庫の中は見られない。', actor: 2, hl: ['out'] },
-            { say: '🏠 <b>クラスの中</b> ＝ <b>口座自身</b>。窓口の係（deposit()）が、自分の金庫（balance・pin）を開けて作業する。<b>自分の持ち物だから、全部触れる</b>。', actor: 0, hl: ['bank'] },
-            { say: '🧒 <b>子クラス</b> ＝ 口座の<b>仲間</b>（定期預金口座＝ <code>Savings extends BankAccount</code>）。親の事務室（protected）までは入れるが、<b>金庫（private）は親だけのもの</b>。', actor: 1, hl: ['kid'] },
-            { say: '💡 <b>なぜ分ける？</b> お客さんが金庫を直接触れたら、残高の書き換えや暗証番号の盗み見ができてしまう。だから<b>立場ごとに「どこまで見せるか」</b>を決める。それが <b>public / protected / private</b>。', actor: -1, hl: [], all: true },
+          /* ③ たとえ話：家に入れる人 ― 歩いて、入れない所で止まる */
+          style('amh', `
+          .ah-who{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:12px}@media(max-width:700px){.ah-who{grid-template-columns:1fr}}
+          .ah-who button{all:unset;cursor:pointer;box-sizing:border-box;padding:.7em 1em;border-radius:12px;border:2px solid var(--line);background:var(--card);display:grid;gap:2px;text-align:center;transition:.25s}
+          .ah-who button .em{font-size:1.9rem}.ah-who button b{font-size:1rem}.ah-who button small{font:700 .75rem var(--font);color:var(--mute)}
+          .ah-who button:hover{transform:translateY(-2px)}.ah-who button.on{border-color:var(--ts);background:color-mix(in srgb,var(--ts) 18%,var(--card));box-shadow:0 10px 24px -14px var(--ts)}
+          .ah-mode{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+          .ah-mode button{all:unset;cursor:pointer;padding:.4em 1em;border-radius:999px;border:1px solid var(--line);background:var(--card);font-weight:800;font-size:.84rem}
+          .ah-mode button.on.good{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 18%,var(--card))}.ah-mode button.on.bad{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 18%,var(--card))}
+          .ah-track{position:relative;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:var(--card)}
+          .ah-zone{padding:18px 8px 58px;text-align:center;border-right:2px dashed var(--line);transition:.4s;display:grid;gap:3px;align-content:start;justify-items:center}.ah-zone:last-child{border-right:0}
+          .ah-zone .em{font-size:2rem}.ah-zone b{font-size:.92rem}.ah-zone small{font:700 .72rem var(--font);color:var(--mute)}.ah-zone code{font:800 .72rem var(--mono);color:var(--text)}
+          .ah-zone .mod{padding:.1em .7em;border-radius:999px;font:800 .72rem var(--mono);border:1px solid var(--line);background:var(--card2)}
+          .ah-zone.ok{background:color-mix(in srgb,var(--ok) 15%,var(--card))}.ah-zone.ng{background:color-mix(in srgb,var(--bad) 15%,var(--card));animation:shake .4s}
+          .ah-zone.hit{background:color-mix(in srgb,var(--bad) 30%,var(--card))}
+          .ah-tok{position:absolute;bottom:10px;left:12.5%;transform:translateX(-50%);font-size:2.2rem;transition:left .7s ease;z-index:3;filter:drop-shadow(0 4px 6px rgba(0,0,0,.4))}
+          .ah-tok.bump{animation:ahbump .5s}@keyframes ahbump{0%,100%{margin-left:0}40%{margin-left:-14px}70%{margin-left:6px}}
+          .ah-say{margin-top:12px;padding:.8em 1em;border-radius:10px;background:var(--card);border:1px dashed var(--line);font-weight:800;line-height:1.7;min-height:3.2em}
+          .ah-say.ok{border-color:var(--ok)}.ah-say.ng{border-color:var(--bad)}.ah-say.bad{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 14%,var(--card))}
+          .ah-out{padding:.7em 1em;border-radius:10px;background:var(--code);color:#cfd5ff;font:700 .85rem/1.7 var(--mono);margin-top:10px;min-height:3em}
+          .ah-out.ok{color:#9be58b;border:1px solid var(--ok)}.ah-out.ng{color:#ff9aa5;border:1px solid var(--bad)}`);
+          const ZN = [
+            { em: '🛣️', n: '家の外', sub: '外のコード', mod: null, f: null },
+            { em: '🚪', n: '玄関', sub: '誰でも入れる', mod: 'public', f: 'entrance', rank: 0 },
+            { em: '🛋️', n: 'リビング', sub: '家族だけ', mod: 'protected', f: 'livingRoom', rank: 1 },
+            { em: '📔', n: '自分の部屋（日記）', sub: '本人だけ', mod: 'private', f: 'diary', rank: 2 },
           ];
-          const asOut = h('div', { class: 'as-node' }, h('span', { class: 'em' }, '🌍'), h('b', '外のコード'), h('small', 'ATM の画面・他のファイル'));
-          const asKid = h('div', { class: 'as-node' }, h('span', { class: 'em' }, '🧒'), h('b', '子クラス'), h('small', 'Savings extends BankAccount（定期預金口座）'));
-          const asRowEls = asRows.map(([d, m, sub]) => h('div', { class: 'as-row' }, h('span', { class: 'd' }, d), h('div', h('b', m), h('small', sub)), h('span', { class: 'tag' }, '')));
-          const asBank = h('div', { class: 'as-bank' }, h('header', h('span', '🏠 class BankAccount'), h('small', 'クラスの中 ＝ 口座自身')), ...asRowEls);
-          const story = h('div', { class: 'am-sec' }, h('h4', '🏦 そもそも「クラスの中・子クラス・外のコード」って誰？（銀行のたとえ）'),
-            stepper({ color: 'var(--ts)', interval: 3800, steps: asStory.map((x) => ({ say: x.say })),
-              init(vis) { vis.append(h('div', { class: 'as-map' }, asOut, h('div', { class: 'as-ar' }, '→'), h('div', { class: 'as-side' }, asBank, h('div', { class: 'as-ext' }, '↑ extends（継ぐ）'), asKid))); },
-              update(n) {
-                const x = asStory[n];
-                asOut.classList.toggle('hl', x.hl.includes('out')); asKid.classList.toggle('hl', x.hl.includes('kid')); asBank.classList.toggle('hl', x.hl.includes('bank'));
-                asOut.style.transform = ''; 
-                asRowEls.forEach((r, k) => {
-                  r.className = 'as-row';
-                  const tag = r.querySelector('.tag');
-                  if (x.actor >= 0) { const ok = !!asRows[k][3][x.actor]; r.classList.add(ok ? 'ok' : 'ng'); tag.textContent = ok ? '✓ 触れる' : '✖ 止める'; }
-                  else if (x.all) { r.classList.add('ok'); tag.textContent = ['誰でも', '自分＋子', '自分だけ'][k]; }
-                });
-              } }));
-
-          /* ③ 誰が触れる？（訪問者を選ぶ → 3つの部屋の鍵が開く/閉まる） */
-          style('amd', `
-          .av-who{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:12px}@media(max-width:700px){.av-who{grid-template-columns:1fr}}
-          .av-who button{all:unset;cursor:pointer;box-sizing:border-box;padding:.8em 1em;border-radius:12px;border:2px solid var(--line);background:var(--card);display:grid;gap:2px;text-align:center;transition:.25s}
-          .av-who button .em{font-size:1.8rem}.av-who button b{font-size:1rem}.av-who button small{font:700 .75rem var(--font);color:var(--mute)}
-          .av-who button:hover{transform:translateY(-2px)}.av-who button.on{border-color:var(--ts);background:color-mix(in srgb,var(--ts) 18%,var(--card));box-shadow:0 10px 24px -14px var(--ts)}
-          .av-say{margin-bottom:12px;padding:.8em 1em;border-radius:10px;background:var(--card);border:1px dashed var(--line);font-weight:800;line-height:1.7}
-          .av-rooms{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}@media(max-width:700px){.av-rooms{grid-template-columns:1fr}}
-          .av-room{cursor:pointer;padding:14px;border-radius:14px;border:2px solid var(--line);background:var(--card2);text-align:center;transition:.35s;display:grid;gap:4px;justify-items:center}
-          .av-room .door{font-size:2.4rem;transition:.35s}.av-room b{font:900 1rem var(--mono)}.av-room small{font:700 .78rem var(--font);color:var(--mute)}
-          .av-room .res{margin-top:4px;padding:.15em .9em;border-radius:999px;font-weight:900;font-size:.85rem;background:var(--card);border:1px solid var(--line)}
-          .av-room.ok{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 14%,var(--card2))}.av-room.ok .res{background:var(--ok);color:#06101f;border-color:var(--ok)}
-          .av-room.ng{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 14%,var(--card2))}.av-room.ng .res{background:var(--bad);color:#fff;border-color:var(--bad)}
-          .av-room.pop{animation:tvpop .4s both}
-          .av-out{padding:.7em 1em;border-radius:10px;background:var(--code);color:#cfd5ff;font:700 .85rem/1.7 var(--mono);margin-top:10px;min-height:3em}
-          .av-out.ok{color:#9be58b;border:1px solid var(--ok)}.av-out.ng{color:#ff9aa5;border:1px solid var(--bad)}`);
-          const VIS = [
-            { em: '🏠', n: 'クラスの中', sub: 'BankAccount 自身のメソッド', say: '<b>BankAccount 自身</b>は、自分の持ち物ならぜんぶ触れる。', code: (m) => 'class BankAccount {\n  check() {\n    return this.' + m + ';\n  }\n}' },
-            { em: '🧒', n: '子クラス', sub: 'BankAccount を継いだクラス', say: '<b>子クラス</b>が入れるのは public と protected。private は<b>自分だけ</b>なので止められる。', code: (m) => 'class Savings extends BankAccount {\n  show() {\n    return this.' + m + ';\n  }\n}' },
-            { em: '🌍', n: '外のコード', sub: '画面や他のファイル', say: '<b>外のコード</b>が入れるのは public だけ。protected も private も止められる。', code: (m) => 'const acc = new BankAccount();\nconsole.log(acc.' + m + ');' },
+          const WH = [
+            { em: '🛵', n: '宅配便の人', sub: '＝ 外のコード', lvl: 0, who: '外のコード', code: (f) => 'const house = new House();\nconsole.log(house.' + f + ');' },
+            { em: '👧', n: '家族', sub: '＝ 子クラス（House を継ぐ）', lvl: 1, who: '子クラス', code: (f) => 'class Child extends House {\n  visit() {\n    return this.' + f + ';\n  }\n}' },
+            { em: '🧑', n: '本人', sub: '＝ クラスの中（House 自身）', lvl: 2, who: 'クラスの中', code: (f) => 'class House {\n  visit() {\n    return this.' + f + ';\n  }\n}' },
           ];
-          const RMS = [
-            { mod: 'public', f: 'owner', door: ['🚪', '🚪'], sub: '誰でも入れる', ok: [1, 1, 1] },
-            { mod: 'protected', f: 'branch', door: ['🛡️', '🛡️'], sub: '自分と子だけ', ok: [1, 1, 0] },
-            { mod: 'private', f: 'pin', door: ['🔒', '🔒'], sub: '自分だけ', ok: [1, 0, 0] },
-          ];
-          let vi = 2;
-          const visBar = h('div', { class: 'av-who' }), say2 = h('div', { class: 'av-say' }), rooms = h('div', { class: 'av-rooms' }), avCode = h('div', { style: { marginTop: '12px' } }), avOut = h('div', { class: 'av-out' });
-          const roomEls = RMS.map((r, i) => h('div', { class: 'av-room', onclick: () => pickRoom(i) }, h('span', { class: 'door' }, r.door[0]), h('b', r.mod + ' ' + r.f), h('small', r.sub), h('span', { class: 'res' }, '…')));
-          const pickRoom = (i) => {
-            const r = RMS[i], ok = !!r.ok[vi];
-            avCode.replaceChildren(code(VIS[vi].code(r.f), 'ts', { color: 'var(--ts)' }));
-            avOut.className = 'av-out ' + (ok ? 'ok' : 'ng');
-            avOut.textContent = ok ? `✓ ${VIS[vi].n}から ${r.f} に触れる` : `✖ Property '${r.f}' is ${r.mod} and only accessible within class 'BankAccount'${r.mod === 'protected' ? ' and its subclasses' : ''}.`;
-            roomEls.forEach((e, k) => e.style.outline = k === i ? '3px solid var(--ts)' : '');
+          let wi = 0, allPub = false, walkT = [];
+          const ahTok = h('div', { class: 'ah-tok' }, '🛵');
+          const zoneEls = ZN.map((z) => h('div', { class: 'ah-zone' }, h('span', { class: 'em' }, z.em), h('b', z.n), h('small', z.sub), z.mod ? h('span', { class: 'mod' }, z.mod) : null, z.f ? h('code', z.f) : null));
+          const track = h('div', { class: 'ah-track' }, ...zoneEls, ahTok);
+          const ahWho = h('div', { class: 'ah-who' }), ahSay = h('div', { class: 'ah-say' }), ahCode = h('div', { style: { marginTop: '10px' } }), ahOut = h('div', { class: 'ah-out' });
+          const modeBtns = [['✅ アクセス修飾子あり', false, 'good'], ['❌ ぜんぶ public だったら？', true, 'bad']].map(([t, v, c]) => h('button', { class: c, onclick: () => { allPub = v; walk(); } }, t));
+          const center = (i) => (i * 25 + 12.5) + '%';
+          const rankOf = (z) => (allPub ? 0 : z.rank);
+          const walk = () => {
+            walkT.forEach(clearTimeout); walkT = [];
+            ahWho.querySelectorAll('button').forEach((b, k) => b.classList.toggle('on', k === wi));
+            modeBtns.forEach((b, k) => b.classList.toggle('on', (k === 1) === allPub));
+            const W = WH[wi];
+            zoneEls.forEach((e, k) => { e.className = 'ah-zone'; const m = e.querySelector('.mod'); if (m && ZN[k].mod) m.textContent = allPub ? 'public' : ZN[k].mod; });
+            ahTok.className = 'ah-tok'; ahTok.textContent = W.em; ahTok.style.transition = 'none'; ahTok.style.left = center(0); void ahTok.offsetWidth; ahTok.style.transition = '';
+            ahSay.className = 'ah-say'; ahSay.textContent = W.em + ' ' + W.n + 'が、家の中へ向かう…'; ahCode.replaceChildren(); ahOut.className = 'ah-out'; ahOut.textContent = '…';
+            let reached = 0, blocked = -1;
+            const step = (i) => {
+              if (i >= ZN.length) return finish();
+              const ok = W.lvl >= rankOf(ZN[i]);
+              if (ok) {
+                ahTok.style.left = center(i);
+                walkT.push(setTimeout(() => { zoneEls[i].classList.add('ok'); reached = i; step(i + 1); }, 800));
+              } else {
+                ahTok.style.left = (i * 25 + 4) + '%';
+                walkT.push(setTimeout(() => { ahTok.classList.add('bump'); zoneEls[i].classList.add('ng'); blocked = i; walkT.push(setTimeout(finish, 600)); }, 700));
+              }
+            };
+            const finish = () => {
+              const z = ZN[reached] && ZN[reached].mod ? ZN[reached] : null;
+              const showI = blocked >= 0 ? blocked : reached;
+              const zi = ZN[showI];
+              if (blocked >= 0) {
+                ahSay.className = 'ah-say ng';
+                ahSay.innerHTML = `${W.em} <b>${W.n}</b>は <b>${ZN[blocked - 1].n}</b>まで。<b>${zi.n}</b>（${zi.mod}）は「${zi.sub}」なので、<b>入れない</b> ✖`;
+                ahCode.replaceChildren(code(W.code(zi.f), 'ts', { color: 'var(--ts)' }));
+                ahOut.className = 'ah-out ng'; ahOut.textContent = `✖ Property '${zi.f}' is ${zi.mod} and only accessible within class 'House'${zi.mod === 'protected' ? ' and its subclasses' : ''}.`;
+              } else {
+                const last = ZN[ZN.length - 1];
+                if (allPub && W.lvl === 0) {
+                  ahSay.className = 'ah-say bad'; ahSay.innerHTML = `${W.em} 💥 ぜんぶ public だと、<b>宅配便の人が日記まで読めてしまう！</b> 守りたい物には private を付けよう。`;
+                  zoneEls[3].classList.add('hit');
+                } else { ahSay.className = 'ah-say ok'; ahSay.innerHTML = `${W.em} <b>${W.n}</b>は <b>${last.n}</b>まで入れる ✓（${last.sub}）`; }
+                ahCode.replaceChildren(code(W.code(last.f), 'ts', { color: 'var(--ts)' }));
+                ahOut.className = 'ah-out ok'; ahOut.textContent = allPub && W.lvl === 0 ? `💥 ${W.who}から ${last.f} が読めてしまった（public なので止められない）` : `✓ ${W.who}から ${last.f} に触れる`;
+              }
+            };
+            walkT.push(setTimeout(() => step(1), 500));
           };
-          const pickVis = (i) => {
-            vi = i;
-            visBar.querySelectorAll('button').forEach((b, k) => b.classList.toggle('on', k === i));
-            say2.innerHTML = VIS[i].say;
-            roomEls.forEach((e, k) => {
-              e.className = 'av-room'; e.querySelector('.res').textContent = '…'; e.querySelector('.door').textContent = '❔'; e.style.outline = '';
-              setTimeout(() => { const ok = !!RMS[k].ok[i]; e.className = 'av-room pop ' + (ok ? 'ok' : 'ng'); e.querySelector('.door').textContent = ok ? '🔓' : RMS[k].door[0]; e.querySelector('.res').textContent = ok ? '✓ 入れる' : '✖ 止められる'; }, 250 + k * 300);
-            });
-            setTimeout(() => pickRoom(2), 1300);
-          };
-          VIS.forEach((v, i) => visBar.append(h('button', { onclick: () => pickVis(i) }, h('span', { class: 'em' }, v.em), h('b', v.n), h('small', v.sub))));
-          rooms.append(...roomEls);
-          const mat = h('div', { class: 'am-sec' }, h('h4', '🔐 まとめ：誰が、どの部屋に入れる？'),
-            h('p', { class: 'am-sub', style: { fontWeight: 700, color: 'var(--mute)', fontSize: '.86rem', margin: '0 0 10px' } }, '① 上で「誰が」を選ぶ → ② 3つの部屋の鍵が開くか閉まるか → ③ 部屋を押すと、そのコードとエラーが出る'),
-            visBar, say2, rooms, avCode, avOut);
-          pickVis(2);
+          WH.forEach((w, i) => ahWho.append(h('button', { onclick: () => { wi = i; walk(); } }, h('span', { class: 'em' }, w.em), h('b', w.n), h('small', w.sub))));
+          const house = h('div', { class: 'am-sec' }, h('h4', '🏠 たとえ話：家に入れるのは、誰？'),
+            h('p', { class: 'am-sub', style: { fontWeight: 700, color: 'var(--mute)', fontSize: '.86rem', margin: '0 0 10px' } }, 'class House ＝ 一軒の家。玄関（public）・リビング（protected）・自分の日記（private）。人を選ぶと、家の中へ歩いていく。'),
+            ahWho, h('div', { class: 'ah-mode' }, ...modeBtns), track, ahSay, ahCode, ahOut);
+          walk();
 
           el.append(lv, tabs, stage,
-            story, mat,
+            house,
             h('div', { class: 'am-tip' }, '💡 迷ったら、まず private'));
           show(0);
         },
