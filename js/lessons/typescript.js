@@ -2172,95 +2172,89 @@ console.log(n.length);
                 wevBox.replaceChildren(...(ev.length ? ev.map(([em, c, t, k]) => h('div', { class: 'aw-e ' + k }, h('code', em + ' ' + c), h('span', t))) : [h('div', { class: 'aw-none' }, '👍 まだ何も起きていない（便利！）')]));
               } }));
 
-          /* ③ たとえ話：家に入れる人 ― 歩いて、入れない所で止まる */
-          style('amh', `
-          .ah-who{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:12px}@media(max-width:700px){.ah-who{grid-template-columns:1fr}}
-          .ah-who button{all:unset;cursor:pointer;box-sizing:border-box;padding:.7em 1em;border-radius:12px;border:2px solid var(--line);background:var(--card);display:grid;gap:2px;text-align:center;transition:.25s}
-          .ah-who button .em{font-size:1.9rem}.ah-who button b{font-size:1rem}.ah-who button small{font:700 .75rem var(--font);color:var(--mute)}
-          .ah-who button:hover{transform:translateY(-2px)}.ah-who button.on{border-color:var(--ts);background:color-mix(in srgb,var(--ts) 18%,var(--card));box-shadow:0 10px 24px -14px var(--ts)}
-          .ah-mode{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
-          .ah-mode button{all:unset;cursor:pointer;padding:.4em 1em;border-radius:999px;border:1px solid var(--line);background:var(--card);font-weight:800;font-size:.84rem}
-          .ah-mode button.on.good{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 18%,var(--card))}.ah-mode button.on.bad{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 18%,var(--card))}
-          .ah-track{position:relative;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:var(--card)}
-          .ah-zone{padding:18px 8px 58px;text-align:center;border-right:2px dashed var(--line);transition:.4s;display:grid;gap:3px;align-content:start;justify-items:center}.ah-zone:last-child{border-right:0}
-          .ah-zone .em{font-size:2rem}.ah-zone b{font-size:.92rem}.ah-zone small{font:700 .72rem var(--font);color:var(--mute)}.ah-zone code{font:800 .72rem var(--mono);color:var(--text)}
-          .ah-zone .mod{padding:.1em .7em;border-radius:999px;font:800 .72rem var(--mono);border:1px solid var(--line);background:var(--card2)}
-          .ah-zone.ok{background:color-mix(in srgb,var(--ok) 15%,var(--card))}.ah-zone.ng{background:color-mix(in srgb,var(--bad) 15%,var(--card));animation:shake .4s}
-          .ah-zone.hit{background:color-mix(in srgb,var(--bad) 30%,var(--card))}
-          .ah-tok{position:absolute;bottom:10px;left:12.5%;transform:translateX(-50%);font-size:2.2rem;transition:left .7s ease;z-index:3;filter:drop-shadow(0 4px 6px rgba(0,0,0,.4))}
-          .ah-tok.bump{animation:ahbump .5s}@keyframes ahbump{0%,100%{margin-left:0}40%{margin-left:-14px}70%{margin-left:6px}}
-          .ah-say{margin-top:12px;padding:.8em 1em;border-radius:10px;background:var(--card);border:1px dashed var(--line);font-weight:800;line-height:1.7;min-height:3.2em}
-          .ah-say.ok{border-color:var(--ok)}.ah-say.ng{border-color:var(--bad)}.ah-say.bad{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 14%,var(--card))}
-          .ah-out{padding:.7em 1em;border-radius:10px;background:var(--code);color:#cfd5ff;font:700 .85rem/1.7 var(--mono);margin-top:10px;min-height:3em}
-          .ah-out.ok{color:#9be58b;border:1px solid var(--ok)}.ah-out.ng{color:#ff9aa5;border:1px solid var(--bad)}`);
-          const ZN = [
-            { em: '🛣️', n: '家の外', sub: '外のコード', mod: null, f: null },
-            { em: '🚪', n: '玄関', sub: '誰でも入れる', mod: 'public', f: 'entrance', rank: 0 },
-            { em: '🛋️', n: 'リビング', sub: '家族だけ', mod: 'protected', f: 'livingRoom', rank: 1 },
-            { em: '📔', n: '自分の部屋（日記）', sub: '本人だけ', mod: 'private', f: 'diary', rank: 2 },
+          /* ④ 実際のクラスで考える：この項目、どれにする？（クイズ形式） */
+          style('amc', `
+          .ac-flow{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:8px;align-items:stretch;margin-bottom:14px}
+          @media(max-width:820px){.ac-flow{grid-template-columns:1fr}.ac-flow>i{display:none}}
+          .ac-flow>div{padding:.7em .9em;border-radius:10px;border:2px solid var(--line);background:var(--card);font-weight:800;font-size:.86rem;line-height:1.6;transition:.35s}
+          .ac-flow>div small{display:block;font-weight:700;color:var(--mute);font-size:.75rem}.ac-flow>i{align-self:center;font-style:normal;color:var(--mute);font-weight:900}
+          .ac-flow>div.on{border-color:var(--c);background:color-mix(in srgb,var(--c) 18%,var(--card));box-shadow:0 8px 20px -12px var(--c)}
+          .ac-tabs{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:12px}
+          .ac-tabs button{all:unset;cursor:pointer;box-sizing:border-box;text-align:center;padding:.55em .8em;border-radius:8px;border:1px solid var(--line);background:var(--card);font-weight:800;font-size:.86rem;transition:.2s}
+          .ac-tabs button:hover{transform:translateY(-2px)}.ac-tabs button.on{border-color:var(--ts);background:color-mix(in srgb,var(--ts) 16%,var(--card))}
+          .ac-ctx{padding:.7em 1em;border-radius:10px;background:color-mix(in srgb,var(--ts) 10%,var(--card));border:1px solid color-mix(in srgb,var(--ts) 35%,var(--line));font-weight:700;font-size:.875rem;line-height:1.7;margin-bottom:12px}
+          .ac-duo{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}@media(max-width:900px){.ac-duo{grid-template-columns:1fr}}
+          .ac-rows{display:grid;gap:8px}
+          .ac-row{padding:.6em .8em;border-radius:10px;border:2px solid var(--line);background:var(--card);transition:.3s}
+          .ac-row .d{font:800 .84rem var(--mono);margin-bottom:6px}.ac-row .d small{font:700 .75rem var(--font);color:var(--mute);margin-left:.6em}
+          .ac-btns{display:flex;gap:6px;flex-wrap:wrap}.ac-btns button{all:unset;cursor:pointer;padding:.25em .8em;border-radius:8px;border:1px solid var(--line);background:var(--card2);font:800 .78rem var(--mono);transition:.2s}
+          .ac-btns button:hover{transform:translateY(-2px);border-color:var(--ts)}
+          .ac-row.ok{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 12%,var(--card))}.ac-row.ng{animation:shake .4s;border-color:var(--bad)}
+          .ac-why{margin-top:6px;font-weight:700;font-size:.82rem;line-height:1.6}.ac-why b{font-family:var(--mono)}
+          .ac-prog{margin:10px 0 0;font-weight:800;color:var(--mute);font-size:.84rem}`);
+          const FLOW = [['外のコード（画面・他のファイル）が使う？', 'YES → public'], ['子クラスが使う？', 'YES → protected'], ['どちらも使わない', '→ private']];
+          const flowEls = FLOW.map(([q, a], k) => h('div', { style: { '--c': ['var(--ok)', 'var(--pink)', 'var(--bad)'][k] } }, '❓ ' + (k + 1) + '. ' + q, h('small', a)));
+          const flow = h('div', { class: 'ac-flow' }, flowEls[0], h('i', '→ NO →'), flowEls[1], h('i', '→ NO →'), flowEls[2]);
+          const CASES4 = [
+            { n: '🛒 ショッピングカート', ctx: '画面に商品と合計を出す <code>Cart</code> クラス。', cls: 'Cart',
+              m: [['items', 'items: Item[] = [];', '商品の一覧', 'private', '中身を外から <code>push</code> されると、合計が狂う。追加は <b>addItem()</b> 経由にしたい'],
+                  ['addItem', 'addItem(item: Item) {…}', '商品を追加する', 'public', '画面のボタンから呼ぶ<b>窓口</b>。外から使えないと困る'],
+                  ['total', 'total(): number {…}', '合計を返す', 'public', '画面に合計を<b>表示する</b>ために、外から呼べる必要がある'],
+                  ['calcTax', 'calcTax(): number {…}', '税額の内部計算', 'private', '<b>内部の計算</b>。外に見せると使い方を間違えるし、仕様変更で困る']] },
+            { n: '👤 ユーザーアカウント', ctx: '<code>User</code> クラス。子クラス <code>AdminUser</code> が管理者の機能を足す。', cls: 'User',
+              m: [['name', 'name: string;', '表示名', 'public', '画面に表示するので、外から読める必要がある'],
+                  ['passwordHash', 'passwordHash: string;', '暗証用のハッシュ', 'private', '漏れたら大事故。<b>外にも子にも</b>見せない'],
+                  ['role', 'role: string;', '権限（"user" / "admin"）', 'protected', '子クラス <b>AdminUser</b> が権限判定に使う。でも外からは書き換えさせない'],
+                  ['login', 'login(pw: string) {…}', 'ログインする', 'public', '画面から呼ぶ<b>窓口</b>']] },
+            { n: '📧 メール通知', ctx: '<code>Notice</code> クラス。子クラス <code>MailNotice</code> / <code>SlackNotice</code> が送り方だけ変える。', cls: 'Notice',
+              m: [['send', 'send(msg: string) {…}', '通知を送る', 'public', '外のコードが呼ぶ<b>窓口</b>'],
+                  ['log', 'log(msg: string) {…}', '送信記録を残す', 'protected', '<b>子クラス全員</b>が共通で使う処理。外からは呼ばせない'],
+                  ['retryCount', 'retryCount = 0;', '再送した回数', 'private', 'この通知クラスだけの内部カウンタ。<b>誰にも</b>触らせない']] },
+            { n: '💳 決済', ctx: '<code>Payment</code> クラス。子クラス <code>CreditPayment</code> が手数料率を変える。', cls: 'Payment',
+              m: [['pay', 'pay(amount: number) {…}', '支払いを実行', 'public', '画面から呼ぶ<b>窓口</b>'],
+                  ['cardNumber', 'cardNumber: string;', 'カード番号', 'private', '漏れたら大事故。<b>外にも子にも</b>見せない'],
+                  ['feeRate', 'feeRate = 0.03;', '手数料率', 'protected', '子クラス <b>CreditPayment</b> が率を変えて使う。外からは変えさせない'],
+                  ['validate', 'validate(n: number) {…}', '金額のチェック', 'private', '<b>内部のチェック</b>。pay() の中でだけ使う']] },
           ];
-          const WH = [
-            { em: '🛵', n: '宅配便の人', sub: '＝ 外のコード', lvl: 0, who: '外のコード', code: (f) => 'const house = new House();\nconsole.log(house.' + f + ');' },
-            { em: '👧', n: '家族', sub: '＝ 子クラス（House を継ぐ）', lvl: 1, who: '子クラス', code: (f) => 'class Child extends House {\n  visit() {\n    return this.' + f + ';\n  }\n}' },
-            { em: '🧑', n: '本人', sub: '＝ クラスの中（House 自身）', lvl: 2, who: 'クラスの中', code: (f) => 'class House {\n  visit() {\n    return this.' + f + ';\n  }\n}' },
-          ];
-          let wi = 0, allPub = false, walkT = [];
-          const ahTok = h('div', { class: 'ah-tok' }, '🛵');
-          const zoneEls = ZN.map((z) => h('div', { class: 'ah-zone' }, h('span', { class: 'em' }, z.em), h('b', z.n), h('small', z.sub), z.mod ? h('span', { class: 'mod' }, z.mod) : null, z.f ? h('code', z.f) : null));
-          const track = h('div', { class: 'ah-track' }, ...zoneEls, ahTok);
-          const ahWho = h('div', { class: 'ah-who' }), ahSay = h('div', { class: 'ah-say' }), ahCode = h('div', { style: { marginTop: '10px' } }), ahOut = h('div', { class: 'ah-out' });
-          const modeBtns = [['✅ アクセス修飾子あり', false, 'good'], ['❌ ぜんぶ public だったら？', true, 'bad']].map(([t, v, c]) => h('button', { class: c, onclick: () => { allPub = v; walk(); } }, t));
-          const center = (i) => (i * 25 + 12.5) + '%';
-          const rankOf = (z) => (allPub ? 0 : z.rank);
-          const walk = () => {
-            walkT.forEach(clearTimeout); walkT = [];
-            ahWho.querySelectorAll('button').forEach((b, k) => b.classList.toggle('on', k === wi));
-            modeBtns.forEach((b, k) => b.classList.toggle('on', (k === 1) === allPub));
-            const W = WH[wi];
-            zoneEls.forEach((e, k) => { e.className = 'ah-zone'; const m = e.querySelector('.mod'); if (m && ZN[k].mod) m.textContent = allPub ? 'public' : ZN[k].mod; });
-            ahTok.className = 'ah-tok'; ahTok.textContent = W.em; ahTok.style.transition = 'none'; ahTok.style.left = center(0); void ahTok.offsetWidth; ahTok.style.transition = '';
-            ahSay.className = 'ah-say'; ahSay.textContent = W.em + ' ' + W.n + 'が、家の中へ向かう…'; ahCode.replaceChildren(); ahOut.className = 'ah-out'; ahOut.textContent = '…';
-            let reached = 0, blocked = -1;
-            const step = (i) => {
-              if (i >= ZN.length) return finish();
-              const ok = W.lvl >= rankOf(ZN[i]);
-              if (ok) {
-                ahTok.style.left = center(i);
-                walkT.push(setTimeout(() => { zoneEls[i].classList.add('ok'); reached = i; step(i + 1); }, 800));
-              } else {
-                ahTok.style.left = (i * 25 + 4) + '%';
-                walkT.push(setTimeout(() => { ahTok.classList.add('bump'); zoneEls[i].classList.add('ng'); blocked = i; walkT.push(setTimeout(finish, 600)); }, 700));
-              }
+          let ci = 0;
+          const acTabs = h('div', { class: 'ac-tabs' }), acBody = h('div');
+          const showCase = (k) => {
+            ci = k;
+            acTabs.querySelectorAll('button').forEach((b, x) => b.classList.toggle('on', x === k));
+            flowEls.forEach((e) => e.classList.remove('on'));
+            const C = CASES4[k], ans = {};
+            const codeBox = h('div'), prog = h('div', { class: 'ac-prog' });
+            const draw = () => {
+              const lines = ['class ' + C.cls + ' {'];
+              C.m.forEach(([nm, decl], x) => lines.push('  ' + (ans[nm] ? ans[nm] + ' ' : '/* ? */ ') + decl));
+              lines.push('}');
+              const cd = code(lines.join('\n'), 'ts', { color: 'var(--ts)' });
+              cd.setHi(C.m.map(([nm], x) => (ans[nm] ? 0 : x + 2)).filter(Boolean), 'err'); codeBox.replaceChildren(cd);
+              const n = Object.keys(ans).length;
+              prog.textContent = n === C.m.length ? '🎉 ぜんぶ正解！ 見せる相手を考えて決めるのが、アクセス修飾子' : `答えた数：${n} / ${C.m.length}`;
             };
-            const finish = () => {
-              const z = ZN[reached] && ZN[reached].mod ? ZN[reached] : null;
-              const showI = blocked >= 0 ? blocked : reached;
-              const zi = ZN[showI];
-              if (blocked >= 0) {
-                ahSay.className = 'ah-say ng';
-                ahSay.innerHTML = `${W.em} <b>${W.n}</b>は <b>${ZN[blocked - 1].n}</b>まで。<b>${zi.n}</b>（${zi.mod}）は「${zi.sub}」なので、<b>入れない</b> ✖`;
-                ahCode.replaceChildren(code(W.code(zi.f), 'ts', { color: 'var(--ts)' }));
-                ahOut.className = 'ah-out ng'; ahOut.textContent = `✖ Property '${zi.f}' is ${zi.mod} and only accessible within class 'House'${zi.mod === 'protected' ? ' and its subclasses' : ''}.`;
-              } else {
-                const last = ZN[ZN.length - 1];
-                if (allPub && W.lvl === 0) {
-                  ahSay.className = 'ah-say bad'; ahSay.innerHTML = `${W.em} 💥 ぜんぶ public だと、<b>宅配便の人が日記まで読めてしまう！</b> 守りたい物には private を付けよう。`;
-                  zoneEls[3].classList.add('hit');
-                } else { ahSay.className = 'ah-say ok'; ahSay.innerHTML = `${W.em} <b>${W.n}</b>は <b>${last.n}</b>まで入れる ✓（${last.sub}）`; }
-                ahCode.replaceChildren(code(W.code(last.f), 'ts', { color: 'var(--ts)' }));
-                ahOut.className = 'ah-out ok'; ahOut.textContent = allPub && W.lvl === 0 ? `💥 ${W.who}から ${last.f} が読めてしまった（public なので止められない）` : `✓ ${W.who}から ${last.f} に触れる`;
-              }
-            };
-            walkT.push(setTimeout(() => step(1), 500));
+            const mark = (mod) => { flowEls.forEach((e) => e.classList.remove('on')); (mod === 'public' ? [0] : mod === 'protected' ? [0, 1] : [0, 1, 2]).forEach((q) => flowEls[q].classList.add('on')); };
+            const rows = C.m.map(([nm, decl, sub, right, why]) => {
+              const why2 = h('div', { class: 'ac-why' });
+              const row = h('div', { class: 'ac-row' }, h('div', { class: 'd' }, decl, h('small', sub)), h('div', { class: 'ac-btns' }, ['public', 'protected', 'private'].map((mod) => h('button', { onclick: () => {
+                if (ans[nm]) return;
+                mark(mod);
+                if (mod === right) { ans[nm] = mod; row.className = 'ac-row ok'; why2.innerHTML = '✓ <b>' + right + '</b>：' + why; row.querySelector('.ac-btns').style.display = 'none'; draw(); }
+                else { row.className = 'ac-row ng'; setTimeout(() => { row.className = 'ac-row'; }, 450); why2.innerHTML = '✖ <b>' + mod + '</b> ではない。<b>' + (mod === 'public' ? 'public にすると外から何でもできてしまう' : mod === 'protected' ? '子クラスが使う？ 使わないなら protected は広すぎる' : '外や子クラスが必要としていないか考えてみよう') + '</b>'; }
+              } }, mod))), why2);
+              return row;
+            });
+            draw();
+            acBody.replaceChildren(h('div', { class: 'ac-ctx', html: '📌 ' + C.ctx + '　<b>各項目に、どれを付ける？</b>（ボタンを押して答える）' }),
+              h('div', { class: 'ac-duo' }, h('div', { class: 'ac-rows' }, rows), h('div', null, codeBox, prog)));
           };
-          WH.forEach((w, i) => ahWho.append(h('button', { onclick: () => { wi = i; walk(); } }, h('span', { class: 'em' }, w.em), h('b', w.n), h('small', w.sub))));
-          const house = h('div', { class: 'am-sec' }, h('h4', '🏠 たとえ話：家に入れるのは、誰？'),
-            h('p', { class: 'am-sub', style: { fontWeight: 700, color: 'var(--mute)', fontSize: '.86rem', margin: '0 0 10px' } }, 'class House ＝ 一軒の家。玄関（public）・リビング（protected）・自分の日記（private）。人を選ぶと、家の中へ歩いていく。'),
-            ahWho, h('div', { class: 'ah-mode' }, ...modeBtns), track, ahSay, ahCode, ahOut);
-          walk();
+          CASES4.forEach((c, k) => acTabs.append(h('button', { onclick: () => showCase(k) }, c.n)));
+          const cases3 = h('div', { class: 'am-sec' }, h('h4', '🧭 実際のクラスで考える：この項目、どれを付ける？'),
+            flow, acTabs, acBody);
+          showCase(0);
 
           el.append(lv, tabs, stage,
-            why3, house,
+            why3, cases3,
             h('div', { class: 'am-tip' }, '💡 迷ったら、まず private'));
           show(0);
         },
