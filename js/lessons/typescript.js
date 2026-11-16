@@ -2089,6 +2089,50 @@ console.log(n.length);
           };
           TABS.forEach((t, i) => tabs.append(h('button', { onclick: () => show(i) }, W(t.mod), h('small', t.sub))));
 
+          /* ③-0 なぜ3段階も必要？ 実際の困りごとから考える（ぜんぶ public → 事故 → private → 困る → 3段階） */
+          style('amw', `
+          .aw-duo{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:14px;align-items:start}@media(max-width:900px){.aw-duo{grid-template-columns:1fr}}
+          .aw-head{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-weight:900}
+          .aw-head .badge{padding:.15em .8em;border-radius:999px;font:800 .78rem var(--mono);background:var(--card2);border:1px solid var(--line)}
+          .aw-ev{display:grid;gap:8px}.aw-e{padding:.7em .9em;border-radius:10px;border:2px solid var(--line);background:var(--card2);animation:tvpop .35s both}
+          .aw-e code{display:block;font:800 .8rem var(--mono);color:var(--text);margin-bottom:3px}.aw-e span{font-weight:800;font-size:.84rem;line-height:1.6}
+          .aw-e.bad{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 14%,var(--card2))}.aw-e.ok{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 12%,var(--card2))}
+          .aw-none{padding:.9em 1em;border-radius:10px;border:2px dashed var(--line);color:var(--mute);font-weight:800}`);
+          const WCODE = [
+            ['class BankAccount {', '  owner = "田中";', '  balance = 10000;', '  pin = "1234";', '  branch = "新宿";', '  deposit(n: number) { this.balance += n; }', '}'],
+            ['class BankAccount {', '  owner = "田中";', '  balance = 10000;', '  pin = "1234";', '  branch = "新宿";', '  deposit(n: number) { this.balance += n; }', '}'],
+            ['class BankAccount {', '  owner = "田中";', '  balance = 10000;', '  pin = "1234";', '  branch = "新宿";', '  deposit(n: number) { this.balance += n; }', '}'],
+            ['class BankAccount {', '  owner = "田中";', '  private balance = 10000;', '  private pin = "1234";', '  private branch = "新宿";   // ← 子も使えなくなった', '  deposit(n: number) { this.balance += n; }', '}', '', 'class Savings extends BankAccount {', '  show() { return this.branch; }   // ✖', '}'],
+            ['class BankAccount {', '  public owner = "田中";', '  private balance = 10000;', '  private pin = "1234";', '  protected branch = "新宿";   // 子には見せる', '  public deposit(n: number) { this.balance += n; }', '}', '', 'class Savings extends BankAccount {', '  show() { return this.branch; }   // ✓', '}'],
+          ];
+          const WHI = [[], [3], [4], [3, 4, 5, 10], [2, 3, 4, 5, 6, 10]];
+          const WEV = [
+            [],
+            [['😱', 'acc.balance = 99999999;', '💥 残高が勝手に書き換わった。誰でも触れるので、止められない', 'bad']],
+            [['😱', 'console.log(acc.pin);', '💥 暗証番号が画面に出てしまった。これも止められない', 'bad']],
+            [['🛡️', 'acc.balance = 99999999;', '✖ 赤線：private なので外から触れない → 守れた', 'ok'], ['🛡️', 'console.log(acc.pin);', '✖ 赤線：private → 守れた', 'ok'], ['😣', 'Savings の中で this.branch', '✖ 赤線：子クラスも使えない → 定期預金口座が作れず、困った', 'bad']],
+            [['✅', 'acc.balance = 99999999;', '✖ 赤線 → 守れた（private）', 'ok'], ['✅', 'console.log(acc.pin);', '✖ 赤線 → 守れた（private）', 'ok'], ['✅', 'Savings の中で this.branch', '✓ 子クラスなら読める（protected）', 'ok'], ['✅', 'acc.deposit(5000);', '✓ 外から使える窓口（public）', 'ok']],
+          ];
+          const WTTL = ['① ぜんぶ public で作ってみる', '② 事故1：残高を書き換えられた', '③ 事故2：暗証番号が見えた', '④ 対策：ぜんぶ private にしたら…', '⑤ 答え：3段階に分ける'];
+          const wcodeBox = h('div'), wevBox = h('div', { class: 'aw-ev' }), wttl = h('div', { class: 'aw-head' });
+          const why3 = h('div', { class: 'am-sec' }, h('h4', '🚨 なぜ「3段階」も必要？ 困りごとから考えよう'),
+            stepper({ color: 'var(--ts)', interval: 4200,
+              steps: [
+                { say: '🏦 銀行の口座クラスを作る。最初は<b>ぜんぶ public</b>（付けなければ public）。誰でも触れて、とりあえず便利。' },
+                { say: '😱 <b>事故1</b>：画面側のコードが、うっかり <code>acc.balance = 99999999</code>。<b>誰でも触れるので、止められない</b>。' },
+                { say: '😱 <b>事故2</b>：別のコードが <code>acc.pin</code> を読んで、暗証番号が画面に出てしまった。→ 大事なものは<b>閉じたい</b>。' },
+                { say: '🛡️ そこで<b>ぜんぶ private</b>にした。外からは守れた。でも…定期預金口座（<code>Savings</code>）が、親の支店情報 <code>branch</code> も使えなくなった。<b>子には見せたい</b>。' },
+                { say: '💡 <b>だから3段階</b>：外にも見せる窓口は <b>public</b>、子にだけ見せる支店情報は <b>protected</b>、誰にも見せない残高・暗証番号は <b>private</b>。<b>見せたい相手が3種類いるから、3つの鍵</b>が要る。' },
+              ],
+              init(vis) { vis.append(h('div', { class: 'aw-duo' }, h('div', null, wttl, wcodeBox), wevBox)); },
+              update(n) {
+                wttl.replaceChildren(h('span', WTTL[n]));
+                const cd = code(WCODE[n].join('\n'), 'ts', { color: 'var(--ts)' }); cd.setHi(WHI[n], n === 4 ? 'on' : 'err');
+                wcodeBox.replaceChildren(cd);
+                const ev = WEV[n];
+                wevBox.replaceChildren(...(ev.length ? ev.map(([em, c, t, k]) => h('div', { class: 'aw-e ' + k }, h('code', em + ' ' + c), h('span', t))) : [h('div', { class: 'aw-none' }, '👍 まだ何も起きていない（便利！）')]));
+              } }));
+
           /* ③ たとえ話：家に入れる人 ― 歩いて、入れない所で止まる */
           style('amh', `
           .ah-who{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:12px}@media(max-width:700px){.ah-who{grid-template-columns:1fr}}
@@ -2177,7 +2221,7 @@ console.log(n.length);
           walk();
 
           el.append(lv, tabs, stage,
-            house,
+            why3, house,
             h('div', { class: 'am-tip' }, '💡 迷ったら、まず private'));
           show(0);
         },
