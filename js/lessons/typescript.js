@@ -814,6 +814,19 @@
   .tv-line .v{color:#ffd479;animation:tvpop .4s}.tv-line .v.bad{color:#ff8f9a}.tv-line .v.ok{color:#9be58b}
   .tv-line.sq .v{text-decoration:underline wavy #ff5470;text-decoration-thickness:2px;text-underline-offset:6px}
   .tv-say{display:flex;gap:10px;align-items:center;font-weight:700;font-size:.9375rem;color:#eef0ff;animation:tvpop .4s}.tv-lt{font-size:1.4rem}
+  .fm-grid{display:grid;gap:8px;align-items:stretch}
+  .fm-col{all:unset;cursor:pointer;box-sizing:border-box;display:grid;gap:4px;align-content:start;padding:10px 12px;border-radius:10px;border:2px solid var(--c);background:color-mix(in srgb,var(--c) 10%,var(--card2));transition:.2s;min-width:0}
+  .fm-col:hover{transform:translateY(-2px)}.fm-col.on{background:color-mix(in srgb,var(--c) 28%,var(--card2));box-shadow:0 8px 20px -12px var(--c)}
+  .fm-h{font-size:.75rem;font-weight:800;color:var(--c)}.fm-col code{font:800 1.0625rem var(--mono);color:var(--text);word-break:break-all}
+  .fm-col small{font-size:.75rem;color:var(--mute);font-weight:700;line-height:1.5}.fm-alt{font:800 .875rem var(--mono)!important;color:var(--c)!important}
+  .fm-sep{display:grid;place-items:center;font:900 1.6rem var(--mono);color:var(--mute);padding:0 2px}
+  .fm-note{display:flex;gap:.6em;align-items:center;padding:.5em .9em;border-radius:8px;background:color-mix(in srgb,var(--ts) 10%,var(--card));font-size:.875rem;font-weight:700}.fm-note .ic{color:var(--ts);flex:none}
+  .fm-ex{display:grid;gap:6px}.fm-line{display:block;padding:.5em .9em;border-radius:8px;background:var(--code);font:700 .9375rem var(--mono);color:#eef0ff;white-space:pre-wrap;word-break:break-word}
+  .fm-t{color:var(--c);font-weight:800;padding:0 .15em;border-bottom:2px solid var(--c)}
+  .fm-groups{display:grid;grid-template-columns:3fr 3fr 2fr;gap:12px}@media(max-width:820px){.fm-groups{grid-template-columns:1fr}}
+  .fm-g{border:1px dashed var(--c);border-radius:12px;padding:10px;display:grid;gap:8px;background:color-mix(in srgb,var(--c) 5%,transparent)}
+  .fm-gh{display:flex;gap:.6em;align-items:baseline}.fm-gh b{color:var(--c);font-size:.9375rem}.fm-gh small{color:var(--mute);font-weight:700;font-size:.75rem}
+  .fm-gc{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;align-items:start}.fm-gc .tv-card h6{font-size:.8125rem;flex-wrap:wrap;line-height:1.3}.fm-gc .tv-card h6 .tv-big{font-size:1.2rem}
   .tv-flowline{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:center;font-weight:800}
   .tv-flowline .st{padding:.5em 1em;border-radius:999px;background:color-mix(in srgb,var(--c) 18%,transparent);border:1px solid var(--c)}
   `);
@@ -929,30 +942,77 @@
     show(0);
     return root;
   }
+  /* 書き方の公式：変数も関数も「宣言 名前 : 型 = 値」。色で4つの部品をそろえる */
+  const FC = { decl: 'var(--basic)', name: 'var(--pink)', type: 'var(--ts)', val: 'var(--team)' };
+  const FORM = {
+    var: {
+      label: '変数', cols: [
+        { k: 'decl', t: '宣言', code: 'let', alt: 'const', say: 'let＝変えられる / const＝変えられない' },
+        { k: 'name', t: '名前', code: 'age', say: '箱の名前（好きに付ける）' },
+        { sep: ':' },
+        { k: 'type', t: '型', code: 'number', say: '入れていい種類' },
+        { sep: '=' },
+        { k: 'val', t: '値', code: '20', say: '最初の中身' },
+      ],
+      ex: [[['let', 'decl'], ' ', ['age', 'name'], ': ', ['number', 'type'], ' = ', ['20', 'val'], ';'], [['const', 'decl'], ' ', ['userName', 'name'], ': ', ['string', 'type'], ' = ', ['"田中"', 'val'], ';'], [['const', 'decl'], ' ', ['clickable', 'name'], ': ', ['boolean', 'type'], ' = ', ['true', 'val'], ';'], [['const', 'decl'], ' ', ['lawyers', 'name'], ': ', ['string[]', 'type'], ' = ', ['["田中", "山本"]', 'val'], ';'], [['const', 'decl'], ' ', ['row', 'name'], ': ', ['[string, number]', 'type'], ' = ', ['["相談", 3000]', 'val'], ';']],
+    },
+    fn: {
+      label: '関数', cols: [
+        { k: 'decl', t: '宣言', code: 'function', say: '「関数を作る」の合図' },
+        { k: 'name', t: '名前', code: 'add', say: '関数の名前' },
+        { k: 'name', t: '引数（名前 : 型）', code: '(a: number, b: number)', say: '入口。ここも「名前 : 型」' },
+        { sep: ':' },
+        { k: 'type', t: '戻り値の型', code: 'number', say: '出口に出てくる種類' },
+        { k: 'val', t: '中身', code: '{ return a + b; }', say: '返す値を作る処理' },
+      ],
+      ex: [[['function', 'decl'], ' ', ['add', 'name'], '(', ['a', 'name'], ': ', ['number', 'type'], ', ', ['b', 'name'], ': ', ['number', 'type'], '): ', ['number', 'type'], ' { … }'], [['function', 'decl'], ' ', ['greet', 'name'], '(', ['name', 'name'], ': ', ['string', 'type'], '): ', ['string', 'type'], ' { … }'], [['function', 'decl'], ' ', ['log', 'name'], '(', ['msg', 'name'], ': ', ['string', 'type'], '): ', ['void', 'type'], ' { … }'], [['function', 'decl'], ' ', ['find', 'name'], '(', ['id', 'name'], ': ', ['number', 'type'], '): ', ['string | null', 'type'], ' { … }']],
+    },
+  };
+  const GROUPS = [
+    { name: 'ひとつの値', hint: '1つだけ入る', c: 'var(--ts)', idx: [0, 1, 2] },
+    { name: 'まとまり', hint: 'いくつかをまとめる', c: 'var(--pink)', idx: [3, 4, 5] },
+    { name: '特別', hint: '何でも／ない', c: 'var(--violet)', idx: [6, 7] },
+  ];
   function overviewScene(el) {
-    const cards = h('div', { class: 'tv-row tv-pick' }), detail = h('div', { class: 'tv-detail' });
-    const show = (i) => {
+    let mode = 'var', hi = null;
+    const tabs = h('div', { class: 'tv-fs' }), grid = h('div', { class: 'fm-grid' }), exs = h('div', { class: 'fm-ex' }), sub = h('div', { class: 'fm-sub' });
+    const tok = (x) => typeof x === 'string' ? x : h('span', { class: 'fm-t', style: { '--c': FC[x[1]] } }, x[0]);
+    const paint = () => {
+      const f = FORM[mode];
+      tabs.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.m === mode));
+      grid.style.gridTemplateColumns = f.cols.map((c) => (c.sep ? 'auto' : 'minmax(0,1fr)')).join(' ');
+      grid.replaceChildren(...f.cols.map((c, i) => c.sep
+        ? h('div', { class: 'fm-sep' }, c.sep)
+        : h('button', { class: 'fm-col' + (hi === i ? ' on' : ''), style: { '--c': FC[c.k] }, onclick: () => { hi = hi === i ? null : i; paint(); if (c.k === 'type') typesBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } },
+          h('span', { class: 'fm-h' }, c.t), h('code', c.code), c.alt ? h('small', { class: 'fm-alt' }, 'または ' + c.alt) : null, h('small', c.say))));
+      sub.replaceChildren(mode === 'fn' ? h('div', { class: 'fm-note' }, icon('corner-down-right'), h('span', { html: '<b>引数の中も「名前 : 型」</b>。変数と同じ形。戻り値の型は ) のあとに <code>: 型</code>' })) : h('div', { class: 'fm-note' }, icon('corner-down-right'), h('span', { html: '<b>: のあとが「型」、= のあとが「値」</b>。型と値は同じ種類にそろえる' })));
+      exs.replaceChildren(...f.ex.map((l) => h('code', { class: 'fm-line' }, ...l.map(tok))));
+    };
+    [['var', '変数を宣言する'], ['fn', '関数を宣言する']].forEach(([m, t]) => tabs.append(h('button', { 'data-m': m, style: { '--c': 'var(--ts)' }, onclick: () => { mode = m; hi = null; paint(); } }, t)));
+    // 型の場所に入るもの：3つのグループ
+    const detail = h('div', { class: 'tv-detail' }), picks = h('div', { class: 'fm-groups tv-pick' });
+    const showType = (i) => {
       const t = TYPES[i];
-      cards.querySelectorAll('.tv-card').forEach((x, k) => x.classList.toggle('on', k === i));
+      picks.querySelectorAll('.tv-card').forEach((x) => x.classList.toggle('on', +x.dataset.i === i));
       detail.replaceChildren(
         h('div', { class: 'tv-dh', style: { '--c': t.c } }, h('span', { class: 'tv-big' }, t.em), h('b', t.name), h('span', '＝ ' + t.sub)),
-        h('div', { class: 'tv-dg' },
-          h('div', null, h('div', { class: 'tv-cap' }, icon('code'), 'コード'), code(t.code, 'ts', { color: t.c })),
-          h('div', null, h('div', { class: 'tv-cap' }, icon('box'), '箱に入れてみる（ボタンで試す）'), tvDrop(t.box[0], t.box[1], t.items))),
+        h('div', { class: 'tv-dg' }, h('div', null, h('div', { class: 'tv-cap' }, icon('code'), 'コード'), code(t.code, 'ts', { color: t.c })), h('div', null, h('div', { class: 'tv-cap' }, icon('box'), '箱に入れてみる（ボタンで試す）'), tvDrop(t.box[0], t.box[1], t.items))),
         h('div', { class: 'tv-real' }, icon('briefcase'), h('span', { html: '<b>こんな時に使う</b>　' + t.real })));
     };
-    TYPES.forEach((t, i) => cards.append(h('button', { class: 'tv-card', style: { '--c': t.c }, onclick: () => show(i) }, h('h6', h('span', { class: 'tv-big' }, t.em), t.name), h('small', t.sub))));
+    GROUPS.forEach((g) => picks.append(h('div', { class: 'fm-g', style: { '--c': g.c } }, h('div', { class: 'fm-gh' }, h('b', g.name), h('small', g.hint)), h('div', { class: 'fm-gc' }, g.idx.map((i) => h('button', { class: 'tv-card', 'data-i': i, style: { '--c': TYPES[i].c }, onclick: () => showType(i) }, h('h6', h('span', { class: 'tv-big' }, TYPES[i].em), TYPES[i].name), h('small', TYPES[i].sub)))))));
+    const typesBox = h('div', { class: 'tv' }, h('div', { class: 'tv-cap', style: { color: FC.type } }, icon('pointer'), '「型」の場所に入るもの：押すと、コードと動く例が出る'), picks, detail);
     el.append(
-      h('div', { class: 'tv' }, h('div', { class: 'tv-cap' }, icon('pointer'), '知りたい型を押す → コードと動く例が出る'), cards, detail),
+      h('div', { class: 'tv' }, h('div', { class: 'tv-cap' }, icon('ruler'), '書き方の公式（色が同じ部分どうしが対応）'), tabs, grid, sub, h('div', { class: 'tv-cap', style: { marginTop: '4px' } }, icon('copy'), '同じ公式で書いた例'), exs),
+      typesBox,
       flowDemo());
-    show(0);
+    paint(); showType(0);
   }
 
   /* ================= ts-basic ================= */
   K.reg({
     id: 'ts-basic', track: 'ts', title: '基礎文法・データ型', sub: '型の指定の方法', emoji: '📘',
     scenes: [
-      { t: '全体マップ：型の種類', tag: 'MAP', lead: '先に全体を見よう。細かいことは、次から1つずつ。', render: overviewScene },
+      { t: '基礎文法の公式', tag: 'FORMULA', lead: '変数も関数も、書き方は同じ「公式」。', render: overviewScene },
       {
         t: '型アノテーションの読み方', lead: '<code class="i">let age: number = 20;</code> は4つの部品。絵と見比べて、下のコードを書き換えてみよう。',
         render(el) {
