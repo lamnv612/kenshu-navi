@@ -1113,8 +1113,8 @@ console.log(name + "さんは来年 " + (age + 1) + " 歳");
         render(el) {
           labTabs(el, [
             {
-              name: '人数 "3" + 2', viz: VZ.p1, point: '入力欄の値は文字。計算の前に Number() で数字にする', sub: 'string と number',
-              story: '"3" + 2 が「32人」に。赤線は出ない。',
+              name: '人数 "3" + 2', viz: VZ.p1, point: '入力欄の値は文字。計算の前に Number() で数字にする。型を書くと TS が見張ってくれる', sub: 'string と number',
+              story: '"3" + 2 が「32人」に。<b>赤線が出ないのは、「文字 + 数字」が文法として正しい（つなげるだけ）から。</b>TS がチェックできるのは、<code>: number</code> のように<b>型を書いた所</b>だけ。',
               src: `const peopleText: string = "3";
 const extra: number = 2;
 
@@ -1124,7 +1124,7 @@ console.log(total + "人");
 // const people: number = peopleText;
 `,
               actions: [{ label: '赤線を出す', icon: 'bug', apply: uncomment('const people: number = peopleText') }],
-              tryIt: '① 実行 → 32人　② 「赤線を出す」　③ <code>Number(peopleText)</code> に直す → 5人',
+              tryIt: '① 実行 → 32人（赤線なし）　② 「赤線を出す」→ <code>: number</code> と書いた所に赤線　③ <code>Number(peopleText)</code> に直す → 5人',
             },
             {
               name: '料金 3500 と "3500"', viz: VZ.p2, point: '引用符が付いたら文字。お金は number で持つ', sub: 'number',
