@@ -561,13 +561,145 @@
     return h('div', { class: 'xt-eq' }, h('div', { style: { display: 'grid', gap: '10px', alignContent: 'start' } }, seg, cbox), tbl);
   }
 
+  /* ===== 命名規則：追加パーツ（どこで使う？ / 現場の失敗 / 何に名前をつける？） ===== */
+  function nmStyle() {
+    style('xn', `
+    .xn-sec{margin-top:24px}.xn-sec>h4{font:900 1.05rem var(--font);margin-bottom:10px}
+    .xn-pick{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-bottom:12px}
+    .xn-pick button{all:unset;cursor:pointer;box-sizing:border-box;text-align:center;padding:.55em .8em;border-radius:8px;border:1px solid var(--line);background:var(--card);font-weight:800;font-size:.84rem;transition:.2s}
+    .xn-pick button:hover{transform:translateY(-2px)}.xn-pick button.on{border-color:var(--c,var(--ts));background:color-mix(in srgb,var(--c,var(--ts)) 18%,var(--card))}
+    .xn-code{border-radius:12px;background:var(--code);padding:14px 16px;font:600 .875rem/2 var(--mono);color:#cfd5ff;overflow:auto;white-space:pre}
+    .xn-code .t{border-radius:6px;padding:0 .3em;transition:.35s;border:1px solid transparent}
+    .xn-code.f .t{opacity:.25}.xn-code.f .t.on{opacity:1;background:color-mix(in srgb,var(--c) 28%,transparent);border-color:var(--c);color:#fff;animation:tvpop .4s both}
+    .xn-code .cm{color:#7c86b8}
+    .xn-leg{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 24px;font-weight:700;font-size:.84rem;color:var(--mute);align-items:center}
+    .xn-ass{display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding:14px;border-radius:12px;background:var(--card);border:1px solid var(--line);min-height:70px;margin-top:10px}
+    .xn-w{padding:.3em .8em;border-radius:8px;font:800 .95rem var(--mono);background:color-mix(in srgb,var(--c) 18%,var(--card2));border:2px solid var(--c);animation:tvpop .35s both}
+    .xn-w u{text-decoration:none;color:var(--c);font-size:1.15em}.xn-sep{font:900 1.2rem var(--mono);color:var(--c);animation:tvpop .35s both}
+    .xn-res{margin-top:8px;font:900 1.2rem var(--mono);color:var(--c)}
+    .xn-ex{display:grid;gap:8px;margin-top:12px}.xn-row{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1.4fr);gap:10px;align-items:center;padding:.55em .9em;border-radius:10px;background:var(--card);border:1px solid var(--line)}
+    .xn-row .bad{color:var(--bad)}.xn-row .good{color:var(--ok)}.xn-row small{display:block;color:var(--mute);font-weight:600;font-size:.78rem;margin-top:2px}
+    .xn-rule{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px}.xn-rule span{padding:.35em .9em;border-radius:999px;font-weight:800;font-size:.84rem;background:color-mix(in srgb,var(--c) 16%,var(--card));border:1px solid var(--c)}
+    @media(max-width:700px){.xn-row{grid-template-columns:1fr}.xn-row .ar{display:none}}`);
+  }
+  const NM_STY = { camel: ['camelCase', 'var(--ts)'], pascal: ['PascalCase', 'var(--pink)'], snake: ['UPPER_SNAKE', 'var(--team)'], kebab: ['kebab-case', 'var(--basic)'] };
+
+  /* 1) どこで何を使う？ ― 実際のコードの中で、書き方ごとに光らせる */
+  function caseUse() {
+    nmStyle();
+    const L = [
+      [['cm', '// settings.ts （ファイル名は kebab-case）\n']],
+      [['t snake', 'const MAX_RETRIES'], ['', ' = 3;\n']],
+      [['', '\n']],
+      [['', 'type '], ['t pascal', 'UserProfile'], ['', ' = {\n  '], ['t camel', 'firstName'], ['', ': string;\n  '], ['t camel', 'isActive'], ['', ': boolean;\n};\n\n']],
+      [['', 'class '], ['t pascal', 'OrderService'], ['', ' {\n  '], ['t camel', 'totalPrice'], ['', ' = 0;\n\n  '], ['t camel', 'addItem'], ['', '('], ['t camel', 'itemPrice'], ['', ': number) {\n    '], ['', 'this.'], ['t camel', 'totalPrice'], ['', ' += '], ['t camel', 'itemPrice'], ['', ';\n  }\n}\n\n']],
+      [['', 'import { '], ['t camel', 'formatDate'], ['', ' } from "./'], ['t kebab', 'date-utils'], ['', '";\n']],
+    ];
+    const pre = h('div', { class: 'xn-code' });
+    L.flat().forEach(([cls, txt]) => { const sp = h('span', { class: cls.includes('cm') ? 'cm' : cls }, txt); if (cls.includes('t ')) sp.dataset.k = cls.split(' ')[1]; pre.append(sp); });
+    const legend = h('div', { class: 'xn-pick' });
+    const show = (k) => {
+      legend.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.k === k));
+      pre.classList.toggle('f', !!k);
+      pre.querySelectorAll('.t').forEach((t) => { const on = t.dataset.k === k; t.classList.toggle('on', on); if (on) { t.style.setProperty('--c', NM_STY[k][1]); t.style.animation = 'none'; void t.offsetWidth; t.style.animation = ''; } else t.style.removeProperty('--c'); });
+    };
+    const U = { camel: '変数・関数・プロパティ', pascal: 'クラス・type・interface', snake: '定数', kebab: 'ファイル名' };
+    Object.keys(NM_STY).forEach((k) => legend.append(h('button', { 'data-k': k, style: { '--c': NM_STY[k][1] }, onclick: () => show(k) }, NM_STY[k][0], h('div', { style: { fontWeight: 600, fontSize: '.72rem', color: 'var(--mute)' } }, U[k]))));
+    return h('div', { class: 'xn-sec' }, h('h4', '🔦 実際のコードで、どこに何を使う？'), legend, pre, h('div', { class: 'xn-leg' }, '👆 書き方を選ぶと、そのルールの名前だけが光る'));
+  }
+
+  /* 2) 単語 → 組み立てアニメーション */
+  function caseBuild() {
+    nmStyle();
+    const cap = (s) => s[0].toUpperCase() + s.slice(1);
+    const WORDS = ['user', 'profile', 'name'];
+    const FM = {
+      camel: (w) => [w.map((x, i) => [i ? cap(x) : x, i]), null],
+      pascal: (w) => [w.map((x) => [cap(x), 1]), null],
+      snake: (w) => [w.map((x) => [x.toUpperCase(), 0]), '_'],
+      kebab: (w) => [w.map((x) => [x, 0]), '-'],
+    };
+    const stage = h('div', { class: 'xn-ass' }), res = h('div', { class: 'xn-res' });
+    let timer = 0;
+    const build = (k) => {
+      clearTimeout(timer); stage.replaceChildren(); res.textContent = '';
+      const [parts, sep] = FM[k](WORDS), c = NM_STY[k][1];
+      stage.style.setProperty('--c', c); res.style.setProperty('--c', c);
+      let i = 0; const out = [];
+      const step = () => {
+        if (i >= parts.length) { res.textContent = '= ' + out.join(''); return; }
+        const [txt, capd] = parts[i];
+        if (i && sep) { stage.append(h('span', { class: 'xn-sep', style: { '--c': c } }, sep)); out.push(sep); }
+        const w = h('span', { class: 'xn-w', style: { '--c': c } }); capd ? w.append(h('u', txt[0]), txt.slice(1)) : w.append(txt);
+        if (k === 'snake') w.style.letterSpacing = '.05em';
+        stage.append(w); out.push(txt); i++; timer = setTimeout(step, 520);
+      };
+      step();
+    };
+    const bar = h('div', { class: 'xn-pick' }, Object.keys(NM_STY).map((k) => h('button', { style: { '--c': NM_STY[k][1] }, onclick: (e) => { bar.querySelectorAll('button').forEach((b) => b.classList.remove('on')); e.currentTarget.classList.add('on'); build(k); } }, NM_STY[k][0])));
+    return h('div', { class: 'xn-sec' }, h('h4', '🧩 単語「user・profile・name」を組み立てる'), bar, stage, res, h('div', { class: 'xn-leg' }, '👆 書き方を選ぶと、単語が1つずつ組み上がる（太字の頭文字が大文字になる所）'));
+  }
+
+  /* 3) 現場で起きる失敗 */
+  function caseBug() {
+    nmStyle();
+    const CS = [
+      { n: '🍎 Mac では動く → 本番で落ちる', pain: 'Mac は大文字小文字を区別しない。<b>本番の Linux では「ファイルが無い」</b>と言われる', gain: 'ファイル名は<b>小文字の kebab-case</b>に統一。import と<b>1文字も違えない</b>',
+        a: '// ファイル名: userProfile.ts\nimport { show } from "./UserProfile";\n// Mac: 動く / Linux(本番): Cannot find module', b: '// ファイル名: user-profile.ts\nimport { show } from "./user-profile";\n// どこでも同じように動く' },
+      { n: '🌐 API は snake_case', pain: 'API の <code>first_name</code> と TS の <code>firstName</code> が<b>混ざる</b>。どっちか迷う', gain: '受け取る所で<b>1回だけ変換</b>。画面側は camelCase に統一',
+        a: 'const user = await load();\nconsole.log(user.first_name);   // ここだけ snake\nconsole.log(user.lastName);     // ここは camel…', b: 'type User = { firstName: string };\nconst raw = await load();\nconst user: User = { firstName: raw.first_name };   // 変換は1か所\nconsole.log(user.firstName);' },
+      { n: '🔢 定数が変数に見える', pain: '<code>taxRate</code> が<b>変えていい値</b>に見える。誰かが書き換える', gain: '<code>TAX_RATE</code> と見た目で<b>「変えない値」</b>と分かる',
+        a: 'const taxRate = 0.1;\n// 途中で書き換えていいの？ 設定値なの？ 分からない', b: 'const TAX_RATE = 0.1;\n// 大文字 = 変えない設定値。一目で分かる' },
+      { n: '🏭 関数かクラスか分からない', pain: '<code>userAccount()</code> が関数か<b>クラスか</b>分からない。new を付けるべき？', gain: '大文字始まり（PascalCase）は<b>クラス</b>。new を付けると一目で分かる',
+        a: 'const a = userAccount();    // 関数？ クラス？\nconst b = new userAccount(); // これで合ってる？', b: 'const a = createAccount();   // 小文字 = 関数\nconst b = new UserAccount(); // 大文字 = クラス' },
+    ];
+    return K.cmpSection('🚨 現場で起きる名前の失敗：ルールなし / あり', CS, '❌ ルールなし', '✅ ルールあり');
+  }
+
+  /* 4) 何に名前をつける？（変数・真偽値・関数・定数・クラス・ファイル） */
+  function nameKinds() {
+    nmStyle();
+    const KS = [
+      { n: '📦 変数', c: 'var(--ts)', rule: '名詞：何が入っているか', pat: ['camelCase', '名詞', '配列は複数形'],
+        rows: [['d', 'consultations', '1文字は検索できない。入っている物の名前に'], ['data1 / tmp', 'todoList', '番号や tmp は中身が分からない'], ['list', 'userNames', '何のリストかを名前に入れる（複数形）']],
+        code: 'const userName = "田中";\nconst consultations = [];     // 配列は複数形\nlet totalPrice = 0;\n' },
+      { n: '✅ 真偽値', c: 'var(--ok)', rule: 'is / has / can / should ＋ 状態', pat: ['camelCase', 'is・has・can で始める', '否定形にしない'],
+        rows: [['ok / flag', 'isLoggedIn', 'true の意味が名前で分かる'], ['permission', 'hasPermission', '「持っている？」の質問の形に'], ['notActive', 'isActive', '否定形は !notActive のように読みにくい']],
+        code: 'const isLoggedIn = true;\nconst hasPermission = false;\nif (isLoggedIn && hasPermission) {\n  // 文章のように読める\n}\n' },
+      { n: '⚙️ 関数', c: 'var(--pink)', rule: '動詞 ＋ 目的語：何をする？', pat: ['camelCase', '動詞で始める', 'get / set など対にする'],
+        rows: [['get', 'getUserById', '何を取る？ 対象を名前に入れる'], ['process / doIt', 'calcTotalFee', '「処理する」は何もしない名前。具体的な動詞に'], ['click', 'handleClick', 'イベントを受ける関数は handle〜 / on〜']],
+        code: 'function getUserById(id: number) {}\nfunction calcTotalFee(price: number, qty: number) {\n  return price * qty;\n}\nfunction handleClick() {}\n' },
+      { n: '🔒 定数', c: 'var(--team)', rule: 'UPPER_SNAKE：意味のある名前の値', pat: ['UPPER_SNAKE_CASE', '魔法の数字をなくす', '設定値は1か所に'],
+        rows: [['0.1', 'TAX_RATE', '0.1 が何か分からない（魔法の数字）'], ['3', 'MAX_RETRIES', '3 回は何の上限？ 名前で説明'], ['"todo"', 'STATUS_TODO', '文字の打ち間違いも防げる']],
+        code: 'const TAX_RATE = 0.1;\nconst MAX_RETRIES = 3;\nconst total = price * (1 + TAX_RATE);\n' },
+      { n: '🏷️ クラス・型', c: 'var(--basic)', rule: 'PascalCase の名詞（単数形）', pat: ['PascalCase', '単数形の名詞', 'interface に I を付けない'],
+        rows: [['userAccount', 'UserAccount', 'クラスは大文字で始める'], ['IUser', 'User', 'interface に I を付けない（TS の流儀）'], ['Statuses', 'Status', 'enum / type は単数形']],
+        code: 'class UserAccount {}\ninterface Consultation { id: number }\ntype Status = "todo" | "done";\nenum Role { Admin, User }\n' },
+      { n: '📁 ファイル', c: 'var(--violet)', rule: 'kebab-case（小文字とハイフン）', pat: ['kebab-case', '小文字だけ', 'テストは .test.ts'],
+        rows: [['UserProfile.ts', 'user-profile.ts', 'OS で大文字小文字の扱いが違い、本番で落ちる'], ['user_profile.ts', 'user-profile.ts', '区切りはハイフンに統一'], ['userProfile.test.ts', 'user-profile.test.ts', 'テストは「本体名.test.ts」']],
+        code: 'src/\n  user-profile.ts\n  user-profile.test.ts\n  components/\n    UserCard.vue      // Vue の部品だけ PascalCase\n' },
+    ];
+    const pick = h('div', { class: 'xn-pick' }), body = h('div');
+    const show = (i) => {
+      const k = KS[i];
+      pick.querySelectorAll('button').forEach((b, x) => { b.classList.toggle('on', x === i); b.style.setProperty('--c', KS[x].c); });
+      body.replaceChildren(
+        h('div', { class: 'xn-rule', style: { '--c': k.c } }, h('span', '📏 ' + k.rule), k.pat.map((x) => h('span', { style: { background: 'transparent' } }, x))),
+        h('div', { class: 'xn-ex' }, k.rows.map(([bad, good, why]) => h('div', { class: 'xn-row' }, h('code', { class: 'bad' }, '✗ ' + bad), h('span', { class: 'ar', style: { color: 'var(--mute)' } }, '→'), h('div', null, h('code', { class: 'good' }, '✓ ' + good), h('small', why))))),
+        h('div', { style: { marginTop: '12px' } }, code(k.code, 'ts', { color: k.c })));
+    };
+    KS.forEach((k, i) => pick.append(h('button', { onclick: () => show(i) }, k.n)));
+    show(0);
+    return h('div', { class: 'xn-sec' }, h('h4', '🧭 何に名前をつける？ 種類ごとのルール'), pick, body);
+  }
+
   K.reg({
     id: 'x-ts-naming', track: 'extra', title: '命名規則', sub: '読みやすい名前の付け方', emoji: '🏷️',
     gh: [{ label: '命名規則 (03_naming.md)', path: 'typescript/bonus/03_naming.md' }, { label: '良い例・悪い例 (03.1)', path: 'typescript/bonus/03.1_naming_sample.md' }],
     meta: meta({ day: '2日目', when: 'クラスの前、または実践の前の5分', mins: 5, order: 23, level: '入門', after: 'ts-class', why: '名前が揃うとチーム開発でコードが読みやすい。レビューで一番よく指摘される点' }),
     scenes: [
-      { t: '4つの書き方', tag: 'case', lead: '単語を入れると、<b>4つのケース</b>に変換。何に使うかも一緒に覚えよう。', render(el) { el.append(caseScene()); } },
-      { t: '名前をつけよう', tag: 'review', lead: '実際のレビューで直される名前を、前と後で見比べよう。ボタンで切り替え。名前を考える練習は右上の「練習」アイコンから。', render(el) { el.append(namingGame()); } },
+      { t: '4つの書き方', tag: 'case', lead: '単語を入れると、<b>4つのケース</b>に変換。何に使うかも一緒に覚えよう。', render(el) { el.append(caseScene(), caseBuild(), caseUse(), caseBug()); } },
+      { t: '名前をつけよう', tag: 'review', lead: '実際のレビューで直される名前を、前と後で見比べよう。ボタンで切り替え。名前を考える練習は右上の「練習」アイコンから。', render(el) { el.append(nameKinds(), namingGame()); } },
     ],
   });
 

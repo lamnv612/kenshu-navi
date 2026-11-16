@@ -2089,76 +2089,58 @@ console.log(n.length);
           };
           TABS.forEach((t, i) => tabs.append(h('button', { onclick: () => show(i) }, W(t.mod), h('small', t.sub))));
 
-          /* ③ 誰が触れる？（図：呼び出す人 → 扉 → 中身） */
+          /* ③ 誰が触れる？（訪問者を選ぶ → 3つの部屋の鍵が開く/閉まる） */
           style('amd', `
-          .ad-wrap{position:relative;display:grid;grid-template-columns:minmax(0,.9fr) 90px minmax(0,1.1fr);gap:0;align-items:center;padding:16px;border-radius:14px;background:var(--card);border:1px solid var(--line);overflow:hidden}
-          @media(max-width:760px){.ad-wrap{grid-template-columns:1fr;gap:14px}.ad-gap{display:none}}
-          .ad-act{display:grid;gap:10px}
-          .ad-who{cursor:pointer;padding:.7em .9em;border-radius:12px;border:2px solid var(--line);background:var(--card2);transition:.25s;display:grid;gap:2px}
-          .ad-who b{font-size:.95rem}.ad-who small{font:700 .75rem var(--mono);color:var(--mute)}
-          .ad-who:hover{transform:translateX(3px)}.ad-who.on{border-color:var(--ts);background:color-mix(in srgb,var(--ts) 18%,var(--card));box-shadow:0 8px 20px -12px var(--ts)}
-          .ad-cls{border:2px solid var(--team);border-radius:14px;overflow:hidden;background:var(--card2)}
-          .ad-cls>header{padding:.55em 1em;background:color-mix(in srgb,var(--team) 22%,var(--card2));font:900 .95rem var(--mono);color:var(--team)}
-          .ad-mem{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:10px;padding:.7em 1em;border-top:1px solid var(--line);cursor:pointer;transition:.2s;position:relative}
-          .ad-mem:hover{background:color-mix(in srgb,var(--ts) 10%,transparent)}
-          .ad-door{font-size:1.4rem}.ad-mem b{font:800 .9rem var(--mono)}.ad-mem small{display:block;font:700 .72rem var(--font);color:var(--mute)}
-          .ad-mem.ok{background:color-mix(in srgb,var(--ok) 22%,transparent)}.ad-mem.ng{background:color-mix(in srgb,var(--bad) 22%,transparent);animation:shake .4s}
-          .ad-tok{position:absolute;z-index:5;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--ts);color:#fff;font-size:.9rem;pointer-events:none;opacity:0;transition:left .55s ease,top .55s ease,opacity .2s,background .2s;box-shadow:0 0 0 6px color-mix(in srgb,var(--ts) 30%,transparent)}
-          .ad-tok.show{opacity:1}.ad-tok.ok{background:var(--ok)}.ad-tok.ng{background:var(--bad)}
-          .ad-gap{text-align:center;font:900 1.4rem var(--mono);color:var(--mute)}
-          .ad-out{padding:.7em 1em;border-radius:10px;background:var(--code);color:#cfd5ff;font:700 .85rem/1.7 var(--mono);min-height:3.4em}.ad-out.ok{color:#9be58b;border:1px solid var(--ok)}.ad-out.ng{color:#ff9aa5;border:1px solid var(--bad)}
-          .ad-code{margin-top:12px}.ad-hint{margin-top:10px;font-weight:700;color:var(--mute);font-size:.84rem}`);
-          const ACTORS = [
-            { n: '🏠 クラスの中', sub: 'BankAccount のメソッド', code: (m) => 'class BankAccount {\n  check() {\n    return this.' + m + ';\n  }\n}' },
-            { n: '🧒 子クラス', sub: 'Savings extends BankAccount', code: (m) => 'class Savings extends BankAccount {\n  show() {\n    return this.' + m + ';\n  }\n}' },
-            { n: '🌍 外のコード', sub: 'new BankAccount() を使う側', code: (m) => 'const acc = new BankAccount();\nconsole.log(acc.' + m + ');' },
+          .av-who{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:12px}@media(max-width:700px){.av-who{grid-template-columns:1fr}}
+          .av-who button{all:unset;cursor:pointer;box-sizing:border-box;padding:.8em 1em;border-radius:12px;border:2px solid var(--line);background:var(--card);display:grid;gap:2px;text-align:center;transition:.25s}
+          .av-who button .em{font-size:1.8rem}.av-who button b{font-size:1rem}.av-who button small{font:700 .75rem var(--font);color:var(--mute)}
+          .av-who button:hover{transform:translateY(-2px)}.av-who button.on{border-color:var(--ts);background:color-mix(in srgb,var(--ts) 18%,var(--card));box-shadow:0 10px 24px -14px var(--ts)}
+          .av-say{margin-bottom:12px;padding:.8em 1em;border-radius:10px;background:var(--card);border:1px dashed var(--line);font-weight:800;line-height:1.7}
+          .av-rooms{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}@media(max-width:700px){.av-rooms{grid-template-columns:1fr}}
+          .av-room{cursor:pointer;padding:14px;border-radius:14px;border:2px solid var(--line);background:var(--card2);text-align:center;transition:.35s;display:grid;gap:4px;justify-items:center}
+          .av-room .door{font-size:2.4rem;transition:.35s}.av-room b{font:900 1rem var(--mono)}.av-room small{font:700 .78rem var(--font);color:var(--mute)}
+          .av-room .res{margin-top:4px;padding:.15em .9em;border-radius:999px;font-weight:900;font-size:.85rem;background:var(--card);border:1px solid var(--line)}
+          .av-room.ok{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 14%,var(--card2))}.av-room.ok .res{background:var(--ok);color:#06101f;border-color:var(--ok)}
+          .av-room.ng{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 14%,var(--card2))}.av-room.ng .res{background:var(--bad);color:#fff;border-color:var(--bad)}
+          .av-room.pop{animation:tvpop .4s both}
+          .av-out{padding:.7em 1em;border-radius:10px;background:var(--code);color:#cfd5ff;font:700 .85rem/1.7 var(--mono);margin-top:10px;min-height:3em}
+          .av-out.ok{color:#9be58b;border:1px solid var(--ok)}.av-out.ng{color:#ff9aa5;border:1px solid var(--bad)}`);
+          const VIS = [
+            { em: '🏠', n: 'クラスの中', sub: 'BankAccount 自身のメソッド', say: '<b>BankAccount 自身</b>は、自分の持ち物ならぜんぶ触れる。', code: (m) => 'class BankAccount {\n  check() {\n    return this.' + m + ';\n  }\n}' },
+            { em: '🧒', n: '子クラス', sub: 'BankAccount を継いだクラス', say: '<b>子クラス</b>が入れるのは public と protected。private は<b>自分だけ</b>なので止められる。', code: (m) => 'class Savings extends BankAccount {\n  show() {\n    return this.' + m + ';\n  }\n}' },
+            { em: '🌍', n: '外のコード', sub: '画面や他のファイル', say: '<b>外のコード</b>が入れるのは public だけ。protected も private も止められる。', code: (m) => 'const acc = new BankAccount();\nconsole.log(acc.' + m + ');' },
           ];
-          const MEMS = [
-            { mod: 'public', f: 'owner', door: '🌐', sub: '名義：誰でも見てよい', ok: [1, 1, 1] },
-            { mod: 'protected', f: 'branch', door: '🛡️', sub: '支店：自分と子まで', ok: [1, 1, 0] },
-            { mod: 'private', f: 'pin', door: '🔒', sub: '暗証番号：自分だけ', ok: [1, 0, 0] },
+          const RMS = [
+            { mod: 'public', f: 'owner', door: ['🚪', '🚪'], sub: '誰でも入れる', ok: [1, 1, 1] },
+            { mod: 'protected', f: 'branch', door: ['🛡️', '🛡️'], sub: '自分と子だけ', ok: [1, 1, 0] },
+            { mod: 'private', f: 'pin', door: ['🔒', '🔒'], sub: '自分だけ', ok: [1, 0, 0] },
           ];
-          let who2 = 2, busy = false;
-          const wrap = h('div', { class: 'ad-wrap' }), tok = h('div', { class: 'ad-tok' }, '👤');
-          const whoEls = ACTORS.map((a, i) => h('div', { class: 'ad-who', onclick: () => { who2 = i; paintWho(); } }, h('b', a.n), h('small', a.sub)));
-          const memEls = MEMS.map((m, i) => h('div', { class: 'ad-mem', onclick: () => send(i) }, h('span', { class: 'ad-door' }, m.door), h('div', h('b', m.mod + ' ' + m.f), h('small', m.sub))));
-          const adCode = h('div', { class: 'ad-code' }), adOut = h('div', { class: 'ad-out', style: { marginTop: '10px', minHeight: '3.4em' } });
-          const paintWho = () => whoEls.forEach((e, i) => e.classList.toggle('on', i === who2));
-          const send = (mi) => {
-            if (busy) return; busy = true;
-            const m = MEMS[mi], ok = !!m.ok[who2];
-            memEls.forEach((e) => e.className = 'ad-mem');
-            adCode.replaceChildren(code(ACTORS[who2].code(m.f), 'ts', { color: 'var(--ts)' }));
-            adOut.className = 'ad-out'; adOut.textContent = '…';
-            const wr = wrap.getBoundingClientRect(), a = whoEls[who2].getBoundingClientRect(), t = memEls[mi].getBoundingClientRect();
-            const at = (r, dx) => [r.left - wr.left + dx - 14, r.top - wr.top + r.height / 2 - 14];
-            tok.className = 'ad-tok'; tok.style.transition = 'none';
-            let [x0, y0] = at(a, a.width); tok.style.left = x0 + 'px'; tok.style.top = y0 + 'px';
-            requestAnimationFrame(() => requestAnimationFrame(() => {
-              tok.style.transition = ''; tok.classList.add('show');
-              const door = at(t, 0), end = at(t, 40);
-              const target = ok ? end : [door[0] - 6, door[1]];
-              tok.style.left = target[0] + 'px'; tok.style.top = target[1] + 'px';
-              setTimeout(() => {
-                tok.classList.add(ok ? 'ok' : 'ng'); tok.textContent = ok ? '✓' : '✖';
-                memEls[mi].classList.add(ok ? 'ok' : 'ng');
-                adOut.className = 'ad-out ' + (ok ? 'ok' : 'ng');
-                adOut.replaceChildren(ok ? `✓ ${ACTORS[who2].n.slice(2)}から ${m.f} に触れる` : `✖ Property '${m.f}' is ${m.mod} and only accessible within class 'BankAccount'${m.mod === 'protected' ? ' and its subclasses' : ''}.`);
-                if (!ok) { tok.style.left = (target[0] - 70) + 'px'; }
-                setTimeout(() => { tok.classList.remove('show'); tok.textContent = '👤'; busy = false; }, 900);
-              }, 650);
-            }));
+          let vi = 2;
+          const visBar = h('div', { class: 'av-who' }), say2 = h('div', { class: 'av-say' }), rooms = h('div', { class: 'av-rooms' }), avCode = h('div', { style: { marginTop: '12px' } }), avOut = h('div', { class: 'av-out' });
+          const roomEls = RMS.map((r, i) => h('div', { class: 'av-room', onclick: () => pickRoom(i) }, h('span', { class: 'door' }, r.door[0]), h('b', r.mod + ' ' + r.f), h('small', r.sub), h('span', { class: 'res' }, '…')));
+          const pickRoom = (i) => {
+            const r = RMS[i], ok = !!r.ok[vi];
+            avCode.replaceChildren(code(VIS[vi].code(r.f), 'ts', { color: 'var(--ts)' }));
+            avOut.className = 'av-out ' + (ok ? 'ok' : 'ng');
+            avOut.textContent = ok ? `✓ ${VIS[vi].n}から ${r.f} に触れる` : `✖ Property '${r.f}' is ${r.mod} and only accessible within class 'BankAccount'${r.mod === 'protected' ? ' and its subclasses' : ''}.`;
+            roomEls.forEach((e, k) => e.style.outline = k === i ? '3px solid var(--ts)' : '');
           };
-          const playAll = async () => {
-            for (let w = 0; w < 3; w++) for (let m = 0; m < 3; m++) { while (busy) await sleep(100); who2 = w; paintWho(); send(m); await sleep(1900); }
+          const pickVis = (i) => {
+            vi = i;
+            visBar.querySelectorAll('button').forEach((b, k) => b.classList.toggle('on', k === i));
+            say2.innerHTML = VIS[i].say;
+            roomEls.forEach((e, k) => {
+              e.className = 'av-room'; e.querySelector('.res').textContent = '…'; e.querySelector('.door').textContent = '❔'; e.style.outline = '';
+              setTimeout(() => { const ok = !!RMS[k].ok[i]; e.className = 'av-room pop ' + (ok ? 'ok' : 'ng'); e.querySelector('.door').textContent = ok ? '🔓' : RMS[k].door[0]; e.querySelector('.res').textContent = ok ? '✓ 入れる' : '✖ 止められる'; }, 250 + k * 300);
+            });
+            setTimeout(() => pickRoom(2), 1300);
           };
-          paintWho();
-          wrap.append(h('div', { class: 'ad-act' }, whoEls), h('div', { class: 'ad-gap' }, '→ 🚪 →'), h('div', { class: 'ad-cls' }, h('header', 'class BankAccount'), memEls), tok);
-          adCode.append(code(ACTORS[2].code('pin'), 'ts', { color: 'var(--ts)' }));
-          adOut.textContent = '👆 左で「誰が」を選んで、右の項目を押してみよう';
-          const mat = h('div', { class: 'am-sec' }, h('h4', '🔐 まとめ：誰が、どの扉を通れる？'),
-            wrap, h('div', { class: 'ad-hint' }, '左で「誰が」を選ぶ → 右の項目（扉）をクリック。✓ は通れる、✖ は止められる。'),
-            h('div', { class: 'row', style: { marginTop: '10px' } }, h('button', { class: 'btn', onclick: playAll }, icon('play'), '9通りを順に見る')), adCode, adOut);
+          VIS.forEach((v, i) => visBar.append(h('button', { onclick: () => pickVis(i) }, h('span', { class: 'em' }, v.em), h('b', v.n), h('small', v.sub))));
+          rooms.append(...roomEls);
+          const mat = h('div', { class: 'am-sec' }, h('h4', '🔐 まとめ：誰が、どの部屋に入れる？'),
+            h('p', { class: 'am-sub', style: { fontWeight: 700, color: 'var(--mute)', fontSize: '.86rem', margin: '0 0 10px' } }, '① 上で「誰が」を選ぶ → ② 3つの部屋の鍵が開くか閉まるか → ③ 部屋を押すと、そのコードとエラーが出る'),
+            visBar, say2, rooms, avCode, avOut);
+          pickVis(2);
 
           el.append(lv, tabs, stage,
             mat,

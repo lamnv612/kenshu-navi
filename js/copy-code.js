@@ -2,7 +2,7 @@
 (function () {
   const { h, icon, style } = window.KENSHU.W;
   style('cpbtn', `
-  .cpbtn{position:fixed;z-index:60;width:32px;height:32px;display:none;place-items:center;border-radius:8px;border:1px solid rgba(255,255,255,.25);background:rgba(30,34,70,.92);color:#d8dcff;cursor:pointer;padding:0;transition:background .15s,color .15s}
+  .cpbtn{position:fixed;z-index:99999;width:32px;height:32px;display:none;place-items:center;border-radius:8px;border:1px solid rgba(255,255,255,.25);background:rgba(30,34,70,.92);color:#d8dcff;cursor:pointer;padding:0;transition:background .15s,color .15s}
   .cpbtn.show{display:grid}.cpbtn:hover{background:var(--ts);color:#fff}.cpbtn.ok{background:var(--ok);color:#fff;border-color:var(--ok)}
   .cpbtn .ic{width:16px;height:16px}`);
   const btn = h('button', { class: 'cpbtn', type: 'button', title: 'コードをコピー', 'aria-label': 'コードをコピー' }, icon('copy'));
