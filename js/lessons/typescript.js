@@ -1624,24 +1624,25 @@ console.log(n.length);
             mergeBtn.replaceChildren(icon(merged ? 'rotate-ccw' : 'merge'), merged ? 'もどす' : '同じ名前を2回書く → 合体させる');
             mergeSay.replaceChildren(say(merged ? '1つに合体した！ <b>id・title・note</b> を全部持つ。<b>type ではできません</b>。' : '同じ名前の <b>interface</b> を2回書くと…？ ボタンを押してみよう。'));
           }
+          let mi = 0, avail = [0, 1], ready = false, drawFn = null;   // 下の「試してみよう」は、今のタブに出てきた型だけ使う
           const TABS = [
             ['extends', '引き継いで足す', () => { z.style.animation = 'none'; void z.offsetWidth; z.style.animation = ''; return h('div', null, A, code('interface Booking extends Consultation {\n  time: string;   // 予約の時間だけ足す\n}', 'ts'), say('<b>extends</b>：Consultation を引き継いで <b>time</b> だけ追加。薄い2つは「引き継いだもの」。')); }],
             ['merge', '同じ名前で合体', () => { paintMerge(); return h('div', null, B, mergeBtn, code('interface Consultation { id: number; title: string }\ninterface Consultation { note: string }   // 同名で合体', 'ts'), mergeSay); }],
           ];
-          const showTab = (i) => { tabsBar.querySelectorAll('button').forEach((x, k) => x.classList.toggle('on', k === i)); stage.replaceChildren(TABS[i][2]()); };
+          const showTab = (i) => { tabsBar.querySelectorAll('button').forEach((x, k) => x.classList.toggle('on', k === i)); stage.replaceChildren(TABS[i][2]()); avail = i === 0 ? [0, 1] : [0, 2]; mi = 0; if (ready) drawFn(); };
           TABS.forEach(([n, sub], i) => tabsBar.append(h('button', { class: 'tsx3-tab', onclick: () => showTab(i) }, n, h('small', sub))));
           el.append(tabsBar, stage);
           showTab(0);
           // 実際に型チェックしてみる（出力が変わる）
           const MODES = [['Consultation', ['x', 'y'], 'そのまま'], ['Booking', ['x', 'y', 'z'], 'extends'], ['Consultation', ['x', 'y', 'z'], 'merge 後']];
-          const DN = (k) => (k === 'x' ? 'id' : k === 'y' ? 'title' : mi === 2 ? 'note' : 'time'), DV = (k) => (k === 'x' ? '1' : k === 'y' ? '"相続"' : mi === 2 ? '"急ぎ"' : '"10:00"'), DT = (k) => (k === 'x' ? 'number' : 'string');
-          let mi = 0; const on = { x: true, y: true, z: true };
+          const DN = (k) => (k === 'x' ? 'id' : k === 'y' ? 'title' : avail[1] === 2 ? 'note' : 'time'), DV = (k) => (k === 'x' ? '1' : k === 'y' ? '"相続"' : avail[1] === 2 ? '"急ぎ"' : '"10:00"'), DT = (k) => (k === 'x' ? 'number' : 'string');
+          const on = { x: true, y: true, z: true };
           const segs = MODES.map(([t, , lb], i) => h('button', { class: 'btn', onclick: () => { mi = i; draw(); } }, h('b', t), ' ', h('small', lb)));
           const tg = ['x', 'y', 'z'].map((k) => h('button', { class: 'btn', onclick: () => { on[k] = !on[k]; draw(); } }, DN(k)));
           const cv = h('div'), ov = h('div', { class: 'fo2-out' });
           function draw() {
             const [T, need] = MODES[mi]; const given = ['x', 'y', 'z'].filter((k) => on[k]);
-            segs.forEach((b, i) => b.classList.toggle('primary', i === mi)); tg.forEach((b, i) => { b.textContent = DN('xyz'[i]); b.classList.toggle('primary', on['xyz'[i]]); b.setAttribute('aria-pressed', on['xyz'[i]]); });
+            segs.forEach((b, i) => { b.classList.toggle('primary', i === mi); b.style.display = avail.includes(i) ? '' : 'none'; }); tg.forEach((b, i) => { b.textContent = DN('xyz'[i]); b.classList.toggle('primary', on['xyz'[i]]); b.setAttribute('aria-pressed', on['xyz'[i]]); });
             const c = code(`const c: ${T} = { ${given.map((k) => DN(k) + ': ' + DV(k)).join(', ')} };`, 'ts', { file: 'main.ts', color: 'var(--ts)' });
             const missing = need.filter((k) => !on[k]).map(DN), extra = given.filter((k) => !need.includes(k)).map(DN);
             const bad = missing.length || extra.length;
@@ -1649,7 +1650,7 @@ console.log(n.length);
             ov.className = 'fo2-out ' + (bad ? 'e' : 'ok');
             ov.replaceChildren(h('div', { class: bad ? 'er' : '' }, bad ? (missing.length ? (missing.length === 1 ? `Property '${missing[0]}' is missing in type '{ ${given.map((k) => DN(k) + ': ' + DT(k)).join('; ')} }' but required in type '${T}'.` : `Type '{ ${given.map((k) => DN(k) + ': ' + DT(k)).join('; ')} }' is missing the following properties from type '${T}': ${missing.join(', ')}`) : `Object literal may only specify known properties, and '${extra[0]}' does not exist in type '${T}'.`) : `OK：${T} の形（${need.map(DN).join(', ')}）にぴったり`));
           }
-          draw();
+          draw(); drawFn = draw; ready = true;
           el.append(h('div', { class: 'fo2-panel' }, lbl('試してみよう：どの型に、どの値を入れる？'), h('div', { class: 'fo2-ctl', style: { margin: 0 } }, segs), h('div', { class: 'fo2-ctl', style: { margin: 0 } }, h('span', { class: 'fo2-k' }, '入れる値：'), tg), h('div', { class: 'fo2-2' }, cv, ov)));
         },
       },
