@@ -173,6 +173,35 @@
     ['すでに JS の資産がある', '少しずつ TS へ', S, '全部書き直さず、<b>新しい所から</b> TS にしていける。', 'allowJs を使うと混ぜられる。', '// tsconfig.json\n// { "compilerOptions": { "allowJs": true } }'],
   ], rules: ['<b>小さい・短い</b> → JS でもよい', '<b>長く・大人数</b> → TS', '<b>覚え方</b>：バグを早く見つけたいなら TS'] };
 
+  G['readonly：書き換え禁止'] = { cases: [
+    ['ID・番号（作ったら不変）', 'readonly', P, '予約番号・口座番号など、<b>途中で変わったら大事故</b>の値に。', '読むのは自由。代入だけ赤線になる。', 'class Booking {\n  readonly id = 1001;\n}\nconst b = new Booking();\nb.id = 2;   // ✖ 赤線（書き換え禁止）'],
+    ['作成日・登録日時', 'readonly', P, '<b>履歴</b>の値が後から変わると、記録が信用できなくなる。', '', 'class Order {\n  readonly createdAt = "2025-01-10";\n}'],
+    ['設定値・定数のまとまり', 'readonly', O, '税率や上限など、<b>アプリ全体で共通の設定</b>を守る。', '', 'interface Config {\n  readonly taxRate: number;\n  readonly maxItems: number;\n}\nconst cfg: Config = { taxRate: 0.1, maxItems: 10 };\ncfg.taxRate = 0.2; // ✖'],
+    ['配列を書き換えさせたくない', 'readonly string[]', T, '関数に渡した配列を、<b>中で勝手に変えられない</b>ようにする。', '呼ぶ側のデータが守られる。', 'function show(names: readonly string[]) {\n  names.push("x");   // ✖ 赤線\n  return names.length;\n}'],
+    ['値を変えて使いたい', '付けない', S, '更新が必要な値（カウンタ・入力中の文字）には付けない。', 'private と組み合わせてもOK。', 'class Counter {\n  count = 0;          // 増やすので readonly にしない\n  up() { this.count += 1; }\n}'],
+  ], rules: ['<b>readonly</b> ＝ 代入禁止（読むのはOK）', '<b>ID・日時・設定</b> → 付ける', '<b>覚え方</b>：変わると困る値に付ける'] };
+
+  G['super()：親を呼ぶ'] = { cases: [
+    ['子の constructor を書く', 'super() が最初', P, '子クラスの constructor では、<b>先に親を準備</b>する（this より前）。', '書き忘れると赤線。', 'class Person {\n  constructor(public name: string) {}\n}\nclass Lawyer extends Person {\n  constructor(name: string, public license: string) {\n    super(name);   // 親の準備を先に\n  }\n}'],
+    ['親のメソッドを残して足す', 'super.メソッド()', T, '親の処理は<b>そのまま使い</b>、子の処理を後ろに足す。', '', 'class Notice {\n  send() { console.log("送信"); }\n}\nclass MailNotice extends Notice {\n  send() {\n    super.send();           // 親の送信\n    console.log("メール履歴に保存");\n  }\n}'],
+    ['親と全く違う動きにしたい', '呼ばない', O, '親の処理が<b>不要</b>なら super.xxx() は呼ばなくてよい。', '', 'class Base { hi() { return "A"; } }\nclass Child extends Base {\n  hi() { return "B"; }   // 親は呼ばない\n}'],
+    ['親が引数なしの constructor', '子に constructor 不要', S, '子が何も足さないなら、<b>書かなくてよい</b>。自動で親が呼ばれる。', '', 'class A {}\nclass B extends A {}   // これで十分'],
+  ], rules: ['<b>constructor</b> ＝ 最初に super()', '<b>メソッド</b> ＝ 親を残すなら super.xxx()', '<b>覚え方</b>：親を先に、子を後に'] };
+
+  G['ミニテストランナー'] = { cases: [
+    ['関数の答えを確かめる', 'expect(...).toBe(...)', P, '<b>実行結果と期待する答え</b>を並べて、合っているか判定。', '', 'it("税込を計算する", () => {\n  expect(withTax(1000)).toBe(1100);\n});'],
+    ['エラーになるはずの時', 'toThrow', T, '「<b>おかしな入力は拒否する</b>」ことも、テストで確認できる。', '', 'it("0円以下は拒否", () => {\n  expect(() => deposit(-1)).toThrow();\n});'],
+    ['配列・オブジェクトの中身', 'toEqual', O, '中身が<b>同じか</b>を比べる（見た目が同じならOK）。', 'toBe は「同じもの」、toEqual は「同じ中身」。', 'expect([1, 2]).toEqual([1, 2]);\nexpect({ id: 1 }).toEqual({ id: 1 });'],
+    ['テストが増えてきた', 'describe でまとめる', S, '関連するテストを<b>グループ</b>にする。結果が読みやすい。', '', 'describe("deposit", () => {\n  it("増える", () => { /* ... */ });\n  it("0円以下は拒否", () => { /* ... */ });\n});'],
+  ], rules: ['<b>expect</b> ＝ 結果を受け取る', '<b>toBe / toEqual</b> ＝ 期待と比べる', '<b>覚え方</b>：入力 → 期待する答え'] };
+
+  G['describe / it / expect 早見表'] = { cases: [
+    ['どのテストか名前を付ける', 'it("〜する", …)', P, '<b>日本語の文</b>で「何を確認するか」を書く。失敗した時に読みやすい。', '', 'it("合計を計算する", () => {\n  // ...\n});'],
+    ['同じ種類のテストをまとめる', 'describe', T, '<b>関数やクラスごと</b>にグループにする。', '', 'describe("Cart", () => {\n  it("追加できる", () => {});\n  it("合計が出る", () => {});\n});'],
+    ['答えを比べる', 'expect + マッチャー', O, '<code>toBe</code> <code>toEqual</code> <code>toContain</code> など、<b>調べたい内容で選ぶ</b>。', '', 'expect(total).toBe(300);\nexpect(list).toContain("相続");\nexpect(list).toHaveLength(2);'],
+    ['毎回同じ準備が必要', 'beforeEach', S, '各テストの<b>前に自動で</b>実行される。準備のコピペが消える。', '', 'let cart: Cart;\nbeforeEach(() => {\n  cart = new Cart();\n});'],
+  ], rules: ['<b>describe</b> ＝ グループ', '<b>it</b> ＝ 1つの確認', '<b>覚え方</b>：describe の中に it、it の中に expect'] };
+
   const build = (g) => {
     const pick = h('div', { class: 'wh-pick' }), ans = h('div');
     const show = (i) => {
