@@ -2206,56 +2206,48 @@ console.log(n.length);
           .ac-row.ok{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 12%,var(--card))}.ac-row.ng{animation:shake .4s;border-color:var(--bad)}
           .ac-why{margin-top:6px;font-weight:700;font-size:.82rem;line-height:1.6}.ac-why b{font-family:var(--mono)}
           .ac-prog{margin:10px 0 0;font-weight:800;color:var(--mute);font-size:.84rem}
+          .ac-leg{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;font-weight:800;font-size:.84rem;color:var(--mute)}
+          .ac-lines{display:grid;gap:8px;align-content:start}.ac-line{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:.6em .9em;border-radius:10px;background:var(--card);border:1px solid var(--line);cursor:pointer;transition:.2s}.ac-line:hover{transform:translateX(3px);border-color:var(--ts)}
+          .ac-line b{font:800 .9rem var(--mono)}.ac-sh{color:var(--mute);font-weight:700;font-size:.84rem}
           .ac-badge{display:inline-block;padding:.1em .7em;border-radius:999px;font:800 .75rem var(--mono);background:var(--c);color:#06101f}.ac-path{margin-top:4px;font:700 .75rem var(--font);color:var(--mute)}.ac-row .d{margin-bottom:4px}`);
-          const FLOW = [['外のコード（画面・他のファイル）が使う？', 'YES → public'], ['子クラスが使う？', 'YES → protected'], ['どちらも使わない', '→ private']];
-          const flowEls = FLOW.map(([q, a], k) => h('div', { style: { '--c': ['var(--ok)', 'var(--pink)', 'var(--bad)'][k] } }, '❓ ' + (k + 1) + '. ' + q, h('small', a)));
-          const flow = h('div', { class: 'ac-flow' }, flowEls[0], h('i', '→ NO →'), flowEls[1], h('i', '→ NO →'), flowEls[2]);
           const CASES4 = [
             { n: '🛒 ショッピングカート', ctx: '画面に商品と合計を出す <code>Cart</code> クラス。', cls: 'Cart',
-              m: [['items', 'items: Item[] = [];', '商品の一覧', 'private', '中身を外から <code>push</code> されると、合計が狂う。追加は <b>addItem()</b> 経由にしたい'],
-                  ['addItem', 'addItem(item: Item) {…}', '商品を追加する', 'public', '画面のボタンから呼ぶ<b>窓口</b>。外から使えないと困る'],
-                  ['total', 'total(): number {…}', '合計を返す', 'public', '画面に合計を<b>表示する</b>ために、外から呼べる必要がある'],
-                  ['calcTax', 'calcTax(): number {…}', '税額の内部計算', 'private', '<b>内部の計算</b>。外に見せると使い方を間違えるし、仕様変更で困る']] },
+              m: [['items', 'items: Item[] = [];', '商品の一覧', 'private', '中身を外から <code>push</code> されると、合計が狂う。追加は <b>addItem()</b> 経由にしたい', '外から勝手に変えさせない'],
+                  ['addItem', 'addItem(item: Item) {…}', '商品を追加する', 'public', '画面のボタンから呼ぶ<b>窓口</b>。外から使えないと困る', '画面から呼ぶ窓口'],
+                  ['total', 'total(): number {…}', '合計を返す', 'public', '画面に合計を<b>表示する</b>ために、外から呼べる必要がある', '画面に表示する'],
+                  ['calcTax', 'calcTax(): number {…}', '税額の内部計算', 'private', '<b>内部の計算</b>。外に見せると使い方を間違えるし、仕様変更で困る', '内部の計算だけ']] },
             { n: '👤 ユーザーアカウント', ctx: '<code>User</code> クラス。子クラス <code>AdminUser</code> が管理者の機能を足す。', cls: 'User',
-              m: [['name', 'name: string;', '表示名', 'public', '画面に表示するので、外から読める必要がある'],
-                  ['passwordHash', 'passwordHash: string;', '暗証用のハッシュ', 'private', '漏れたら大事故。<b>外にも子にも</b>見せない'],
-                  ['role', 'role: string;', '権限（"user" / "admin"）', 'protected', '子クラス <b>AdminUser</b> が権限判定に使う。でも外からは書き換えさせない'],
-                  ['login', 'login(pw: string) {…}', 'ログインする', 'public', '画面から呼ぶ<b>窓口</b>']] },
+              m: [['name', 'name: string;', '表示名', 'public', '画面に表示するので、外から読める必要がある', '画面に表示する'],
+                  ['passwordHash', 'passwordHash: string;', '暗証用のハッシュ', 'private', '漏れたら大事故。<b>外にも子にも</b>見せない', '外にも子にも見せない'],
+                  ['role', 'role: string;', '権限（"user" / "admin"）', 'protected', '子クラス <b>AdminUser</b> が権限判定に使う。でも外からは書き換えさせない', '子（AdminUser）だけ使う'],
+                  ['login', 'login(pw: string) {…}', 'ログインする', 'public', '画面から呼ぶ<b>窓口</b>', '画面から呼ぶ窓口']] },
             { n: '📧 メール通知', ctx: '<code>Notice</code> クラス。子クラス <code>MailNotice</code> / <code>SlackNotice</code> が送り方だけ変える。', cls: 'Notice',
-              m: [['send', 'send(msg: string) {…}', '通知を送る', 'public', '外のコードが呼ぶ<b>窓口</b>'],
-                  ['log', 'log(msg: string) {…}', '送信記録を残す', 'protected', '<b>子クラス全員</b>が共通で使う処理。外からは呼ばせない'],
-                  ['retryCount', 'retryCount = 0;', '再送した回数', 'private', 'この通知クラスだけの内部カウンタ。<b>誰にも</b>触らせない']] },
+              m: [['send', 'send(msg: string) {…}', '通知を送る', 'public', '外のコードが呼ぶ<b>窓口</b>', '外から呼ぶ窓口'],
+                  ['log', 'log(msg: string) {…}', '送信記録を残す', 'protected', '<b>子クラス全員</b>が共通で使う処理。外からは呼ばせない', '子が共通で使う'],
+                  ['retryCount', 'retryCount = 0;', '再送した回数', 'private', 'この通知クラスだけの内部カウンタ。<b>誰にも</b>触らせない', '内部のカウンタ']] },
             { n: '💳 決済', ctx: '<code>Payment</code> クラス。子クラス <code>CreditPayment</code> が手数料率を変える。', cls: 'Payment',
-              m: [['pay', 'pay(amount: number) {…}', '支払いを実行', 'public', '画面から呼ぶ<b>窓口</b>'],
-                  ['cardNumber', 'cardNumber: string;', 'カード番号', 'private', '漏れたら大事故。<b>外にも子にも</b>見せない'],
-                  ['feeRate', 'feeRate = 0.03;', '手数料率', 'protected', '子クラス <b>CreditPayment</b> が率を変えて使う。外からは変えさせない'],
-                  ['validate', 'validate(n: number) {…}', '金額のチェック', 'private', '<b>内部のチェック</b>。pay() の中でだけ使う']] },
+              m: [['pay', 'pay(amount: number) {…}', '支払いを実行', 'public', '画面から呼ぶ<b>窓口</b>', '画面から呼ぶ窓口'],
+                  ['cardNumber', 'cardNumber: string;', 'カード番号', 'private', '漏れたら大事故。<b>外にも子にも</b>見せない', '外にも子にも見せない'],
+                  ['feeRate', 'feeRate = 0.03;', '手数料率', 'protected', '子クラス <b>CreditPayment</b> が率を変えて使う。外からは変えさせない', '子が率を変えて使う'],
+                  ['validate', 'validate(n: number) {…}', '金額のチェック', 'private', '<b>内部のチェック</b>。pay() の中でだけ使う', '内部のチェック']] },
           ];
           let ci = 0;
           const acTabs = h('div', { class: 'ac-tabs' }), acBody = h('div');
           const MODC = { public: 'var(--ok)', protected: 'var(--pink)', private: 'var(--bad)' };
-          const PATH = { public: '① 外のコードが使う → YES', protected: '① 外は使わない → ② 子が使う → YES', private: '① 外も ② 子も使わない' };
           const showCase = (k) => {
-            ci = k;
             acTabs.querySelectorAll('button').forEach((b, x) => b.classList.toggle('on', x === k));
-            flowEls.forEach((e) => e.classList.remove('on'));
             const C = CASES4[k];
-            const mark = (mod) => { flowEls.forEach((e) => e.classList.remove('on')); (mod === 'public' ? [0] : mod === 'protected' ? [0, 1] : [0, 1, 2]).forEach((q) => flowEls[q].classList.add('on')); };
             const lines = ['class ' + C.cls + ' {'];
             C.m.forEach(([nm, decl, sub, mod]) => lines.push('  ' + mod + ' ' + decl));
             lines.push('}');
             const cd = code(lines.join('\n'), 'ts', { color: 'var(--ts)' });
-            const rows = C.m.map(([nm, decl, sub, mod, why], x) => h('div', { class: 'ac-row ok', style: { cursor: 'pointer', borderColor: MODC[mod] }, onclick: () => { mark(mod); cd.setHi([x + 2], 'on'); } },
-              h('div', { class: 'd' }, h('span', { class: 'ac-badge', style: { '--c': MODC[mod] } }, mod), ' ', nm, h('small', sub)),
-              h('div', { class: 'ac-why', html: why }),
-              h('div', { class: 'ac-path' }, '判断：' + PATH[mod])));
-            acBody.replaceChildren(h('div', { class: 'ac-ctx', html: '📌 ' + C.ctx + '　<b>各項目に何を付けるか</b>と、その理由。（項目を押すと、上の判断の流れが光る）' }),
-              h('div', { class: 'ac-duo' }, h('div', { class: 'ac-rows' }, rows), h('div', null, cd)));
-            mark(C.m[0][3]);
+            const rows = C.m.map(([nm, decl, sub, mod, why, short], x) => h('div', { class: 'ac-line', onmouseenter: () => cd.setHi([x + 2], 'on'), onclick: () => cd.setHi([x + 2], 'on') },
+              h('span', { class: 'ac-badge', style: { '--c': MODC[mod] } }, mod), h('b', nm), h('span', { class: 'ac-sh' }, short)));
+            acBody.replaceChildren(h('div', { class: 'ac-duo' }, cd, h('div', { class: 'ac-lines' }, rows)));
           };
           CASES4.forEach((c, k) => acTabs.append(h('button', { onclick: () => showCase(k) }, c.n)));
           const cases3 = h('div', { class: 'am-sec' }, h('h4', '🧭 実際のクラスで見る：この項目には、どれを付ける？'),
-            flow, acTabs, acBody);
+            h('div', { class: 'ac-leg' }, h('span', { class: 'ac-badge', style: { '--c': 'var(--ok)' } }, 'public'), '外が使う', h('span', { class: 'ac-badge', style: { '--c': 'var(--pink)' } }, 'protected'), '子が使う', h('span', { class: 'ac-badge', style: { '--c': 'var(--bad)' } }, 'private'), '自分だけ'), acTabs, acBody);
           showCase(0);
 
           el.append(lv, tabs, stage,
