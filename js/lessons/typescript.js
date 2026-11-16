@@ -789,26 +789,35 @@
   .tv-eqb{display:grid;gap:4px;justify-items:center}.tv-eqb small{color:var(--mute);font-weight:700;font-size:.75rem}
   .tv-lockbox{display:flex;align-items:center;gap:12px}
   .tv-nothing{display:flex;align-items:center;gap:14px}.tv-nothing code{font:800 .875rem var(--mono)}
+  .tv-dropw{display:grid;gap:10px;justify-items:center;width:100%}
+  .tv-dropw .tv-drop{min-height:96px;justify-content:center;align-items:flex-end;gap:30px}
+  .tv-tl{font-size:.75rem;font-weight:800;color:var(--mute)}
+  .tv-try{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+  .tv-try button{all:unset;cursor:pointer;padding:.4em .9em;border-radius:8px;font:800 .8125rem var(--mono);border:1px solid var(--line);background:var(--card2);color:var(--text);transition:.2s;display:inline-flex;gap:.4em;align-items:center}
+  .tv-try button:hover{transform:translateY(-2px);border-color:var(--ts)}
+  .tv-try button.on{border-color:var(--ts);background:color-mix(in srgb,var(--ts) 20%,var(--card2))}
+  .tv-try button.nx{font-family:var(--font);color:var(--ts);border-style:dashed}
+  .tv-try button .ic{width:14px;height:14px}
   .tv-flowline{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:center;font-weight:800}
   .tv-flowline .st{padding:.5em 1em;border-radius:999px;background:color-mix(in srgb,var(--c) 18%,transparent);border:1px solid var(--c)}
   `);
   const tvBox = (name, type, cells, c) => h('div', { class: 'tv-bx', style: { '--c': c || 'var(--ts)' } }, h('span', { class: 'nm' }, name), h('span', { class: 'tp' }, type), h('div', { class: 'tv-cells' }, cells.map((x) => h('div', { class: 'sl' }, x))));
   const tvWrap = (cap, ...kids) => h('div', { class: 'tv' }, cap ? h('div', { class: 'tv-cap' }, icon('eye'), cap) : null, ...kids);
   function tvDrop(box, type, items) {
-    const slot = h('div', { class: 'sl' }, '　'), chip = h('div', { class: 'tv-chip', style: { opacity: 0 } }), msg = h('div', { class: 'tv-msg' }, '');
+    const slot = h('div', { class: 'sl' }, '　'), chip = h('div', { class: 'tv-chip', style: { opacity: 0 } }), msg = h('div', { class: 'tv-msg' }, '👇 ボタンを押して、箱に入れてみよう');
     const bx = h('div', { class: 'tv-bx', style: { '--c': 'var(--ts)' } }, h('span', { class: 'nm' }, box), h('span', { class: 'tp' }, type), slot);
-    const root = h('div', { class: 'tv-drop' }, chip, bx, msg);
-    let i = 0, started = false;
-    const tick = () => {
-      if (started && !root.isConnected) return; started = true;
-      const it = items[i++ % items.length];
+    const btns = h('div', { class: 'tv-try' });
+    let busy = 0, cur = -1, timer = 0;
+    const play = (i) => {
+      cur = i; const it = items[i], my = ++busy; clearTimeout(timer);
+      btns.querySelectorAll('button.v').forEach((b, k) => b.classList.toggle('on', k === i));
       chip.className = 'tv-chip'; void chip.offsetWidth; chip.textContent = it.v; chip.style.opacity = 1; chip.classList.add(it.ok ? 'go' : 'ng');
-      slot.textContent = '　'; bx.style.setProperty('--c', 'var(--ts)'); msg.className = 'tv-msg'; msg.textContent = '';
-      setTimeout(() => { if (!root.isConnected) return; bx.style.setProperty('--c', it.ok ? 'var(--ok)' : 'var(--bad)'); if (it.ok) slot.textContent = it.v; msg.className = 'tv-msg ' + (it.ok ? 'ok' : 'ng'); msg.textContent = it.ok ? (it.okMsg || '✓ 入る') : (it.ngMsg || '✗ 入らない（赤線）'); }, 900);
-      setTimeout(tick, 3200);
+      slot.textContent = '　'; bx.style.setProperty('--c', 'var(--ts)'); msg.className = 'tv-msg'; msg.textContent = '…';
+      timer = setTimeout(() => { if (my !== busy) return; bx.style.setProperty('--c', it.ok ? 'var(--ok)' : 'var(--bad)'); if (it.ok) slot.textContent = it.v; msg.className = 'tv-msg ' + (it.ok ? 'ok' : 'ng'); msg.textContent = it.ok ? (it.okMsg || '✓ 入る') : (it.ngMsg || '✗ 入らない（赤線）'); }, 900);
     };
-    setTimeout(tick, 100);
-    return root;
+    items.forEach((it, i) => btns.append(h('button', { class: 'v ' + (it.ok ? 'ok' : 'ng'), onclick: () => play(i) }, it.v)));
+    btns.append(h('button', { class: 'nx', title: '次の例へ', onclick: () => play((cur + 1) % items.length) }, icon('step-forward'), '次の例'));
+    return h('div', { class: 'tv-dropw' }, h('div', { class: 'tv-drop' }, chip, bx), msg, h('div', { class: 'tv-tl' }, '入れてみる値：'), btns);
   }
   const VIZ = {
     anatomy: () => tvWrap('絵で見る：型は「箱に貼るラベル」', tvDrop('age', 'number', [{ v: '20', ok: true }, { v: '"二十"', ok: false }, { v: '21', ok: true }])),
