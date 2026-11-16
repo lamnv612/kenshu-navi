@@ -574,6 +574,8 @@
   .tslab-rerr small{display:block;font:700 .75rem var(--font);opacity:.85}
   .tslab-stale{opacity:.5}
   .tslab-note{font:700 .75rem var(--font);color:var(--mute)}
+  .tslab-h{display:flex;gap:.5em;align-items:center;padding:.5em 1em;font-weight:800;font-size:.8125rem;color:var(--mute);border-bottom:1px solid var(--line)}.tslab-h .ic{width:14px;height:14px}
+  .tslab-err b,.tslab-rerr b{display:block;font-size:.875rem;margin-bottom:2px}.tslab-err small,.tslab-rerr small{display:block;opacity:.75;font-family:var(--mono);font-size:.6875rem;margin-top:3px}
   .tslab-legend{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
   .tslab-legend>div{padding:.55em .8em;border-radius:8px;background:var(--card);border:1px solid var(--line);border-top:3px solid var(--lc);display:grid;gap:2px}
   .tslab-legend code{font:800 .9375rem var(--mono);color:var(--lc)}.tslab-legend small{color:var(--mute);font-weight:700;font-size:.75rem}
@@ -682,7 +684,7 @@
       }
       const lg = sn && !last ? rr.logs.slice(0, sn.logs) : rr.logs;
       if (lg.length) out.append(h('div', { class: 'tslab-log' }, lg.map((t) => '› ' + t).join('\n')));
-      if (rr.err && last) { const g = RGLOSS.map(([re, f]) => { const m = rr.err.match(re); return m ? f(m) : ''; }).find(Boolean) || ''; out.append(h('div', { class: 'tslab-rerr' }, '実行エラー: ' + rr.err, g ? h('small', g) : null)); }
+      if (rr.err && last) { const g = RGLOSS.map(([re, f]) => { const m = rr.err.match(re); return m ? f(m) : ''; }).find(Boolean) || ''; out.append(h('div', { class: 'tslab-rerr' }, h('b', '💥 動かしたら落ちた'), g ? h('div', g) : null, h('small', rr.err))); }
       if (!sn && !lg.length && !rr.err) out.append(h('div', { class: 'tslab-note' }, '（出力なし）'));
       if (stale) out.append(h('div', { class: 'tslab-note' }, 'コードを変えました。「実行」で結果を更新'));
       stepLbl.textContent = rr.snaps.length ? (step + 1) + ' / ' + rr.snaps.length + ' 行目まで実行' : '';
@@ -696,21 +698,21 @@
       const src = ed.get(), errs = K.W.tsCheck(ts, src);
       ed.mark(errs.map((e) => e.line)); curLine(!stale && rr && rr.snaps[step] ? rr.snaps[step].line : 0);
       lbl2.textContent = errs.length ? errs.length + ' 件' : '';
-      chk.replaceChildren(...(errs.length ? errs.map((e) => h('div', { class: 'tslab-err' }, 'L' + e.line + ': ' + e.msg, gloss(e.msg) ? h('small', gloss(e.msg)) : null)) : [h('div', { class: 'tslab-ok' }, '✓ 型エラーなし')]),
+      chk.replaceChildren(...(errs.length ? errs.map((e) => h('div', { class: 'tslab-err' }, gloss(e.msg) ? h('b', '🔴 ' + gloss(e.msg)) : h('b', '🔴 ' + e.msg), h('small', 'L' + e.line + '：' + e.msg))) : [h('div', { class: 'tslab-ok' }, '✓ 赤線なし（OK）')]),
         ...((o.coach ? o.coach(src) : []).map((t) => h('div', { class: 'tslab-tip', html: t }))));
       const it = inferTypes(ts, src);
-      inf.replaceChildren(it.length ? h('div', { class: 'tslab-chips' }, it.map((x) => h('span', { class: 'tslab-chip ' + (x.written ? 'w' : 'inf'), title: 'L' + x.line }, x.name, ': ', h('b', x.type), h('i', x.written ? '書いた' : '推論')))) : h('div', { class: 'tslab-note' }, '（変数がありません）'));
+      inf.replaceChildren(it.length ? h('div', { class: 'tslab-chips' }, it.map((x) => h('span', { class: 'tslab-chip ' + (x.written ? 'w' : 'inf'), title: 'L' + x.line }, x.name, ': ', h('b', x.type), h('i', x.written ? '自分で書いた' : '自動で決まった')))) : h('div', { class: 'tslab-note' }, '（変数がありません）'));
     }
     async function run() {
       try { ts = ts || await K.W.loadTS(); } catch (e) { return; }
       rr = execute(ts, ed.get()); stale = false; step = rr.snaps.length - 1; paintOut();
     }
     root.append(
-      h('div', { class: 'tslab-ed' }, ed, bar),
+      h('div', { class: 'tslab-ed' }, h('div', { class: 'tslab-h' }, icon('pencil'), '① コード（書き換えてOK）'), ed, bar),
       h('div', { class: 'tslab-side' },
-        h('div', { class: 'tslab-box' }, h('h5', icon('shield-check'), '型チェック（書いた瞬間に判定）', lbl2), chk),
-        h('div', { class: 'tslab-box' }, h('h5', icon('tag'), 'TS が決めた型', h('em', '点線＝推論')), inf),
-        h('div', { class: 'tslab-box' }, h('h5', icon('terminal'), '実行結果（変数の中身）'), out)));
+        h('div', { class: 'tslab-box' }, h('h5', icon('shield-check'), '② 赤線チェック（動かす前に TS が見る）', lbl2), chk),
+        h('div', { class: 'tslab-box' }, h('h5', icon('tag'), '変数の型（TS が見ているもの）'), inf),
+        h('div', { class: 'tslab-box' }, h('h5', icon('terminal'), '③ 実行結果（動かしたらこうなった）'), out)));
     paintOut();
     check().then(run);
     root.ed = ed;
