@@ -1708,105 +1708,196 @@ console.log(n.length);
     id: 'ts-class', track: 'ts', title: 'クラス', sub: '設計図とインスタンス', emoji: '🏭',
     scenes: [
       {
-        t: 'クラス = 設計図、new = スタンプ', lead: '予約者の名前と人数を入れて <b>new</b> を押すと、設計図から予約（<b>インスタンス</b>）が量産されます。',
+        t: 'クラス = 設計図、new = スタンプ', lead: '<b>クラスなし</b>と<b>クラスあり</b>を、いろいろな場面で書き比べよう。',
         render(el) {
-          const nm = h('input', { value: '田中', style: { font: 'inherit', padding: '.4em .8em', borderRadius: '6px', border: '1px solid var(--line)', background: 'var(--bg2)', color: 'var(--text)', width: '120px' } });
-          const pr = h('input', { type: 'number', value: '2', style: { font: 'inherit', padding: '.4em .8em', borderRadius: '6px', border: '1px solid var(--line)', background: 'var(--bg2)', color: 'var(--text)', width: '100px' } });
-          const fac = h('div', { class: 'tsx-fac', style: { '--c': 'var(--ts)' } });
-          const cd = code('class Booking {\n  constructor(\n    public name: string,\n    public people: number,\n  ) {}\n}\n\nconst b1 = new Booking("田中", 2);', 'ts', { color: 'var(--ts)' });
-          let n = 0;
-          const make = () => {
-            n++; cd.setHi([2, 3, 4, 5]);
-            cd.lines[7].innerHTML = K.W.hl(`const b${n} = new Booking("${nm.value}", ${pr.value || 0});`, 'ts');
-            fac.append(h('div', { class: 'tsx-inst', style: { '--c': ['var(--ts)', 'var(--pink)', 'var(--basic)', 'var(--team)'][n % 4] } }, h('b', `b${n} : Booking`), h('div', `name: "${nm.value}"`), h('div', `people: ${pr.value || 0}`)));
-            setTimeout(() => cd.setHi([8]), 600);
+          style('clx', `
+          .cx-pick{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-bottom:12px}
+          .cx-pick button{all:unset;cursor:pointer;box-sizing:border-box;text-align:center;padding:.55em .8em;border-radius:8px;border:1px solid var(--line);background:var(--card);font-weight:800;font-size:.875rem;transition:.2s}
+          .cx-pick button:hover{transform:translateY(-2px)}.cx-pick button.on{border-color:var(--ts);background:color-mix(in srgb,var(--ts) 16%,var(--card))}
+          .cx-pg{padding:.7em 1em;border-top:1px dashed var(--line);font-weight:700;font-size:.84rem;line-height:1.7}
+          .cx-sec{margin-bottom:22px}.cx-sec>h4{font:900 1.05rem var(--font);margin-bottom:10px}
+          .cx-ctl{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px;padding:12px;border-radius:12px;background:var(--card);border:1px solid var(--line)}
+          .cx-ctl input{font:inherit;padding:.4em .8em;border-radius:6px;border:1px solid var(--line);background:var(--bg2);color:var(--text)}
+          .cx-ctl .sp{flex:1}
+          .cx-duo{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}@media(max-width:900px){.cx-duo{grid-template-columns:1fr}}
+          .cx-c{border:2px solid var(--c);border-radius:12px;background:var(--card);overflow:hidden}
+          .cx-h{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:.6em 1em;background:color-mix(in srgb,var(--c) 16%,var(--card2));font-weight:900;color:var(--c)}
+          .cx-h small{font-weight:700;color:var(--mute)}
+          .cx-c pre.code{margin:0;border:0;border-radius:0;min-height:300px;font-size:.8rem;white-space:pre-wrap;word-break:break-all}
+          .cx-m{display:flex;gap:8px;flex-wrap:wrap;padding:.7em 1em;border-top:1px dashed var(--line)}
+          .cx-m span{padding:.2em .8em;border-radius:999px;background:var(--card2);border:1px solid var(--line);font-size:.8rem;font-weight:800}.cx-m b{color:var(--c)}
+          .cx-st{display:flex;gap:8px;flex-wrap:wrap;padding:.6em 1em;border-top:1px dashed var(--line);min-height:3.2em;align-items:center}
+          .cx-st i{font-style:normal;padding:.25em .8em;border-radius:8px;background:color-mix(in srgb,var(--c) 22%,var(--card));border:1px solid var(--c);font:800 .78rem var(--mono);animation:tvpop .35s both}
+          .cx-note{margin-top:12px;padding:.7em 1em;border-radius:10px;background:var(--card);border:1px dashed var(--line);font-weight:700;font-size:.875rem;line-height:1.8;min-height:3em}
+          .cx-tb{margin-top:14px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}@media(max-width:820px){.cx-tb{grid-template-columns:1fr}}
+          .cx-tb div{padding:.7em 1em;border-radius:10px;background:var(--card2);border:1px solid var(--line);font-size:.84rem;font-weight:700;line-height:1.7}
+          .cx-tb b.ng,.cx-tb b.ok{display:block;margin-bottom:2px}.cx-tb .ng{color:var(--bad)}.cx-tb .ok{color:var(--ok)}`);
+          const NAMES = [['田中', 2], ['山本', 4], ['佐藤', 1], ['鈴木', 3], ['高橋', 2]];
+          let list = [NAMES[0], NAMES[1]], mail = false, changed = '';
+          const nm = h('input', { value: '佐藤', style: { width: '110px' } }), pr = h('input', { type: 'number', value: '1', style: { width: '80px' } });
+          const left = h('div'), right = h('div'), note = h('div', { class: 'cx-note' });
+          const mkLeft = () => {
+            const L = ['// 予約1件ごとに、項目を全部書く'];
+            list.forEach(([n, p], i) => L.push(`const b${i + 1} = { name: "${n}", people: ${p}, cancelled: false${mail ? ', email: ""' : ''} };`));
+            L.push('', '// 操作は別の関数。どの予約かを引数で渡す', 'function cancel(b: { cancelled: boolean }) {', '  b.cancelled = true;', '}', '', 'cancel(b1);');
+            return L;
           };
-          el.append(h('div', { class: 'split' }, h('div', { class: 'col' }, lbl('設計図 (class)'), cd, h('div', { class: 'row' }, 'name', nm, 'people', pr, h('button', { class: 'btn primary', onclick: make }, '🖨 new Booking()'))), h('div', { class: 'col' }, lbl('インスタンス'), fac)));
-          make();
+          const mkRight = () => {
+            const R = ['class Booking {', '  name: string;', '  people: number;', '  cancelled = false;'];
+            if (mail) R.push('  email = "";');
+            R.push('', '  constructor(name: string, people: number) {', '    this.name = name;', '    this.people = people;', '  }', '', '  cancel() {', '    this.cancelled = true;', '  }', '}', '');
+            list.forEach(([n, p], i) => R.push(`const b${i + 1} = new Booking("${n}", ${p});`));
+            R.push('', 'b1.cancel();');
+            return R;
+          };
+          const card = (c, title, sub, lines, hi, metrics, stamps) => {
+            const cd = code(lines.join('\n'), 'ts', { color: c });
+            cd.setHi(hi);
+            return h('div', { class: 'cx-c', style: { '--c': c } }, h('div', { class: 'cx-h' }, h('span', title), h('small', sub)), cd, stamps || null, h('div', { class: 'cx-m' }, metrics.map((m) => h('span', { html: m }))));
+          };
+          const paint = () => {
+            const L = mkLeft(), R = mkRight();
+            const hiL = mail ? list.map((_, i) => i + 2) : [], hiR = mail ? [5] : [];
+            const stamps = h('div', { class: 'cx-st' }, h('small', { style: { color: 'var(--mute)', fontWeight: 800 } }, 'new で作れた予約：'), list.map(([n], i) => h('i', `b${i + 1}: ${n}`)));
+            left.replaceChildren(card('var(--bad)', '❌ クラスなし', '毎回ぜんぶ書く', L, hiL, [mail ? '直す場所 <b>' + list.length + ' か所</b>' : 'データと操作が<b>バラバラ</b>']));
+            right.replaceChildren(card('var(--ok)', '✅ クラスあり', '設計図は1回だけ', R, hiR, [mail ? '直す場所 <b>1 か所</b>' : 'データと操作が<b>セット</b>'], stamps));
+            note.innerHTML = changed || '👆 <b>＋予約を追加</b> を押すと、左右のコードがどう増えるか見られる。';
+          };
+          const add = () => {
+            if (list.length >= 5) { changed = '予約は5件まで（画面が長くなるため）。'; paint(); return; }
+            list = list.concat([[nm.value || '名無し', Number(pr.value) || 0]]);
+            changed = `<b>${list.length}件目</b>：左は<b>全項目をまた1行ぜんぶ書く</b>。右は <code>new Booking("${nm.value}", ${pr.value || 0})</code> と引数だけ。`;
+            paint();
+          };
+          const addMail = () => {
+            mail = !mail;
+            changed = mail ? `🆕 項目 <b>email</b> を追加！　左は <b>${list.length}件ぜんぶ</b>書き直し（光っている行）。右は<b>設計図の1行</b>だけ。` : '元に戻した。';
+            paint();
+          };
+          const reset = () => { list = [NAMES[0], NAMES[1]]; mail = false; changed = ''; paint(); };
+          const CASES = [
+            { n: '📅 予約', pain: '予約が増えるたび、同じ形を<b>コピペ</b>。関数はデータと別の場所', gain: '設計図を1回書けば、<code>new</code> で何件でも作れる。操作は <code>b1.cancel()</code>',
+              a: 'const b1 = { name: "田中", people: 2 };\nconst b2 = { name: "山本", people: 4 };\n\nfunction label(b: { name: string; people: number }) {\n  return b.name + "様 " + b.people + "名";\n}\n\nlabel(b1);',
+              c: 'class Booking {\n  name: string;\n  people: number;\n\n  constructor(name: string, people: number) {\n    this.name = name;\n    this.people = people;\n  }\n\n  label() {\n    return this.name + "様 " + this.people + "名";\n  }\n}\n\nconst b1 = new Booking("田中", 2);\nb1.label();' },
+            { n: '🛒 カート', pain: 'カートが2つ要ると、<b>変数も関数も全部コピー</b>（名前に 2 を付けて…）', gain: 'カートは <code>new Cart()</code> で何個でも。それぞれ中身は別',
+              a: 'let items1: number[] = [];\nlet total1 = 0;\nfunction add1(price: number) {\n  items1.push(price);\n  total1 += price;\n}\n\n// 2つ目のカート → 全部コピー\nlet items2: number[] = [];\nlet total2 = 0;\nfunction add2(price: number) {\n  items2.push(price);\n  total2 += price;\n}',
+              c: 'class Cart {\n  items: number[] = [];\n  total = 0;\n\n  add(price: number) {\n    this.items.push(price);\n    this.total += price;\n  }\n}\n\nconst a = new Cart();\nconst b = new Cart();\na.add(500);\nb.add(1200);' },
+            { n: '🎮 キャラクター', pain: '<code>hp1</code> と <code>hp2</code> の<b>取り違え</b>が起きやすい', gain: '<code>p1.damage(30)</code> と書けば、<b>誰の</b> hp かが一目で分かる',
+              a: 'let hp1 = 100;\nlet hp2 = 80;\n\nfunction damage(hp: number, n: number) {\n  return hp - n;\n}\n\nhp1 = damage(hp2, 30); // ← hp2 を渡してしまった！',
+              c: 'class Player {\n  hp: number;\n\n  constructor(hp: number) {\n    this.hp = hp;\n  }\n\n  damage(n: number) {\n    this.hp = this.hp - n;\n  }\n}\n\nconst p1 = new Player(100);\nconst p2 = new Player(80);\np1.damage(30);' },
+            { n: '🏦 銀行口座', pain: '残高を<b>誰でも書き換え</b>られる。ルールを守らせられない', gain: '<code>private</code> で守れる（次のシーンで体験）。入金は <code>acc.deposit()</code> から',
+              a: 'const acc = { balance: 10000 };\n\nacc.balance = -999999; // 何でも書ける\n\nfunction deposit(a: { balance: number }, n: number) {\n  a.balance += n;\n}',
+              c: 'class BankAccount {\n  balance = 10000;\n\n  deposit(n: number) {\n    if (n <= 0) throw new Error("1円以上");\n    this.balance += n;\n  }\n}\n\nconst acc = new BankAccount();\nacc.deposit(5000);' },
+          ];
+          const wPick = h('div', { class: 'cx-pick' }), wBody = h('div');
+          const showW = (i) => {
+            const r = CASES[i];
+            wPick.querySelectorAll('button').forEach((x, k) => x.classList.toggle('on', k === i));
+            const one = (c, t, src, msg) => h('div', { class: 'cx-c', style: { '--c': c } }, h('div', { class: 'cx-h' }, h('span', t)), code(src, 'ts', { color: c }), h('div', { class: 'cx-pg', html: msg }));
+            wBody.replaceChildren(h('div', { class: 'cx-duo' }, one('var(--bad)', '❌ クラスなし', r.a, '😣 ' + r.pain), one('var(--ok)', '✅ クラスあり', r.c, '😄 ' + r.gain)));
+          };
+          CASES.forEach((r, i) => wPick.append(h('button', { onclick: () => showW(i) }, r.n)));
+          showW(0);
+          const whySec = h('div', { class: 'cx-sec' }, h('h4', '🤔 なぜ class が要る？ いろいろな場面で比べよう'), wPick, wBody);
+          const demoH = h('div', { class: 'cx-sec' }, h('h4', '🖨 もう少し見てみよう：予約を増やす・項目を足す'));
+          el.append(whySec, demoH,
+            h('div', { class: 'cx-ctl' }, 'name', nm, 'people', pr,
+              h('button', { class: 'btn primary', onclick: add }, icon('plus'), '予約を追加'),
+              h('button', { class: 'btn', onclick: addMail }, icon('mail-plus'), 'email 項目を足す'),
+              h('span', { class: 'sp' }), h('button', { class: 'btn ghost', onclick: reset }, icon('rotate-ccw'), 'もどす')),
+            h('div', { class: 'cx-duo' }, left, right), note);
+          paint();
         },
       },
       {
-        t: 'アクセス修飾子：誰が触れる？', lead: '<b>「誰に見せて、誰に触らせるか」</b>を決める仕組み。銀行口座を例に、3つの段階を体験しよう。',
+        t: 'アクセス修飾子：誰が触れる？', lead: '<code class="i">private</code> を付けるか、付けないか。<b>同じ操作</b>で、結果を比べよう。',
         render(el) {
-          style('acm', `
-          .acm-sec{margin-bottom:26px}.acm-sec>h4{font:900 1.05rem var(--font);margin-bottom:4px;display:flex;align-items:center;gap:.5em}
-          .acm-sec>h4 i{font-style:normal;display:grid;place-items:center;width:1.6em;height:1.6em;border-radius:50%;background:var(--ts);color:#fff;font-size:.85rem}
-          .acm-sub{font-weight:700;color:var(--mute);font-size:.86rem;margin:0 0 10px}
-          .acm-lv{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}@media(max-width:820px){.acm-lv{grid-template-columns:1fr}}
-          .acm-c{padding:14px;border-radius:12px;border:2px solid var(--c);background:color-mix(in srgb,var(--c) 11%,var(--card))}
-          .acm-c>b{display:block;font:900 1.05rem var(--mono);color:var(--c);margin-bottom:2px}.acm-c .em{font-size:1.7rem;display:block;margin-bottom:4px}
-          .acm-c p{font-weight:700;font-size:.84rem;line-height:1.65;margin:4px 0 0}.acm-c .eg{margin-top:8px;padding:.45em .7em;border-radius:8px;background:var(--card);font-size:.8rem;font-weight:700;color:var(--mute)}
-          .acm-c .eg code{color:var(--text)}
-          .acm-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
-          .acm-bar button{all:unset;cursor:pointer;padding:.45em 1em;border-radius:8px;border:1px solid var(--line);background:var(--card);font:800 .84rem var(--mono)}
-          .acm-bar button.on{border-color:var(--c);background:color-mix(in srgb,var(--c) 18%,var(--card));color:var(--c)}
-          .acm-lab{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:16px;align-items:start}@media(max-width:900px){.acm-lab{grid-template-columns:1fr}}
-          .acm-bal{display:flex;align-items:center;justify-content:center;gap:12px;padding:16px;border-radius:12px;background:var(--card);border:2px solid var(--line);transition:.3s}
-          .acm-bal small{font-weight:700;color:var(--mute)}.acm-bal b{font:900 1.9rem var(--mono)}
-          .acm-bal.bad{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 14%,var(--card));animation:shake .4s}.acm-bal.good{border-color:var(--ok)}
-          .acm-act{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
-          .acm-msg{min-height:3em;padding:.7em 1em;border-radius:10px;background:var(--code);color:#cfd5ff;font:700 .85rem/1.7 var(--mono)}
-          .acm-msg.ok{color:#9be58b;border:1px solid var(--ok)}.acm-msg.ng{color:#ff9aa5;border:1px solid var(--bad)}
-          .acm-flow{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:8px;align-items:stretch}.acm-flow>div{padding:.7em .9em;border-radius:10px;border:2px solid var(--c);background:color-mix(in srgb,var(--c) 12%,var(--card));font-weight:800;font-size:.875rem;line-height:1.6}
-          .acm-flow small{display:block;font-weight:700;color:var(--mute);font-size:.75rem}.acm-flow>i{align-self:center;font-style:normal;font-weight:900;color:var(--mute)}
-          @media(max-width:820px){.acm-flow{grid-template-columns:1fr}.acm-flow>i{display:none}}
-          .acm-tip{margin-top:12px;padding:.7em 1em;border-radius:10px;background:var(--card);border:1px dashed var(--line);font-size:.84rem;font-weight:700;line-height:1.8}`);
+          style('amx', `
+          .am-lv{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+          .am-lv span{flex:1 1 180px;padding:.55em .9em;border-radius:10px;border:2px solid var(--c);background:color-mix(in srgb,var(--c) 12%,var(--card));font:800 .9rem var(--mono);color:var(--c)}
+          .am-lv small{display:block;font:700 .75rem var(--font);color:var(--mute)}
+          .am-ctl{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;padding:12px;border-radius:12px;background:var(--card);border:1px solid var(--line)}.am-ctl .sp{flex:1}
+          .am-duo{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}@media(max-width:900px){.am-duo{grid-template-columns:1fr}}
+          .am-c{border:2px solid var(--c);border-radius:12px;background:var(--card);overflow:hidden}
+          .am-h{padding:.6em 1em;background:color-mix(in srgb,var(--c) 16%,var(--card2));font-weight:900;color:var(--c)}
+          .am-c pre.code{margin:0;border:0;border-radius:0;font-size:.82rem}
+          .am-r{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:.7em 1em;border-top:1px dashed var(--line);transition:.3s}
+          .am-r b{font:900 1.4rem var(--mono)}.am-r small{font-weight:700;color:var(--mute)}
+          .am-r.bad{background:color-mix(in srgb,var(--bad) 14%,transparent)}.am-r.good{background:color-mix(in srgb,var(--ok) 12%,transparent)}
+          .am-msg{flex:1 1 100%;font:700 .82rem/1.6 var(--mono)}.am-msg.ng{color:#ff9aa5}.am-msg.ok{color:#9be58b}
+          .am-sec{margin-top:26px}.am-sec>h4{font:900 1.05rem var(--font);margin-bottom:10px}
+          .am-pick{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:12px}
+          .am-pick button{all:unset;cursor:pointer;box-sizing:border-box;padding:.55em .8em;border-radius:8px;border:1px solid var(--line);background:var(--card);font-weight:800;font-size:.84rem;line-height:1.5;transition:.2s}
+          .am-pick button:hover{transform:translateY(-2px)}.am-pick button.on{border-color:var(--ts);background:color-mix(in srgb,var(--ts) 16%,var(--card))}
+          .am-ans{display:grid;grid-template-columns:minmax(0,.55fr) minmax(0,1.45fr);gap:14px;align-items:stretch;animation:tvpop .35s both}@media(max-width:820px){.am-ans{grid-template-columns:1fr}}
+          .am-v{padding:14px;border-radius:12px;border:2px solid var(--c);background:color-mix(in srgb,var(--c) 12%,var(--card));display:grid;align-content:center;gap:6px}
+          .am-v b{font:900 1.25rem var(--mono);color:var(--c)}.am-v p{font-weight:800;font-size:.9rem}
+          .am-tip{margin-top:14px;padding:.7em 1em;border-radius:10px;background:color-mix(in srgb,var(--ts) 12%,var(--card));border:1px solid color-mix(in srgb,var(--ts) 40%,var(--line));font-weight:800}`);
 
-          /* ① 3段階 */
-          const lv = h('div', { class: 'acm-sec' }, h('h4', h('i', '1'), '3つの公開範囲（マンションで考えよう）'), h('p', { class: 'acm-sub' }, '上から順に、見せる相手が少なくなる。'),
-            h('div', { class: 'acm-lv' },
-              h('div', { class: 'acm-c', style: { '--c': 'var(--ok)' } }, h('span', { class: 'em' }, '🌐'), h('b', 'public'), h('p', { html: '<b>誰でも</b>使える。エントランス・郵便受け。' }), h('div', { class: 'eg', html: '口座では：<code>owner</code>（名義）<br><code>deposit()</code>（入金ボタン）' })),
-              h('div', { class: 'acm-c', style: { '--c': 'var(--pink)' } }, h('span', { class: 'em' }, '🛡️'), h('b', 'protected'), h('p', { html: '<b>自分と「子クラス」</b>だけ。住人用の共用部分。' }), h('div', { class: 'eg', html: '口座では：<code>branch</code>（支店）<br>定期預金口座など、親から継いだ子は見られる' })),
-              h('div', { class: 'acm-c', style: { '--c': 'var(--bad)' } }, h('span', { class: 'em' }, '🔒'), h('b', 'private'), h('p', { html: '<b>自分の中だけ</b>。自分の部屋の金庫。' }), h('div', { class: 'eg', html: '口座では：<code>balance</code>（残高）<code>pin</code>（暗証番号）' }))));
+          /* ① 3段階（短く） */
+          const lv = h('div', { class: 'am-lv' },
+            h('span', { style: { '--c': 'var(--ok)' } }, '🌐 public', h('small', '誰でも')),
+            h('span', { style: { '--c': 'var(--pink)' } }, '🛡️ protected', h('small', '自分 ＋ 子クラス')),
+            h('span', { style: { '--c': 'var(--bad)' } }, '🔒 private', h('small', '自分だけ')));
 
-          /* ② 実験：残高 */
-          let mode = 'public', bal = 10000;
-          const balB = h('b'), balBox = h('div', { class: 'acm-bal' }, h('small', '残高'), balB, h('small', '円'));
-          const msg = h('div', { class: 'acm-msg' }, '👇 ボタンを押して試そう');
-          const pre = h('div'), bar = h('div', { class: 'acm-bar' });
-          const fmt = (n) => n.toLocaleString();
-          const paint = () => { balB.textContent = fmt(bal); };
-          const srcOf = () => `class BankAccount {\n  ${mode} balance = 10000;   // 残高\n\n  deposit(n: number) {      // 入金ボタン\n    if (n <= 0) throw new Error("1円以上");\n    this.balance += n;\n  }\n}\n\nconst acc = new BankAccount();`;
-          const setMode = (m) => { mode = m; bal = 10000; paint(); balBox.className = 'acm-bal'; msg.className = 'acm-msg'; msg.textContent = '👇 ボタンを押して試そう'; bar.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.m === m)); pre.replaceChildren(code(srcOf(), 'ts', { color: m === 'public' ? 'var(--bad)' : 'var(--ok)' })); };
-          ['public', 'private'].forEach((m) => bar.append(h('button', { 'data-m': m, style: { '--c': m === 'public' ? 'var(--bad)' : 'var(--ok)' }, onclick: () => setMode(m) }, m + ' balance')));
-          const say = (ok, t) => { msg.className = 'acm-msg ' + (ok ? 'ok' : 'ng'); msg.textContent = t; };
-          const direct = () => {
-            if (mode === 'public') { bal = 99999999; paint(); balBox.className = 'acm-bal bad'; say(false, '💥 acc.balance = 99999999 が通ってしまった！\n誰でも残高を好きな数字に書き換えられる。'); }
-            else { balBox.className = 'acm-bal'; say(false, "✖ Property 'balance' is private and only accessible within class 'BankAccount'.\n（赤線で止まる。残高はそのまま）"); }
+          /* ② 比較：public のまま vs private */
+          let bal = [10000, 10000];
+          const srcOf = (mod) => `class BankAccount {\n  ${mod}balance = 10000;\n\n  deposit(n: number) {\n    if (n <= 0) throw new Error("1円以上");\n    this.balance += n;\n  }\n}\n\nconst acc = new BankAccount();`;
+          const mk = (c, title, mod) => {
+            const cd = code(srcOf(mod), 'ts', { color: c }); cd.setHi([2]);
+            const bv = h('b'), msg = h('div', { class: 'am-msg' }), r = h('div', { class: 'am-r' }, h('small', '残高'), bv, h('small', '円'), msg);
+            return { box: h('div', { class: 'am-c', style: { '--c': c } }, h('div', { class: 'am-h' }, title), cd, r), bv, msg, r };
           };
+          const A = mk('var(--bad)', '❌ private なし（全員が触れる）', ''), B = mk('var(--ok)', '✅ private あり（窓口だけ）', 'private ');
+          const paint = () => { A.bv.textContent = bal[0].toLocaleString(); B.bv.textContent = bal[1].toLocaleString(); };
+          const say = (X, ok, t, cls) => { X.msg.className = 'am-msg ' + (ok ? 'ok' : 'ng'); X.msg.textContent = t; X.r.className = 'am-r ' + (cls || ''); };
+          const direct = () => { bal[0] = 99999999; paint(); say(A, false, '💥 acc.balance = 99999999 が通った！', 'bad'); say(B, false, '✖ 赤線：private は外から触れない', ''); };
           const dep = (n) => {
-            if (n <= 0) { balBox.className = 'acm-bal'; say(false, 'acc.deposit(' + n + ') → Error: 1円以上\n窓口（deposit）が、おかしな値を断った。'); return; }
-            bal += n; paint(); balBox.className = 'acm-bal good'; say(true, '✓ acc.deposit(' + n + ') → 残高 ' + fmt(bal) + ' 円\n窓口を通したので、ルールどおりに増えた。');
+            if (n <= 0) { say(A, false, 'deposit(' + n + ') → Error: 1円以上', ''); say(B, false, 'deposit(' + n + ') → Error: 1円以上', ''); return; }
+            bal = bal.map((x) => x + n); paint(); say(A, true, '✓ deposit(' + n + ')', 'good'); say(B, true, '✓ deposit(' + n + ')', 'good');
           };
-          const lab = h('div', { class: 'acm-sec' }, h('h4', h('i', '2'), '実験：残高を public にすると？'), h('p', { class: 'acm-sub' }, 'public と private を切り替えて、同じ操作をしてみよう。'),
-            bar, h('div', { class: 'acm-lab' }, pre, h('div', balBox, h('div', { class: 'acm-act' },
-              h('button', { class: 'btn', onclick: direct }, 'acc.balance = 99999999'), h('button', { class: 'btn primary', onclick: () => dep(5000) }, 'acc.deposit(5000)'), h('button', { class: 'btn ghost', onclick: () => dep(-5000) }, 'acc.deposit(-5000)')), msg)),
-            h('div', { class: 'acm-tip', html: '👉 <b>private</b> にすると、残高は<b>窓口（deposit）経由でしか</b>変えられない。ルール（1円以上）を<b>全員に守らせる</b>ための仕組み。' }));
+          const reset = () => { bal = [10000, 10000]; paint(); [A, B].forEach((X) => { X.msg.textContent = ''; X.r.className = 'am-r'; }); };
+          paint();
+          const cmp = h('div', null,
+            h('div', { class: 'am-ctl' }, '👉 同じ操作を両方に：',
+              h('button', { class: 'btn', onclick: direct }, 'acc.balance = 99999999'),
+              h('button', { class: 'btn primary', onclick: () => dep(5000) }, 'acc.deposit(5000)'),
+              h('button', { class: 'btn', onclick: () => dep(-5000) }, 'acc.deposit(-5000)'),
+              h('span', { class: 'sp' }), h('button', { class: 'btn ghost', onclick: reset }, icon('rotate-ccw'), 'もどす')),
+            h('div', { class: 'am-duo' }, A.box, B.box));
 
-          /* ③ 誰が触れる？ マトリクス */
-          const who = ['クラスの中', '子クラス', '外部（画面など）'];
+          /* ③ 実際のケース */
+          const CS = [
+            ['💳 残高・暗証番号', 'private', 'var(--bad)', 'class BankAccount {\n  private balance = 0;\n  private pin = "1234";\n}', '外から変えさせない'],
+            ['👤 名義・入金ボタン', 'public', 'var(--ok)', 'class BankAccount {\n  public owner = "田中";\n  public deposit(n: number) {}\n}', '誰でも使ってOK'],
+            ['🏦 支店コード', 'protected', 'var(--pink)', 'class BankAccount {\n  protected branch = "新宿";\n}\nclass Savings extends BankAccount {\n  show() { return this.branch; } // ✓\n}\nnew Savings().branch; // ✖', '子まではOK、外はNG'],
+            ['🆔 口座番号（不変）', 'readonly', 'var(--ts)', 'class BankAccount {\n  public readonly id = 1001;\n}\nconst acc = new BankAccount();\nacc.id = 2; // ✖ 書き換え禁止', '作ったら変えない'],
+            ['🧮 内部の計算', 'private メソッド', 'var(--bad)', 'class BankAccount {\n  private calcFee() { return 110; }\n  withdraw(n: number) {\n    return n + this.calcFee();\n  }\n}', '中だけで使う関数'],
+          ];
+          const pick = h('div', { class: 'am-pick' }), ans = h('div');
+          const showC = (i) => {
+            const r = CS[i];
+            pick.querySelectorAll('button').forEach((b, k) => b.classList.toggle('on', k === i));
+            ans.replaceChildren(h('div', { class: 'am-ans' }, h('div', { class: 'am-v', style: { '--c': r[2] } }, h('b', r[1]), h('p', r[4])), code(r[3], 'ts', { color: r[2] })));
+          };
+          CS.forEach((r, i) => pick.append(h('button', { onclick: () => showC(i) }, r[0])));
+          showC(0);
+
+          /* ④ 誰が触れる？ */
+          const who = ['クラスの中', '子クラス', '外部'];
           const F = [['🌐 public', 'owner', [1, 1, 1]], ['🛡️ protected', 'branch', [1, 1, 0]], ['🔒 private', 'pin', [1, 0, 0]]];
           const mmsg = h('div', { style: { minHeight: '2.4em', marginTop: '10px' } });
           const mx = h('div', { class: 'tsx-mx', style: { '--c': 'var(--ts)' } }, h('div'), who.map((w) => h('div', { class: 'hd' }, w)));
           F.forEach(([lb, f, ok]) => {
             mx.append(h('div', { class: 'fl' }, lb + '\n' + f));
-            ok.forEach((o, i) => { const b = h('button', { onclick: () => { b.className = o ? 'y' : 'n'; b.textContent = o ? '🔓 OK' : '🔒 NG'; mmsg.replaceChildren(o ? res(true, `${who[i]}から ${f} にアクセスできる`) : res(false, `Property '${f}' is ${lb.split(' ')[1]} and only accessible within class 'BankAccount'${f === 'branch' ? ' and its subclasses' : ''}.`)); } }, '？'); mx.append(b); });
+            ok.forEach((o, i) => { const b = h('button', { onclick: () => { b.className = o ? 'y' : 'n'; b.textContent = o ? '🔓 OK' : '🔒 NG'; mmsg.replaceChildren(o ? res(true, `${who[i]}から ${f} に触れる`) : res(false, `Property '${f}' is ${lb.split(' ')[1]} and only accessible within class 'BankAccount'${f === 'branch' ? ' and its subclasses' : ''}.`)); } }, '？'); mx.append(b); });
           });
-          const mat = h('div', { class: 'acm-sec' }, h('h4', h('i', '3'), '誰が触れる？ マスをクリック'), h('p', { class: 'acm-sub' }, '子クラス ＝ BankAccount を extends した SavingsAccount（定期預金口座）'),
-            code('class BankAccount {\n  public owner = "田中";       // 名義：誰でも見てよい\n  protected branch = "新宿";   // 支店：子クラスまで\n  private pin = "1234";        // 暗証番号：この中だけ\n}\n\nclass SavingsAccount extends BankAccount {\n  show() { return this.branch; }   // ✓ protected は子から見える\n}', 'ts', { color: 'var(--ts)' }),
-            h('div', { style: { height: '12px' } }), mx, mmsg,
-            h('div', { class: 'row', style: { marginTop: '10px' } }, h('button', { class: 'btn ghost', onclick: () => mx.querySelectorAll('button').forEach((b) => b.click()) }, '全部開ける')));
 
-          /* ④ 決め方 */
-          const dec = h('div', { class: 'acm-sec' }, h('h4', h('i', '4'), '現場での決め方'),
-            h('div', { class: 'acm-flow' },
-              h('div', { style: { '--c': 'var(--bad)' } }, '① まず private', h('small', 'データ（残高・パスワード）は閉じておく')), h('i', '→'),
-              h('div', { style: { '--c': 'var(--ok)' } }, '② 外から使うものだけ public', h('small', '入金・出金など「窓口」になる操作')), h('i', '→'),
-              h('div', { style: { '--c': 'var(--pink)' } }, '③ 子で使うなら protected', h('small', '継承する時だけ。なければ使わない'))),
-            h('div', { class: 'acm-tip', html: '💡 <b>あとから開けるのは簡単、あとから閉じるのは大変</b>（他のコードが使い始めてしまうため）。だから「まず private」。<br>💡 引数に付けると宣言も兼ねる：<code>constructor(private balance: number) {}</code><br>💡 TS の <code>private</code> は<b>書く時のチェック</b>だけ（実行時は見える）。本当に隠すなら <code>#balance</code>。' }));
-
-          el.append(lv, lab, mat, dec);
-          setMode('public');
+          el.append(lv, cmp,
+            h('div', { class: 'am-sec' }, h('h4', '🏦 実際のケース：どれを付ける？'), pick, ans),
+            h('div', { class: 'am-sec' }, h('h4', '🔐 誰が触れる？ マスをクリック'), mx, mmsg,
+              h('div', { class: 'row', style: { marginTop: '10px' } }, h('button', { class: 'btn ghost', onclick: () => mx.querySelectorAll('button').forEach((b) => b.click()) }, '全部開ける'))),
+            h('div', { class: 'am-tip' }, '💡 迷ったら、まず private'));
         },
       },
       { t: 'readonly：書き換え禁止', tag: 'readonly', lead: '「次へ ▶」で、読み取り専用プロパティが<b>いつ代入できて、いつダメか</b>を追おう。', render: readonlySceneGap },

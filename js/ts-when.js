@@ -112,13 +112,6 @@
     ['どちらか迷う', 'チームの規約に従う', S, '機能の差より<b>揃っていること</b>のほうが大事。', 'ルールがない時は「形は interface、それ以外は type」。', '// チームのルール例\n// ・オブジェクト → interface\n// ・Union / タプル / 関数 → type'],
   ], rules: ['<b>形</b> → interface', '<b>形以外</b> → type', '<b>覚え方</b>：迷ったらチームに合わせる'] };
 
-  G['クラス = 設計図、new = スタンプ'] = { cases: [
-    ['同じ形のものを何個も作る', 'class', P, '「予約」が10件あって、それぞれが<b>データと操作</b>を持つなら class。', 'new するたびに別の実体ができる。', 'class Booking {\n  constructor(public time: string) {}\n  cancel() {}\n}\nconst a = new Booking("10:00");\nconst b = new Booking("11:00");'],
-    ['ただのデータ', 'interface で十分', O, '操作がなく<b>持つだけ</b>なら class はいらない。', '軽くて読みやすい。', 'interface Consultation { id: number; title: string }\nconst c: Consultation = { id: 1, title: "相続" };'],
-    ['ルールを守らせたい', 'class ＋ private', T, '「残高はマイナスにできない」など、<b>勝手に変えさせない</b>時。', '', 'class Wallet {\n  private balance = 0;\n  deposit(n: number) { this.balance += n; }\n}'],
-    ['関数1つで済む', '関数', S, '状態を持たない処理は<b>関数</b>のほうが簡単。', 'Vue では関数（composable）中心。', 'function fee(price: number): number {\n  return price * 1.1;\n}'],
-  ], rules: ['<b>データ ＋ 操作</b>を持つ → class', '<b>データだけ</b> → interface', '<b>覚え方</b>：必要な時だけ class'] };
-
   G['getter / setter：門番を置く'] = { cases: [
     ['読む時に計算したい', 'getter', P, '<b>姓 + 名</b>のように、取り出す時に組み立てる。', '外からは普通の項目に見える。', 'class Person {\n  constructor(private first: string, private last: string) {}\n  get fullName() { return this.last + this.first; }\n}'],
     ['代入時にチェックしたい', 'setter', T, '<b>マイナスの年齢</b>を拒否するなど、門番にする。', '', 'class Person {\n  private _age = 0;\n  set age(n: number) {\n    if (n < 0) throw new Error("年齢が不正");\n    this._age = n;\n  }\n}'],
