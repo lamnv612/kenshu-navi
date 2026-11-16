@@ -797,9 +797,7 @@
     return root;
   }
 
-  /* interface なし / あり の書き比べ（interface シーンの冒頭） */
-  function ifaceCompare() {
-    style('ifc', `
+  const IC_CSS = `
     .ic-sec{margin-bottom:24px}.ic-sec>h4{font:900 1.05rem var(--font);margin-bottom:10px}
     .ic-pick{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:12px}
     .ic-pick button{all:unset;cursor:pointer;box-sizing:border-box;text-align:center;padding:.55em .8em;border-radius:8px;border:1px solid var(--line);background:var(--card);font-weight:800;font-size:.875rem;transition:.2s}
@@ -808,7 +806,42 @@
     .ic-c{border:2px solid var(--c);border-radius:12px;background:var(--card);overflow:hidden}
     .ic-h{padding:.6em 1em;background:color-mix(in srgb,var(--c) 16%,var(--card2));font-weight:900;color:var(--c)}
     .ic-c pre.code{margin:0;border:0;border-radius:0;font-size:.82rem;min-height:170px}
-    .ic-pg{padding:.7em 1em;border-top:1px dashed var(--line);font-weight:700;font-size:.84rem;line-height:1.7}`);
+    .ic-pg{padding:.7em 1em;border-top:1px dashed var(--line);font-weight:700;font-size:.84rem;line-height:1.7}`;
+  /* なし / あり の書き比べ（汎用）。CS: [{ n, pain, gain, a, b }] */
+  function cmpSection(heading, CS, labelA, labelB) {
+    style('ifc', IC_CSS);
+    const pick = h('div', { class: 'ic-pick' }), body = h('div');
+    const show = (i) => {
+      const r = CS[i];
+      pick.querySelectorAll('button').forEach((b, k) => b.classList.toggle('on', k === i));
+      const one = (c, t, src, msg) => h('div', { class: 'ic-c', style: { '--c': c } }, h('div', { class: 'ic-h' }, t), code(src, 'ts', { color: c }), h('div', { class: 'ic-pg', html: msg }));
+      body.replaceChildren(h('div', { class: 'ic-duo' }, one('var(--bad)', labelA, r.a, '😣 ' + r.pain), one('var(--ok)', labelB, r.b, '😄 ' + r.gain)));
+    };
+    CS.forEach((r, i) => pick.append(h('button', { onclick: () => show(i) }, r.n)));
+    show(0);
+    return h('div', { class: 'ic-sec' }, h('h4', heading), pick, body);
+  }
+  function extendsCompare() {
+    const B = 'interface Consultation {\n  id: number;\n  title: string;\n}\n\n';
+    return cmpSection('🆚 extends / merge を使わない時 / 使う時', [
+      { n: '📋 共通項目のコピペ', pain: 'id・title を<b>毎回書き直し</b>。似た型が増えるほど長くなる', gain: '共通部分は引き継ぐ。<b>足す項目だけ</b>書けばいい',
+        a: 'interface Consultation {\n  id: number;\n  title: string;\n}\n\ninterface Booking {\n  id: number;       // ← コピペ\n  title: string;    // ← コピペ\n  time: string;\n}',
+        b: B + 'interface Booking extends Consultation {\n  time: string;   // 足す項目だけ\n}' },
+      { n: '🔧 共通項目を直したい', pain: 'fee を足す時、<b>全部の型</b>を探して直す。直し忘れが出る', gain: '<b>Consultation に1行</b>足せば、Booking にも反映',
+        a: 'interface Consultation {\n  id: number;\n  title: string;\n  fee: number;      // ← 足した\n}\n\ninterface Booking {\n  id: number;\n  title: string;\n  time: string;     // ← fee を足し忘れ！\n}',
+        b: 'interface Consultation {\n  id: number;\n  title: string;\n  fee: number;      // ← 1行足すだけ\n}\n\ninterface Booking extends Consultation {\n  time: string;     // fee も自動で持つ\n}' },
+      { n: '🪟 window に項目を足す', pain: '<code>window.myApp</code> は <b>赤線</b>。Window 型に項目が無い', gain: '同名で書き足す（<b>merge</b>）と、Window に項目が増える',
+        a: 'window.myApp = "研修ナビ";\n// ✖ 赤線：Property \'myApp\' does not exist on type \'Window\'',
+        b: 'interface Window {\n  myApp: string;   // 同じ名前で書き足す\n}\n\nwindow.myApp = "研修ナビ";   // ✓ OK' },
+      { n: '📦 ライブラリの型を拡張', pain: 'ライブラリの型は<b>書き換えられない</b>。足したい項目が使えない', gain: '同名の interface を足すと、<b>ライブラリの型にも項目が増える</b>',
+        a: '// Express の req にログイン中ユーザーを入れたい\nreq.user = { id: 1 };\n// ✖ 赤線：Property \'user\' does not exist on type \'Request\'',
+        b: 'declare global {\n  namespace Express {\n    interface Request {\n      user?: { id: number };   // merge で足す\n    }\n  }\n}\n\nreq.user = { id: 1 };   // ✓ OK' },
+    ], '❌ extends / merge なし', '✅ extends / merge あり');
+  }
+
+  /* interface なし / あり の書き比べ（interface シーンの冒頭） */
+  function ifaceCompare() {
+    style('ifc', IC_CSS);
     const D = 'interface Consultation {\n  id: number;\n  title: string;\n  fee: number;\n}\n\n';
     const CS = [
       { n: '📋 同じ形を何回も', pain: '同じ形を<b>毎回コピペ</b>。項目を足す時は全部直す', gain: '形は<b>1か所</b>。直すのも1か所',
@@ -1604,6 +1637,7 @@ console.log(n.length);
       {
         t: 'extends と merge', lead: 'interface は<b>足して増やせる</b>。2つのやり方をタブで見比べよう。',
         render(el) {
+          el.append(extendsCompare());
           const bl = (t, c, cls) => h('span', { class: 'tsx-bl ' + (cls || ''), style: { background: cls ? '' : c } }, t);
           const pointA = h('div', { class: 'tsx-card' }, h('b', 'interface Consultation'), bl('id: number', 'var(--basic)'), bl('title: string', 'var(--basic)'));
           const z = bl('time: string', 'var(--pink)'); z.classList.add('tsx-fall');
