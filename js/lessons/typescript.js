@@ -830,6 +830,12 @@
       { n: '🔧 共通項目を直したい', pain: 'fee を足す時、<b>全部の型</b>を探して直す。直し忘れが出る', gain: '<b>Consultation に1行</b>足せば、Booking にも反映',
         a: 'interface Consultation {\n  id: number;\n  title: string;\n  fee: number;      // ← 足した\n}\n\ninterface Booking {\n  id: number;\n  title: string;\n  time: string;     // ← fee を足し忘れ！\n}',
         b: 'interface Consultation {\n  id: number;\n  title: string;\n  fee: number;      // ← 1行足すだけ\n}\n\ninterface Booking extends Consultation {\n  time: string;     // fee も自動で持つ\n}' },
+      { n: '🏗️ さらに特別な型（2段）', pain: '<b>また全部</b>を書き直し。項目が増えるほど長くなる', gain: '<code>Booking</code> を引き継いで、<b>足す1行</b>だけ',
+        a: 'interface Booking {\n  id: number;\n  title: string;\n  time: string;\n}\n\ninterface PaidBooking {\n  id: number;       // ← またコピペ\n  title: string;    // ← またコピペ\n  time: string;     // ← またコピペ\n  paid: boolean;\n}',
+        b: 'interface Booking {\n  id: number;\n  title: string;\n  time: string;\n}\n\ninterface PaidBooking extends Booking {\n  paid: boolean;   // 足す項目だけ\n}' },
+      { n: '🧷 複数を引き継ぐ', pain: '<code>createdAt</code> を<b>あちこちにコピペ</b>。書き方がバラバラになる', gain: '<code>extends A, B</code> と<b>カンマで複数</b>引き継げる',
+        a: 'interface Consultation {\n  id: number;\n  title: string;\n  createdAt: string;   // ← コピペ\n}\n\ninterface Booking {\n  id: number;\n  time: string;\n  createdAt: string;   // ← コピペ\n}',
+        b: 'interface Timestamped {\n  createdAt: string;\n}\n\ninterface Consultation extends Timestamped {\n  id: number;\n  title: string;\n}\n\ninterface Booking extends Timestamped {\n  id: number;\n  time: string;\n}' },
     ];
     const MG = [
       { n: '🧩 同じ名前を2回書く', pain: '<code>type</code> は同じ名前を<b>2回書けない</b>（エラー）', gain: '<code>interface</code> は<b>合体</b>。id と name を両方持つ型になる',
@@ -1990,6 +1996,11 @@ console.log(n.length);
                 { l: 'acc.balance = 99999999', a: ['bad', '💥 通った！ 残高が勝手に変わった', 99999999], b: ['ng', '✖ 赤線：private は外から触れない（残高そのまま）'] },
                 { l: 'acc.deposit(5000)', a: ['ok', '✓ 入金できた', { add: 5000 }], b: ['ok', '✓ 入金できた（窓口を通った）', { add: 5000 }] },
                 { l: 'acc.deposit(-5000)', a: ['ng', 'Error: 1円以上（窓口がルールを守った）'], b: ['ng', 'Error: 1円以上（窓口がルールを守った）'] }],
+              alt2: { ex: '💴 給料', vl: '給料', v: 300000, cand: [['salary', 'raise'], ['raise']], hi: [2],
+                a: CLS(['class Employee {', '  salary = 300000;   // ← private なし', '', '  raise(percent: number) {', '    if (percent > 20) throw new Error("20%まで");', '    this.salary += this.salary * percent / 100;', '  }', '}', '', 'const emp = new Employee();']),
+                b: CLS(['class Employee {', '  private salary = 300000;', '', '  raise(percent: number) {', '    if (percent > 20) throw new Error("20%まで");', '    this.salary += this.salary * percent / 100;', '  }', '}', '', 'const emp = new Employee();']),
+                acts: [{ l: 'emp.salary = 9999999', a: ['bad', '💥 給料が勝手に書き換わった', 9999999], b: ['ng', '✖ 赤線：private は外から触れない'] }, { l: 'emp.raise(10)', a: ['ok', '✓ 10% アップ', { add: 30000 }], b: ['ok', '✓ 10% アップ（窓口を通った）', { add: 30000 }] }, { l: 'emp.raise(50)', a: ['ng', 'Error: 20%まで（ルールが効く）'], b: ['ng', 'Error: 20%まで（ルールが効く）'] }],
+                bn: '🎯 給料のような<b>大事な値</b>は、変更の入口を <code>raise()</code> だけにして、上限ルールを守らせる。' },
               bn: '🎯 private の<b>メリット</b>：変更の入口が <code>deposit()</code> だけになる → ルール（1円以上）が<b>必ず守られる</b>。間違った書き換えは、書いた瞬間に赤線。' },
             { mod: 'public', sub: '外に見せる窓口', vl: '残高', v: 10000, ex: '🏦 入金ボタン',
               alt: { ex: '🛒 カートに追加', vl: '', v: null, cand: [[], ['add']], hi: [4],
@@ -2003,6 +2014,11 @@ console.log(n.length);
               acts: [
                 { l: 'acc.deposit(5000)', a: ['bad', '✖ 赤線：private なので呼べない → 入金できない！'], b: ['ok', '✓ 入金できた', { add: 5000 }] },
                 { l: 'acc.balance = 0', a: ['ng', '✖ 赤線：private'], b: ['ng', '✖ 赤線：private（残高は守られたまま）'] }],
+              alt2: { ex: '📧 メール送信', vl: '', v: null, cand: [[], ['send']], hi: [4],
+                a: CLS(['class Mailer {', '  private queue: string[] = [];', '', '  private send(to: string) {   // ← private', '    this.queue.push(to);', '  }', '}', '', 'const mailer = new Mailer();']),
+                b: CLS(['class Mailer {', '  private queue: string[] = [];', '', '  public send(to: string) {    // ← public', '    this.queue.push(to);', '  }', '}', '', 'const mailer = new Mailer();']),
+                acts: [{ l: 'mailer.send("a@example.com")', a: ['bad', '✖ 赤線：private なので呼べない → 送れない！'], b: ['ok', '✓ 送信キューに入った'] }, { l: 'mailer.queue.length = 0', a: ['ng', '✖ 赤線：queue は private'], b: ['ng', '✖ 赤線：queue は private（キューは守られる）'] }],
+                bn: '🎯 メールを送る<b>ボタン（send）は public</b>。中のキュー（queue）は private。' },
               bn: '🎯 public の<b>役目</b>：外から使ってほしい「窓口」に付ける。<b>閉じすぎる</b>（全部 private）と、使えないクラスになる。' },
             { mod: 'protected', sub: '子には見せる', vl: '', v: null, ex: '🏦 支店コード',
               alt: { ex: '📨 通知のログ', hi: [2],
@@ -2016,6 +2032,11 @@ console.log(n.length);
               acts: [
                 { l: 'Savings の中で this.branch', a: ['bad', '✖ 赤線：private は子クラスからも見えない'], b: ['ok', '✓ 子クラスなら読める → "新宿"'] },
                 { l: '外から s.branch', a: ['ng', '✖ 赤線：外からは見えない'], b: ['ng', '✖ 赤線：外からは見えない（protected でも外はNG）'] }],
+              alt2: { ex: '👤 権限 role', hi: [2],
+                a: CLS(['class User {', '  private role = "user";   // ← private', '}', '', 'class Admin extends User {', '  isAdmin() { return this.role === "admin"; }', '}', '', 'const a = new Admin();']),
+                b: CLS(['class User {', '  protected role = "user";   // ← protected', '}', '', 'class Admin extends User {', '  isAdmin() { return this.role === "admin"; }', '}', '', 'const a = new Admin();']),
+                acts: [{ l: 'Admin の中で this.role', a: ['bad', '✖ 赤線：private は子クラスから読めない'], b: ['ok', '✓ 子クラスから読める'] }, { l: '外から a.role', a: ['ng', '✖ 赤線'], b: ['ng', '✖ 赤線：外からは読めない（権限は守られる）'] }],
+                bn: '🎯 <b>親が持つ権限情報</b>を、子クラスだけが使えるようにする。' },
               bn: '🎯 protected の<b>使いどころ</b>：<b>親子クラス</b>で共有したいデータ。private だと子も使えず、public だと外に漏れる。→ ちょうど中間。' },
             { mod: 'readonly', sub: '作ったら変えない', vl: '口座番号', v: 1001, ex: '🆔 口座番号',
               alt: { ex: '📅 作成日', vl: '作成日', v: '2025-01-10', hi: [2],
@@ -2029,15 +2050,20 @@ console.log(n.length);
               acts: [
                 { l: 'acc.id = 2', a: ['bad', '💥 口座番号が書き換わった！', 2], b: ['ng', '✖ 赤線：readonly は代入できない'] },
                 { l: 'console.log(acc.id)', a: ['ok', '✓ 読める'], b: ['ok', '✓ 読むのはOK'] }],
+              alt2: { ex: '⚙️ 設定値', vl: '上限', v: 10, hi: [2],
+                a: CLS(['class Config {', '  maxItems = 10;   // ← readonly なし', '}', '', 'const cfg = new Config();']),
+                b: CLS(['class Config {', '  readonly maxItems = 10;', '}', '', 'const cfg = new Config();']),
+                acts: [{ l: 'cfg.maxItems = 9999', a: ['bad', '💥 上限が勝手に書き換わった', 9999], b: ['ng', '✖ 赤線：readonly は代入できない'] }, { l: 'console.log(cfg.maxItems)', a: ['ok', '✓ 読める'], b: ['ok', '✓ 読むのはOK'] }],
+                bn: '🎯 アプリ全体の<b>設定値</b>は、実行中に変わらないよう readonly で固定。' },
               bn: '🎯 readonly の<b>メリット</b>：「作ったら不変」の値（ID・口座番号）を、<b>うっかり変更から</b>守る。読むのは自由。' },
           ];
           const tabs = h('div', { class: 'am-tabs' }), stage = h('div');
-          const fmtV = (t, v) => (t.vl === '残高' ? v.toLocaleString() : String(v));
+          const fmtV = (t, v) => (typeof v === 'number' && t.vl !== '口座番号' ? v.toLocaleString() : String(v));
           const show = (ti, vi) => {
             vi = vi || 0;
-            const base = TABS[ti], t = vi ? Object.assign({}, base, base.alt) : base;
+            const base = TABS[ti], vs = [base, base.alt, base.alt2], t = vi ? Object.assign({}, base, vs[vi]) : base;
             tabs.querySelectorAll('button').forEach((b, k) => b.classList.toggle('on', k === ti));
-            const vbar = h('div', { class: 'am-vb' }, [base.ex, base.alt.ex].map((x, k) => h('button', { class: k === vi ? 'on' : '', onclick: () => show(ti, k) }, '例' + (k + 1) + '：' + x)));
+            const vbar = h('div', { class: 'am-vb' }, vs.map((v) => v.ex).map((x, k) => h('button', { class: k === vi ? 'on' : '', onclick: () => show(ti, k) }, '例' + (k + 1) + '：' + x)));
             let vals = [t.v, t.v];
             const side = (c, title, src, k) => {
               const cd = code(src, 'ts', { color: c }); cd.setHi(t.hi);
