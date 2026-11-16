@@ -1936,7 +1936,7 @@ console.log(n.length);
           CASES.forEach((r, i) => wPick.append(h('button', { onclick: () => showW(i) }, r.n)));
           showW(0);
           const whySec = h('div', { class: 'cx-sec' }, h('h4', '🤔 ① なぜ class が要る？ いろいろな場面で比べよう'), wPick, wBody);
-          const demoH = h('div', { class: 'cx-sec' }, h('h4', '🔧 ④ 項目を足す時の違い（予約を増やす・email を足す）'));
+          const demoH = h('div', { class: 'cx-sec' }, h('h4', '🔧 ③ 項目を足す時の違い（予約を増やす・email を足す）'));
           /* ③ 設計図から設計図を作る：親クラスと子クラス */
           style('kds', `
           .kd-tree{display:grid;justify-items:center;gap:8px}
@@ -1962,7 +1962,7 @@ console.log(n.length);
             { say: '✏️ 子クラスは<b>足す分だけ</b>書く。ここでは <b>hall</b>（会場）だけ。' },
             { say: '🖨 子クラスの設計図からも <code>new</code> できる。s1 は name・people・hall を持ち、<b>親の cancel() もそのまま使える</b>。' },
           ];
-          const kidSec = h('div', { class: 'cx-sec' }, h('h4', '🧒 ③ 設計図から設計図を作る：親クラスと子クラス'),
+          const kidSec = h('div', { class: 'cx-sec' }, h('h4', '🧒 ④ 設計図から設計図を作る：親クラスと子クラス'),
             stepper({ color: 'var(--ts)', interval: 3600, steps: KSTEP,
               init(vis) { vis.append(h('div', { class: 'kd-tree' }, kPar, kAr, h('div', { class: 'kd-row' }, kGhost, kKid), kSt), kTerm); },
               update(n) {
@@ -1976,12 +1976,26 @@ console.log(n.length);
                 if (n >= 5) kSt.append(h('span', { style: { '--c': 'var(--ts)' } }, 's1 : SeminarBooking  ("山本", 3, "A会場")'), h('span', { style: { '--c': 'var(--ok)' } }, 's1.cancel()  ✓ 親の機能も使える'));
               } }));
 
-          el.append(whySec, blueSec, kidSec, demoH,
+          const kidCmp = K.cmpSection('🧒 ⑤ 子クラスを使わない時 / 使う時', [
+            { n: '🎫 予約の種類が増える', pain: 'セミナー予約・相談予約ごとに、<b>name・people・cancel() をコピペ</b>', gain: '共通部分は Booking に1回。子クラスは<b>足す分だけ</b>',
+              a: 'class SeminarBooking {\n  name = "";\n  people = 0;\n  hall = "";       // セミナーだけ\n  cancel() { /* 共通 */ }   // ← コピペ\n}\n\nclass ConsultBooking {\n  name = "";\n  people = 0;\n  lawyer = "";     // 相談だけ\n  cancel() { /* 共通 */ }   // ← コピペ\n}',
+              b: 'class Booking {\n  name = "";\n  people = 0;\n  cancel() { /* 共通 */ }   // 1回だけ\n}\n\nclass SeminarBooking extends Booking {\n  hall = "";       // セミナーだけ\n}\n\nclass ConsultBooking extends Booking {\n  lawyer = "";     // 相談だけ\n}' },
+            { n: '🔧 共通のルールを変えたい', pain: 'cancel() の仕様変更を<b>全クラスで直す</b>。1つ直し忘れると不具合', gain: '<b>親の1か所</b>を直せば、子すべてに反映',
+              a: '// 「キャンセルは前日まで」に変更…\nclass SeminarBooking {\n  cancel() { /* 前日まで */ }   // 直した\n}\nclass ConsultBooking {\n  cancel() { /* 当日OK */ }     // ← 直し忘れ！\n}',
+              b: 'class Booking {\n  cancel() { /* 前日まで */ }   // ここだけ直す\n}\nclass SeminarBooking extends Booking {}\nclass ConsultBooking extends Booking {}\n// どちらも自動で「前日まで」になる' },
+            { n: '📋 まとめて扱いたい', pain: '種類ごとに<b>別々の配列</b>・別々の処理が必要', gain: '<code>Booking[]</code> に<b>混ぜて入れて</b>、まとめて処理できる',
+              a: 'const seminars: SeminarBooking[] = [];\nconst consults: ConsultBooking[] = [];\n\nseminars.forEach((b) => b.cancel());\nconsults.forEach((b) => b.cancel());   // 種類の数だけ繰り返し',
+              b: 'const list: Booking[] = [\n  new SeminarBooking(),\n  new ConsultBooking(),\n];\n\nlist.forEach((b) => b.cancel());   // 1回で全部' },
+            { n: '👥 利用者と管理者', pain: '管理者のクラスに、利用者の機能を<b>全部コピー</b>', gain: '<code>Admin extends User</code>：<b>管理者の機能だけ</b>足す',
+              a: 'class User {\n  name = "";\n  login() { /* … */ }\n}\n\nclass Admin {\n  name = "";\n  login() { /* … */ }   // ← コピペ\n  deleteUser() { /* … */ }\n}',
+              b: 'class User {\n  name = "";\n  login() { /* … */ }\n}\n\nclass Admin extends User {\n  deleteUser() { /* … */ }   // 管理者だけの機能\n}' },
+          ], '❌ 子クラスなし', '✅ 子クラスあり');
+          el.append(whySec, blueSec, demoH,
             h('div', { class: 'cx-ctl' }, 'name', nm, 'people', pr,
               h('button', { class: 'btn primary', onclick: add }, icon('plus'), '予約を追加'),
               h('button', { class: 'btn', onclick: addMail }, icon('mail-plus'), 'email 項目を足す'),
               h('span', { class: 'sp' }), h('button', { class: 'btn ghost', onclick: reset }, icon('rotate-ccw'), 'もどす')),
-            h('div', { class: 'cx-duo' }, left, right), note);
+            h('div', { class: 'cx-duo' }, left, right), note, h('div', { style: { height: '26px' } }), kidSec, kidCmp);
           paint();
         },
       },
