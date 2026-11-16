@@ -2205,7 +2205,8 @@ console.log(n.length);
           .ac-btns button:hover{transform:translateY(-2px);border-color:var(--ts)}
           .ac-row.ok{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 12%,var(--card))}.ac-row.ng{animation:shake .4s;border-color:var(--bad)}
           .ac-why{margin-top:6px;font-weight:700;font-size:.82rem;line-height:1.6}.ac-why b{font-family:var(--mono)}
-          .ac-prog{margin:10px 0 0;font-weight:800;color:var(--mute);font-size:.84rem}`);
+          .ac-prog{margin:10px 0 0;font-weight:800;color:var(--mute);font-size:.84rem}
+          .ac-badge{display:inline-block;padding:.1em .7em;border-radius:999px;font:800 .75rem var(--mono);background:var(--c);color:#06101f}.ac-path{margin-top:4px;font:700 .75rem var(--font);color:var(--mute)}.ac-row .d{margin-bottom:4px}`);
           const FLOW = [['外のコード（画面・他のファイル）が使う？', 'YES → public'], ['子クラスが使う？', 'YES → protected'], ['どちらも使わない', '→ private']];
           const flowEls = FLOW.map(([q, a], k) => h('div', { style: { '--c': ['var(--ok)', 'var(--pink)', 'var(--bad)'][k] } }, '❓ ' + (k + 1) + '. ' + q, h('small', a)));
           const flow = h('div', { class: 'ac-flow' }, flowEls[0], h('i', '→ NO →'), flowEls[1], h('i', '→ NO →'), flowEls[2]);
@@ -2232,38 +2233,28 @@ console.log(n.length);
           ];
           let ci = 0;
           const acTabs = h('div', { class: 'ac-tabs' }), acBody = h('div');
+          const MODC = { public: 'var(--ok)', protected: 'var(--pink)', private: 'var(--bad)' };
+          const PATH = { public: '① 外のコードが使う → YES', protected: '① 外は使わない → ② 子が使う → YES', private: '① 外も ② 子も使わない' };
           const showCase = (k) => {
             ci = k;
             acTabs.querySelectorAll('button').forEach((b, x) => b.classList.toggle('on', x === k));
             flowEls.forEach((e) => e.classList.remove('on'));
-            const C = CASES4[k], ans = {};
-            const codeBox = h('div'), prog = h('div', { class: 'ac-prog' });
-            const draw = () => {
-              const lines = ['class ' + C.cls + ' {'];
-              C.m.forEach(([nm, decl], x) => lines.push('  ' + (ans[nm] ? ans[nm] + ' ' : '/* ? */ ') + decl));
-              lines.push('}');
-              const cd = code(lines.join('\n'), 'ts', { color: 'var(--ts)' });
-              cd.setHi(C.m.map(([nm], x) => (ans[nm] ? 0 : x + 2)).filter(Boolean), 'err'); codeBox.replaceChildren(cd);
-              const n = Object.keys(ans).length;
-              prog.textContent = n === C.m.length ? '🎉 ぜんぶ正解！ 見せる相手を考えて決めるのが、アクセス修飾子' : `答えた数：${n} / ${C.m.length}`;
-            };
+            const C = CASES4[k];
             const mark = (mod) => { flowEls.forEach((e) => e.classList.remove('on')); (mod === 'public' ? [0] : mod === 'protected' ? [0, 1] : [0, 1, 2]).forEach((q) => flowEls[q].classList.add('on')); };
-            const rows = C.m.map(([nm, decl, sub, right, why]) => {
-              const why2 = h('div', { class: 'ac-why' });
-              const row = h('div', { class: 'ac-row' }, h('div', { class: 'd' }, decl, h('small', sub)), h('div', { class: 'ac-btns' }, ['public', 'protected', 'private'].map((mod) => h('button', { onclick: () => {
-                if (ans[nm]) return;
-                mark(mod);
-                if (mod === right) { ans[nm] = mod; row.className = 'ac-row ok'; why2.innerHTML = '✓ <b>' + right + '</b>：' + why; row.querySelector('.ac-btns').style.display = 'none'; draw(); }
-                else { row.className = 'ac-row ng'; setTimeout(() => { row.className = 'ac-row'; }, 450); why2.innerHTML = '✖ <b>' + mod + '</b> ではない。<b>' + (mod === 'public' ? 'public にすると外から何でもできてしまう' : mod === 'protected' ? '子クラスが使う？ 使わないなら protected は広すぎる' : '外や子クラスが必要としていないか考えてみよう') + '</b>'; }
-              } }, mod))), why2);
-              return row;
-            });
-            draw();
-            acBody.replaceChildren(h('div', { class: 'ac-ctx', html: '📌 ' + C.ctx + '　<b>各項目に、どれを付ける？</b>（ボタンを押して答える）' }),
-              h('div', { class: 'ac-duo' }, h('div', { class: 'ac-rows' }, rows), h('div', null, codeBox, prog)));
+            const lines = ['class ' + C.cls + ' {'];
+            C.m.forEach(([nm, decl, sub, mod]) => lines.push('  ' + mod + ' ' + decl));
+            lines.push('}');
+            const cd = code(lines.join('\n'), 'ts', { color: 'var(--ts)' });
+            const rows = C.m.map(([nm, decl, sub, mod, why], x) => h('div', { class: 'ac-row ok', style: { cursor: 'pointer', borderColor: MODC[mod] }, onclick: () => { mark(mod); cd.setHi([x + 2], 'on'); } },
+              h('div', { class: 'd' }, h('span', { class: 'ac-badge', style: { '--c': MODC[mod] } }, mod), ' ', nm, h('small', sub)),
+              h('div', { class: 'ac-why', html: why }),
+              h('div', { class: 'ac-path' }, '判断：' + PATH[mod])));
+            acBody.replaceChildren(h('div', { class: 'ac-ctx', html: '📌 ' + C.ctx + '　<b>各項目に何を付けるか</b>と、その理由。（項目を押すと、上の判断の流れが光る）' }),
+              h('div', { class: 'ac-duo' }, h('div', { class: 'ac-rows' }, rows), h('div', null, cd)));
+            mark(C.m[0][3]);
           };
           CASES4.forEach((c, k) => acTabs.append(h('button', { onclick: () => showCase(k) }, c.n)));
-          const cases3 = h('div', { class: 'am-sec' }, h('h4', '🧭 実際のクラスで考える：この項目、どれを付ける？'),
+          const cases3 = h('div', { class: 'am-sec' }, h('h4', '🧭 実際のクラスで見る：この項目には、どれを付ける？'),
             flow, acTabs, acBody);
           showCase(0);
 
