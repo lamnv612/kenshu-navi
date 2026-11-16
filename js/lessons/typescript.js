@@ -2089,18 +2089,79 @@ console.log(n.length);
           };
           TABS.forEach((t, i) => tabs.append(h('button', { onclick: () => show(i) }, W(t.mod), h('small', t.sub))));
 
-          /* ③ 誰が触れる？ */
-          const who = ['クラスの中', '子クラス', '外部'];
-          const F = [['🌐 ', 'public', 'owner', [1, 1, 1]], ['🛡️ ', 'protected', 'branch', [1, 1, 0]], ['🔒 ', 'private', 'pin', [1, 0, 0]]];
-          const mmsg = h('div', { style: { minHeight: '2.4em', marginTop: '10px' } });
-          const mx = h('div', { class: 'tsx-mx', style: { '--c': 'var(--ts)' } }, h('div'), who.map((w) => h('div', { class: 'hd' }, w)));
-          F.forEach(([em, mod, f, ok]) => {
-            mx.append(h('div', { class: 'fl' }, em, W(mod), h('small', { style: { color: 'var(--mute)' } }, f)));
-            ok.forEach((o, i) => { const b = h('button', { class: o ? 'y' : 'n', onclick: () => { mmsg.replaceChildren(o ? res(true, `${who[i]}から ${f} に触れる`) : res(false, `Property '${f}' is ${mod} and only accessible within class 'BankAccount'${mod === 'protected' ? ' and its subclasses' : ''}.`)); } }, o ? '🔓 OK' : '🔒 NG'); mx.append(b); });
-          });
+          /* ③ 誰が触れる？（図：呼び出す人 → 扉 → 中身） */
+          style('amd', `
+          .ad-wrap{position:relative;display:grid;grid-template-columns:minmax(0,.9fr) 90px minmax(0,1.1fr);gap:0;align-items:center;padding:16px;border-radius:14px;background:var(--card);border:1px solid var(--line);overflow:hidden}
+          @media(max-width:760px){.ad-wrap{grid-template-columns:1fr;gap:14px}.ad-gap{display:none}}
+          .ad-act{display:grid;gap:10px}
+          .ad-who{cursor:pointer;padding:.7em .9em;border-radius:12px;border:2px solid var(--line);background:var(--card2);transition:.25s;display:grid;gap:2px}
+          .ad-who b{font-size:.95rem}.ad-who small{font:700 .75rem var(--mono);color:var(--mute)}
+          .ad-who:hover{transform:translateX(3px)}.ad-who.on{border-color:var(--ts);background:color-mix(in srgb,var(--ts) 18%,var(--card));box-shadow:0 8px 20px -12px var(--ts)}
+          .ad-cls{border:2px solid var(--team);border-radius:14px;overflow:hidden;background:var(--card2)}
+          .ad-cls>header{padding:.55em 1em;background:color-mix(in srgb,var(--team) 22%,var(--card2));font:900 .95rem var(--mono);color:var(--team)}
+          .ad-mem{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:10px;padding:.7em 1em;border-top:1px solid var(--line);cursor:pointer;transition:.2s;position:relative}
+          .ad-mem:hover{background:color-mix(in srgb,var(--ts) 10%,transparent)}
+          .ad-door{font-size:1.4rem}.ad-mem b{font:800 .9rem var(--mono)}.ad-mem small{display:block;font:700 .72rem var(--font);color:var(--mute)}
+          .ad-mem.ok{background:color-mix(in srgb,var(--ok) 22%,transparent)}.ad-mem.ng{background:color-mix(in srgb,var(--bad) 22%,transparent);animation:shake .4s}
+          .ad-tok{position:absolute;z-index:5;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--ts);color:#fff;font-size:.9rem;pointer-events:none;opacity:0;transition:left .55s ease,top .55s ease,opacity .2s,background .2s;box-shadow:0 0 0 6px color-mix(in srgb,var(--ts) 30%,transparent)}
+          .ad-tok.show{opacity:1}.ad-tok.ok{background:var(--ok)}.ad-tok.ng{background:var(--bad)}
+          .ad-gap{text-align:center;font:900 1.4rem var(--mono);color:var(--mute)}
+          .ad-out{padding:.7em 1em;border-radius:10px;background:var(--code);color:#cfd5ff;font:700 .85rem/1.7 var(--mono);min-height:3.4em}.ad-out.ok{color:#9be58b;border:1px solid var(--ok)}.ad-out.ng{color:#ff9aa5;border:1px solid var(--bad)}
+          .ad-code{margin-top:12px}.ad-hint{margin-top:10px;font-weight:700;color:var(--mute);font-size:.84rem}`);
+          const ACTORS = [
+            { n: '🏠 クラスの中', sub: 'BankAccount のメソッド', code: (m) => 'class BankAccount {\n  check() {\n    return this.' + m + ';\n  }\n}' },
+            { n: '🧒 子クラス', sub: 'Savings extends BankAccount', code: (m) => 'class Savings extends BankAccount {\n  show() {\n    return this.' + m + ';\n  }\n}' },
+            { n: '🌍 外のコード', sub: 'new BankAccount() を使う側', code: (m) => 'const acc = new BankAccount();\nconsole.log(acc.' + m + ');' },
+          ];
+          const MEMS = [
+            { mod: 'public', f: 'owner', door: '🌐', sub: '名義：誰でも見てよい', ok: [1, 1, 1] },
+            { mod: 'protected', f: 'branch', door: '🛡️', sub: '支店：自分と子まで', ok: [1, 1, 0] },
+            { mod: 'private', f: 'pin', door: '🔒', sub: '暗証番号：自分だけ', ok: [1, 0, 0] },
+          ];
+          let who2 = 2, busy = false;
+          const wrap = h('div', { class: 'ad-wrap' }), tok = h('div', { class: 'ad-tok' }, '👤');
+          const whoEls = ACTORS.map((a, i) => h('div', { class: 'ad-who', onclick: () => { who2 = i; paintWho(); } }, h('b', a.n), h('small', a.sub)));
+          const memEls = MEMS.map((m, i) => h('div', { class: 'ad-mem', onclick: () => send(i) }, h('span', { class: 'ad-door' }, m.door), h('div', h('b', m.mod + ' ' + m.f), h('small', m.sub))));
+          const adCode = h('div', { class: 'ad-code' }), adOut = h('div', { class: 'ad-out', style: { marginTop: '10px', minHeight: '3.4em' } });
+          const paintWho = () => whoEls.forEach((e, i) => e.classList.toggle('on', i === who2));
+          const send = (mi) => {
+            if (busy) return; busy = true;
+            const m = MEMS[mi], ok = !!m.ok[who2];
+            memEls.forEach((e) => e.className = 'ad-mem');
+            adCode.replaceChildren(code(ACTORS[who2].code(m.f), 'ts', { color: 'var(--ts)' }));
+            adOut.className = 'ad-out'; adOut.textContent = '…';
+            const wr = wrap.getBoundingClientRect(), a = whoEls[who2].getBoundingClientRect(), t = memEls[mi].getBoundingClientRect();
+            const at = (r, dx) => [r.left - wr.left + dx - 14, r.top - wr.top + r.height / 2 - 14];
+            tok.className = 'ad-tok'; tok.style.transition = 'none';
+            let [x0, y0] = at(a, a.width); tok.style.left = x0 + 'px'; tok.style.top = y0 + 'px';
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+              tok.style.transition = ''; tok.classList.add('show');
+              const door = at(t, 0), end = at(t, 40);
+              const target = ok ? end : [door[0] - 6, door[1]];
+              tok.style.left = target[0] + 'px'; tok.style.top = target[1] + 'px';
+              setTimeout(() => {
+                tok.classList.add(ok ? 'ok' : 'ng'); tok.textContent = ok ? '✓' : '✖';
+                memEls[mi].classList.add(ok ? 'ok' : 'ng');
+                adOut.className = 'ad-out ' + (ok ? 'ok' : 'ng');
+                adOut.replaceChildren(ok ? `✓ ${ACTORS[who2].n.slice(2)}から ${m.f} に触れる` : `✖ Property '${m.f}' is ${m.mod} and only accessible within class 'BankAccount'${m.mod === 'protected' ? ' and its subclasses' : ''}.`);
+                if (!ok) { tok.style.left = (target[0] - 70) + 'px'; }
+                setTimeout(() => { tok.classList.remove('show'); tok.textContent = '👤'; busy = false; }, 900);
+              }, 650);
+            }));
+          };
+          const playAll = async () => {
+            for (let w = 0; w < 3; w++) for (let m = 0; m < 3; m++) { while (busy) await sleep(100); who2 = w; paintWho(); send(m); await sleep(1900); }
+          };
+          paintWho();
+          wrap.append(h('div', { class: 'ad-act' }, whoEls), h('div', { class: 'ad-gap' }, '→ 🚪 →'), h('div', { class: 'ad-cls' }, h('header', 'class BankAccount'), memEls), tok);
+          adCode.append(code(ACTORS[2].code('pin'), 'ts', { color: 'var(--ts)' }));
+          adOut.textContent = '👆 左で「誰が」を選んで、右の項目を押してみよう';
+          const mat = h('div', { class: 'am-sec' }, h('h4', '🔐 まとめ：誰が、どの扉を通れる？'),
+            wrap, h('div', { class: 'ad-hint' }, '左で「誰が」を選ぶ → 右の項目（扉）をクリック。✓ は通れる、✖ は止められる。'),
+            h('div', { class: 'row', style: { marginTop: '10px' } }, h('button', { class: 'btn', onclick: playAll }, icon('play'), '9通りを順に見る')), adCode, adOut);
 
           el.append(lv, tabs, stage,
-            h('div', { class: 'am-sec' }, h('h4', '🔐 まとめ：誰が触れる？（マスを押すと理由が出る）'), mx, mmsg),
+            mat,
             h('div', { class: 'am-tip' }, '💡 迷ったら、まず private'));
           show(0);
         },
