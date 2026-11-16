@@ -36,4 +36,19 @@
     Object.values(K.lessons).forEach((l) => { if (l.meta && l.meta.after === 'ts-types') l.meta.after = 'ts-alias'; });
     (window.KENSHU_PRACTICE || []).forEach((p) => { if (p.lesson === 'ts-types') p.lesson = (p.scene === 'extends と merge') ? 'ts-interface' : (p.scene === 'Enum：名前の付いた定数') ? 'ts-types' : 'ts-alias'; });
   })();
+
+  /* ---- クラス：今日の最後の1時間（設計図・アクセス修飾子）と翌日（getter・継承・実践）に分ける ---- */
+  (function () {
+    const C = K.lessons['ts-class']; if (!C) return;
+    const ck = (ts) => ts.map((t) => C.scenes.find((s) => s.t === t)).filter(Boolean);
+    const P1 = ck(['クラス = 設計図、new = スタンプ', 'アクセス修飾子：誰が触れる？', 'readonly：書き換え禁止']);
+    const P2 = C.scenes.filter((s) => !P1.includes(s));
+    if (!P1.length || !P2.length) return;
+    const dr = (K.drills && K.drills['ts-class']) || {};
+    const gv = (id, sc) => { K.drills = K.drills || {}; K.drills[id] = K.drills[id] || {}; sc.forEach((s) => { if (dr[s.t]) K.drills[id][s.t] = dr[s.t]; }); };
+    C.scenes = P1; C.title = 'クラス ①'; C.sub = '設計図・アクセス修飾子'; gv('ts-class', P1);
+    K.reg({ id: 'ts-class2', track: 'ts', title: 'クラス ②', sub: 'getter・継承・実践', emoji: '🏭', scenes: P2 }); gv('ts-class2', P2);
+    if (K.tests && K.tests['ts-class']) { K.tests['ts-class2'] = K.tests['ts-class']; delete K.tests['ts-class']; }
+    (window.KENSHU_PRACTICE || []).forEach((p) => { if (p.lesson === 'ts-class' && p.scene && !P1.some((s) => s.t === p.scene)) p.lesson = 'ts-class2'; });
+  })();
 })();

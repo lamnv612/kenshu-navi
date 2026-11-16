@@ -1720,18 +1720,87 @@ console.log(n.length);
         },
       },
       {
-        t: 'アクセス修飾子：誰が触れる？', lead: 'マスを<b>クリック</b>して、アクセスできるか確認。（public は誰でも／protected は子まで／private は自分だけ）',
+        t: 'アクセス修飾子：誰が触れる？', lead: '<b>「誰に見せて、誰に触らせるか」</b>を決める仕組み。銀行口座を例に、3つの段階を体験しよう。',
         render(el) {
-          const F = [['🌐 public', 'name', [1, 1, 1]], ['🛡️ protected', 'email', [1, 1, 0]], ['🔒 private', 'password', [1, 0, 0]]];
-          const who = ['クラスの中', '子クラス', '外部'];
-          const msg = h('div', { style: { minHeight: '2.4em', marginTop: '10px' } });
+          style('acm', `
+          .acm-sec{margin-bottom:26px}.acm-sec>h4{font:900 1.05rem var(--font);margin-bottom:4px;display:flex;align-items:center;gap:.5em}
+          .acm-sec>h4 i{font-style:normal;display:grid;place-items:center;width:1.6em;height:1.6em;border-radius:50%;background:var(--ts);color:#fff;font-size:.85rem}
+          .acm-sub{font-weight:700;color:var(--mute);font-size:.86rem;margin:0 0 10px}
+          .acm-lv{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}@media(max-width:820px){.acm-lv{grid-template-columns:1fr}}
+          .acm-c{padding:14px;border-radius:12px;border:2px solid var(--c);background:color-mix(in srgb,var(--c) 11%,var(--card))}
+          .acm-c>b{display:block;font:900 1.05rem var(--mono);color:var(--c);margin-bottom:2px}.acm-c .em{font-size:1.7rem;display:block;margin-bottom:4px}
+          .acm-c p{font-weight:700;font-size:.84rem;line-height:1.65;margin:4px 0 0}.acm-c .eg{margin-top:8px;padding:.45em .7em;border-radius:8px;background:var(--card);font-size:.8rem;font-weight:700;color:var(--mute)}
+          .acm-c .eg code{color:var(--text)}
+          .acm-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+          .acm-bar button{all:unset;cursor:pointer;padding:.45em 1em;border-radius:8px;border:1px solid var(--line);background:var(--card);font:800 .84rem var(--mono)}
+          .acm-bar button.on{border-color:var(--c);background:color-mix(in srgb,var(--c) 18%,var(--card));color:var(--c)}
+          .acm-lab{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:16px;align-items:start}@media(max-width:900px){.acm-lab{grid-template-columns:1fr}}
+          .acm-bal{display:flex;align-items:center;justify-content:center;gap:12px;padding:16px;border-radius:12px;background:var(--card);border:2px solid var(--line);transition:.3s}
+          .acm-bal small{font-weight:700;color:var(--mute)}.acm-bal b{font:900 1.9rem var(--mono)}
+          .acm-bal.bad{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 14%,var(--card));animation:shake .4s}.acm-bal.good{border-color:var(--ok)}
+          .acm-act{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+          .acm-msg{min-height:3em;padding:.7em 1em;border-radius:10px;background:var(--code);color:#cfd5ff;font:700 .85rem/1.7 var(--mono)}
+          .acm-msg.ok{color:#9be58b;border:1px solid var(--ok)}.acm-msg.ng{color:#ff9aa5;border:1px solid var(--bad)}
+          .acm-flow{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:8px;align-items:stretch}.acm-flow>div{padding:.7em .9em;border-radius:10px;border:2px solid var(--c);background:color-mix(in srgb,var(--c) 12%,var(--card));font-weight:800;font-size:.875rem;line-height:1.6}
+          .acm-flow small{display:block;font-weight:700;color:var(--mute);font-size:.75rem}.acm-flow>i{align-self:center;font-style:normal;font-weight:900;color:var(--mute)}
+          @media(max-width:820px){.acm-flow{grid-template-columns:1fr}.acm-flow>i{display:none}}
+          .acm-tip{margin-top:12px;padding:.7em 1em;border-radius:10px;background:var(--card);border:1px dashed var(--line);font-size:.84rem;font-weight:700;line-height:1.8}`);
+
+          /* ① 3段階 */
+          const lv = h('div', { class: 'acm-sec' }, h('h4', h('i', '1'), '3つの公開範囲（マンションで考えよう）'), h('p', { class: 'acm-sub' }, '上から順に、見せる相手が少なくなる。'),
+            h('div', { class: 'acm-lv' },
+              h('div', { class: 'acm-c', style: { '--c': 'var(--ok)' } }, h('span', { class: 'em' }, '🌐'), h('b', 'public'), h('p', { html: '<b>誰でも</b>使える。エントランス・郵便受け。' }), h('div', { class: 'eg', html: '口座では：<code>owner</code>（名義）<br><code>deposit()</code>（入金ボタン）' })),
+              h('div', { class: 'acm-c', style: { '--c': 'var(--pink)' } }, h('span', { class: 'em' }, '🛡️'), h('b', 'protected'), h('p', { html: '<b>自分と「子クラス」</b>だけ。住人用の共用部分。' }), h('div', { class: 'eg', html: '口座では：<code>branch</code>（支店）<br>定期預金口座など、親から継いだ子は見られる' })),
+              h('div', { class: 'acm-c', style: { '--c': 'var(--bad)' } }, h('span', { class: 'em' }, '🔒'), h('b', 'private'), h('p', { html: '<b>自分の中だけ</b>。自分の部屋の金庫。' }), h('div', { class: 'eg', html: '口座では：<code>balance</code>（残高）<code>pin</code>（暗証番号）' }))));
+
+          /* ② 実験：残高 */
+          let mode = 'public', bal = 10000;
+          const balB = h('b'), balBox = h('div', { class: 'acm-bal' }, h('small', '残高'), balB, h('small', '円'));
+          const msg = h('div', { class: 'acm-msg' }, '👇 ボタンを押して試そう');
+          const pre = h('div'), bar = h('div', { class: 'acm-bar' });
+          const fmt = (n) => n.toLocaleString();
+          const paint = () => { balB.textContent = fmt(bal); };
+          const srcOf = () => `class BankAccount {\n  ${mode} balance = 10000;   // 残高\n\n  deposit(n: number) {      // 入金ボタン\n    if (n <= 0) throw new Error("1円以上");\n    this.balance += n;\n  }\n}\n\nconst acc = new BankAccount();`;
+          const setMode = (m) => { mode = m; bal = 10000; paint(); balBox.className = 'acm-bal'; msg.className = 'acm-msg'; msg.textContent = '👇 ボタンを押して試そう'; bar.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.m === m)); pre.replaceChildren(code(srcOf(), 'ts', { color: m === 'public' ? 'var(--bad)' : 'var(--ok)' })); };
+          ['public', 'private'].forEach((m) => bar.append(h('button', { 'data-m': m, style: { '--c': m === 'public' ? 'var(--bad)' : 'var(--ok)' }, onclick: () => setMode(m) }, m + ' balance')));
+          const say = (ok, t) => { msg.className = 'acm-msg ' + (ok ? 'ok' : 'ng'); msg.textContent = t; };
+          const direct = () => {
+            if (mode === 'public') { bal = 99999999; paint(); balBox.className = 'acm-bal bad'; say(false, '💥 acc.balance = 99999999 が通ってしまった！\n誰でも残高を好きな数字に書き換えられる。'); }
+            else { balBox.className = 'acm-bal'; say(false, "✖ Property 'balance' is private and only accessible within class 'BankAccount'.\n（赤線で止まる。残高はそのまま）"); }
+          };
+          const dep = (n) => {
+            if (n <= 0) { balBox.className = 'acm-bal'; say(false, 'acc.deposit(' + n + ') → Error: 1円以上\n窓口（deposit）が、おかしな値を断った。'); return; }
+            bal += n; paint(); balBox.className = 'acm-bal good'; say(true, '✓ acc.deposit(' + n + ') → 残高 ' + fmt(bal) + ' 円\n窓口を通したので、ルールどおりに増えた。');
+          };
+          const lab = h('div', { class: 'acm-sec' }, h('h4', h('i', '2'), '実験：残高を public にすると？'), h('p', { class: 'acm-sub' }, 'public と private を切り替えて、同じ操作をしてみよう。'),
+            bar, h('div', { class: 'acm-lab' }, pre, h('div', balBox, h('div', { class: 'acm-act' },
+              h('button', { class: 'btn', onclick: direct }, 'acc.balance = 99999999'), h('button', { class: 'btn primary', onclick: () => dep(5000) }, 'acc.deposit(5000)'), h('button', { class: 'btn ghost', onclick: () => dep(-5000) }, 'acc.deposit(-5000)')), msg)),
+            h('div', { class: 'acm-tip', html: '👉 <b>private</b> にすると、残高は<b>窓口（deposit）経由でしか</b>変えられない。ルール（1円以上）を<b>全員に守らせる</b>ための仕組み。' }));
+
+          /* ③ 誰が触れる？ マトリクス */
+          const who = ['クラスの中', '子クラス', '外部（画面など）'];
+          const F = [['🌐 public', 'owner', [1, 1, 1]], ['🛡️ protected', 'branch', [1, 1, 0]], ['🔒 private', 'pin', [1, 0, 0]]];
+          const mmsg = h('div', { style: { minHeight: '2.4em', marginTop: '10px' } });
           const mx = h('div', { class: 'tsx-mx', style: { '--c': 'var(--ts)' } }, h('div'), who.map((w) => h('div', { class: 'hd' }, w)));
-          F.forEach(([lab, f, ok]) => {
-            mx.append(h('div', { class: 'fl' }, lab + '\n' + f));
-            ok.forEach((o, i) => { const b = h('button', { onclick: () => { b.className = o ? 'y' : 'n'; b.textContent = o ? '🔓 OK' : '🔒 NG'; msg.replaceChildren(o ? res(true, `${who[i]}から ${f} にアクセスできる`) : res(false, `Property '${f}' is ${lab.split(' ')[1]} and only accessible within class 'User'${f === 'email' ? ' and its subclasses' : ''}.`)); } }, '？'); mx.append(b); });
+          F.forEach(([lb, f, ok]) => {
+            mx.append(h('div', { class: 'fl' }, lb + '\n' + f));
+            ok.forEach((o, i) => { const b = h('button', { onclick: () => { b.className = o ? 'y' : 'n'; b.textContent = o ? '🔓 OK' : '🔒 NG'; mmsg.replaceChildren(o ? res(true, `${who[i]}から ${f} にアクセスできる`) : res(false, `Property '${f}' is ${lb.split(' ')[1]} and only accessible within class 'BankAccount'${f === 'branch' ? ' and its subclasses' : ''}.`)); } }, '？'); mx.append(b); });
           });
-          el.append(code('class User {\n  public name = "田中";          // 画面に出してよい\n  protected email = "a@b.c";     // 子クラスまで\n  private password = "****";     // クラスの中だけ\n}', 'ts', { color: 'var(--ts)' }), h('div', { style: { height: '14px' } }), mx, msg,
-            h('div', { class: 'row', style: { marginTop: '12px' } }, h('button', { class: 'btn ghost', onclick: () => mx.querySelectorAll('button').forEach((b) => b.click()) }, '全部開ける')));
+          const mat = h('div', { class: 'acm-sec' }, h('h4', h('i', '3'), '誰が触れる？ マスをクリック'), h('p', { class: 'acm-sub' }, '子クラス ＝ BankAccount を extends した SavingsAccount（定期預金口座）'),
+            code('class BankAccount {\n  public owner = "田中";       // 名義：誰でも見てよい\n  protected branch = "新宿";   // 支店：子クラスまで\n  private pin = "1234";        // 暗証番号：この中だけ\n}\n\nclass SavingsAccount extends BankAccount {\n  show() { return this.branch; }   // ✓ protected は子から見える\n}', 'ts', { color: 'var(--ts)' }),
+            h('div', { style: { height: '12px' } }), mx, mmsg,
+            h('div', { class: 'row', style: { marginTop: '10px' } }, h('button', { class: 'btn ghost', onclick: () => mx.querySelectorAll('button').forEach((b) => b.click()) }, '全部開ける')));
+
+          /* ④ 決め方 */
+          const dec = h('div', { class: 'acm-sec' }, h('h4', h('i', '4'), '現場での決め方'),
+            h('div', { class: 'acm-flow' },
+              h('div', { style: { '--c': 'var(--bad)' } }, '① まず private', h('small', 'データ（残高・パスワード）は閉じておく')), h('i', '→'),
+              h('div', { style: { '--c': 'var(--ok)' } }, '② 外から使うものだけ public', h('small', '入金・出金など「窓口」になる操作')), h('i', '→'),
+              h('div', { style: { '--c': 'var(--pink)' } }, '③ 子で使うなら protected', h('small', '継承する時だけ。なければ使わない'))),
+            h('div', { class: 'acm-tip', html: '💡 <b>あとから開けるのは簡単、あとから閉じるのは大変</b>（他のコードが使い始めてしまうため）。だから「まず private」。<br>💡 引数に付けると宣言も兼ねる：<code>constructor(private balance: number) {}</code><br>💡 TS の <code>private</code> は<b>書く時のチェック</b>だけ（実行時は見える）。本当に隠すなら <code>#balance</code>。' }));
+
+          el.append(lv, lab, mat, dec);
+          setMode('public');
         },
       },
       { t: 'readonly：書き換え禁止', tag: 'readonly', lead: '「次へ ▶」で、読み取り専用プロパティが<b>いつ代入できて、いつダメか</b>を追おう。', render: readonlySceneGap },

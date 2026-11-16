@@ -119,13 +119,6 @@
     ['関数1つで済む', '関数', S, '状態を持たない処理は<b>関数</b>のほうが簡単。', 'Vue では関数（composable）中心。', 'function fee(price: number): number {\n  return price * 1.1;\n}'],
   ], rules: ['<b>データ ＋ 操作</b>を持つ → class', '<b>データだけ</b> → interface', '<b>覚え方</b>：必要な時だけ class'] };
 
-  G['アクセス修飾子：誰が触れる？'] = { cases: [
-    ['外から使わせる操作', 'public', S, '<b>ボタン</b>にあたる部分。何も書かなければ public。', '', 'class Wallet {\n  public deposit(n: number) {}\n}'],
-    ['中だけで使う値', 'private', T, '外から<b>触らせたくない</b>データ（残高など）。', 'TS の private は書く時のチェックだけ（実行時は見える）。本当に隠すなら #name。', 'class Wallet {\n  private balance = 0;\n}\nnew Wallet().balance; // ✖ 赤線'],
-    ['子クラスにだけ見せたい', 'protected', P, '外には隠すが、<b>継承した子</b>は使える。', '', 'class Base {\n  protected id = 1;\n}'],
-    ['作ったら変えない', 'readonly', O, '<b>あとから書き換え禁止</b>。id など。', 'private と組み合わせてもよい。', 'class Booking {\n  constructor(public readonly id: number) {}\n}'],
-  ], rules: ['<b>外から使う</b> → public', '<b>中だけ</b> → private', '<b>覚え方</b>：まず private、必要なら公開'] };
-
   G['getter / setter：門番を置く'] = { cases: [
     ['読む時に計算したい', 'getter', P, '<b>姓 + 名</b>のように、取り出す時に組み立てる。', '外からは普通の項目に見える。', 'class Person {\n  constructor(private first: string, private last: string) {}\n  get fullName() { return this.last + this.first; }\n}'],
     ['代入時にチェックしたい', 'setter', T, '<b>マイナスの年齢</b>を拒否するなど、門番にする。', '', 'class Person {\n  private _age = 0;\n  set age(n: number) {\n    if (n < 0) throw new Error("年齢が不正");\n    this._age = n;\n  }\n}'],
