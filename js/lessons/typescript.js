@@ -1797,7 +1797,7 @@ console.log(n.length);
     id: 'ts-class', track: 'ts', title: 'クラス', sub: '設計図とインスタンス', emoji: '🏭',
     scenes: [
       {
-        t: 'クラス = 設計図、new = スタンプ', lead: '<b>class ＝ 設計図</b>、<b>new ＝ スタンプ</b>。まず仕組みを触って、そのあと「なし／あり」を比べよう。',
+        t: 'クラス = 設計図、new = スタンプ', lead: '<b>class ＝ 設計図</b>、<b>new ＝ スタンプ</b>。まず「なし／あり」を比べて、そのあと仕組みを触ろう。',
         render(el) {
           style('clx', `
           .cx-pick{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-bottom:12px}
@@ -1805,7 +1805,11 @@ console.log(n.length);
           .cx-pick button:hover{transform:translateY(-2px)}.cx-pick button.on{border-color:var(--ts);background:color-mix(in srgb,var(--ts) 16%,var(--card))}
           .cx-pg{padding:.7em 1em;border-top:1px dashed var(--line);font-weight:700;font-size:.84rem;line-height:1.7}
           .cx-inst{padding:10px 12px;border-radius:10px;border:2px solid var(--c);background:color-mix(in srgb,var(--c) 12%,var(--card));font:700 .82rem/1.7 var(--mono);display:grid;gap:2px;animation:tvpop .35s both;transition:.3s}.cx-inst b{color:var(--c)}.cx-inst .st{font:800 .8rem var(--font);margin:4px 0}.cx-inst .btn{margin-top:4px;font-size:.78rem}
-          .cx-sec{margin-bottom:22px}.cx-sec>h4{font:900 1.05rem var(--font);margin-bottom:10px}
+          .cx-rt{padding:12px 14px;display:grid;gap:12px;align-content:start;min-height:300px}
+          .cx-ctl2{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.cx-ctl2 input{font:inherit;padding:.4em .8em;border-radius:6px;border:1px solid var(--line);background:var(--bg2);color:var(--text)}
+          .cx-h2{margin:16px 0 8px;font-weight:800;font-size:.875rem;color:var(--mute)}
+          .cx-leg{grid-template-columns:repeat(5,minmax(0,1fr)) !important}@media(max-width:900px){.cx-leg{grid-template-columns:repeat(2,minmax(0,1fr)) !important}}
+          .cx-sec{margin-bottom:26px}.cx-sec>h4{font:900 1.05rem var(--font);margin-bottom:10px}
           .cx-ctl{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px;padding:12px;border-radius:12px;background:var(--card);border:1px solid var(--line)}
           .cx-ctl input{font:inherit;padding:.4em .8em;border-radius:6px;border:1px solid var(--line);background:var(--bg2);color:var(--text)}
           .cx-ctl .sp{flex:1}
@@ -1876,7 +1880,7 @@ console.log(n.length);
             ['👉 this', [7, 8, 12], '「<b>この予約自身</b>」。b1 なら b1、b2 なら b2'],
           ];
           const legNote = h('div', { class: 'cx-note', style: { marginTop: '8px', minHeight: '2.6em' } });
-          const legBar = h('div', { class: 'cx-pick', style: { marginTop: '10px', marginBottom: 0 } });
+          const legBar = h('div', { class: 'cx-pick cx-leg', style: { marginBottom: 0 } });
           const pickLeg = (i) => { legBar.querySelectorAll('button').forEach((b, k) => b.classList.toggle('on', k === i)); bpCode.setHi(LEG[i][1]); legNote.innerHTML = LEG[i][2]; };
           LEG.forEach((l, i) => legBar.append(h('button', { onclick: () => pickLeg(i) }, l[0])));
           const insts = [], stampBox = h('div', { style: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(150px,1fr))', gap: '10px' } });
@@ -1895,10 +1899,12 @@ console.log(n.length);
           insts.push({ name: '田中', people: 2, cancelled: false }); paintInst();
           log.innerHTML = 'const b1 = new Booking("田中", 2);　<span style="color:var(--mute)">// 設計図からスタンプを1つ押した</span>';
           pickLeg(0);
-          const blueSec = h('div', { class: 'cx-sec' }, h('h4', '🖨 ① 設計図（class）に、スタンプ（new）を押す'),
-            h('div', { class: 'cx-duo' },
-              h('div', null, h('div', { class: 'cx-c', style: { '--c': 'var(--ts)' } }, h('div', { class: 'cx-h' }, h('span', '📐 設計図 class Booking'), h('small', '1回だけ書く')), bpCode), legBar, legNote),
-              h('div', null, h('div', { class: 'cx-ctl' }, 'name', nm2, 'people', pr2, h('button', { class: 'btn primary', onclick: stamp }, icon('stamp'), 'new（スタンプを押す）')), stampBox, log)));
+          const blueSec = h('div', { class: 'cx-sec' }, h('h4', '🖨 ② 設計図（class）に、スタンプ（new）を押す'),
+            h('div', { class: 'cx-duo', style: { alignItems: 'stretch' } },
+              h('div', { class: 'cx-c', style: { '--c': 'var(--ts)' } }, h('div', { class: 'cx-h' }, h('span', '📐 設計図 class Booking'), h('small', '1回だけ書く')), bpCode),
+              h('div', { class: 'cx-c', style: { '--c': 'var(--pink)' } }, h('div', { class: 'cx-h' }, h('span', '🖨 スタンプ台 new Booking(…)'), h('small', '何回でも押せる')),
+                h('div', { class: 'cx-rt' }, h('div', { class: 'cx-ctl2' }, 'name', nm2, 'people', pr2, h('button', { class: 'btn primary', onclick: stamp }, icon('stamp'), 'new（スタンプを押す）')), stampBox, log))),
+            h('div', { class: 'cx-h2' }, '👇 設計図のコードを、パーツごとに見る'), legBar, legNote);
           const CASES = [
             { n: '📅 予約', pain: '予約が増えるたび、同じ形を<b>コピペ</b>。関数はデータと別の場所', gain: '設計図を1回書けば、<code>new</code> で何件でも作れる。操作は <code>b1.cancel()</code>',
               a: 'const b1 = { name: "田中", people: 2 };\nconst b2 = { name: "山本", people: 4 };\n\nfunction label(b: { name: string; people: number }) {\n  return b.name + "様 " + b.people + "名";\n}\n\nlabel(b1);',
@@ -1922,9 +1928,9 @@ console.log(n.length);
           };
           CASES.forEach((r, i) => wPick.append(h('button', { onclick: () => showW(i) }, r.n)));
           showW(0);
-          const whySec = h('div', { class: 'cx-sec' }, h('h4', '🤔 ② なぜ class が要る？ いろいろな場面で比べよう'), wPick, wBody);
+          const whySec = h('div', { class: 'cx-sec' }, h('h4', '🤔 ① なぜ class が要る？ いろいろな場面で比べよう'), wPick, wBody);
           const demoH = h('div', { class: 'cx-sec' }, h('h4', '🔧 ③ 項目を足す時の違い（予約を増やす・email を足す）'));
-          el.append(blueSec, whySec, demoH,
+          el.append(whySec, blueSec, demoH,
             h('div', { class: 'cx-ctl' }, 'name', nm, 'people', pr,
               h('button', { class: 'btn primary', onclick: add }, icon('plus'), '予約を追加'),
               h('button', { class: 'btn', onclick: addMail }, icon('mail-plus'), 'email 項目を足す'),
