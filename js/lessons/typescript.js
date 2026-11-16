@@ -1343,6 +1343,46 @@ console.log(res.toUpperCase());
               tryIt: '① 赤線の文を読む　② 「確かめてから使う」→ 赤線が消える',
             },
           ]);
+          style('auw', `
+          .au-sec{margin-top:22px;padding-top:16px;border-top:1px dashed var(--line)}
+          .au-sec>h4{font:900 1.05rem var(--font);margin-bottom:10px}
+          .au-flow{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:8px;align-items:stretch;margin-bottom:14px}
+          .au-flow>div{padding:.7em .9em;border-radius:10px;border:2px solid var(--c);background:color-mix(in srgb,var(--c) 12%,var(--card));font-weight:800;font-size:.875rem;line-height:1.6}
+          .au-flow>div small{display:block;font-weight:700;color:var(--mute);font-size:.75rem}.au-flow>i{align-self:center;font-style:normal;color:var(--mute);font-weight:900}
+          @media(max-width:820px){.au-flow{grid-template-columns:1fr}.au-flow>i{display:none}}
+          .au-pick{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;margin-bottom:12px}
+          .au-pick button{all:unset;cursor:pointer;box-sizing:border-box;padding:.55em .8em;border-radius:8px;border:1px solid var(--line);background:var(--card);font-weight:800;font-size:.84rem;line-height:1.5;transition:.2s}
+          .au-pick button:hover{transform:translateY(-2px)}.au-pick button.on{border-color:var(--ts);background:color-mix(in srgb,var(--ts) 16%,var(--card))}
+          .au-ans{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:14px;align-items:start;animation:tvpop .35s both}@media(max-width:820px){.au-ans{grid-template-columns:1fr}}
+          .au-v{padding:14px;border-radius:12px;border:2px solid var(--c);background:color-mix(in srgb,var(--c) 12%,var(--card))}
+          .au-v>b{display:block;font:900 1.3rem var(--mono);color:var(--c);margin-bottom:6px}.au-v p{font-weight:700;font-size:.875rem;line-height:1.7}
+          .au-v em{display:block;margin-top:8px;font-style:normal;font-size:.8rem;font-weight:700;color:var(--mute)}
+          .au-rule{margin-top:12px;display:flex;gap:10px;flex-wrap:wrap}.au-rule div{flex:1 1 200px;padding:.6em 1em;border-radius:8px;background:var(--card2);border:1px solid var(--line);font-size:.84rem;font-weight:700;line-height:1.7}`);
+          const CS = [
+            { n: '外部 API の JSON', ty: 'unknown', c: 'var(--ok)', say: '中身は相手次第で、こちらでは決められない。unknown で受けて、<b>確認してから</b>使う。', note: '本当は「型を定義 → 検証」が理想（Zod など）。', src: 'const res: unknown = await r.json();\n\nif (typeof res === "object" && res !== null && "name" in res) {\n  // ここで初めて安全に使える\n}' },
+            { n: 'catch (e) のエラー', ty: 'unknown', c: 'var(--ok)', say: '何が投げられるかは分からない（文字かもしれない）。<b>Error か確認</b>してから message を読む。', note: 'try/catch の e は unknown が安全。', src: 'try {\n  run();\n} catch (e: unknown) {\n  if (e instanceof Error) {\n    console.log(e.message);\n  }\n}' },
+            { n: '何でも受ける関数', ty: 'unknown', c: 'var(--ok)', say: '中身は触らず「受け取るだけ」なら unknown。引数が何でも通るが、<b>勝手に使えない</b>ので安全。', note: 'ログ出力・保存など、中身を見ない処理向け。', src: 'function log(value: unknown) {\n  console.log("LOG:", value);\n}\n\nlog(1);\nlog("a");\nlog({ id: 1 });' },
+            { n: 'JS からの移行中', ty: 'any（一時だけ）', c: 'var(--bad)', say: '大量の JS を一気に直せないときの<b>つなぎ</b>。直す場所に <code>// TODO</code> を残す。', note: '最終的には具体的な型へ。any が残るほど TS の意味が薄れる。', src: '// TODO: 型を付ける（移行中）\nconst legacy: any = oldLib.load();' },
+            { n: '型定義がないライブラリ', ty: 'any ではなく @types', c: 'var(--team)', say: 'まず <code>npm i -D @types/○○</code> を探す。無ければ最小限だけ自分で型を書く。', note: 'any を広げず、使う部分だけ型を付ける。', src: '// 1) npm install -D @types/lodash\n// 2) 無ければ自作\ninterface Lib {\n  load(): string;\n}\nconst lib = oldLib as Lib;' },
+            { n: '型が分かっている', ty: '具体的な型', c: 'var(--basic)', say: 'number や Consultation のように<b>分かるなら、それを書く</b>。any / unknown は「分からない時」だけ。', note: '迷ったら: 具体的な型 → unknown → 最後に any。', src: 'const fee: number = 3000;\nconst c: Consultation = { title: "相続", fee };' },
+          ];
+          const pick = h('div', { class: 'au-pick' }), ans = h('div');
+          const showC = (i) => {
+            const r = CS[i];
+            pick.querySelectorAll('button').forEach((b, k) => b.classList.toggle('on', k === i));
+            ans.replaceChildren(h('div', { class: 'au-ans' }, h('div', { class: 'au-v', style: { '--c': r.c } }, h('b', r.ty), h('p', { html: r.say }), h('em', r.note)), code(r.src, 'ts')));
+          };
+          CS.forEach((r, i) => pick.append(h('button', { onclick: () => showC(i) }, r.n)));
+          el.append(h('div', { class: 'au-sec' },
+            h('h4', '🧭 実際のコードでは、どれを使う？'),
+            h('div', { class: 'au-flow' },
+              h('div', { style: { '--c': 'var(--basic)' } }, '① 型が分かる？', h('small', 'YES → その型を書く（number など）')), h('i', '→'),
+              h('div', { style: { '--c': 'var(--ok)' } }, '② 分からない → 中身を使う？', h('small', 'unknown で受けて、確認してから使う')), h('i', '→'),
+              h('div', { style: { '--c': 'var(--bad)' } }, '③ どうしても逃げたい', h('small', 'any（一時だけ・TODO を残す）'))),
+            h('p', { class: 'au-note', style: { fontWeight: 700, color: 'var(--mute)', fontSize: '.84rem', margin: '0 0 8px' } }, '👇 場面を選ぶと、おすすめの型とコードが出る'),
+            pick, ans,
+            h('div', { class: 'au-rule' }, h('div', { html: '<b>any</b> ＝ 検査を全部オフ。<b>どんな操作も通る</b>（バグも通る）' }), h('div', { html: '<b>unknown</b> ＝ 何でも入るが、<b>確認するまで使えない</b>' }), h('div', { html: '<b>覚え方</b>：分からない値は <b>unknown</b>、any は最後の手段' }))));
+          showC(0);
         },
       },
       {
