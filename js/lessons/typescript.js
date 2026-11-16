@@ -2258,23 +2258,59 @@ console.log(n.length);
       },
       { t: 'readonly：書き換え禁止', tag: 'readonly', lead: '「次へ ▶」で、読み取り専用プロパティが<b>いつ代入できて、いつダメか</b>を追おう。', render: readonlySceneGap },
       {
-        t: 'getter / setter：門番を置く', lead: '<code class="i">private</code> の値は直接触れない。<b>setter が検査</b>してから通します。値を送ってみよう。',
+        t: 'getter / setter：門番を置く', lead: '値を<b>入れる時</b>は setter が検査、<b>読む時</b>は getter が返す。値を送って、流れを見よう。',
         render(el) {
-          let age = 20;
-          const store = h('div', { class: 'tsx-door' }, '🔐'), sv = h('div', { style: { font: '800 1.3rem var(--mono)', textAlign: 'center' } }), gate = h('div', { class: 'tsx-door' }, '🚧'), inp = h('div', { class: 'tsx-door' }, '✉️');
-          const out = h('div', { style: { minHeight: '2.4em' } });
-          const draw = () => { sv.textContent = '_age = ' + age; };
+          style('gst', `
+          .gs-track{position:relative;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;padding:22px 14px 64px;border-radius:14px;background:var(--card);border:1px solid var(--line)}
+          @media(max-width:760px){.gs-track{grid-template-columns:1fr;padding-bottom:22px}.gs-tok{display:none}}
+          .gs-node{padding:.9em 1em;border-radius:12px;border:2px solid var(--line);background:var(--card2);text-align:center;transition:.35s;display:grid;gap:3px;justify-items:center}
+          .gs-node .em{font-size:2rem}.gs-node b{font-size:.95rem}.gs-node small{font:700 .75rem var(--mono);color:var(--mute)}.gs-node .v{font:900 1.4rem var(--mono)}
+          .gs-node.ok{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 15%,var(--card2))}.gs-node.ng{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 15%,var(--card2));animation:shake .4s}
+          .gs-node.flash{animation:tvpop .5s both;border-color:var(--ok)}
+          .gs-tok{position:absolute;bottom:14px;left:16.6%;transform:translateX(-50%);padding:.25em .9em;border-radius:999px;font:900 .9rem var(--mono);background:var(--ts);color:#fff;transition:left .65s ease,opacity .25s,background .25s;opacity:0;z-index:3;box-shadow:0 0 0 6px color-mix(in srgb,var(--ts) 28%,transparent)}
+          .gs-tok.show{opacity:1}.gs-tok.ok{background:var(--ok);color:#06101f}.gs-tok.ng{background:var(--bad)}
+          .gs-btns{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 8px}
+          .gs-out{padding:.7em 1em;border-radius:10px;background:var(--code);color:#cfd5ff;font:700 .85rem/1.7 var(--mono);min-height:3em}
+          .gs-out.ok{color:#9be58b;border:1px solid var(--ok)}.gs-out.ng{color:#ff9aa5;border:1px solid var(--bad)}`);
+          let age = 25, busy = false;
+          const inV = h('span', { class: 'v' }, '—'), vault = h('span', { class: 'v' }, String(age));
+          const nIn = h('div', { class: 'gs-node' }, h('span', { class: 'em' }, '✉️'), h('b', '外から来る値'), inV, h('small', 'user.age = ?'));
+          const nGate = h('div', { class: 'gs-node' }, h('span', { class: 'em' }, '🚧'), h('b', 'setter（門番）'), h('small', '0 ≦ 値 ≦ 150 ?'));
+          const nVault = h('div', { class: 'gs-node' }, h('span', { class: 'em' }, '🔐'), h('b', '_age（金庫）'), vault, h('small', 'private'));
+          const tok = h('div', { class: 'gs-tok' }), out = h('div', { class: 'gs-out' }, '👆 値を送ってみよう（または getter で読む）');
+          const pos = (x) => { tok.style.left = x; };
+          const reset = () => { [nIn, nGate, nVault].forEach((n) => n.className = 'gs-node'); };
           const send = (v) => {
-            inp.firstChild && (inp.textContent = '✉️ ' + v);
-            const ok = v >= 0 && v <= 150;
-            gate.className = 'tsx-door ' + (ok ? 'ok' : 'ng'); gate.textContent = ok ? '✅' : '⛔';
-            if (ok) { age = v; store.className = 'tsx-door ok'; draw(); out.replaceChildren(res(true, `user.age = ${v}  →  保存された`)); }
-            else { store.className = 'tsx-door'; out.replaceChildren(res(false, `user.age = ${v}  →  Error: 年齢は0〜150`)); }
+            if (busy) return; busy = true; reset();
+            out.className = 'gs-out'; out.textContent = '…';
+            inV.textContent = String(v);
+            tok.className = 'gs-tok'; tok.textContent = String(v); tok.style.transition = 'none'; pos('16.6%'); void tok.offsetWidth; tok.style.transition = ''; tok.classList.add('show');
+            setTimeout(() => pos('50%'), 100);
+            setTimeout(() => {
+              const ok = v >= 0 && v <= 150;
+              if (ok) {
+                nGate.classList.add('ok'); tok.classList.add('ok'); pos('83.3%');
+                setTimeout(() => { age = v; vault.textContent = String(age); nVault.classList.add('flash'); out.className = 'gs-out ok'; out.textContent = `✓ user.age = ${v}  →  門番を通過。_age に保存された`; tok.classList.remove('show'); busy = false; }, 750);
+              } else {
+                nGate.classList.add('ng'); tok.classList.add('ng'); tok.textContent = '✖';
+                setTimeout(() => pos('16.6%'), 450);
+                setTimeout(() => { out.className = 'gs-out ng'; out.textContent = `✖ user.age = ${v}  →  Error: 年齢は0〜150（門番が止めた。_age は ${age} のまま）`; tok.classList.remove('show'); busy = false; }, 1150);
+              }
+            }, 800);
           };
-          draw();
-          el.append(code('class User {\n  private _age = 20;\n  get age() { return this._age; }\n  set age(v: number) {\n    if (v < 0 || v > 150) throw new Error("年齢は0〜150");\n    this._age = v;\n  }\n}', 'ts', { color: 'var(--ts)' }),
-            h('div', { class: 'tsx-gate', style: { margin: '16px 0' } }, inp, gate, h('div', store, sv)),
-            h('div', { class: 'row' }, [25, 99, -5, 200].map((v) => h('button', { class: 'btn', onclick: () => send(v) }, 'user.age = ' + v))), out);
+          const read = () => {
+            if (busy) return; busy = true; reset();
+            out.className = 'gs-out'; out.textContent = '…';
+            tok.className = 'gs-tok'; tok.textContent = String(age); tok.style.transition = 'none'; pos('83.3%'); void tok.offsetWidth; tok.style.transition = ''; tok.classList.add('show');
+            nVault.classList.add('ok');
+            setTimeout(() => { pos('16.6%'); }, 150);
+            setTimeout(() => { out.className = 'gs-out ok'; out.textContent = `✓ console.log(user.age)  →  ${age}　（getter が _age をそのまま返す。検査は要らない）`; tok.classList.remove('show'); busy = false; }, 950);
+          };
+          el.append(code('class User {\n  private _age = 25;\n\n  get age() {              // 読む時\n    return this._age;\n  }\n\n  set age(v: number) {     // 入れる時\n    if (v < 0 || v > 150) throw new Error("年齢は0〜150");\n    this._age = v;\n  }\n}', 'ts', { color: 'var(--ts)' }),
+            h('div', { style: { height: '14px' } }),
+            h('div', { class: 'gs-track' }, nIn, nGate, nVault, tok),
+            h('div', { class: 'gs-btns' }, [25, 99, -5, 200].map((v) => h('button', { class: 'btn', onclick: () => send(v) }, 'user.age = ' + v)), h('button', { class: 'btn primary', onclick: read }, icon('eye'), 'user.age（getter で読む）')),
+            out);
         },
       },
       {
