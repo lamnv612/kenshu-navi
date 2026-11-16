@@ -819,24 +819,39 @@
     };
     CS.forEach((r, i) => pick.append(h('button', { onclick: () => show(i) }, r.n)));
     show(0);
-    return h('div', { class: 'ic-sec' }, h('h4', heading), pick, body);
+    return h('div', { class: heading ? 'ic-sec' : '' }, heading ? h('h4', heading) : null, pick, body);
   }
   function extendsCompare() {
     const B = 'interface Consultation {\n  id: number;\n  title: string;\n}\n\n';
-    return cmpSection('🆚 extends / merge を使わない時 / 使う時', [
+    const EX = [
       { n: '📋 共通項目のコピペ', pain: 'id・title を<b>毎回書き直し</b>。似た型が増えるほど長くなる', gain: '共通部分は引き継ぐ。<b>足す項目だけ</b>書けばいい',
         a: 'interface Consultation {\n  id: number;\n  title: string;\n}\n\ninterface Booking {\n  id: number;       // ← コピペ\n  title: string;    // ← コピペ\n  time: string;\n}',
         b: B + 'interface Booking extends Consultation {\n  time: string;   // 足す項目だけ\n}' },
       { n: '🔧 共通項目を直したい', pain: 'fee を足す時、<b>全部の型</b>を探して直す。直し忘れが出る', gain: '<b>Consultation に1行</b>足せば、Booking にも反映',
         a: 'interface Consultation {\n  id: number;\n  title: string;\n  fee: number;      // ← 足した\n}\n\ninterface Booking {\n  id: number;\n  title: string;\n  time: string;     // ← fee を足し忘れ！\n}',
         b: 'interface Consultation {\n  id: number;\n  title: string;\n  fee: number;      // ← 1行足すだけ\n}\n\ninterface Booking extends Consultation {\n  time: string;     // fee も自動で持つ\n}' },
+    ];
+    const MG = [
+      { n: '🧩 同じ名前を2回書く', pain: '<code>type</code> は同じ名前を<b>2回書けない</b>（エラー）', gain: '<code>interface</code> は<b>合体</b>。id と name を両方持つ型になる',
+        a: 'type User = { id: number };\ntype User = { name: string };\n// ✖ 赤線：Duplicate identifier \'User\'',
+        b: 'interface User { id: number }\ninterface User { name: string }\n\nconst u: User = { id: 1, name: "田中" };   // ✓ 両方持つ' },
       { n: '🪟 window に項目を足す', pain: '<code>window.myApp</code> は <b>赤線</b>。Window 型に項目が無い', gain: '同名で書き足す（<b>merge</b>）と、Window に項目が増える',
         a: 'window.myApp = "研修ナビ";\n// ✖ 赤線：Property \'myApp\' does not exist on type \'Window\'',
         b: 'interface Window {\n  myApp: string;   // 同じ名前で書き足す\n}\n\nwindow.myApp = "研修ナビ";   // ✓ OK' },
       { n: '📦 ライブラリの型を拡張', pain: 'ライブラリの型は<b>書き換えられない</b>。足したい項目が使えない', gain: '同名の interface を足すと、<b>ライブラリの型にも項目が増える</b>',
         a: '// Express の req にログイン中ユーザーを入れたい\nreq.user = { id: 1 };\n// ✖ 赤線：Property \'user\' does not exist on type \'Request\'',
         b: 'declare global {\n  namespace Express {\n    interface Request {\n      user?: { id: number };   // merge で足す\n    }\n  }\n}\n\nreq.user = { id: 1 };   // ✓ OK' },
-    ], '❌ extends / merge なし', '✅ extends / merge あり');
+      { n: '🔌 別ファイルから足す', pain: '他の人のファイルを<b>直接書き換える</b>しかない', gain: '<b>自分のファイル</b>から、同じ名前で足せる',
+        a: '// core.ts（本体・他の人のファイル）\ninterface Options {\n  debug: boolean;\n  theme: string;   // ← 本体を直接書き換えるしかない\n}',
+        b: '// core.ts（本体）\ninterface Options { debug: boolean }\n\n// plugin.ts（自分のファイル）\ninterface Options { theme: string }   // 同名で足す\n\nconst o: Options = { debug: true, theme: "dark" };' },
+    ];
+    const GR = [['🧬 extends（引き継ぐ）', EX], ['🧩 merge（合体する）', MG]];
+    const bar = h('div', { class: 'ic-pick', style: { gridTemplateColumns: '1fr 1fr' } }), body = h('div');
+    const go = (i) => { bar.querySelectorAll('button').forEach((b, k) => b.classList.toggle('on', k === i)); body.replaceChildren(cmpSection('', GR[i][1], '❌ ' + (i ? 'merge' : 'extends') + ' なし', '✅ ' + (i ? 'merge' : 'extends') + ' あり')); };
+    GR.forEach(([t], i) => bar.append(h('button', { onclick: () => go(i) }, t)));
+    style('ifc', IC_CSS);
+    go(0);
+    return h('div', { class: 'ic-sec' }, h('h4', '🆚 使わない時 / 使う時'), bar, body);
   }
 
   /* interface なし / あり の書き比べ（interface シーンの冒頭） */
