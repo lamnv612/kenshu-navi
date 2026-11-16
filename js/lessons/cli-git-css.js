@@ -3229,7 +3229,7 @@ style('cgk', `
   const GX = (() => {
     style('cgx', `
     .cgx-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
-    .cgx-tab{all:unset;cursor:pointer;display:flex;align-items:center;gap:.5em;padding:.5em 1em;border-radius:8px;font-weight:800;font-size:.875rem;background:var(--card);border:1px solid var(--line);transition:.2s}
+    .cgx-tab{all:unset;cursor:pointer;display:flex;color:var(--text);align-items:center;gap:.5em;padding:.5em 1em;border-radius:8px;font-weight:800;font-size:.875rem;background:var(--card);border:1px solid var(--line);transition:.2s}
     .cgx-tab small{display:block;font-weight:600;color:var(--mute);font-size:.75rem}.cgx-tab .ic{color:var(--c)}.cgx-tab:hover{transform:translateY(-2px)}
     .cgx-tab.on{background:color-mix(in srgb,var(--c) 22%,var(--card));border-color:var(--c)}
     .cgx-story{display:flex;gap:.7em;align-items:flex-start;padding:.7em 1em;border-radius:10px;border:1px dashed var(--c,var(--ts));background:color-mix(in srgb,var(--c,var(--ts)) 10%,transparent);font-size:.875rem;line-height:1.8;margin-bottom:12px}
