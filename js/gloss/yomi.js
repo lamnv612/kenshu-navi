@@ -1,0 +1,97 @@
+/* 用語ツールチップに「読み方」を足す。 '読み｜由来（元の英語の意味）' */
+(function () {
+  const K = window.KENSHU; if (!K) return;
+  const Y = {
+    /* ===== TypeScript ===== */
+    'interface': 'インターフェース｜interface ＝ 接点・約束事', 'enum': 'イーナム（エナム とも）｜enumeration ＝ 列挙', 'extends': 'エクステンズ｜extend ＝ 広げる・引き継ぐ',
+    'implements': 'インプリメンツ｜implement ＝ 実装する', 'readonly': 'リードオンリー｜read only ＝ 読み取り専用', 'public': 'パブリック｜public ＝ 公開の', 'private': 'プライベート｜private ＝ 非公開の',
+    'protected': 'プロテクテッド｜protected ＝ 保護された', 'static': 'スタティック｜static ＝ 静的な', 'abstract': 'アブストラクト｜abstract ＝ 抽象的な', 'constructor': 'コンストラクタ｜construct ＝ 組み立てる',
+    'class': 'クラス｜class ＝ 種類・分類', 'new': 'ニュー｜new ＝ 新しい', 'this': 'ディス｜this ＝ これ（自分自身）', 'super': 'スーパー｜super ＝ 上の（親）',
+    'keyof': 'キーオブ｜key of ＝ 〜のキー', 'typeof': 'タイプオブ｜type of ＝ 〜の型', 'instanceof': 'インスタンスオブ｜instance of ＝ 〜の実体か', 'any': 'エニー｜any ＝ 何でも',
+    'unknown': 'アンノウン｜unknown ＝ 不明な', 'never': 'ネバー｜never ＝ 決して〜ない', 'void': 'ボイド｜void ＝ 空っぽ', 'null': 'ヌル｜null ＝ 無（空）', 'undefined': 'アンディファインド｜undefined ＝ 未定義',
+    'Partial': 'パーシャル｜partial ＝ 一部の', 'Required': 'リクワイアード｜required ＝ 必須の', 'Pick': 'ピック｜pick ＝ 選ぶ', 'Omit': 'オミット｜omit ＝ 省く', 'Record': 'レコード｜record ＝ 記録',
+    'Readonly': 'リードオンリー｜read only ＝ 読み取り専用', 'ReturnType': 'リターンタイプ｜return type ＝ 戻り値の型', 'Awaited': 'アウェイテッド｜awaited ＝ 待たれた', 'Extract': 'エクストラクト｜extract ＝ 取り出す',
+    'Exclude': 'エクスクルード｜exclude ＝ 除く', 'NonNullable': 'ノンナラブル｜non-nullable ＝ null でない', 'Promise': 'プロミス｜promise ＝ 約束', 'async': 'エイシンク｜asynchronous ＝ 非同期',
+    'await': 'アウェイト｜await ＝ 待つ', 'try': 'トライ｜try ＝ 試す', 'catch': 'キャッチ｜catch ＝ 捕まえる', 'finally': 'ファイナリー｜finally ＝ 最後に', 'throw': 'スロー｜throw ＝ 投げる',
+    'import': 'インポート｜import ＝ 取り込む', 'export': 'エクスポート｜export ＝ 公開する', 'tsc': 'ティーエスシー｜TypeScript Compiler', 'tsconfig': 'ティーエスコンフィグ｜TypeScript config ＝ 設定',
+    'strict': 'ストリクト｜strict ＝ 厳しい', 'console.log': 'コンソールログ｜console ＝ 画面 / log ＝ 記録', 'JSON.parse': 'ジェイソン パース｜parse ＝ 解析する', 'JSON.stringify': 'ジェイソン ストリンギファイ｜stringify ＝ 文字列にする',
+    'fetch': 'フェッチ｜fetch ＝ 取ってくる', 'localStorage': 'ローカルストレージ｜local storage ＝ 手元の保存場所', 'Promise.all': 'プロミス オール｜all ＝ 全部', 'setTimeout': 'セットタイムアウト｜set timeout ＝ 時間切れをセット',
+    'vitest': 'ブイテスト（ヴィテスト）｜Vite ＋ test', 'describe': 'ディスクライブ｜describe ＝ 説明する', 'expect': 'エクスペクト｜expect ＝ 期待する', 'toBe': 'トゥービー｜to be ＝ 〜であること',
+    'toEqual': 'トゥーイコール｜to equal ＝ 等しいこと', 'toContain': 'トゥーコンテイン｜to contain ＝ 含むこと', 'toBeTruthy': 'トゥービートゥルーシー｜truthy ＝ 真っぽい', 'toHaveLength': 'トゥーハブレングス｜have length ＝ 長さを持つ',
+    'toThrow': 'トゥースロー｜to throw ＝ 例外を投げる', 'beforeEach': 'ビフォーイーチ｜before each ＝ 毎回の前に', 'vi.fn': 'ブイアイ エフエヌ｜function mock ＝ 偽の関数', 'mount': 'マウント｜mount ＝ 載せる',
+    'shallowMount': 'シャローマウント｜shallow ＝ 浅い', 'AAA': 'トリプルエー｜Arrange・Act・Assert', 'Arrange': 'アレンジ｜arrange ＝ 準備する', 'Act': 'アクト｜act ＝ 行動する', 'Assert': 'アサート｜assert ＝ 断言する', 'TDD': 'ティーディーディー｜Test-Driven Development ＝ テスト駆動開発',
+    /* ===== Vue ===== */
+    'ref': 'レフ｜reference ＝ 参照', 'reactive': 'リアクティブ｜reactive ＝ 反応する', 'computed': 'コンピューテッド｜computed ＝ 計算された', 'watch': 'ウォッチ｜watch ＝ 見張る', 'watchEffect': 'ウォッチエフェクト｜watch effect ＝ 見張って実行',
+    'onMounted': 'オンマウンテッド｜on mounted ＝ 載った時', 'onBeforeMount': 'オンビフォーマウント｜載る前', 'onUpdated': 'オンアップデーテッド｜更新された時', 'onBeforeUpdate': 'オンビフォーアップデート｜更新される前',
+    'onUnmounted': 'オンアンマウンテッド｜外れた時', 'onBeforeUnmount': 'オンビフォーアンマウント｜外れる前', 'nextTick': 'ネクストティック｜next tick ＝ 次の更新の後', 'defineProps': 'デファインプロップス｜define props ＝ props を定義',
+    'defineEmits': 'デファインエミッツ｜define emits ＝ emit を定義', 'defineModel': 'デファインモデル｜define model', 'emit': 'エミット｜emit ＝ 発信する', 'setup': 'セットアップ｜set up ＝ 準備する',
+    'v-if': 'ブイ イフ｜if ＝ もし', 'v-else': 'ブイ エルス｜else ＝ そうでなければ', 'v-else-if': 'ブイ エルスイフ｜else if', 'v-show': 'ブイ ショー｜show ＝ 見せる', 'v-for': 'ブイ フォー｜for ＝ 〜のために（繰り返し）',
+    ':key': 'キー｜key ＝ 目印', 'v-model': 'ブイ モデル｜model ＝ 模型・データ', 'v-bind': 'ブイ バインド｜bind ＝ 結びつける', ':class': 'クラス（バインド）', ':style': 'スタイル（バインド）', ':is': 'イズ｜is ＝ 〜である',
+    'v-on': 'ブイ オン｜on ＝ 〜の時', '@click': 'アットクリック｜click ＝ クリック', '@submit': 'アットサブミット｜submit ＝ 送信', '@input': 'アットインプット｜input ＝ 入力', 'v-html': 'ブイ エイチティーエムエル｜html ＝ HTML として出す',
+    'v-slot': 'ブイ スロット｜slot ＝ 差し込み口', 'slot': 'スロット｜slot ＝ 差し込み口', 'template': 'テンプレート｜template ＝ ひな形', 'component': 'コンポーネント｜component ＝ 部品', 'keep-alive': 'キープアライブ｜keep alive ＝ 生かしておく',
+    'router-link': 'ルーターリンク｜router ＝ 経路を決める', 'router-view': 'ルータービュー｜view ＝ 表示', 'RouterLink': 'ルーターリンク｜router link', 'RouterView': 'ルータービュー｜router view', 'KeepAlive': 'キープアライブ｜keep alive',
+    'Teleport': 'テレポート｜teleport ＝ 瞬間移動', 'useRoute': 'ユーズルート｜use route ＝ 今のルートを使う', 'useRouter': 'ユーズルーター｜use router', 'router.push': 'ルーター プッシュ｜push ＝ 押し込む（移動する）',
+    'provide': 'プロバイド｜provide ＝ 提供する', 'inject': 'インジェクト｜inject ＝ 注入する', 'Pinia': 'ピーニャ｜Vue の状態管理ライブラリ', 'defineStore': 'デファインストア｜define store ＝ ストアを定義', 'VueUse': 'ビュー ユーズ｜Vue 便利関数集',
+    'Nuxt': 'ナクスト（ニュクスト）｜Vue のフレームワーク', 'SPA': 'エスピーエー｜Single Page Application', 'SSR': 'エスエスアール｜Server Side Rendering', 'SSG': 'エスエスジー｜Static Site Generation', 'ISR': 'アイエスアール｜Incremental Static Regeneration',
+    'Vite': 'ヴィート（ビート）｜フランス語で「速い」', 'HMR': 'エイチエムアール｜Hot Module Replacement', 'npm': 'エヌピーエム｜Node Package Manager', 'Prettier': 'プリティア｜pretty ＝ きれいな', 'prettier': 'プリティア｜pretty ＝ きれいな',
+    'ESLint': 'イーエスリント｜lint ＝ 糸くず取り（コードの掃除）', 'eslint': 'イーエスリント｜lint ＝ コードの掃除', 'PR': 'ピーアール｜Pull Request', 'Pull Request': 'プルリクエスト（プルリク）｜pull request ＝ 取り込み依頼', 'Issue': 'イシュー｜issue ＝ 課題',
+    /* ===== HTML タグ ===== */
+    'html': 'エイチティーエムエル｜HyperText Markup Language', 'head': 'ヘッド｜head ＝ 頭', 'body': 'ボディ｜body ＝ 本体', 'title': 'タイトル｜title ＝ 題名', 'meta': 'メタ｜meta ＝ 〜についての情報', 'link': 'リンク｜link ＝ つなぐ',
+    'script': 'スクリプト｜script ＝ 台本・プログラム', 'style': 'スタイル｜style ＝ 様式（見た目）', 'p': 'ピー｜paragraph ＝ 段落', 'br': 'ビーアール｜break ＝ 改行', 'hr': 'エイチアール｜horizontal rule ＝ 水平線',
+    'strong': 'ストロング｜strong ＝ 強い（強調）', 'em': 'イーエム｜emphasis ＝ 強調', 'b': 'ビー｜bold ＝ 太字', 'i': 'アイ｜italic ＝ 斜体', 'small': 'スモール｜small ＝ 小さい', 'mark': 'マーク｜mark ＝ 印', 'code': 'コード｜code ＝ 符号・ソース',
+    'pre': 'プレ｜preformatted ＝ 整形済み', 'kbd': 'ケービーディー｜keyboard ＝ キーボード', 'blockquote': 'ブロッククォート｜block quote ＝ 引用ブロック', 'abbr': 'アブリ｜abbreviation ＝ 略語', 'time': 'タイム｜time ＝ 時間',
+    'address': 'アドレス｜address ＝ 住所', 'a': 'エー｜anchor ＝ 錨（リンク）', 'img': 'イメージ｜image ＝ 画像', 'picture': 'ピクチャー｜picture ＝ 絵', 'source': 'ソース｜source ＝ 出どころ', 'iframe': 'アイフレーム｜inline frame ＝ 埋め込み枠',
+    'video': 'ビデオ｜video ＝ 動画', 'audio': 'オーディオ｜audio ＝ 音声', 'canvas': 'キャンバス｜canvas ＝ 画布', 'svg': 'エスブイジー｜Scalable Vector Graphics', 'ul': 'ユーエル｜unordered list ＝ 順序なしリスト',
+    'ol': 'オーエル｜ordered list ＝ 順序ありリスト', 'li': 'エルアイ｜list item ＝ 項目', 'dl': 'ディーエル｜description list ＝ 説明リスト', 'dt': 'ディーティー｜description term ＝ 用語', 'dd': 'ディーディー｜description details ＝ 説明',
+    'table': 'テーブル｜table ＝ 表', 'caption': 'キャプション｜caption ＝ 見出し', 'thead': 'ティーヘッド｜table head ＝ 表の頭', 'tbody': 'ティーボディ｜table body ＝ 表の本体', 'tfoot': 'ティーフット｜table foot ＝ 表の足', 'tr': 'ティーアール｜table row ＝ 行',
+    'th': 'ティーエイチ｜table header ＝ 見出しセル', 'td': 'ティーディー｜table data ＝ データセル', 'form': 'フォーム｜form ＝ 書式・入力欄', 'label': 'ラベル｜label ＝ 札', 'input': 'インプット｜input ＝ 入力', 'textarea': 'テキストエリア｜text area ＝ 文章入力欄',
+    'select': 'セレクト｜select ＝ 選ぶ', 'option': 'オプション｜option ＝ 選択肢', 'button': 'ボタン｜button ＝ ボタン', 'fieldset': 'フィールドセット｜field set ＝ 項目のまとまり', 'legend': 'レジェンド｜legend ＝ 凡例・見出し', 'div': 'ディブ｜division ＝ 区分',
+    'span': 'スパン｜span ＝ 範囲', 'header': 'ヘッダー｜header ＝ 頭部', 'nav': 'ナブ｜navigation ＝ 案内', 'main': 'メイン｜main ＝ 主な', 'section': 'セクション｜section ＝ 区画', 'article': 'アーティクル｜article ＝ 記事', 'aside': 'アサイド｜aside ＝ 脇',
+    'footer': 'フッター｜footer ＝ 足元', 'figure': 'フィギュア｜figure ＝ 図', 'figcaption': 'フィグキャプション｜figure caption ＝ 図の説明', 'details': 'ディテールズ｜details ＝ 詳細', 'summary': 'サマリー｜summary ＝ 要約', 'dialog': 'ダイアログ｜dialog ＝ 対話ウィンドウ',
+    /* ===== HTML 属性 ===== */
+    'href': 'エイチレフ｜hypertext reference ＝ 行き先', 'src': 'エスアールシー（ソース）｜source ＝ 元', 'alt': 'オルト｜alternative ＝ 代わりの', 'id': 'アイディー｜identifier ＝ 識別子', 'type': 'タイプ｜type ＝ 種類',
+    'name': 'ネーム｜name ＝ 名前', 'value': 'バリュー｜value ＝ 値', 'placeholder': 'プレースホルダー｜place holder ＝ 場所取り', 'for': 'フォー｜for ＝ 〜のための', 'action': 'アクション｜action ＝ 動作', 'method': 'メソッド｜method ＝ 方法',
+    'target': 'ターゲット｜target ＝ 的', 'rel': 'レル｜relationship ＝ 関係', 'lang': 'ラング｜language ＝ 言語', 'charset': 'キャラセット｜character set ＝ 文字コード', 'content': 'コンテンツ｜content ＝ 中身', 'width': 'ウィズ｜width ＝ 幅',
+    'height': 'ハイト｜height ＝ 高さ', 'role': 'ロール｜role ＝ 役割', 'tabindex': 'タブインデックス｜tab index ＝ Tab 順', 'autocomplete': 'オートコンプリート｜auto complete ＝ 自動補完', 'min': 'ミン｜minimum ＝ 最小', 'max': 'マックス｜maximum ＝ 最大',
+    'minlength': 'ミンレングス｜minimum length', 'maxlength': 'マックスレングス｜maximum length', 'pattern': 'パターン｜pattern ＝ 型・模様', 'step': 'ステップ｜step ＝ 刻み', 'rows': 'ローズ｜rows ＝ 行数', 'cols': 'コルズ｜columns ＝ 列数',
+    'required': 'リクワイアード｜required ＝ 必須', 'disabled': 'ディスエーブルド｜disabled ＝ 無効', 'checked': 'チェックト｜checked ＝ チェック済み', 'selected': 'セレクテッド｜selected ＝ 選択済み', 'multiple': 'マルチプル｜multiple ＝ 複数',
+    'hidden': 'ヒドゥン｜hidden ＝ 隠れた', 'autofocus': 'オートフォーカス｜auto focus ＝ 自動で選択', 'controls': 'コントロールズ｜controls ＝ 操作部品', 'loop': 'ループ｜loop ＝ 繰り返し', 'muted': 'ミュート｜muted ＝ 消音', 'autoplay': 'オートプレイ｜auto play ＝ 自動再生',
+    'open': 'オープン｜open ＝ 開く', 'download': 'ダウンロード｜download ＝ 受け取る', 'defer': 'ディファー｜defer ＝ 後回し', 'novalidate': 'ノーバリデート｜no validate ＝ 検証しない', 'DOCTYPE': 'ドックタイプ｜document type ＝ 文書の種類',
+    'GET': 'ゲット｜get ＝ 取得', 'POST': 'ポスト｜post ＝ 送る', 'UTF-8': 'ユーティーエフ エイト｜文字コードの名前', 'viewport': 'ビューポート｜view port ＝ 見える範囲', 'noopener': 'ノーオープナー｜no opener ＝ 開いた元を渡さない',
+    '_blank': 'ブランク｜blank ＝ 空の（新しいタブ）', 'stylesheet': 'スタイルシート｜style sheet ＝ 様式の紙', 'loading': 'ローディング｜loading ＝ 読み込み', 'placeholder ': 'プレースホルダー',
+    /* ===== CLI / Git ===== */
+    'pwd': 'ピーダブリューディー｜print working directory ＝ 今いる場所を表示', 'ls': 'エルエス｜list ＝ 一覧', 'cd': 'シーディー｜change directory ＝ 場所を変える', 'mkdir': 'エムケーディーアール（メイクディレクトリ）｜make directory ＝ フォルダを作る',
+    'touch': 'タッチ｜touch ＝ 触る（空ファイル作成）', 'cat': 'キャット｜concatenate ＝ つなげて表示', 'tail': 'テイル｜tail ＝ しっぽ（末尾）', 'wc -l': 'ダブリューシー エルオプション｜word count ＝ 行数を数える', 'grep': 'グレップ｜global regular expression print',
+    'cp': 'シーピー｜copy ＝ コピー', 'mv': 'エムブイ｜move ＝ 移動', 'rm': 'アールエム｜remove ＝ 削除', 'echo': 'エコー｜echo ＝ こだま（表示）', 'clear': 'クリア｜clear ＝ 消す', 'man': 'マン｜manual ＝ 説明書',
+    'sudo': 'スード（スードゥ）｜superuser do ＝ 管理者として実行', 'chmod +x': 'チェンジモード プラスエックス｜change mode ＝ 権限を変える', 'curl': 'カール｜client URL', 'ssh': 'エスエスエイチ｜Secure Shell', 'ssh-keygen': 'エスエスエイチ キージェン｜key generator ＝ 鍵を作る',
+    'npx': 'エヌピーエックス｜npm execute ＝ npm のコマンドを実行', 'git init': 'ギット イニット｜initialize ＝ 初期化', 'git clone': 'ギット クローン｜clone ＝ 複製', 'git status': 'ギット ステータス｜status ＝ 状態', 'git add': 'ギット アド｜add ＝ 追加',
+    'git commit': 'ギット コミット｜commit ＝ 確定させる', 'git log': 'ギット ログ｜log ＝ 記録', 'git diff': 'ギット ディフ｜difference ＝ 差分', 'git show': 'ギット ショー｜show ＝ 見せる', 'git blame': 'ギット ブレーム｜blame ＝ 責める（誰が書いたか）',
+    'git tag': 'ギット タグ｜tag ＝ 札', 'git branch': 'ギット ブランチ｜branch ＝ 枝', 'git checkout': 'ギット チェックアウト｜checkout ＝ 切り替える', 'git merge': 'ギット マージ｜merge ＝ 合流', 'git pull': 'ギット プル｜pull ＝ 引っ張る',
+    'git fetch': 'ギット フェッチ｜fetch ＝ 取ってくる', 'git push': 'ギット プッシュ｜push ＝ 押し出す', 'git stash': 'ギット スタッシュ｜stash ＝ 隠しておく', 'git restore': 'ギット リストア｜restore ＝ 元に戻す', 'git reset': 'ギット リセット｜reset ＝ 巻き戻す',
+    'git revert': 'ギット リバート｜revert ＝ 打ち消す', 'git cherry-pick': 'ギット チェリーピック｜cherry pick ＝ いいとこ取り', 'git rebase': 'ギット リベース｜rebase ＝ 土台を付け替える', '.gitignore': 'ドット ギットイグノア｜ignore ＝ 無視する',
+    'HEAD': 'ヘッド｜head ＝ 頭（今いる位置）', 'origin': 'オリジン｜origin ＝ 起源（リモートの名前）', 'develop': 'デベロップ｜develop ＝ 開発', 'hotfix': 'ホットフィックス｜hot fix ＝ 緊急修正', 'fast-forward': 'ファストフォワード｜fast forward ＝ 早送り',
+    'CONFLICT': 'コンフリクト｜conflict ＝ 衝突', '.env': 'ドットエンブ｜environment ＝ 環境', 'Elements': 'エレメンツ｜elements ＝ 要素', 'Console': 'コンソール｜console ＝ 操作画面', 'Network': 'ネットワーク｜network ＝ 通信', 'Sources': 'ソースィズ｜sources ＝ 元のファイル',
+    'Esc': 'エスケープ｜escape ＝ 逃げる', 'dd': 'ディーディー｜delete ＝ 行を削除（Vim）', 'yy': 'ワイワイ｜yank ＝ 行をコピー（Vim）', 'gg': 'ジージー｜go ＝ 先頭へ（Vim）', ':wq': 'コロン ダブリュー キュー｜write ＋ quit ＝ 保存して終了', ':q!': 'コロン キュー バン｜quit ＝ 保存せず終了',
+    ':w': 'コロン ダブリュー｜write ＝ 保存', ':q': 'コロン キュー｜quit ＝ 終了', 'Format on Save': 'フォーマット オン セーブ｜保存した時に整形', 'GitLens': 'ギットレンズ｜Git ＋ lens ＝ レンズ', 'Error Lens': 'エラーレンズ｜エラーを行に表示'
+  };
+  /* CSS プロパティ */
+  const C = {
+    'font-size': 'フォントサイズ｜文字の大きさ', 'font-family': 'フォントファミリー｜family ＝ 一族（書体）', 'font-weight': 'フォントウェイト｜weight ＝ 重さ（太さ）', 'font-style': 'フォントスタイル｜style ＝ 様式', 'line-height': 'ラインハイト｜行の高さ',
+    'letter-spacing': 'レタースペーシング｜letter spacing ＝ 文字の間隔', 'text-align': 'テキストアライン｜align ＝ 揃える', 'text-decoration': 'テキストデコレーション｜decoration ＝ 飾り', 'text-transform': 'テキストトランスフォーム｜transform ＝ 変換',
+    'text-overflow': 'テキストオーバーフロー｜overflow ＝ あふれ', 'white-space': 'ホワイトスペース｜white space ＝ 空白', 'word-break': 'ワードブレイク｜break ＝ 区切る', 'overflow-wrap': 'オーバーフローラップ｜wrap ＝ 折り返す', 'color': 'カラー｜color ＝ 色',
+    'vertical-align': 'バーティカルアライン｜vertical ＝ 縦の', 'background': 'バックグラウンド｜background ＝ 背景', 'background-color': 'バックグラウンドカラー｜背景色', 'background-image': 'バックグラウンドイメージ｜背景画像', 'background-size': 'バックグラウンドサイズ｜背景の大きさ',
+    'background-position': 'バックグラウンドポジション｜position ＝ 位置', 'background-repeat': 'バックグラウンドリピート｜repeat ＝ 繰り返し', 'opacity': 'オパシティ｜opacity ＝ 不透明度', 'min-width': 'ミンウィズ｜minimum width ＝ 最小幅', 'max-width': 'マックスウィズ｜maximum width ＝ 最大幅',
+    'min-height': 'ミンハイト｜最小の高さ', 'max-height': 'マックスハイト｜最大の高さ', 'margin': 'マージン｜margin ＝ 余白（外側）', 'margin-top': 'マージントップ｜上の外側の余白', 'padding': 'パディング｜padding ＝ 詰め物（内側の余白）', 'padding-top': 'パディングトップ｜上の内側の余白',
+    'border': 'ボーダー｜border ＝ 境界線', 'border-radius': 'ボーダーラディウス｜radius ＝ 半径（角丸）', 'border-color': 'ボーダーカラー｜枠線の色', 'border-bottom': 'ボーダーボトム｜下の枠線', 'box-shadow': 'ボックスシャドウ｜shadow ＝ 影', 'box-sizing': 'ボックスサイジング｜sizing ＝ 大きさの測り方',
+    'outline': 'アウトライン｜outline ＝ 輪郭', 'overflow': 'オーバーフロー｜overflow ＝ あふれ', 'overflow-x': 'オーバーフローエックス｜横のあふれ', 'display': 'ディスプレイ｜display ＝ 表示', 'visibility': 'ビジビリティ｜visibility ＝ 可視性', 'position': 'ポジション｜position ＝ 位置',
+    'top': 'トップ｜top ＝ 上', 'right': 'ライト｜right ＝ 右', 'bottom': 'ボトム｜bottom ＝ 下', 'left': 'レフト｜left ＝ 左', 'inset': 'インセット｜inset ＝ はめ込み（上下左右）', 'z-index': 'ズィーインデックス｜z 軸の順番（重なり）', 'float': 'フロート｜float ＝ 浮かぶ',
+    'cursor': 'カーソル｜cursor ＝ 矢印', 'pointer-events': 'ポインターイベンツ｜pointer events ＝ クリックの受け付け', 'transform': 'トランスフォーム｜transform ＝ 変形', 'transition': 'トランジション｜transition ＝ 移り変わり', 'animation': 'アニメーション｜animation ＝ 動き',
+    'object-fit': 'オブジェクトフィット｜fit ＝ 収める', 'aspect-ratio': 'アスペクトレシオ｜aspect ratio ＝ 縦横比', 'flex': 'フレックス｜flex ＝ 柔軟な', 'flex-direction': 'フレックスディレクション｜direction ＝ 向き', 'flex-wrap': 'フレックスラップ｜wrap ＝ 折り返し',
+    'flex-grow': 'フレックスグロー｜grow ＝ 伸びる', 'flex-shrink': 'フレックスシュリンク｜shrink ＝ 縮む', 'flex-basis': 'フレックスベイシス｜basis ＝ 基準', 'justify-content': 'ジャスティファイコンテンツ｜justify ＝ 配分する', 'align-items': 'アラインアイテムズ｜items ＝ 項目',
+    'align-self': 'アラインセルフ｜self ＝ 自分', 'align-content': 'アラインコンテンツ｜content ＝ 中身', 'gap': 'ギャップ｜gap ＝ すき間', 'row-gap': 'ローギャップ｜行の間', 'order': 'オーダー｜order ＝ 順番', 'grid-template-columns': 'グリッドテンプレートカラムズ｜列の設計',
+    'grid-template-rows': 'グリッドテンプレートローズ｜行の設計', 'grid-column': 'グリッドカラム｜列', 'place-items': 'プレイスアイテムズ｜place ＝ 置く', 'place-content': 'プレイスコンテンツ｜中身を置く', 'list-style': 'リストスタイル｜リストの飾り', 'table-layout': 'テーブルレイアウト｜layout ＝ 配置',
+    'scroll-behavior': 'スクロールビヘイビア｜behavior ＝ ふるまい', 'filter': 'フィルター｜filter ＝ ろ過', 'resize': 'リサイズ｜resize ＝ 大きさ変更', 'will-change': 'ウィルチェンジ｜will change ＝ これから変わる', 'font-variant': 'フォントバリアント｜variant ＝ 異体', 'line-clamp': 'ラインクランプ｜clamp ＝ 締めつける（行数制限）'
+  };
+  K.yomi = Object.assign({}, Y, C);
+  K.yomiOf = function (k) { return K.yomi[k] || K.yomi[(k || '').toLowerCase()] || ''; };
+})();

@@ -1810,94 +1810,142 @@ console.log(n.length);
         },
       },
       {
-        t: 'アクセス修飾子：誰が触れる？', lead: '<code class="i">private</code> を付けるか、付けないか。<b>同じ操作</b>で、結果を比べよう。',
+        t: 'アクセス修飾子：誰が触れる？', lead: '1つずつ、<b>付けた時</b>と<b>付けない時</b>を比べよう。ボタンを押すと、両方に同じ操作をする。',
         render(el) {
           style('amx', `
           .am-lv{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
-          .am-lv span{flex:1 1 180px;padding:.55em .9em;border-radius:10px;border:2px solid var(--c);background:color-mix(in srgb,var(--c) 12%,var(--card));font:800 .9rem var(--mono);color:var(--c)}
-          .am-lv small{display:block;font:700 .75rem var(--font);color:var(--mute)}
+          .am-lv>div{flex:1 1 180px;padding:.55em .9em;border-radius:10px;border:2px solid var(--c);background:color-mix(in srgb,var(--c) 12%,var(--card));font-weight:800}
+          .am-lv .am-w{font:800 .95rem var(--mono);color:var(--c)}.am-lv small{display:block;font:700 .75rem var(--font);color:var(--mute)}
+          .am-w{font-family:var(--mono);font-weight:800}
+          .am-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:12px}@media(max-width:700px){.am-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}}
+          .am-tabs button{all:unset;cursor:pointer;box-sizing:border-box;text-align:center;padding:.55em .6em;border-radius:10px;border:1px solid var(--line);background:var(--card);display:grid;gap:1px;transition:.2s}
+          .am-tabs button small{font:700 .72rem var(--font);color:var(--mute)}.am-tabs button:hover{transform:translateY(-2px)}
+          .am-tabs button.on{border-color:var(--ts);background:color-mix(in srgb,var(--ts) 18%,var(--card))}
+          .am-vb{display:flex;gap:8px;margin-bottom:10px}.am-vb button{all:unset;cursor:pointer;padding:.35em 1em;border-radius:999px;border:1px solid var(--line);background:var(--card);font-weight:800;font-size:.84rem}.am-vb button.on{border-color:var(--ts);background:color-mix(in srgb,var(--ts) 18%,var(--card))}
           .am-ctl{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;padding:12px;border-radius:12px;background:var(--card);border:1px solid var(--line)}.am-ctl .sp{flex:1}
           .am-duo{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}@media(max-width:900px){.am-duo{grid-template-columns:1fr}}
           .am-c{border:2px solid var(--c);border-radius:12px;background:var(--card);overflow:hidden}
           .am-h{padding:.6em 1em;background:color-mix(in srgb,var(--c) 16%,var(--card2));font-weight:900;color:var(--c)}
           .am-c pre.code{margin:0;border:0;border-radius:0;font-size:.82rem}
+          .am-cand{display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding:.5em 1em;border-top:1px dashed var(--line);font-size:.78rem;font-weight:700;color:var(--mute)}
+          .am-cand i{font-style:normal;padding:.1em .7em;border-radius:6px;background:var(--card2);border:1px solid var(--line);font:700 .78rem var(--mono);color:var(--text)}
           .am-r{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:.7em 1em;border-top:1px dashed var(--line);transition:.3s}
           .am-r b{font:900 1.4rem var(--mono)}.am-r small{font-weight:700;color:var(--mute)}
-          .am-r.bad{background:color-mix(in srgb,var(--bad) 14%,transparent)}.am-r.good{background:color-mix(in srgb,var(--ok) 12%,transparent)}
-          .am-msg{flex:1 1 100%;font:700 .82rem/1.6 var(--mono)}.am-msg.ng{color:#ff9aa5}.am-msg.ok{color:#9be58b}
+          .am-r.bad{background:color-mix(in srgb,var(--bad) 16%,transparent);animation:shake .4s}.am-r.ok{background:color-mix(in srgb,var(--ok) 12%,transparent)}.am-r.ng{background:color-mix(in srgb,var(--ts) 10%,transparent)}
+          .am-msg{flex:1 1 100%;font:700 .84rem/1.6 var(--font)}.am-r.bad .am-msg{color:#ff9aa5}.am-r.ok .am-msg{color:#9be58b}
+          .am-bn{margin-top:14px;padding:.8em 1em;border-radius:10px;background:color-mix(in srgb,var(--ts) 12%,var(--card));border:1px solid color-mix(in srgb,var(--ts) 40%,var(--line));font-weight:800;line-height:1.7}
           .am-sec{margin-top:26px}.am-sec>h4{font:900 1.05rem var(--font);margin-bottom:10px}
-          .am-pick{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:12px}
-          .am-pick button{all:unset;cursor:pointer;box-sizing:border-box;padding:.55em .8em;border-radius:8px;border:1px solid var(--line);background:var(--card);font-weight:800;font-size:.84rem;line-height:1.5;transition:.2s}
-          .am-pick button:hover{transform:translateY(-2px)}.am-pick button.on{border-color:var(--ts);background:color-mix(in srgb,var(--ts) 16%,var(--card))}
-          .am-ans{display:grid;grid-template-columns:minmax(0,.55fr) minmax(0,1.45fr);gap:14px;align-items:stretch;animation:tvpop .35s both}@media(max-width:820px){.am-ans{grid-template-columns:1fr}}
-          .am-v{padding:14px;border-radius:12px;border:2px solid var(--c);background:color-mix(in srgb,var(--c) 12%,var(--card));display:grid;align-content:center;gap:6px}
-          .am-v b{font:900 1.25rem var(--mono);color:var(--c)}.am-v p{font-weight:800;font-size:.9rem}
-          .am-tip{margin-top:14px;padding:.7em 1em;border-radius:10px;background:color-mix(in srgb,var(--ts) 12%,var(--card));border:1px solid color-mix(in srgb,var(--ts) 40%,var(--line));font-weight:800}`);
+          .am-tip{margin-top:14px;padding:.7em 1em;border-radius:10px;background:var(--card);border:1px dashed var(--line);font-weight:800}`);
 
-          /* ① 3段階（短く） */
+          const W = (t) => h('span', { class: 'am-w' }, t);
+          /* ① 3段階 */
           const lv = h('div', { class: 'am-lv' },
-            h('span', { style: { '--c': 'var(--ok)' } }, '🌐 public', h('small', '誰でも')),
-            h('span', { style: { '--c': 'var(--pink)' } }, '🛡️ protected', h('small', '自分 ＋ 子クラス')),
-            h('span', { style: { '--c': 'var(--bad)' } }, '🔒 private', h('small', '自分だけ')));
+            h('div', { style: { '--c': 'var(--ok)' } }, '🌐 ', W('public'), h('small', '誰でも')),
+            h('div', { style: { '--c': 'var(--pink)' } }, '🛡️ ', W('protected'), h('small', '自分 ＋ 子クラス')),
+            h('div', { style: { '--c': 'var(--bad)' } }, '🔒 ', W('private'), h('small', '自分だけ')));
 
-          /* ② 比較：public のまま vs private */
-          let bal = [10000, 10000];
-          const srcOf = (mod) => `class BankAccount {\n  ${mod}balance = 10000;\n\n  deposit(n: number) {\n    if (n <= 0) throw new Error("1円以上");\n    this.balance += n;\n  }\n}\n\nconst acc = new BankAccount();`;
-          const mk = (c, title, mod) => {
-            const cd = code(srcOf(mod), 'ts', { color: c }); cd.setHi([2]);
-            const bv = h('b'), msg = h('div', { class: 'am-msg' }), r = h('div', { class: 'am-r' }, h('small', '残高'), bv, h('small', '円'), msg);
-            return { box: h('div', { class: 'am-c', style: { '--c': c } }, h('div', { class: 'am-h' }, title), cd, r), bv, msg, r };
-          };
-          const A = mk('var(--bad)', '❌ private なし（全員が触れる）', ''), B = mk('var(--ok)', '✅ private あり（窓口だけ）', 'private ');
-          const paint = () => { A.bv.textContent = bal[0].toLocaleString(); B.bv.textContent = bal[1].toLocaleString(); };
-          const say = (X, ok, t, cls) => { X.msg.className = 'am-msg ' + (ok ? 'ok' : 'ng'); X.msg.textContent = t; X.r.className = 'am-r ' + (cls || ''); };
-          const direct = () => { bal[0] = 99999999; paint(); say(A, false, '💥 acc.balance = 99999999 が通った！', 'bad'); say(B, false, '✖ 赤線：private は外から触れない', ''); };
-          const dep = (n) => {
-            if (n <= 0) { say(A, false, 'deposit(' + n + ') → Error: 1円以上', ''); say(B, false, 'deposit(' + n + ') → Error: 1円以上', ''); return; }
-            bal = bal.map((x) => x + n); paint(); say(A, true, '✓ deposit(' + n + ')', 'good'); say(B, true, '✓ deposit(' + n + ')', 'good');
-          };
-          const reset = () => { bal = [10000, 10000]; paint(); [A, B].forEach((X) => { X.msg.textContent = ''; X.r.className = 'am-r'; }); };
-          paint();
-          const cmp = h('div', null,
-            h('div', { class: 'am-ctl' }, '👉 同じ操作を両方に：',
-              h('button', { class: 'btn', onclick: direct }, 'acc.balance = 99999999'),
-              h('button', { class: 'btn primary', onclick: () => dep(5000) }, 'acc.deposit(5000)'),
-              h('button', { class: 'btn', onclick: () => dep(-5000) }, 'acc.deposit(-5000)'),
-              h('span', { class: 'sp' }), h('button', { class: 'btn ghost', onclick: reset }, icon('rotate-ccw'), 'もどす')),
-            h('div', { class: 'am-duo' }, A.box, B.box));
-
-          /* ③ 実際のケース */
-          const CS = [
-            ['💳 残高・暗証番号', 'private', 'var(--bad)', 'class BankAccount {\n  private balance = 0;\n  private pin = "1234";\n}', '外から変えさせない'],
-            ['👤 名義・入金ボタン', 'public', 'var(--ok)', 'class BankAccount {\n  public owner = "田中";\n  public deposit(n: number) {}\n}', '誰でも使ってOK'],
-            ['🏦 支店コード', 'protected', 'var(--pink)', 'class BankAccount {\n  protected branch = "新宿";\n}\nclass Savings extends BankAccount {\n  show() { return this.branch; } // ✓\n}\nnew Savings().branch; // ✖', '子まではOK、外はNG'],
-            ['🆔 口座番号（不変）', 'readonly', 'var(--ts)', 'class BankAccount {\n  public readonly id = 1001;\n}\nconst acc = new BankAccount();\nacc.id = 2; // ✖ 書き換え禁止', '作ったら変えない'],
-            ['🧮 内部の計算', 'private メソッド', 'var(--bad)', 'class BankAccount {\n  private calcFee() { return 110; }\n  withdraw(n: number) {\n    return n + this.calcFee();\n  }\n}', '中だけで使う関数'],
+          /* ② 1つずつ比較 */
+          const CLS = (lines) => lines.join('\n');
+          const TABS = [
+            { mod: 'private', sub: '外から守る', vl: '残高', v: 10000, ex: '🏦 銀行口座',
+              alt: { ex: '🔑 パスワード', vl: '', v: null, cand: [['password', 'login'], ['login']], hi: [2],
+                a: CLS(['class User {', '  password = "abc123";   // ← private なし', '', '  login(input: string) {', '    return input === this.password;', '  }', '}', '', 'const u = new User();']),
+                b: CLS(['class User {', '  private password = "abc123";', '', '  login(input: string) {', '    return input === this.password;', '  }', '}', '', 'const u = new User();']),
+                acts: [{ l: 'console.log(u.password)', a: ['bad', '💥 パスワードが丸見え！'], b: ['ng', '✖ 赤線：private は外から読めない'] }, { l: 'u.login("abc123")', a: ['ok', '✓ true'], b: ['ok', '✓ true（確認は login() が担当）'] }],
+                bn: '🎯 パスワードのような<b>外に出したくない値</b>は private。確認だけ <code>login()</code> に任せる。' },
+              a: CLS(['class BankAccount {', '  balance = 10000;     // ← private なし', '', '  deposit(n: number) {', '    if (n <= 0) throw new Error("1円以上");', '    this.balance += n;', '  }', '}', '', 'const acc = new BankAccount();']),
+              b: CLS(['class BankAccount {', '  private balance = 10000;', '', '  deposit(n: number) {', '    if (n <= 0) throw new Error("1円以上");', '    this.balance += n;', '  }', '}', '', 'const acc = new BankAccount();']), hi: [2],
+              cand: [['balance', 'deposit'], ['deposit']],
+              acts: [
+                { l: 'acc.balance = 99999999', a: ['bad', '💥 通った！ 残高が勝手に変わった', 99999999], b: ['ng', '✖ 赤線：private は外から触れない（残高そのまま）'] },
+                { l: 'acc.deposit(5000)', a: ['ok', '✓ 入金できた', { add: 5000 }], b: ['ok', '✓ 入金できた（窓口を通った）', { add: 5000 }] },
+                { l: 'acc.deposit(-5000)', a: ['ng', 'Error: 1円以上（窓口がルールを守った）'], b: ['ng', 'Error: 1円以上（窓口がルールを守った）'] }],
+              bn: '🎯 private の<b>メリット</b>：変更の入口が <code>deposit()</code> だけになる → ルール（1円以上）が<b>必ず守られる</b>。間違った書き換えは、書いた瞬間に赤線。' },
+            { mod: 'public', sub: '外に見せる窓口', vl: '残高', v: 10000, ex: '🏦 入金ボタン',
+              alt: { ex: '🛒 カートに追加', vl: '', v: null, cand: [[], ['add']], hi: [4],
+                a: CLS(['class Cart {', '  private items: number[] = [];', '', '  private add(price: number) {   // ← private', '    this.items.push(price);', '  }', '}', '', 'const cart = new Cart();']),
+                b: CLS(['class Cart {', '  private items: number[] = [];', '', '  public add(price: number) {    // ← public', '    this.items.push(price);', '  }', '}', '', 'const cart = new Cart();']),
+                acts: [{ l: 'cart.add(500)', a: ['bad', '✖ 赤線：private なので呼べない → 商品を追加できない！'], b: ['ok', '✓ 追加できた'] }, { l: 'cart.items.push(0)', a: ['ng', '✖ 赤線：items は private'], b: ['ng', '✖ 赤線：items は private（中身は守られる）'] }],
+                bn: '🎯 画面のボタンから呼ぶ操作（add）は public。中身（items）は private のまま。' },
+              a: CLS(['class BankAccount {', '  private balance = 10000;', '', '  private deposit(n: number) {   // ← private', '    this.balance += n;', '  }', '}', '', 'const acc = new BankAccount();']),
+              b: CLS(['class BankAccount {', '  private balance = 10000;', '', '  public deposit(n: number) {    // ← public', '    this.balance += n;', '  }', '}', '', 'const acc = new BankAccount();']), hi: [4],
+              cand: [[], ['deposit']],
+              acts: [
+                { l: 'acc.deposit(5000)', a: ['bad', '✖ 赤線：private なので呼べない → 入金できない！'], b: ['ok', '✓ 入金できた', { add: 5000 }] },
+                { l: 'acc.balance = 0', a: ['ng', '✖ 赤線：private'], b: ['ng', '✖ 赤線：private（残高は守られたまま）'] }],
+              bn: '🎯 public の<b>役目</b>：外から使ってほしい「窓口」に付ける。<b>閉じすぎる</b>（全部 private）と、使えないクラスになる。' },
+            { mod: 'protected', sub: '子には見せる', vl: '', v: null, ex: '🏦 支店コード',
+              alt: { ex: '📨 通知のログ', hi: [2],
+                a: CLS(['class Notice {', '  private log(msg: string) {}   // ← private', '}', '', 'class MailNotice extends Notice {', '  send() { this.log("送信"); }', '}', '', 'const m = new MailNotice();']),
+                b: CLS(['class Notice {', '  protected log(msg: string) {}   // ← protected', '}', '', 'class MailNotice extends Notice {', '  send() { this.log("送信"); }', '}', '', 'const m = new MailNotice();']),
+                acts: [{ l: 'MailNotice の中で this.log()', a: ['bad', '✖ 赤線：private は子クラスから呼べない'], b: ['ok', '✓ 子クラスから呼べる（共通のログ処理を再利用）'] }, { l: '外から m.log("x")', a: ['ng', '✖ 赤線'], b: ['ng', '✖ 赤線：外からは呼べない'] }],
+                bn: '🎯 <b>親が用意した共通処理</b>を、子だけが使えるようにしたい → protected。' },
+              a: CLS(['class BankAccount {', '  private branch = "新宿";   // ← private', '}', '', 'class Savings extends BankAccount {', '  show() { return this.branch; }', '}', '', 'const s = new Savings();']),
+              b: CLS(['class BankAccount {', '  protected branch = "新宿";   // ← protected', '}', '', 'class Savings extends BankAccount {', '  show() { return this.branch; }', '}', '', 'const s = new Savings();']), hi: [2],
+              cand: null,
+              acts: [
+                { l: 'Savings の中で this.branch', a: ['bad', '✖ 赤線：private は子クラスからも見えない'], b: ['ok', '✓ 子クラスなら読める → "新宿"'] },
+                { l: '外から s.branch', a: ['ng', '✖ 赤線：外からは見えない'], b: ['ng', '✖ 赤線：外からは見えない（protected でも外はNG）'] }],
+              bn: '🎯 protected の<b>使いどころ</b>：<b>親子クラス</b>で共有したいデータ。private だと子も使えず、public だと外に漏れる。→ ちょうど中間。' },
+            { mod: 'readonly', sub: '作ったら変えない', vl: '口座番号', v: 1001, ex: '🆔 口座番号',
+              alt: { ex: '📅 作成日', vl: '作成日', v: '2025-01-10', hi: [2],
+                a: CLS(['class Booking {', '  createdAt = "2025-01-10";   // ← readonly なし', '}', '', 'const b = new Booking();']),
+                b: CLS(['class Booking {', '  readonly createdAt = "2025-01-10";', '}', '', 'const b = new Booking();']),
+                acts: [{ l: 'b.createdAt = "2000-01-01"', a: ['bad', '💥 作成日が書き換わった（履歴が壊れる）', '2000-01-01'], b: ['ng', '✖ 赤線：readonly は代入できない'] }, { l: 'console.log(b.createdAt)', a: ['ok', '✓ 読める'], b: ['ok', '✓ 読むのはOK'] }],
+                bn: '🎯 作成日・ID など<b>あとで変わってはいけない値</b>には readonly。' },
+              a: CLS(['class BankAccount {', '  id = 1001;            // ← readonly なし', '}', '', 'const acc = new BankAccount();']),
+              b: CLS(['class BankAccount {', '  readonly id = 1001;', '}', '', 'const acc = new BankAccount();']), hi: [2],
+              cand: null,
+              acts: [
+                { l: 'acc.id = 2', a: ['bad', '💥 口座番号が書き換わった！', 2], b: ['ng', '✖ 赤線：readonly は代入できない'] },
+                { l: 'console.log(acc.id)', a: ['ok', '✓ 読める'], b: ['ok', '✓ 読むのはOK'] }],
+              bn: '🎯 readonly の<b>メリット</b>：「作ったら不変」の値（ID・口座番号）を、<b>うっかり変更から</b>守る。読むのは自由。' },
           ];
-          const pick = h('div', { class: 'am-pick' }), ans = h('div');
-          const showC = (i) => {
-            const r = CS[i];
-            pick.querySelectorAll('button').forEach((b, k) => b.classList.toggle('on', k === i));
-            ans.replaceChildren(h('div', { class: 'am-ans' }, h('div', { class: 'am-v', style: { '--c': r[2] } }, h('b', r[1]), h('p', r[4])), code(r[3], 'ts', { color: r[2] })));
+          const tabs = h('div', { class: 'am-tabs' }), stage = h('div');
+          const fmtV = (t, v) => (t.vl === '残高' ? v.toLocaleString() : String(v));
+          const show = (ti, vi) => {
+            vi = vi || 0;
+            const base = TABS[ti], t = vi ? Object.assign({}, base, base.alt) : base;
+            tabs.querySelectorAll('button').forEach((b, k) => b.classList.toggle('on', k === ti));
+            const vbar = h('div', { class: 'am-vb' }, [base.ex, base.alt.ex].map((x, k) => h('button', { class: k === vi ? 'on' : '', onclick: () => show(ti, k) }, '例' + (k + 1) + '：' + x)));
+            let vals = [t.v, t.v];
+            const side = (c, title, src, k) => {
+              const cd = code(src, 'ts', { color: c }); cd.setHi(t.hi);
+              const bv = h('b'), msg = h('div', { class: 'am-msg' }, '👆 上のボタンを押す');
+              const r = h('div', { class: 'am-r' }, t.v != null ? [h('small', t.vl), bv] : [], msg);
+              const cand = t.cand ? h('div', { class: 'am-cand' }, '💡 ', h('span', { class: 'am-w' }, 'acc.'), ' と打つと出る候補：', t.cand[k].length ? t.cand[k].map((x) => h('i', x)) : h('i', '（なし）')) : null;
+              const paint = () => { if (t.v != null) bv.textContent = fmtV(t, vals[k]); };
+              paint();
+              return { box: h('div', { class: 'am-c', style: { '--c': c } }, h('div', { class: 'am-h' }, ...title), cd, cand, r), r, msg, paint };
+            };
+            const A = side('var(--bad)', ['❌ ', W(t.mod), ' なし'], t.a, 0), B = side('var(--ok)', ['✅ ', W(t.mod), ' あり'], t.b, 1);
+            const apply = (X, k, res) => {
+              if (res[2] != null) vals[k] = (typeof res[2] === 'object') ? vals[k] + res[2].add : res[2];
+              X.paint(); X.r.className = 'am-r ' + res[0]; X.msg.textContent = res[1];
+            };
+            const reset = () => { vals = [t.v, t.v]; [A, B].forEach((X) => { X.paint(); X.r.className = 'am-r'; X.msg.textContent = '👆 上のボタンを押す'; }); };
+            const bn = h('div', { class: 'am-bn', html: t.bn });
+            stage.replaceChildren(vbar,
+              h('div', { class: 'am-ctl' }, '👉 両方に同じ操作：', t.acts.map((a) => h('button', { class: 'btn', onclick: () => { apply(A, 0, a.a); apply(B, 1, a.b); } }, a.l)), h('span', { class: 'sp' }), h('button', { class: 'btn ghost', onclick: reset }, icon('rotate-ccw'), 'もどす')),
+              h('div', { class: 'am-duo' }, A.box, B.box), bn);
+            setTimeout(() => { const b0 = stage.querySelector('.am-ctl .btn'); b0 && b0.click(); }, 350);   // 最初の1つを自動で見せる
           };
-          CS.forEach((r, i) => pick.append(h('button', { onclick: () => showC(i) }, r[0])));
-          showC(0);
+          TABS.forEach((t, i) => tabs.append(h('button', { onclick: () => show(i) }, W(t.mod), h('small', t.sub))));
 
-          /* ④ 誰が触れる？ */
+          /* ③ 誰が触れる？ */
           const who = ['クラスの中', '子クラス', '外部'];
-          const F = [['🌐 public', 'owner', [1, 1, 1]], ['🛡️ protected', 'branch', [1, 1, 0]], ['🔒 private', 'pin', [1, 0, 0]]];
+          const F = [['🌐 ', 'public', 'owner', [1, 1, 1]], ['🛡️ ', 'protected', 'branch', [1, 1, 0]], ['🔒 ', 'private', 'pin', [1, 0, 0]]];
           const mmsg = h('div', { style: { minHeight: '2.4em', marginTop: '10px' } });
           const mx = h('div', { class: 'tsx-mx', style: { '--c': 'var(--ts)' } }, h('div'), who.map((w) => h('div', { class: 'hd' }, w)));
-          F.forEach(([lb, f, ok]) => {
-            mx.append(h('div', { class: 'fl' }, lb + '\n' + f));
-            ok.forEach((o, i) => { const b = h('button', { onclick: () => { b.className = o ? 'y' : 'n'; b.textContent = o ? '🔓 OK' : '🔒 NG'; mmsg.replaceChildren(o ? res(true, `${who[i]}から ${f} に触れる`) : res(false, `Property '${f}' is ${lb.split(' ')[1]} and only accessible within class 'BankAccount'${f === 'branch' ? ' and its subclasses' : ''}.`)); } }, '？'); mx.append(b); });
+          F.forEach(([em, mod, f, ok]) => {
+            mx.append(h('div', { class: 'fl' }, em, W(mod), h('small', { style: { color: 'var(--mute)' } }, f)));
+            ok.forEach((o, i) => { const b = h('button', { class: o ? 'y' : 'n', onclick: () => { mmsg.replaceChildren(o ? res(true, `${who[i]}から ${f} に触れる`) : res(false, `Property '${f}' is ${mod} and only accessible within class 'BankAccount'${mod === 'protected' ? ' and its subclasses' : ''}.`)); } }, o ? '🔓 OK' : '🔒 NG'); mx.append(b); });
           });
 
-          el.append(lv, cmp,
-            h('div', { class: 'am-sec' }, h('h4', '🏦 実際のケース：どれを付ける？'), pick, ans),
-            h('div', { class: 'am-sec' }, h('h4', '🔐 誰が触れる？ マスをクリック'), mx, mmsg,
-              h('div', { class: 'row', style: { marginTop: '10px' } }, h('button', { class: 'btn ghost', onclick: () => mx.querySelectorAll('button').forEach((b) => b.click()) }, '全部開ける'))),
+          el.append(lv, tabs, stage,
+            h('div', { class: 'am-sec' }, h('h4', '🔐 まとめ：誰が触れる？（マスを押すと理由が出る）'), mx, mmsg),
             h('div', { class: 'am-tip' }, '💡 迷ったら、まず private'));
+          show(0);
         },
       },
       { t: 'readonly：書き換え禁止', tag: 'readonly', lead: '「次へ ▶」で、読み取り専用プロパティが<b>いつ代入できて、いつダメか</b>を追おう。', render: readonlySceneGap },

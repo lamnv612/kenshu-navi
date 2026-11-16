@@ -117,6 +117,7 @@
     const head = add(tip, 'div', 'gl-h');
     add(head, 'b', 'gl-k', e.k);
     add(head, 'span', 'gl-kind', e.t || KIND[0]);
+    { const yo = e.y || (K.yomiOf ? K.yomiOf(e.k) : ''); if (yo) { const [rd, org] = yo.split('｜'); const d = add(tip, 'div', 'gl-y'); add(d, 'small', 'gl-l', '読み方'); add(d, 'b', 'gl-yr', rd); if (org) add(d, 'span', 'gl-yo', org); } }
     const sec = (label, cls) => { const d = add(tip, 'div', 'gl-s ' + cls); add(d, 'small', 'gl-l', label); return d; };
     add(sec('意味', 'gl-sm'), 'div', 'gl-m', e.m);
     if (e.c) {
