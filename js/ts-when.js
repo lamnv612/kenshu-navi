@@ -139,13 +139,6 @@
     ['名前の付け方', 'T / K / V', S, 'T（Type）、K（Key）、V（Value）が慣習。', '意味が分かりにくければ TItem のように書いてもよい。', 'function pair<K, V>(k: K, v: V): [K, V] {\n  return [k, v];\n}'],
   ], rules: ['<b>入れた型 = 出る型</b> → T', '<b>呼ぶ側</b>が型を決める', '<b>覚え方</b>：コピーしたくなったら T'] };
 
-  G['Array<T> と制約 extends'] = { cases: [
-    ['title を持つものだけ受けたい', 'T extends { title: string }', P, '「何でも」ではなく<b>最低限の条件</b>を付ける。', '', 'function titles<T extends { title: string }>(xs: T[]) {\n  return xs.map((x) => x.title);\n}'],
-    ['キー名を指定して取り出す', 'K extends keyof T', T, '存在する<b>キーだけ</b>を許す。打ち間違いは赤線。', '', 'function pick<T, K extends keyof T>(o: T, k: K) {\n  return o[k];\n}\npick({ id: 1 }, "id");   // OK\npick({ id: 1 }, "name"); // ✖'],
-    ['条件がいらない', '制約なしの T', O, '中身を<b>触らない</b>なら制約はいらない。', '', 'function wrap<T>(x: T): T[] {\n  return [x];\n}'],
-    ['制約を付けすぎる', '最小限に', B, '厳しすぎると<b>使い回せなく</b>なる。', '必要な項目だけ要求する。', '// ✖ 全項目を要求\n// ✓ 使う項目（title）だけ要求'],
-  ], rules: ['<b>extends</b> ＝ 最低限の条件', '<b>keyof</b> ＝ キー名だけ許す', '<b>覚え方</b>：使う項目だけ要求'] };
-
   G['TDD：赤 → 緑 → 赤 → 緑'] = { cases: [
     ['料金計算など、答えが決まっている', 'TDD が向く', O, '<b>入力と答え</b>がはっきりしている処理は、先にテストを書くと迷わない。', '', 'it("税込を計算する", () => {\n  expect(withTax(1000)).toBe(1100);\n});'],
     ['バグを直す前', '再現テストから', P, 'まず<b>バグを再現するテスト</b>を書く（赤）。直したら緑になる。', '再発も防げる。', 'it("0円でもエラーにならない", () => {\n  expect(withTax(0)).toBe(0);\n});'],

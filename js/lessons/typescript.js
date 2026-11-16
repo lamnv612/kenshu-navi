@@ -2259,55 +2259,6 @@ console.log(n.length);
         },
       },
       {
-        t: 'Array<T> と制約 extends', lead: '<code class="i">T</code> は「なんでも」。だから<b>「最低限これは持っていてね」</b>という条件を付けたい。それが <code class="i">T extends …</code>。',
-        render(el) {
-          style('con', `
-          .co-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:14px}@media(max-width:700px){.co-tabs{grid-template-columns:1fr}}
-          .co-tabs button{all:unset;cursor:pointer;box-sizing:border-box;text-align:center;padding:.6em .8em;border-radius:10px;border:1px solid var(--line);background:var(--card);font-weight:800;display:grid;gap:1px;transition:.2s}
-          .co-tabs button small{font:700 .72rem var(--font);color:var(--mute)}.co-tabs button:hover{transform:translateY(-2px)}
-          .co-tabs button.on{border-color:var(--ts);background:color-mix(in srgb,var(--ts) 18%,var(--card))}
-          .co-duo{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:14px;align-items:start}@media(max-width:900px){.co-duo{grid-template-columns:1fr}}
-          .co-duo pre.code{white-space:pre-wrap;word-break:break-word;font-size:.82rem}
-          .co-say{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px;padding:.7em 1em;border-radius:10px;background:color-mix(in srgb,var(--ts) 12%,var(--card));border:1px solid color-mix(in srgb,var(--ts) 40%,var(--line));font-weight:800}
-          .co-say code{font:800 .9rem var(--mono)}
-          .co-act{display:grid;gap:8px;margin-bottom:10px}.co-act button{text-align:left}
-          .co-out{padding:.7em 1em;border-radius:10px;background:var(--code);color:#cfd5ff;font:700 .85rem/1.7 var(--mono);min-height:4.2em}
-          .co-out.ok{color:#9be58b;border:1px solid var(--ok)}.co-out.ng{color:#ff9aa5;border:1px solid var(--bad)}
-          .co-out small{display:block;font:700 .78rem var(--font);color:var(--mute);margin-top:2px}
-          .co-door{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.co-door span{padding:.25em .8em;border-radius:999px;font:800 .78rem var(--mono);border:2px solid var(--c);background:color-mix(in srgb,var(--c) 16%,var(--card))}
-          .co-door span.no{border-style:dashed;background:transparent;color:var(--mute);text-decoration:line-through}`);
-          const TABS = [
-            { n: '① 条件なしの T', sub: 'なんでも入る → 困る', say: 'T は<b>なんでも</b>入る。だから「length がある」とは限らない。',
-              code: 'function longest<T>(a: T, b: T) {\n  return a.length >= b.length ? a : b;\n}',
-              door: [['文字 "apple"', 1], ['配列 [1,2]', 1], ['数字 10', 1]], doorNote: 'T の入口：<b>全部通る</b>（数字も）',
-              acts: [['TS が見る：a.length は書いていい？', 'ng', "✖ 赤線：Property 'length' does not exist on type 'T'", '😣 T が数字かもしれない。<b>length があるか分からない</b>から、TS が止める']] },
-            { n: '② T extends { length }', sub: '条件を付ける', say: '<code>T extends { length: number }</code> ＝ 「<b>length を持つものだけ</b> OK」',
-              code: 'function longest<T extends { length: number }>(a: T, b: T): T {\n  return a.length >= b.length ? a : b;\n}',
-              door: [['文字 "apple"', 1], ['配列 [1,2]', 1], ['数字 10', 0]], doorNote: 'T の入口：<b>length を持つものだけ</b>通る',
-              acts: [['longest("apple", "fig")', 'ok', 'apple', '👍 文字は length を持つ → OK'], ['longest([1, 2, 3], [1])', 'ok', '[1, 2, 3]', '👍 配列も length を持つ → OK'], ['longest(10, 20)', 'ng', "✖ 赤線：Argument of type 'number' is not assignable to parameter of type '{ length: number; }'", '🚫 数字は length を持たない → <b>入口で止まる</b>']] },
-            { n: '③ K extends keyof T', sub: 'キー名だけ許す', say: '<code>K extends keyof T</code> ＝ 「<b>T にあるキー名だけ</b> OK」',
-              code: 'function pick<T, K extends keyof T>(obj: T, key: K) {\n  return obj[key];\n}\n\nconst user = { id: 1, name: "田中" };',
-              door: [['"id"', 1], ['"name"', 1], ['"nmae"', 0]], doorNote: 'K の入口：<b>user にあるキー名だけ</b>通る',
-              acts: [['pick(user, "name")', 'ok', '田中', '👍 name は user にある'], ['pick(user, "id")', 'ok', '1', '👍 id も user にある'], ['pick(user, "nmae")', 'ng', "✖ 赤線：Argument of type '\"nmae\"' is not assignable to parameter of type '\"id\" | \"name\"'", '🚫 <b>打ち間違いのキー</b>が入口で止まる']] },
-          ];
-          const tabs = h('div', { class: 'co-tabs' }), body = h('div');
-          const show = (i) => {
-            const t = TABS[i];
-            tabs.querySelectorAll('button').forEach((b, k) => b.classList.toggle('on', k === i));
-            const out = h('div', { class: 'co-out' }, '👆 ボタンを押して、動かしてみよう');
-            const run = (a) => { out.className = 'co-out ' + a[1]; out.replaceChildren(a[2], h('small', { html: a[3] })); };
-            body.replaceChildren(
-              h('div', { class: 'co-say', html: t.say }),
-              h('div', { class: 'co-duo' },
-                h('div', null, code(t.code, 'ts', { color: 'var(--ts)' }), h('div', { class: 'co-door' }, h('small', { style: { color: 'var(--mute)', fontWeight: 800, alignSelf: 'center' }, html: t.doorNote }), t.door.map(([x, ok]) => h('span', { class: ok ? '' : 'no', style: { '--c': ok ? 'var(--ok)' : 'var(--bad)' } }, (ok ? '✓ ' : '✗ ') + x)))),
-                h('div', null, h('div', { class: 'co-act' }, t.acts.map((a) => h('button', { class: 'btn', onclick: () => run(a) }, icon('play'), a[0]))), out)));
-          };
-          TABS.forEach((t, i) => tabs.append(h('button', { onclick: () => show(i) }, t.n, h('small', t.sub))));
-          el.append(tabs, body);
-          show(0);
-        },
-      },
-      {
         t: '実践：any を T に置き換えよう', tag: 'PRACTICE', lead: 'ミッションは3つ。<code class="i">first</code> の any を <code class="i">&lt;T&gt;</code> に置き換えよう。',
         render(el) {
           el.append(tsPractice("// any だと戻り値の型が失われる → T に置き換えよう\nfunction first(arr: any[]): any { // ここを直す\n  return arr[0];\n}\n\nconst n = first([10, 20]);\nconst s = first([\"a\", \"b\"]);\nconsole.log(n, s);\n", (v, c, ed) => [
