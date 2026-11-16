@@ -729,6 +729,7 @@
       bar.querySelectorAll('.tsx3-tab').forEach((t, k) => t.classList.toggle('on', k === i));
       const t = tabs[i];
       body.replaceChildren(
+        t.viz ? t.viz() : null,
         h('div', { class: 'tslab-story' }, icon('triangle-alert'), h('div', { html: t.story })),
         lab(t),
         t.tryIt ? tryBox(t.tryIt) : null);
@@ -781,6 +782,13 @@
   .tv-dg{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:14px}@media(max-width:820px){.tv-dg{grid-template-columns:1fr}}
   .tv-real{display:flex;gap:10px;align-items:flex-start;padding:.6em 1em;border-radius:8px;background:color-mix(in srgb,var(--ts) 10%,var(--card));border:1px solid color-mix(in srgb,var(--ts) 40%,var(--line));font-size:.875rem;line-height:1.7}
   .tv-real .ic{flex:none;margin-top:.3em;color:var(--ts)}
+  .tv-pair{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:stretch}@media(max-width:820px){.tv-pair{grid-template-columns:1fr}}
+  .tv-pair>.tv-card{align-content:center;justify-items:center;text-align:center;min-height:150px;border-top-width:1px}
+  .tv-pair .tv-drop{justify-content:center;align-items:center;width:100%}.tv-pair .tv-drop .tv-chip,.tv-pair .tv-drop .tv-msg{margin-bottom:0}
+  .tv-note{color:var(--mute);font-weight:700;font-size:.8125rem;line-height:1.6}
+  .tv-eqb{display:grid;gap:4px;justify-items:center}.tv-eqb small{color:var(--mute);font-weight:700;font-size:.75rem}
+  .tv-lockbox{display:flex;align-items:center;gap:12px}
+  .tv-nothing{display:flex;align-items:center;gap:14px}.tv-nothing code{font:800 .875rem var(--mono)}
   .tv-flowline{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:center;font-weight:800}
   .tv-flowline .st{padding:.5em 1em;border-radius:999px;background:color-mix(in srgb,var(--c) 18%,transparent);border:1px solid var(--c)}
   `);
@@ -831,6 +839,40 @@
       h('div', { class: 'tv-card', style: { '--c': 'var(--hi, #ffb454)' } }, h('h6', h('span', { class: 'tv-big' }, '⬜'), 'undefined'), h('code', 'nickname?: string'), h('small', 'まだ入っていない')),
       h('div', { class: 'tv-card', style: { '--c': 'var(--violet)' } }, h('h6', h('span', { class: 'tv-big' }, '∅'), 'null'), h('code', 'string | null'), h('small', '「ない」と自分で示す')))),
   };
+
+  /* タブごとの図解（タブを切り替えると、図も変わる）：左＝しくみの絵、右＝動く例 */
+  const tvPair = (cap, left, drop) => h('div', { class: 'tv' }, h('div', { class: 'tv-cap' }, icon('eye'), cap), h('div', { class: 'tv-pair' }, h('div', { class: 'tv-card tv-l' }, left), h('div', { class: 'tv-card tv-r' }, drop)));
+  const eq = (a, b, r, c, note) => h('div', { class: 'tv-eqb', style: { '--c': c } }, h('div', { class: 'tv-eq' }, h('span', { class: 'tk' }, a), '+', h('span', { class: 'tk' }, b), '=', h('span', { class: 'res' }, r)), h('small', note));
+  const flow3 = (hl) => h('div', { class: 'tv-flow' },
+    h('div', { class: 'tv-st' + (hl === 'in' ? ' dash' : ''), style: { '--c': hl === 'in' ? 'var(--bad)' : 'var(--ok)' } }, '入口（引数）', h('code', hl === 'in' ? 'price, qty' : 'price: number'), h('small', hl === 'in' ? '書いてない → any ⚠' : '書く ✏️')), h('span', { class: 'tv-ar' }, '→'),
+    h('div', { class: 'tv-st dash', style: { '--c': hl === 'mid' ? 'var(--bad)' : 'var(--mute)' } }, '関数の中', h('code', hl === 'mid' ? 'sum: number = …' : 'const sum = …'), h('small', hl === 'mid' ? '書きすぎ（ノイズ）' : '書かない（推論）')), h('span', { class: 'tv-ar' }, '→'),
+    h('div', { class: 'tv-st', style: { '--c': 'var(--ok)' } }, '出口（戻り値）', h('code', '): number'), h('small', '書く ✏️')));
+  const cap = (t) => h('small', { class: 'tv-note' }, t);
+  const D = tvDrop;
+  const VZ = {
+    anatomy: () => tvPair('絵で見る：型は「箱に貼るラベル」', [tvBox('age', 'number', ['20']), cap('名前（age）と型（number）が箱のラベル。違う種類は入らない')], D('age', 'number', [{ v: '20', ok: true }, { v: '"二十"', ok: false }, { v: '21', ok: true }])),
+    p1: () => tvPair('絵で見る："3"（文字）と 3（数字）はちがう', [eq('"3"', '2', '"32"', 'var(--bad)', '文字 + 数字 → くっつくだけ'), eq('3', '2', '5', 'var(--ok)', '数字 + 数字 → 足し算')], D('people', 'number', [{ v: '"3"', ok: false }, { v: 'Number("3")', ok: true, okMsg: '✓ 数字に変えれば入る' }])),
+    p2: () => tvPair('絵で見る：引用符が付くと「文字」', [eq('"3500"', '500', '"3500500"', 'var(--bad)', '文字 + 数字 → 3500500円'), eq('3500', '500', '4000', 'var(--ok)', '数字 + 数字 → 4000円')], D('fee', 'number', [{ v: '"3500"', ok: false }, { v: '3500', ok: true }])),
+    p3: () => tvPair('絵で見る："false" は文字。boolean ではない', [h('div', { class: 'tv-eqb', style: { '--c': 'var(--team)' } }, h('div', { class: 'tv-eq' }, h('span', { class: 'tk' }, 'true'), '/', h('span', { class: 'tk' }, 'false')), h('small', 'boolean は2つだけ')), h('div', { class: 'tv-eqb', style: { '--c': 'var(--bad)' } }, h('div', { class: 'tv-eq' }, h('span', { class: 'tk' }, '"false"')), h('small', '文字。if に入れると「ある」扱い'))], D('agree', 'boolean', [{ v: 'false', ok: true }, { v: '"false"', ok: false }, { v: 'true', ok: true }])),
+    c1: () => tvPair('絵で見る：const は鍵つきの箱', [h('div', { class: 'tv-lockbox' }, h('span', { class: 'tv-lock' }, '🔒'), tvBox('TAX_RATE', 'const 0.1', ['0.1'], 'var(--ok)')), cap('一度入れたら入れ直せない → 税率・設定値に使う')], D('TAX_RATE', 'const', [{ v: '0', ok: false, ngMsg: '✗ const は入れ直せない（赤線）' }])),
+    c2: () => {
+      const cnt = h('div', { class: 'sl tv-cnt' }, '0'); let k = 0; const seq = ['0', '1200', '2000', '4500'];
+      const t = setInterval(() => { if (!cnt.isConnected && k > 0) return clearInterval(t); k++; cnt.textContent = seq[k % 4]; cnt.classList.remove('tv-cnt'); void cnt.offsetWidth; cnt.classList.add('tv-cnt'); }, 1400);
+      return tvPair('絵で見る：let は入れ直せる箱', [h('div', { class: 'tv-bx' }, h('span', { class: 'nm' }, 'total'), h('span', { class: 'tp' }, 'let number'), cnt), cap('商品を足すたびに中身が変わる → 合計・カウンターに使う')], D('total', 'number', [{ v: '+= 1200', ok: true, okMsg: '✓ 足せる' }, { v: '+= 800', ok: true, okMsg: '✓ 足せる' }, { v: '"abc"', ok: false }]));
+    },
+    c3: () => tvPair('絵で見る：const が守るのは「箱」。中身は変えられる', [tvBox('cart', 'const', ['{ items, count }'], 'var(--ok)'), cap('箱（cart）は固定。でも中の items は増やせる')], D('cart', 'const', [{ v: '.push("書類確認")', ok: true, okMsg: '✓ 中身は変えられる' }, { v: 'cart = { … }', ok: false, ngMsg: '✗ 箱ごとの入れ替えは NG' }])),
+    c4: () => tvPair('絵で見る：書かなくても、最初の値から型が決まる', [h('div', { class: 'tv-bx' }, h('span', { class: 'nm' }, 'price'), h('span', { class: 'tp', style: { borderStyle: 'dashed' } }, 'number（推論）'), h('div', { class: 'sl' }, '1000')), cap('点線＝書いていないのに TS が決めた型')], D('price', 'number（推論）', [{ v: '1500', ok: true }, { v: '"千円"', ok: false }])),
+    i1: () => tvPair('絵で見る：入口に型を書かないと any になる', [flow3('in'), cap('any は何でも通す → "3個" でも通って NaN')], D('qty', 'any ⚠', [{ v: '3', ok: true }, { v: '"3個"', ok: true, okMsg: '✓ 通ってしまう → NaN になる' }])),
+    i2: () => tvPair('絵で見る：中の変数は書かなくていい', [flow3('mid'), cap('右辺から分かる型は、書くとノイズ')], D('sum', 'number（推論）', [{ v: '3000', ok: true }, { v: '"小計"', ok: false }])),
+    d1: () => tvPair('絵で見る：配列 ＝ 同じ型が並ぶ', [tvBox('lawyers', 'string[]', ['田中', '山本', '鈴木'], 'var(--basic)'), cap('好きなだけ並べられる。ただし全部 string')], D('lawyers', 'string[]', [{ v: '.push("鈴木")', ok: true, okMsg: '✓ 追加できる' }, { v: '.push(3)', ok: false, ngMsg: '✗ 数字は入らない（赤線）' }])),
+    d2: () => tvPair('絵で見る：タプル ＝ 位置ごとに型が決まる', [h('div', { class: 'tv-bx' }, h('span', { class: 'nm' }, 'row'), h('span', { class: 'tp' }, '[string, number, boolean]'), h('div', { class: 'tv-cells' }, h('div', { class: 'sl', style: { '--c': 'var(--basic)' } }, '離婚相談'), h('div', { class: 'sl', style: { '--c': 'var(--pink)' } }, '3000'), h('div', { class: 'sl', style: { '--c': 'var(--team)' } }, 'true'))), cap('1番目＝題名、2番目＝料金、3番目＝公開中か')], D('row', '[string, number, boolean]', [{ v: '["離婚相談", 3000, true]', ok: true, okMsg: '✓ 順番も型も合っている' }, { v: '[3000, "離婚相談", true]', ok: false, ngMsg: '✗ 順番が逆（赤線）' }])),
+    d3: () => tvPair('絵で見る：オブジェクト ＝ 名前つきの引き出し', [h('div', { class: 'tv-bx' }, h('span', { class: 'nm' }, 'c'), h('span', { class: 'tp' }, 'Consultation'), h('div', { class: 'tv-cells' }, h('div', { class: 'sl', style: { '--c': 'var(--basic)', flexDirection: 'column', fontSize: '.75rem' } }, h('small', 'title'), '相続'), h('div', { class: 'sl', style: { '--c': 'var(--pink)', flexDirection: 'column', fontSize: '.75rem' } }, h('small', 'fee'), '3000'))), cap('項目の名前と型を決めた「形」')], D('c', 'Consultation', [{ v: '{ title, fee: 3000 }', ok: true, okMsg: '✓ 形が合っている' }, { v: 'fee: "無料"', ok: false, ngMsg: '✗ fee は number（赤線）' }, { v: 'priority: 1', ok: false, ngMsg: '✗ そんな項目は無い（赤線）' }])),
+    a1: () => tvPair('絵で見る：any は素通り（開けっぱなしの扉）', [h('div', { class: 'tv-flow' }, h('span', { class: 'tv-chip' }, '何か'), h('span', { class: 'tv-ar' }, '→ 🚪 →'), h('span', { class: 'tv-chip', style: { background: 'var(--bad)' } }, '💥 本番で落ちる')), cap('赤線ゼロ。誰も事前に気づけない')], D('res', 'any', [{ v: '"tanaka"', ok: true }, { v: 'res.name.toUpperCase()', ok: true, okMsg: '✓ 赤線なし… でも実行で落ちる 💥' }])),
+    a2: () => tvPair('絵で見る：unknown は検問', [h('div', { class: 'tv-flow' }, h('span', { class: 'tv-chip' }, '何か'), h('span', { class: 'tv-ar' }, '→ 🛂 typeof →'), h('span', { class: 'tv-chip', style: { background: 'var(--ok)' } }, '✓ 安全に使う')), cap('確かめるまで使えない')], D('res', 'unknown', [{ v: '"tanaka"', ok: true, okMsg: '✓ 何でも入る' }, { v: 'res.toUpperCase()', ok: false, ngMsg: '✗ 確認するまで使えない（赤線）' }, { v: 'typeof で確認', ok: true, okMsg: '✓ 確認したら使える' }])),
+    n1: () => tvPair('絵で見る：void ＝ 何も返さない', [h('div', { class: 'tv-nothing' }, h('span', { class: 'tv-big' }, '🕳️'), h('code', 'function f(): void')), cap('「実行するだけ」の関数。戻り値は使えない')], D('r', 'void', [{ v: '（何も返さない）', ok: true, okMsg: '✓ undefined になる' }, { v: 'return 1', ok: false, ngMsg: '✗ 値は返せない（赤線）' }])),
+    n2: () => tvPair('絵で見る：undefined ＝ まだ入っていない', [h('div', { class: 'tv-nothing' }, h('span', { class: 'tv-big' }, '⬜'), h('code', 'nickname?: string')), cap('入力しなくていい項目。未入力のときは undefined')], D('nickname', 'string | undefined', [{ v: '"たろ"', ok: true }, { v: '（未入力）', ok: true, okMsg: '✓ undefined' }, { v: '.length', ok: false, ngMsg: '✗ 空かも → 先に確認（赤線）' }])),
+    n3: () => tvPair('絵で見る：null ＝ 「ない」と自分で示す', [h('div', { class: 'tv-nothing' }, h('span', { class: 'tv-big' }, '∅'), h('code', 'string | null')), cap('見つからなかったときに返す')], D('n', 'string | null', [{ v: '"田中"', ok: true }, { v: 'null', ok: true, okMsg: '✓ 「ない」を示せる' }, { v: '.length', ok: false, ngMsg: '✗ null かも → 先に確認（赤線）' }])),
+  };
   /* 全体マップ（最初の場面）：カードを押すと、具体例が出る */
   const TYPES = [
     { em: '🔤', name: 'string', sub: '文字', c: 'var(--basic)', box: ['name', 'string'], code: 'let name: string = "田中";\nlet memo: string = "初回相談";', real: '名前・メールアドレス・メモなど、文章になるもの', items: [{ v: '"田中"', ok: true }, { v: '"初回相談"', ok: true }, { v: '3000', ok: false }, { v: 'true', ok: false }] },
@@ -870,11 +912,10 @@
       {
         t: '型アノテーションの読み方', lead: '<code class="i">let age: number = 20;</code> は4つの部品。絵と見比べて、下のコードを書き換えてみよう。',
         render(el) {
-          el.append(VIZ.anatomy());
           const L = [['let', '箱を作る合図', 'var(--basic)'], ['age', '箱の名前（変数名）', 'var(--pink)'], [': number', '型。数字だけ入る箱にする', 'var(--ts)'], ['= 20', '最初の中身', 'var(--team)']];
           el.append(h('div', { class: 'tslab-legend' }, L.map(([c, s, col]) => h('div', { style: { '--lc': col } }, h('code', c), h('small', s)))), h('div', { style: { height: '12px' } }));
           labTabs(el, [{
-            name: '申込フォームの値',
+            name: '申込フォームの値', viz: VZ.anatomy,
             story: '田中さんの年齢に文字が入って、画面が「二十1 歳」になった。',
             src: `// 申込フォームの値。「変数名: 型」で、入る種類を決める
 let age: number = 20;
@@ -894,10 +935,9 @@ console.log(name + "さんは来年 " + (age + 1) + " 歳");
       {
         t: '型の箱に値を入れよう', tag: 'string · number', lead: '入力欄から届く値は<b>いつも文字</b>。足し算が狂う様子を見よう。',
         render(el) {
-          el.append(VIZ.plus());
           labTabs(el, [
             {
-              name: '人数 "3" + 2', sub: 'string と number',
+              name: '人数 "3" + 2', viz: VZ.p1, sub: 'string と number',
               story: '"3" + 2 が「32人」に。赤線は出ない。',
               src: `// フォームの入力欄から届く値は、いつも「文字」
 const peopleText: string = "3";
@@ -913,7 +953,7 @@ console.log(total + "人");
               tryIt: '① 実行 → 32人　② 「赤線を出す」　③ <code>Number(peopleText)</code> に直す → 5人',
             },
             {
-              name: '料金 3500 と "3500"', sub: 'number',
+              name: '料金 3500 と "3500"', viz: VZ.p2, sub: 'number',
               story: '"3500" + 500 が「3500500円」に。',
               src: `const priceText: string = "3500";   // 文字
 const priceNum: number = 3500;      // 数字
@@ -925,7 +965,7 @@ console.log(priceNum + fee);    // 数字 + 数字
               tryIt: '① 実行 → 2つの出力を見比べる　② <code>priceNum</code> を <code>"3500"</code> にすると赤線',
             },
             {
-              name: '同意チェック "false"', sub: 'boolean',
+              name: '同意チェック "false"', viz: VZ.p3, sub: 'boolean',
               story: 'チェックを外したのに "false" で「同意あり」に。',
               src: `// 文字で持つと、"false" でも if を通ってしまう
 const agreeText: string = "false";
@@ -949,10 +989,9 @@ if (agree) {
       {
         t: 'const / let と型推論', lead: '<b>まず const</b>。赤線が出たら <b>let</b>。',
         render(el) {
-          el.append(VIZ.cl());
           labTabs(el, [
             {
-              name: 'const：変わらない値', sub: '税率',
+              name: 'const：変わらない値', viz: VZ.c1, sub: '税率',
               story: 'どこかで税率が書き換わり、税額が0円に。',
               src: `const TAX_RATE = 0.1;   // 消費税率：ずっと同じ
 
@@ -969,7 +1008,7 @@ console.log(withTax(1000));
               tryIt: '① 実行 → 1100　② 「事故を起こす」→ 赤線　③ <code>let</code> に変えると赤線は消えるが 1000 に（税0円）',
             },
             {
-              name: 'let：変わる値', sub: '合計',
+              name: 'let：変わる値', viz: VZ.c2, sub: '合計',
               story: '合計は足すたびに変わる。const だと止まる。',
               src: `const prices = [1200, 800, 2500];   // カートの商品
 let total = 0;                      // 足していくので let
@@ -983,7 +1022,7 @@ console.log("合計", total);
               tryIt: '① 実行 → ◀ ▶ で1行ずつ（0→1200→2000→4500）　② <code>const total</code> に変えると赤線',
             },
             {
-              name: 'const でも中身は変えられる', sub: 'カート',
+              name: 'const でも中身は変えられる', viz: VZ.c3, sub: 'カート',
               story: 'const でも push できる。守るのは「箱」だけ。',
               src: `const cart = { items: ["相談 30分"], count: 1 };
 
@@ -997,7 +1036,7 @@ console.log(cart.items, cart.count);
               tryIt: '① 実行 → 中身は増える　② 「箱ごと入れ替える」→ 赤線',
             },
             {
-              name: '型は書かなくても決まる', sub: '型推論',
+              name: '型は書かなくても決まる', viz: VZ.c4, sub: '型推論',
               story: '書かなくても、初期値から型が決まる。',
               src: `const tax = 0.1;        // const は値そのものが型（0.1）
 let price = 1000;       // let は「数字」という種類（number）
@@ -1020,7 +1059,6 @@ console.log(tax, price, status, label);
       {
         t: '型推論：どこまで書く？', tag: 'inference', lead: '<b>入口（引数）と出口（戻り値）</b>には書く。中の変数は TS におまかせ。',
         render(el) {
-          el.append(VIZ.infer());
           const noise = (src) => {
             const tips = [];
             src.split('\n').forEach((l, i) => { const m = l.match(/^\s{2,}(?:const|let)\s+(\w+)\s*:\s*(\w+)\s*=\s*\S/); if (m) tips.push('L' + (i + 1) + ': <code>' + m[1] + '</code> は右辺から <code>' + m[2] + '</code> と分かる。<b>書かなくてよい</b>（ノイズ）'); });
@@ -1028,7 +1066,7 @@ console.log(tax, price, status, label);
           };
           labTabs(el, [
             {
-              name: '引数に書かないと any', sub: '入口',
+              name: '引数に書かないと any', viz: VZ.i1, sub: '入口',
               story: '引数の型を省いたら "3個" が通って NaN に。',
               src: `// 引数の型を書いていない
 function subtotal(price, qty) {
@@ -1040,7 +1078,7 @@ console.log(subtotal(1000, "3個"));   // 文字でも通る
               tryIt: '① 実行 → NaN　② <code>price: number, qty: number</code> を書く → 呼び出し側に赤線　③ <code>subtotal(1000, 3)</code> に直す',
             },
             {
-              name: '中の変数は書かない', sub: '出口と中身',
+              name: '中の変数は書かない', viz: VZ.i2, sub: '出口と中身',
               story: '型だらけで読めない。右辺で分かる型は省く。',
               src: `function subtotal(price: number, qty: number): number {
   const sum: number = price * qty;
@@ -1059,10 +1097,9 @@ console.log(subtotal(1000, 3));
       {
         t: '配列・タプル・オブジェクト', lead: 'データのまとまりも型で守れる。3つの形を見比べよう。',
         render(el) {
-          el.append(VIZ.data());
           labTabs(el, [
             {
-              name: '配列', sub: '同じ型が並ぶ',
+              name: '配列', viz: VZ.d1, sub: '同じ型が並ぶ',
               story: '弁護士一覧に数字が混ざった。',
               src: `const lawyers: string[] = ["田中", "山本"];
 
@@ -1075,7 +1112,7 @@ console.log(lawyers.length, lawyers);
               tryIt: '① 実行 → 3人　② 「数字を入れてみる」→ 赤線',
             },
             {
-              name: 'タプル', sub: '位置ごとに型',
+              name: 'タプル', viz: VZ.d2, sub: '位置ごとに型',
               story: 'row[1] が料金か件数か分からず画面が落ちた。',
               src: `// 相談の1行：[題名, 料金, 公開中か]
 const row: [string, number, boolean] = ["離婚相談", 3000, true];
@@ -1092,7 +1129,7 @@ console.log(row[1] * 2);   // 料金を2倍
               tryIt: '① 「料金に文字」を押す　② 「順番を入れ替え」を押す　③ 赤線の文を読む',
             },
             {
-              name: 'オブジェクト', sub: '形を決める',
+              name: 'オブジェクト', viz: VZ.d3, sub: '形を決める',
               story: '項目名を変えたのに直し忘れ、料金が空に。',
               src: `interface Consultation {
   title: string;
@@ -1118,10 +1155,9 @@ console.log(c);
       {
         t: 'any と unknown', tag: 'any', lead: '外から来る値は <b>any</b> か <b>unknown</b> か。見比べよう。',
         render(el) {
-          el.append(VIZ.any());
           labTabs(el, [
             {
-              name: 'any で受ける', sub: '落ちる',
+              name: 'any で受ける', viz: VZ.a1, sub: '落ちる',
               story: 'any で受けたら項目名の変更に気づけず、本番で真っ白。',
               src: `// 外部 API の返事。相手が項目名を変えた（name → fullName）
 const res: any = JSON.parse('{"fullName":"田中"}');
@@ -1131,7 +1167,7 @@ console.log(res.name.toUpperCase());   // 赤線なし
               tryIt: '① 実行 → 実行エラー　② 赤線は1本も出ていない',
             },
             {
-              name: 'unknown で受ける', sub: '守られる',
+              name: 'unknown で受ける', viz: VZ.a2, sub: '守られる',
               story: 'unknown なら使う前に止められる。',
               src: `// 何が来るか分からない → unknown で受ける
 const res: unknown = JSON.parse('"tanaka"');   // 今回は文字が来た
@@ -1152,10 +1188,9 @@ console.log(res.toUpperCase());   // 赤線：確かめる前は使えない
       {
         t: '値がない型：void / undefined / null', tag: 'void', lead: '「値がない」は3種類。違いを絵で見よう。',
         render(el) {
-          el.append(VIZ.nothing());
           labTabs(el, [
             {
-              name: 'void', sub: '戻り値がない',
+              name: 'void', viz: VZ.n1, sub: '戻り値がない',
               story: '記録だけの関数。戻り値は無い。',
               src: `function logOrder(id: number): void {
   console.log("注文 " + id + " を記録しました");
@@ -1167,7 +1202,7 @@ console.log(r);
               tryIt: '① 右の型：<code>r</code> は <code>void</code>　② 出力2行目は <code>undefined</code>',
             },
             {
-              name: 'undefined', sub: 'まだ入っていない',
+              name: 'undefined', viz: VZ.n2, sub: 'まだ入っていない',
               story: '未入力のあだ名を読んで画面が落ちた。',
               src: `interface Profile {
   name: string;
@@ -1183,7 +1218,7 @@ console.log(p.nickname);           // undefined
               tryIt: '① 実行 → undefined　② 「そのまま使う」→ 赤線　③ <code>if (p.nickname !== undefined)</code> で直す',
             },
             {
-              name: 'null', sub: '「ない」を自分で示す',
+              name: 'null', viz: VZ.n3, sub: '「ない」を自分で示す',
               story: '見つからないとき null が返り、画面が落ちた。',
               src: `function findName(id: number): string | null {
   return id === 1 ? "田中" : null;   // 見つからなければ null
