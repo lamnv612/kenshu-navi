@@ -3337,40 +3337,40 @@ style('cgk', `
   /* 取り消しの図解：commit の鎖が動く（steps と同じ番号のコマを出す） */
   (function () {
     const { h, style } = K.W;
-    style('cgv', `
-    .cgv{border:1px solid var(--line);border-radius:12px;background:var(--card);padding:12px 16px;margin-bottom:12px;display:grid;gap:10px}
-    .cgv-row{display:flex;align-items:center;gap:10px;min-height:46px}
-    .cgv-lb{flex:none;width:112px;white-space:pre-line;font-size:.75rem;font-weight:800;color:var(--mute);line-height:1.3}
-    .cgv-ch{display:flex;align-items:center;flex-wrap:wrap;gap:0}
-    .cgv-n{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px}
-    .cgv-n i{display:block;width:26px;height:26px;border-radius:50%;background:var(--c,var(--mute));border:2px solid color-mix(in srgb,var(--c,var(--mute)) 60%,#fff);box-shadow:0 0 0 3px color-mix(in srgb,var(--c,var(--mute)) 25%,transparent);transition:.3s}
-    .cgv-n span{font-size:.6875rem;font-weight:700;max-width:96px;text-align:center;line-height:1.3;color:var(--text)}
-    .cgv-l{width:22px;height:3px;background:var(--line);margin:0 2px 18px}
-    .cgv-n.ok{--c:var(--ok)}.cgv-n.bad{--c:var(--bad)}.cgv-n.hi{--c:#ffb454}.cgv-n.rev{--c:var(--violet)}.cgv-n.base{--c:var(--mute)}.cgv-n.blue{--c:var(--basic)}
-    .cgv-n.new{animation:cgvpop .6s cubic-bezier(.2,1.6,.4,1)}
-    .cgv-n.ghost{opacity:.45;animation:cgvfade 1s}.cgv-n.ghost i{background:transparent;border-style:dashed}.cgv-n.ghost span{text-decoration:line-through}
-    .cgv-n.shake{animation:cgvshake .5s}
-    @keyframes cgvpop{from{transform:scale(0) translateY(-14px);opacity:0}to{transform:none;opacity:1}}
-    @keyframes cgvfade{from{opacity:1}to{opacity:.45}}
-    @keyframes cgvshake{20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)}}
-    .cgv-st{display:flex;gap:6px;flex-wrap:wrap}
-    .cgv-f{padding:.15em .7em;border-radius:6px;border:1px solid var(--c,var(--line));background:color-mix(in srgb,var(--c,var(--mute)) 14%,transparent);font:700 .75rem var(--mono);color:var(--text)}
-    .cgv-f.ok{--c:var(--ok)}.cgv-f.bad{--c:var(--bad)}.cgv-f.hi{--c:#ffb454}.cgv-f.ghost{opacity:.5;text-decoration:line-through;border-style:dashed}
-    .cgv-f.new{animation:cgvpop .5s}
-    .cgv-cap{font-weight:800;font-size:.875rem;padding:.5em .8em;border-radius:8px;background:color-mix(in srgb,var(--c,var(--ts)) 14%,transparent);border-left:4px solid var(--c,var(--ts));animation:cgvpop .4s}
-    .cgv-cap.ok{--c:var(--ok)}.cgv-cap.bad{--c:var(--bad)}.cgv-cap.hi{--c:#ffb454}
+    style('cgu', `
+    .cgu{border:1px solid var(--line);border-radius:12px;background:var(--card);padding:12px 16px;margin-bottom:12px;display:grid;gap:10px}
+    .cgu-row{display:flex;align-items:center;gap:10px;min-height:46px}
+    .cgu-lb{flex:none;width:112px;white-space:pre-line;font-size:.75rem;font-weight:800;color:var(--mute);line-height:1.3}
+    .cgu-ch{display:flex;align-items:center;flex-wrap:wrap;gap:0}
+    .cgu-n{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px}
+    .cgu-n i{display:block;width:26px;height:26px;border-radius:50%;background:var(--c,var(--mute));border:2px solid color-mix(in srgb,var(--c,var(--mute)) 60%,#fff);box-shadow:0 0 0 3px color-mix(in srgb,var(--c,var(--mute)) 25%,transparent);transition:.3s}
+    .cgu-n span{font-size:.6875rem;font-weight:700;max-width:96px;text-align:center;line-height:1.3;color:var(--text)}
+    .cgu-l{width:22px;height:3px;background:var(--line);margin:0 2px 18px}
+    .cgu-n.ok{--c:var(--ok)}.cgu-n.bad{--c:var(--bad)}.cgu-n.hi{--c:#ffb454}.cgu-n.rev{--c:var(--violet)}.cgu-n.base{--c:var(--mute)}.cgu-n.blue{--c:var(--basic)}
+    .cgu-n.new{animation:cgupop .6s cubic-bezier(.2,1.6,.4,1)}
+    .cgu-n.ghost{opacity:.45;animation:cgufade 1s}.cgu-n.ghost i{background:transparent;border-style:dashed}.cgu-n.ghost span{text-decoration:line-through}
+    .cgu-n.shake{animation:cgushake .5s}
+    @keyframes cgupop{from{transform:scale(0) translateY(-14px);opacity:0}to{transform:none;opacity:1}}
+    @keyframes cgufade{from{opacity:1}to{opacity:.45}}
+    @keyframes cgushake{20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)}}
+    .cgu-st{display:flex;gap:6px;flex-wrap:wrap}
+    .cgu-f{padding:.15em .7em;border-radius:6px;border:1px solid var(--c,var(--line));background:color-mix(in srgb,var(--c,var(--mute)) 14%,transparent);font:700 .75rem var(--mono);color:var(--text)}
+    .cgu-f.ok{--c:var(--ok)}.cgu-f.bad{--c:var(--bad)}.cgu-f.hi{--c:#ffb454}.cgu-f.ghost{opacity:.5;text-decoration:line-through;border-style:dashed}
+    .cgu-f.new{animation:cgupop .5s}
+    .cgu-cap{font-weight:800;font-size:.875rem;padding:.5em .8em;border-radius:8px;background:color-mix(in srgb,var(--c,var(--ts)) 14%,transparent);border-left:4px solid var(--c,var(--ts));animation:cgupop .4s}
+    .cgu-cap.ok{--c:var(--ok)}.cgu-cap.bad{--c:var(--bad)}.cgu-cap.hi{--c:#ffb454}
     `);
     const N = (l, k) => ({ l, k: k || 'base' });
-    const chain = (a) => h('div', { class: 'cgv-ch' }, a.map((x, i) => [i ? h('div', { class: 'cgv-l' }) : null, h('div', { class: 'cgv-n ' + x.k }, h('i'), h('span', x.l))]));
-    K.cgvViz = (frames) => (n) => {
+    const chain = (a) => h('div', { class: 'cgu-ch' }, a.map((x, i) => [i ? h('div', { class: 'cgu-l' }) : null, h('div', { class: 'cgu-n ' + x.k }, h('i'), h('span', x.l))]));
+    K.cguViz = (frames) => (n) => {
       const f = frames[Math.min(n, frames.length - 1)]; if (!f) return null;
-      return h('div', { class: 'cgv' },
-        h('div', { class: 'cgv-row' }, h('div', { class: 'cgv-lb' }, '💻 自分の PC'), chain(f.local)),
-        f.stage ? h('div', { class: 'cgv-row' }, h('div', { class: 'cgv-lb' }, f.sl || '📄 ファイル'), h('div', { class: 'cgv-st' }, f.stage.map((x) => h('span', { class: 'cgv-f ' + x.k }, x.l)))) : null,
-        f.remote ? h('div', { class: 'cgv-row' }, h('div', { class: 'cgv-lb' }, '☁️ GitHub\n（みんなが見る）'), chain(f.remote)) : null,
-        h('div', { class: 'cgv-cap ' + (f.ck || '') }, f.cap));
+      return h('div', { class: 'cgu' },
+        h('div', { class: 'cgu-row' }, h('div', { class: 'cgu-lb' }, '💻 自分の PC'), chain(f.local)),
+        f.stage ? h('div', { class: 'cgu-row' }, h('div', { class: 'cgu-lb' }, f.sl || '📄 ファイル'), h('div', { class: 'cgu-st' }, f.stage.map((x) => h('span', { class: 'cgu-f ' + x.k }, x.l)))) : null,
+        f.remote ? h('div', { class: 'cgu-row' }, h('div', { class: 'cgu-lb' }, '☁️ GitHub\n（みんなが見る）'), chain(f.remote)) : null,
+        h('div', { class: 'cgu-cap ' + (f.ck || '') }, f.cap));
     };
-    K.cgvN = N;
+    K.cguN = N;
   })();
 
   /* ① ミスを取り消す */
@@ -3386,7 +3386,7 @@ style('cgk', `
     render(el) {
       const F0 = { 'price.html': PRICE0, 'README.md': '# app\n' };
       const base = (sim, extra) => sim.seed(Object.assign({ commits: [{ msg: 'first commit', files: F0, push: true }] }, extra));
-      style('cgv2', `
+      style('cgu2', `
       .cgp{border:1px solid var(--line);border-radius:12px;background:var(--card);padding:14px 16px;margin-bottom:14px;display:grid;gap:12px}
       .cgp>b{font-size:.9375rem;display:flex;align-items:center;gap:.5em}
       .cgp-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px}
@@ -3394,13 +3394,13 @@ style('cgk', `
       .cgp-c:hover{transform:translateY(-2px);border-color:var(--c)}
       .cgp-c code{font:800 .8125rem var(--mono);color:var(--c)}.cgp-c span{font-size:.8125rem;line-height:1.6}
       .cgp-h{display:flex;align-items:center;gap:0;flex-wrap:wrap;padding:6px 2px}
-      .cgp-h .cgv-n span{max-width:120px}
+      .cgp-h .cgu-n span{max-width:120px}
       .cgp-tag{font:800 .6875rem var(--mono);padding:.1em .6em;border-radius:6px;background:var(--pink);color:#fff;margin-bottom:4px;animation:cgpbob 1.4s ease-in-out infinite}
       .cgp-tag.p{background:var(--mute)}
       @keyframes cgpbob{50%{transform:translateY(-4px)}}
       `);
       const cmd = (c, code, txt, col) => h('div', { class: 'cgp-c', style: { '--c': col } }, h('code', code), h('span', { html: txt }));
-      const nd = (l, k, tag, tc) => h('div', { class: 'cgv-n ' + k }, tag ? h('div', { class: 'cgp-tag ' + (tc || '') }, tag) : h('div', { style: { height: '22px' } }), h('i'), h('span', l));
+      const nd = (l, k, tag, tc) => h('div', { class: 'cgu-n ' + k }, tag ? h('div', { class: 'cgp-tag ' + (tc || '') }, tag) : h('div', { style: { height: '22px' } }), h('i'), h('span', l));
       el.append(h('div', { class: 'cgp' },
         h('b', icon('lightbulb'), 'まず、よく使う簡単なコマンド（これだけ知っていれば読めます）'),
         h('div', { class: 'cgp-g' },
@@ -3411,13 +3411,13 @@ style('cgk', `
           cmd(0, 'git commit -m "説明"', '選んだ変更を<b>1 つの記録</b>として保存（自分の PC の中だけ）', PINK),
           cmd(0, 'git push', '記録を <b>GitHub に送る</b>。送るとみんなにも見える', 'var(--ok)')),
         h('div', { class: 'cgp-h' },
-          nd('first commit', 'base', 'HEAD~2', 'p'), h('div', { class: 'cgv-l' }), nd('前の commit', 'base', 'HEAD~1', 'p'), h('div', { class: 'cgv-l' }), nd('いちばん新しい commit', 'ok', 'HEAD'),
+          nd('first commit', 'base', 'HEAD~2', 'p'), h('div', { class: 'cgu-l' }), nd('前の commit', 'base', 'HEAD~1', 'p'), h('div', { class: 'cgu-l' }), nd('いちばん新しい commit', 'ok', 'HEAD'),
           h('div', { style: { marginLeft: '16px', fontSize: '.8125rem', lineHeight: 1.7, flex: '1 1 260px' }, html: '<b>HEAD</b> ＝「いま自分がいる場所」（＝最新の commit）。<b>HEAD~1</b> ＝ ひとつ前。<b>ハッシュ</b>（f1bbcd8 のような英数字）＝ commit の名札。' }))));
       el.append(GX.tabs([
         { t: 'メッセージの誤字', sub: 'push 前 · amend', ic: 'pencil', c: TS, cfg: {
           story: '料金表に「相談」を追加して commit した。直後に、<b>メッセージの誤字（typoo）</b>に気づいた。まだ push していない。',
           seed: (sim) => base(sim, { commits: [{ msg: 'first commit', files: F0, push: true }, { msg: 'feat: 料金表に「相談」を追加（typoo）', branch: 'feature/price-table', files: { 'price.html': PRICE0 + '<p>相談 60分 9,000円</p>\n' } }], head: 'feature/price-table' }),
-          extra: (() => { const N = K.cgvN, A = N('first commit'); return K.cgvViz([
+          extra: (() => { const N = K.cguN, A = N('first commit'); return K.cguViz([
             { local: [A, N('料金表を追加（typoo）', 'bad')], remote: [A], cap: '🔎 誤字の commit は、まだ自分の PC の中だけ → 作り直してOK', ck: 'hi' },
             { local: [A, N('料金表を追加（typoo）', 'hi')], remote: [A], cap: '🔎 いちばん新しい commit が直す対象' , ck: 'hi' },
             { local: [A, N('料金表を追加（typoo）', 'ghost'), N('料金表を追加', 'new ok')], remote: [A], cap: '✏️ --amend：古い commit を捨てて、同じ場所に作り直す', ck: 'ok' },
@@ -3434,7 +3434,7 @@ style('cgk', `
         { t: '余計なファイル', sub: 'push 前 · reset --soft', ic: 'file-minus', c: PINK, cfg: {
           story: '料金表を commit したら、<b>デバッグ用の debug.log</b> まで一緒に入ってしまった。まだ push していない。',
           seed: (sim) => base(sim, { commits: [{ msg: 'first commit', files: F0, push: true }, { msg: 'feat: 料金表を更新', branch: 'feature/price-table', files: { 'price.html': PRICE0 + '<p>相談 60分 9,000円</p>\n', 'debug.log': 'DEBUG ...\n' } }], head: 'feature/price-table' }),
-          extra: (() => { const N = K.cgvN, A = N('first commit'); return K.cgvViz([
+          extra: (() => { const N = K.cguN, A = N('first commit'); return K.cguViz([
             { local: [A, N('料金表 + debug.log', 'bad')], remote: [A], stage: [N('price.html', 'ok'), N('debug.log（余計）', 'bad')], sl: '📦 commit の中身', cap: '🔎 commit に debug.log まで入ってしまった', ck: 'hi' },
             { local: [A, N('取り消した', 'ghost')], remote: [A], stage: [N('price.html', 'ok new'), N('debug.log', 'bad new')], sl: '📥 ステージ', cap: '↩️ reset --soft：commit だけ取り消す。変更はステージに残る', ck: 'ok' },
             { local: [A], remote: [A], stage: [N('price.html', 'ok'), N('debug.log', 'ghost')], sl: '📥 ステージ', cap: '➖ 余計なファイルだけステージから外す', ck: 'ok' },
@@ -3453,7 +3453,7 @@ style('cgk', `
         { t: 'push 済みの誤り', sub: 'revert', ic: 'rotate-ccw', c: BASIC, cfg: {
           story: '<b>料金を 5,000円 → 50,000円</b>に誤って変えた commit を、もう GitHub に push してしまった。他の人も pull しているかもしれない。',
           seed: (sim) => sim.seed({ commits: [{ msg: 'first commit', files: F0, push: true }, { msg: 'fix: 相談料を変更（誤り）', files: { 'price.html': '<h1>料金表</h1>\n<p>相談 30分 50,000円</p>\n<p>書面作成 20,000円</p>\n' }, push: true }, { msg: 'docs: README を更新', files: { 'README.md': '# app\n使い方\n' }, push: true }] }),
-          extra: (() => { const N = K.cgvN, A = N('first commit'), X = N('料金を 50,000円に（誤り）', 'bad'), C = N('README 更新'); return K.cgvViz([
+          extra: (() => { const N = K.cguN, A = N('first commit'), X = N('料金を 50,000円に（誤り）', 'bad'), C = N('README 更新'); return K.cguViz([
             { local: [A, X, C], remote: [A, X, C], cap: '☁️ 誤りの commit は、もう GitHub にある（みんなが見ている）', ck: 'hi' },
             { local: [A, N('料金を 50,000円に（誤り）', 'hi'), C], remote: [A, N('料金を 50,000円に（誤り）', 'hi'), C], cap: '🔎 log で取り消したい commit を見つける', ck: 'hi' },
             { local: [A, X, C, N('Revert：料金を元に戻す', 'rev new')], remote: [A, X, C], cap: '➕ revert：履歴は消さず、「逆の変更」の commit を足す', ck: 'ok' },
@@ -3470,7 +3470,7 @@ style('cgk', `
         { t: '保存前の変更を捨てる', sub: 'restore', ic: 'eraser', c: TEAM, cfg: {
           story: '料金表を試しに書き換えたが、<b>やっぱり元のままでよかった</b>。まだ add も commit もしていない。',
           seed: (sim) => base(sim, { work: { 'price.html': '<h1>料金表（試し書き）</h1>\n' } }),
-          extra: (() => { const N = K.cgvN, A = N('first commit'); return K.cgvViz([
+          extra: (() => { const N = K.cguN, A = N('first commit'); return K.cguViz([
             { local: [A], stage: [N('price.html（変更あり）', 'hi')], sl: '📄 作業ファイル', cap: '✏️ 試しに書き換えた（まだ add も commit もしていない）', ck: 'hi' },
             { local: [A], stage: [N('price.html：試し書き', 'bad')], sl: '📄 作業ファイル', cap: '🔎 diff で何が変わったか確認（消すと戻せない！）', ck: 'hi' },
             { local: [A], stage: [N('price.html：試し書き', 'ghost'), N('price.html：元の内容', 'ok new')], sl: '📄 作業ファイル', cap: '↩️ restore：最後の commit の状態に戻す', ck: 'ok' },
@@ -3485,7 +3485,7 @@ style('cgk', `
         { t: 'やってはいけない', sub: 'force push', ic: 'ban', c: 'var(--bad)', cfg: {
           story: '自分の枝を amend したら push が<b>拒否</b>された。ここで <code>--force</code> を付けると…？ <b>同僚が同じ枝に足した commit</b>があるとする。',
           seed: (sim) => { base(sim, { commits: [{ msg: 'first commit', files: F0, push: true }, { msg: 'feat: 料金表を追加（typoo）', branch: 'feature/price-table', files: { 'price.html': PRICE0 + '<p>相談 60分 9,000円</p>\n' }, push: true }], remoteOnly: [{ branch: 'feature/price-table', msg: '同僚: 消費税の表示を追加', files: { 'tax.html': '<p>税込</p>\n' } }], head: 'feature/price-table' }); },
-          extra: (() => { const N = K.cgvN, A = N('first commit'), B = N('料金表（typoo）'), D = N('同僚の commit', 'blue'); return K.cgvViz([
+          extra: (() => { const N = K.cguN, A = N('first commit'), B = N('料金表（typoo）'), D = N('同僚の commit', 'blue'); return K.cguViz([
             { local: [A, N('料金表（直した）', 'new hi')], remote: [A, B, D], cap: '⚠️ amend したので、手元の履歴が GitHub と違う形になった', ck: 'hi' },
             { local: [A, N('料金表（直した）', 'hi')], remote: [A, B, D], cap: '🚫 push は拒否：GitHub に、手元にない同僚の commit がある', ck: 'bad' },
             { local: [A, N('料金表（直した）', 'hi')], remote: [A, N('料金表（直した）', 'hi new')], cap: '💥 --force：GitHub の履歴を、手元の形で上書き！', ck: 'bad' },
