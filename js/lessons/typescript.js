@@ -576,6 +576,9 @@
   .tslab-note{font:700 .75rem var(--font);color:var(--mute)}
   .tslab-h{display:flex;gap:.5em;align-items:center;padding:.5em 1em;font-weight:800;font-size:.8125rem;color:var(--mute);border-bottom:1px solid var(--line)}.tslab-h .ic{width:14px;height:14px}
   .tslab-err b,.tslab-rerr b{display:block;font-size:.875rem;margin-bottom:2px}.tslab-err small,.tslab-rerr small{display:block;opacity:.75;font-family:var(--mono);font-size:.6875rem;margin-top:3px}
+  .tv-point{display:flex;gap:10px;align-items:center;padding:.7em 1em;border-radius:10px;background:color-mix(in srgb,var(--ok) 12%,var(--card));border:1px solid color-mix(in srgb,var(--ok) 50%,var(--line));font-size:.9375rem;font-weight:700;margin:10px 0}.tv-point .ic{color:var(--ok);flex:none}.tv-point b{color:var(--ok);margin-right:.4em}
+  .tslab-sub{font-size:.75rem;font-weight:800;color:var(--mute);margin:8px 0 4px}
+  .tslab-more summary{cursor:pointer;display:flex;gap:.5em;align-items:center;padding:.5em 1em;font-size:.8125rem;font-weight:800;color:var(--mute)}.tslab-more[open] summary{border-bottom:1px solid var(--line);margin-bottom:6px}
   .tslab-legend{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
   .tslab-legend>div{padding:.55em .8em;border-radius:8px;background:var(--card);border:1px solid var(--line);border-top:3px solid var(--lc);display:grid;gap:2px}
   .tslab-legend code{font:800 .9375rem var(--mono);color:var(--lc)}.tslab-legend small{color:var(--mute);font-weight:700;font-size:.75rem}
@@ -678,12 +681,12 @@
       const sn = rr.snaps[step] || null, last = !rr.snaps.length || step === rr.snaps.length - 1;
       if (sn) {
         const pv = step > 0 ? rr.snaps[step - 1].vars : {};
-        const grid = h('div', { class: 'tslab-vars' });
+        var grid = h('div', { class: 'tslab-vars' });
         Object.keys(sn.vars).forEach((k) => grid.append(h('span', { class: 'k' }, k), h('span', { class: 'v' + (pv[k] !== sn.vars[k] ? ' ch' : '') }, sn.vars[k])));
-        out.append(grid);
       }
       const lg = sn && !last ? rr.logs.slice(0, sn.logs) : rr.logs;
-      if (lg.length) out.append(h('div', { class: 'tslab-log' }, lg.map((t) => '› ' + t).join('\n')));
+      if (lg.length) out.append(h('div', { class: 'tslab-sub' }, '📺 画面に出る結果'), h('div', { class: 'tslab-log' }, lg.map((t) => '› ' + t).join('\n')));
+      if (grid) out.append(h('div', { class: 'tslab-sub' }, '📦 変数の中身（下の < > ボタンで1行ずつ）'), grid);
       if (rr.err && last) { const g = RGLOSS.map(([re, f]) => { const m = rr.err.match(re); return m ? f(m) : ''; }).find(Boolean) || ''; out.append(h('div', { class: 'tslab-rerr' }, h('b', '💥 動かしたら落ちた'), g ? h('div', g) : null, h('small', rr.err))); }
       if (!sn && !lg.length && !rr.err) out.append(h('div', { class: 'tslab-note' }, '（出力なし）'));
       if (stale) out.append(h('div', { class: 'tslab-note' }, 'コードを変えました。「実行」で結果を更新'));
@@ -698,7 +701,7 @@
       const src = ed.get(), errs = K.W.tsCheck(ts, src);
       ed.mark(errs.map((e) => e.line)); curLine(!stale && rr && rr.snaps[step] ? rr.snaps[step].line : 0);
       lbl2.textContent = errs.length ? errs.length + ' 件' : '';
-      chk.replaceChildren(...(errs.length ? errs.map((e) => h('div', { class: 'tslab-err' }, gloss(e.msg) ? h('b', '🔴 ' + gloss(e.msg)) : h('b', '🔴 ' + e.msg), h('small', 'L' + e.line + '：' + e.msg))) : [h('div', { class: 'tslab-ok' }, '✓ 赤線なし（OK）')]),
+      chk.replaceChildren(...(errs.length ? errs.map((e) => h('div', { class: 'tslab-err' }, gloss(e.msg) ? h('b', '🔴 ' + gloss(e.msg)) : h('b', '🔴 ' + e.msg), h('small', 'L' + e.line + '：' + e.msg))) : [h('div', { class: 'tslab-ok' }, '🟢 赤線なし：TS は問題なしと判断')]),
         ...((o.coach ? o.coach(src) : []).map((t) => h('div', { class: 'tslab-tip', html: t }))));
       const it = inferTypes(ts, src);
       inf.replaceChildren(it.length ? h('div', { class: 'tslab-chips' }, it.map((x) => h('span', { class: 'tslab-chip ' + (x.written ? 'w' : 'inf'), title: 'L' + x.line }, x.name, ': ', h('b', x.type), h('i', x.written ? '自分で書いた' : '自動で決まった')))) : h('div', { class: 'tslab-note' }, '（変数がありません）'));
@@ -711,7 +714,7 @@
       h('div', { class: 'tslab-ed' }, h('div', { class: 'tslab-h' }, icon('pencil'), '① コード（書き換えてOK）'), ed, bar),
       h('div', { class: 'tslab-side' },
         h('div', { class: 'tslab-box' }, h('h5', icon('shield-check'), '② 赤線チェック（動かす前に TS が見る）', lbl2), chk),
-        h('div', { class: 'tslab-box' }, h('h5', icon('tag'), '変数の型（TS が見ているもの）'), inf),
+        h('details', { class: 'tslab-box tslab-more' }, h('summary', icon('tag'), '🔍 くわしく：変数の型（TS が見ているもの）'), inf),
         h('div', { class: 'tslab-box' }, h('h5', icon('terminal'), '③ 実行結果（動かしたらこうなった）'), out)));
     paintOut();
     check().then(run);
@@ -734,6 +737,7 @@
         t.viz ? t.viz() : null,
         h('div', { class: 'tslab-story' }, icon('triangle-alert'), h('div', { html: t.story })),
         lab(t),
+        t.point ? h('div', { class: 'tv-point' }, icon('target'), h('span', { html: '<b>覚えること</b>　' + t.point })) : null,
         t.tryIt ? tryBox(t.tryIt) : null);
     };
     tabs.forEach((t, i) => bar.append(h('button', { class: 'tsx3-tab', onclick: () => show(i) }, t.name, t.sub ? h('small', t.sub) : null)));
@@ -926,7 +930,7 @@
           const L = [['let', '箱を作る合図', 'var(--basic)'], ['age', '箱の名前（変数名）', 'var(--pink)'], [': number', '型。数字だけ入る箱にする', 'var(--ts)'], ['= 20', '最初の中身', 'var(--team)']];
           el.append(h('div', { class: 'tslab-legend' }, L.map(([c, s, col]) => h('div', { style: { '--lc': col } }, h('code', c), h('small', s)))), h('div', { style: { height: '12px' } }));
           labTabs(el, [{
-            name: '申込フォームの値', viz: VZ.anatomy,
+            name: '申込フォームの値', viz: VZ.anatomy, point: '型は「箱のラベル」。ラベルと違う種類は入らない',
             story: '田中さんの年齢に文字が入って、画面が「二十1 歳」になった。',
             src: `// 申込フォームの値。「変数名: 型」で、入る種類を決める
 let age: number = 20;
@@ -948,7 +952,7 @@ console.log(name + "さんは来年 " + (age + 1) + " 歳");
         render(el) {
           labTabs(el, [
             {
-              name: '人数 "3" + 2', viz: VZ.p1, sub: 'string と number',
+              name: '人数 "3" + 2', viz: VZ.p1, point: '入力欄の値は文字。計算の前に Number() で数字にする', sub: 'string と number',
               story: '"3" + 2 が「32人」に。赤線は出ない。',
               src: `// フォームの入力欄から届く値は、いつも「文字」
 const peopleText: string = "3";
@@ -964,7 +968,7 @@ console.log(total + "人");
               tryIt: '① 実行 → 32人　② 「赤線を出す」　③ <code>Number(peopleText)</code> に直す → 5人',
             },
             {
-              name: '料金 3500 と "3500"', viz: VZ.p2, sub: 'number',
+              name: '料金 3500 と "3500"', viz: VZ.p2, point: '引用符が付いたら文字。お金は number で持つ', sub: 'number',
               story: '"3500" + 500 が「3500500円」に。',
               src: `const priceText: string = "3500";   // 文字
 const priceNum: number = 3500;      // 数字
@@ -976,7 +980,7 @@ console.log(priceNum + fee);    // 数字 + 数字
               tryIt: '① 実行 → 2つの出力を見比べる　② <code>priceNum</code> を <code>"3500"</code> にすると赤線',
             },
             {
-              name: '同意チェック "false"', viz: VZ.p3, sub: 'boolean',
+              name: '同意チェック "false"', viz: VZ.p3, point: '"false" は文字。はい／いいえは boolean で持つ', sub: 'boolean',
               story: 'チェックを外したのに "false" で「同意あり」に。',
               src: `// 文字で持つと、"false" でも if を通ってしまう
 const agreeText: string = "false";
@@ -1002,7 +1006,7 @@ if (agree) {
         render(el) {
           labTabs(el, [
             {
-              name: 'const：変わらない値', viz: VZ.c1, sub: '税率',
+              name: 'const：変わらない値', viz: VZ.c1, point: '変わらない値は const。うっかり書き換えを防げる', sub: '税率',
               story: 'どこかで税率が書き換わり、税額が0円に。',
               src: `const TAX_RATE = 0.1;   // 消費税率：ずっと同じ
 
@@ -1019,7 +1023,7 @@ console.log(withTax(1000));
               tryIt: '① 実行 → 1100　② 「事故を起こす」→ 赤線　③ <code>let</code> に変えると赤線は消えるが 1000 に（税0円）',
             },
             {
-              name: 'let：変わる値', viz: VZ.c2, sub: '合計',
+              name: 'let：変わる値', viz: VZ.c2, point: '足して変わる値は let。赤線が出たら let に変える', sub: '合計',
               story: '合計は足すたびに変わる。const だと止まる。',
               src: `const prices = [1200, 800, 2500];   // カートの商品
 let total = 0;                      // 足していくので let
@@ -1033,7 +1037,7 @@ console.log("合計", total);
               tryIt: '① 実行 → ◀ ▶ で1行ずつ（0→1200→2000→4500）　② <code>const total</code> に変えると赤線',
             },
             {
-              name: 'const でも中身は変えられる', viz: VZ.c3, sub: 'カート',
+              name: 'const でも中身は変えられる', viz: VZ.c3, point: 'const が固定するのは箱だけ。中身は変えられる', sub: 'カート',
               story: 'const でも push できる。守るのは「箱」だけ。',
               src: `const cart = { items: ["相談 30分"], count: 1 };
 
@@ -1047,7 +1051,7 @@ console.log(cart.items, cart.count);
               tryIt: '① 実行 → 中身は増える　② 「箱ごと入れ替える」→ 赤線',
             },
             {
-              name: '型は書かなくても決まる', viz: VZ.c4, sub: '型推論',
+              name: '型は書かなくても決まる', viz: VZ.c4, point: '最初の値から型は決まる。毎回は書かなくていい', sub: '型推論',
               story: '書かなくても、初期値から型が決まる。',
               src: `const tax = 0.1;        // const は値そのものが型（0.1）
 let price = 1000;       // let は「数字」という種類（number）
@@ -1077,7 +1081,7 @@ console.log(tax, price, status, label);
           };
           labTabs(el, [
             {
-              name: '引数に書かないと any', viz: VZ.i1, sub: '入口',
+              name: '引数に書かないと any', viz: VZ.i1, point: '引数には必ず型を書く。書かないと any で素通り', sub: '入口',
               story: '引数の型を省いたら "3個" が通って NaN に。',
               src: `// 引数の型を書いていない
 function subtotal(price, qty) {
@@ -1089,7 +1093,7 @@ console.log(subtotal(1000, "3個"));   // 文字でも通る
               tryIt: '① 実行 → NaN　② <code>price: number, qty: number</code> を書く → 呼び出し側に赤線　③ <code>subtotal(1000, 3)</code> に直す',
             },
             {
-              name: '中の変数は書かない', viz: VZ.i2, sub: '出口と中身',
+              name: '中の変数は書かない', viz: VZ.i2, point: '中の変数は書かない。書くのは引数と戻り値だけ', sub: '出口と中身',
               story: '型だらけで読めない。右辺で分かる型は省く。',
               src: `function subtotal(price: number, qty: number): number {
   const sum: number = price * qty;
@@ -1110,7 +1114,7 @@ console.log(subtotal(1000, 3));
         render(el) {
           labTabs(el, [
             {
-              name: '配列', viz: VZ.d1, sub: '同じ型が並ぶ',
+              name: '配列', viz: VZ.d1, point: '配列：同じ型が並ぶ。string[] のように書く', sub: '同じ型が並ぶ',
               story: '弁護士一覧に数字が混ざった。',
               src: `const lawyers: string[] = ["田中", "山本"];
 
@@ -1123,7 +1127,7 @@ console.log(lawyers.length, lawyers);
               tryIt: '① 実行 → 3人　② 「数字を入れてみる」→ 赤線',
             },
             {
-              name: 'タプル', viz: VZ.d2, sub: '位置ごとに型',
+              name: 'タプル', viz: VZ.d2, point: 'タプル：位置ごとに型が決まる。順番が大事', sub: '位置ごとに型',
               story: 'row[1] が料金か件数か分からず画面が落ちた。',
               src: `// 相談の1行：[題名, 料金, 公開中か]
 const row: [string, number, boolean] = ["離婚相談", 3000, true];
@@ -1140,7 +1144,7 @@ console.log(row[1] * 2);   // 料金を2倍
               tryIt: '① 「料金に文字」を押す　② 「順番を入れ替え」を押す　③ 赤線の文を読む',
             },
             {
-              name: 'オブジェクト', viz: VZ.d3, sub: '形を決める',
+              name: 'オブジェクト', viz: VZ.d3, point: 'オブジェクト：項目名と型の「形」を interface で決める', sub: '形を決める',
               story: '項目名を変えたのに直し忘れ、料金が空に。',
               src: `interface Consultation {
   title: string;
@@ -1168,7 +1172,7 @@ console.log(c);
         render(el) {
           labTabs(el, [
             {
-              name: 'any で受ける', viz: VZ.a1, sub: '落ちる',
+              name: 'any で受ける', viz: VZ.a1, point: 'any は検問なし。赤線が出ないので、使わない', sub: '落ちる',
               story: 'any で受けたら項目名の変更に気づけず、本番で真っ白。',
               src: `// 外部 API の返事。相手が項目名を変えた（name → fullName）
 const res: any = JSON.parse('{"fullName":"田中"}');
@@ -1178,7 +1182,7 @@ console.log(res.name.toUpperCase());   // 赤線なし
               tryIt: '① 実行 → 実行エラー　② 赤線は1本も出ていない',
             },
             {
-              name: 'unknown で受ける', viz: VZ.a2, sub: '守られる',
+              name: 'unknown で受ける', viz: VZ.a2, point: '何が来るか分からない値は unknown。確認してから使う', sub: '守られる',
               story: 'unknown なら使う前に止められる。',
               src: `// 何が来るか分からない → unknown で受ける
 const res: unknown = JSON.parse('"tanaka"');   // 今回は文字が来た
@@ -1201,7 +1205,7 @@ console.log(res.toUpperCase());   // 赤線：確かめる前は使えない
         render(el) {
           labTabs(el, [
             {
-              name: 'void', viz: VZ.n1, sub: '戻り値がない',
+              name: 'void', viz: VZ.n1, point: 'void：戻り値なし。値としては使えない', sub: '戻り値がない',
               story: '記録だけの関数。戻り値は無い。',
               src: `function logOrder(id: number): void {
   console.log("注文 " + id + " を記録しました");
@@ -1213,7 +1217,7 @@ console.log(r);
               tryIt: '① 右の型：<code>r</code> は <code>void</code>　② 出力2行目は <code>undefined</code>',
             },
             {
-              name: 'undefined', viz: VZ.n2, sub: 'まだ入っていない',
+              name: 'undefined', viz: VZ.n2, point: 'undefined：まだ入っていない。使う前に確認', sub: 'まだ入っていない',
               story: '未入力のあだ名を読んで画面が落ちた。',
               src: `interface Profile {
   name: string;
@@ -1229,7 +1233,7 @@ console.log(p.nickname);           // undefined
               tryIt: '① 実行 → undefined　② 「そのまま使う」→ 赤線　③ <code>if (p.nickname !== undefined)</code> で直す',
             },
             {
-              name: 'null', viz: VZ.n3, sub: '「ない」を自分で示す',
+              name: 'null', viz: VZ.n3, point: 'null：「ない」を自分で示す。使う前に確認', sub: '「ない」を自分で示す',
               story: '見つからないとき null が返り、画面が落ちた。',
               src: `function findName(id: number): string | null {
   return id === 1 ? "田中" : null;   // 見つからなければ null
