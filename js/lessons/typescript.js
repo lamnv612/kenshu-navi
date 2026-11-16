@@ -430,6 +430,74 @@
     id: 'ts-intro', track: 'ts', title: 'TypeScript 紹介', sub: 'なぜ型が必要？', emoji: '✨',
     scenes: [
       {
+        t: '環境準備：TypeScript を動かす', tag: 'SETUP', lead: 'まずは動かす場所を用意しよう。<b>インストール不要のブラウザ</b>か、<b>自分のPC</b>の2通り。',
+        render(el) {
+          style('tsenv', `
+          .te-tabs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+          .te-tabs button{all:unset;cursor:pointer;box-sizing:border-box;padding:.7em 1em;border-radius:10px;border:1px solid var(--line);background:var(--card);font-weight:800;display:grid;gap:2px;text-align:center;transition:.2s}
+          .te-tabs button small{font-weight:700;color:var(--mute);font-size:.75rem}
+          .te-tabs button.on{border-color:var(--ts);background:color-mix(in srgb,var(--ts) 16%,var(--card))}
+          .te-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:16px;align-items:start}@media(max-width:900px){.te-grid{grid-template-columns:1fr}}
+          .te-term{border-radius:10px;overflow:hidden;background:var(--code);border:1px solid var(--line)}
+          .te-bar{display:flex;gap:6px;padding:.5em .8em;background:rgba(255,255,255,.06)}.te-bar i{width:10px;height:10px;border-radius:50%;background:#ff5f57}.te-bar i:nth-child(2){background:#febc2e}.te-bar i:nth-child(3){background:#28c840}
+          .te-body{padding:12px 14px;min-height:230px;font:700 .875rem/1.8 var(--mono);color:#cfd5ff}
+          .te-body .p{color:#7ee787}.te-body .o{color:#9aa4d8;font-weight:600}.te-body .g{color:#9be58b}
+          .te-body .cur{display:inline-block;width:.55em;height:1em;background:#cfd5ff;vertical-align:-2px;animation:tvblink 1s steps(2) infinite}
+          @keyframes tvblink{50%{opacity:0}}
+          .te-list{display:grid;gap:8px}
+          .te-st{display:grid;grid-template-columns:30px 1fr;gap:10px;align-items:center;padding:.6em .9em;border-radius:10px;background:var(--card);border:1px solid var(--line);opacity:.55;transition:.3s}
+          .te-st .n{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:var(--card2);font-weight:900;font-size:.8rem}
+          .te-st b{display:block;font-size:.9rem}.te-st small{color:var(--mute);font-weight:600;font-size:.78rem}
+          .te-st.cur{opacity:1;border-color:var(--ts);background:color-mix(in srgb,var(--ts) 14%,var(--card))}.te-st.cur .n{background:var(--ts);color:#fff}
+          .te-st.done{opacity:1;border-color:color-mix(in srgb,var(--ok) 60%,var(--line))}.te-st.done .n{background:var(--ok);color:#fff}
+          .te-btns{display:flex;gap:8px;margin-top:12px}
+          .te-url{display:flex;align-items:center;gap:8px;padding:.5em .9em;background:var(--card2);border-bottom:1px solid var(--line);font:700 .8rem var(--mono);color:var(--mute)}
+          .te-pg{display:grid;grid-template-columns:1fr 1fr}.te-pg>div{padding:10px 12px;min-height:150px}.te-pg>div+div{border-left:1px solid var(--line);background:var(--card2)}
+          .te-pg h5{font:800 .72rem var(--mono);color:var(--mute);margin-bottom:6px}
+          .te-note{margin-top:12px;padding:.7em 1em;border-radius:10px;background:var(--card);border:1px dashed var(--line);font-size:.875rem;font-weight:600;line-height:1.7}
+          .te-tm{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.te-tm span{padding:.3em .8em;border-radius:999px;background:var(--card);border:1px solid var(--line);font-size:.78rem;font-weight:700}.te-tm b{color:var(--ts)}`);
+          const tabs = h('div', { class: 'te-tabs' }), stage = h('div');
+          // ---- ブラウザ
+          const pg = () => h('div', null,
+            h('div', { class: 'te-term' }, h('div', { class: 'te-url' }, icon('globe'), 'typescriptlang.org/ja/play'),
+              h('div', { class: 'te-pg' }, h('div', null, h('h5', 'TS（左に書く）'), code('const price: number = 3000;\nconsole.log(price);', 'ts')), h('div', null, h('h5', 'JS（右に出る）'), code('"use strict";\nconst price = 3000;\nconsole.log(price);', 'js')))),
+            h('div', { class: 'te-note', html: '① URL を開く　② 左に TS を書く（型違いは<b>赤線</b>）　③ 右に変換後の JS が出る。<b>「実行」</b>で結果も見られる。<br>インストール不要。まずはここで十分。' }));
+          // ---- ローカル
+          const STEPS = [
+            { t: 'Node.js を確認', s: 'npm は Node に付いてくる', cmd: 'node -v', out: ['v20.11.0'] },
+            { t: 'TypeScript をインストール', s: '-g = どこからでも使える', cmd: 'npm install -g typescript', out: ['added 1 package in 3s'] },
+            { t: 'バージョン確認', s: 'tsc が使えれば成功', cmd: 'tsc -v', out: ['Version 5.6.3'] },
+            { t: 'hello.ts を作る', s: '拡張子は .ts', cmd: 'echo \'const msg: string = "Hello";console.log(msg);\' > hello.ts', out: ['（hello.ts ができた）'] },
+            { t: 'コンパイル：TS → JS', s: 'tsc ファイル名', cmd: 'tsc hello.ts', out: ['（hello.js ができた）'] },
+            { t: '実行', s: 'JS は node で動く', cmd: 'node hello.js', out: ['Hello'] },
+          ];
+          const local = () => {
+            let n = -1;
+            const body = h('div', { class: 'te-body' }), list = h('div', { class: 'te-list' });
+            const items = STEPS.map((x, i) => h('div', { class: 'te-st' }, h('span', { class: 'n' }, i + 1), h('div', h('b', x.t), h('small', x.s))));
+            list.append(...items);
+            const paint = () => {
+              items.forEach((it, i) => { it.classList.toggle('done', i < n); it.classList.toggle('cur', i === n); });
+              body.replaceChildren();
+              STEPS.slice(0, n + 1).forEach((x) => { body.append(h('div', null, h('span', { class: 'p' }, '$ '), x.cmd), ...x.out.map((o) => h('div', { class: x.cmd === 'node hello.js' ? 'g' : 'o' }, o))); });
+              body.append(h('div', null, h('span', { class: 'p' }, '$ '), h('span', { class: 'cur' })));
+              next.disabled = n >= STEPS.length - 1; next.style.opacity = next.disabled ? .4 : 1;
+            };
+            const next = h('button', { class: 'btn primary', onclick: () => { n = Math.min(n + 1, STEPS.length - 1); paint(); } }, icon('step-forward'), '次のコマンド');
+            const reset = h('button', { class: 'btn ghost', onclick: () => { n = -1; paint(); } }, icon('rotate-ccw'), 'はじめから');
+            paint();
+            return h('div', null,
+              h('div', { class: 'te-grid' }, h('div', null, h('div', { class: 'te-term' }, h('div', { class: 'te-bar' }, h('i'), h('i'), h('i')), body), h('div', { class: 'te-btns' }, next, reset)), list),
+              h('div', { class: 'te-tm' }, h('span', { html: '<b>npm</b> = Node package manager（部品の管理人）' }), h('span', { html: '<b>-g</b> = global（PC全体にインストール）' }), h('span', { html: '<b>tsc</b> = TypeScript compiler（TS → JS に変換）' })),
+              h('div', { class: 'te-note', html: 'TypeScript は Microsoft が作り、2012年に公開された。<b>TS は JS に変換して</b>から動かす（変換 = コンパイル）。' }));
+          };
+          const T = [['globe', 'ブラウザで試す', 'Playground・インストール不要', pg], ['terminal', '自分のPCに入れる', 'npm install -g typescript', local]];
+          const show = (i) => { tabs.querySelectorAll('button').forEach((b, k) => b.classList.toggle('on', k === i)); stage.replaceChildren(T[i][3]()); };
+          T.forEach((t, i) => tabs.append(h('button', { onclick: () => show(i) }, h('span', null, icon(t[0]), ' ', t[1]), h('small', t[2]))));
+          el.append(tabs, stage); show(0);
+        },
+      },
+      {
         t: 'そのバグ、どこで見つかる？', lead: '同じミス <code class="i">add("1", 2)</code> を、JS と TS で流してみよう。「次へ ▶」で進むよ。',
         render(el) {
           style('tsx2', `
@@ -1498,6 +1566,46 @@ console.log(n.length);
           }
           draw();
           el.append(h('div', { class: 'fo2-panel' }, lbl('試してみよう：どの型に、どの値を入れる？'), h('div', { class: 'fo2-ctl', style: { margin: 0 } }, segs), h('div', { class: 'fo2-ctl', style: { margin: 0 } }, h('span', { class: 'fo2-k' }, '入れる値：'), tg), h('div', { class: 'fo2-2' }, cv, ov)));
+        },
+      },
+      {
+        t: 'type：型に名前をつける', lead: '<code class="i">type 名前 = 型</code>　長い型・よく使う型に<b>名札</b>を付ける書き方。',
+        render(el) {
+          style('tyal', `
+          .ta-tabs{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-bottom:14px}
+          .ta-tabs button{all:unset;cursor:pointer;box-sizing:border-box;text-align:center;padding:.55em .8em;border-radius:8px;border:1px solid var(--line);background:var(--card);font-weight:800;display:grid;gap:1px;transition:.2s}
+          .ta-tabs button small{font-weight:700;color:var(--mute);font-size:.72rem}.ta-tabs button:hover{transform:translateY(-2px)}
+          .ta-tabs button.on{border-color:var(--pink);background:color-mix(in srgb,var(--pink) 16%,var(--card))}
+          .ta-fm{display:flex;flex-wrap:wrap;align-items:stretch;gap:8px;justify-content:center;margin-bottom:14px;font:800 1.05rem var(--mono)}
+          .ta-fm>span{padding:.55em .9em;border-radius:10px;border:2px solid var(--c);background:color-mix(in srgb,var(--c) 14%,var(--card));display:grid;gap:2px;text-align:center;animation:tvpop .35s both}
+          .ta-fm>span small{font:700 .7rem var(--font);color:var(--mute)}.ta-fm>i{align-self:center;font-style:normal;color:var(--mute)}
+          .ta-duo{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start}@media(max-width:820px){.ta-duo{grid-template-columns:1fr}}
+          .ta-box{padding:14px;border-radius:12px;background:var(--card);border:1px solid var(--line)}.ta-box h5{font:800 .8rem var(--font);color:var(--mute);margin-bottom:8px}
+          .ta-chips{display:flex;gap:8px;flex-wrap:wrap}.ta-chips button{all:unset;cursor:pointer;padding:.35em .9em;border-radius:8px;border:1px solid var(--line);background:var(--card2);font:700 .85rem var(--mono);transition:.2s}
+          .ta-chips button:hover{transform:translateY(-2px);border-color:var(--pink)}
+          .ta-res{margin-top:10px;min-height:2.8em;padding:.6em .9em;border-radius:8px;background:var(--code);color:#cfd5ff;font:700 .85rem/1.6 var(--mono)}
+          .ta-res.ok{color:#9be58b;border:1px solid var(--ok)}.ta-res.ng{color:#ff9aa5;border:1px solid var(--bad)}
+          .ta-why{margin-top:12px;padding:.7em 1em;border-radius:10px;background:color-mix(in srgb,var(--pink) 10%,var(--card));border:1px solid color-mix(in srgb,var(--pink) 40%,var(--line));font-weight:700;font-size:.9rem;line-height:1.7}`);
+          const R = [
+            { n: '別名', sub: 'type Age = number', name: 'Age', def: 'number', c: 'type Age = number;\n\nconst a: Age = 20;', vals: [['20', 1, '✓ Age は number。数字はOK'], ['"20"', 0, "✗ 'string' は 'number' に渡せません"]], why: '👉 中身は number のまま。<b>意味が分かる名前</b>になる（年齢の型、と読める）。' },
+            { n: 'Union', sub: 'A または B', name: 'Id', def: 'number | string', c: 'type Id = number | string;\n\nconst a: Id = 1;\nconst b: Id = "A-1";', vals: [['1', 1, '✓ number なのでOK'], ['"A-1"', 1, '✓ string なのでOK'], ['true', 0, "✗ 'boolean' は Id に渡せません"]], why: '👉 長い Union も <b>1回名前を付ければ</b>、あちこちで使い回せる。' },
+            { n: '選択肢', sub: '決まった文字だけ', name: 'Status', def: '"todo" | "doing" | "done"', c: 'type Status = "todo" | "doing" | "done";\n\nconst s: Status = "todo";', vals: [['"todo"', 1, '✓ 選択肢に入っている'], ['"done"', 1, '✓ 選択肢に入っている'], ['"finished"', 0, '✗ "finished" は Status にない（赤線）']], why: '👉 <b>決まった文字だけ</b>を許す。打ち間違いが赤線になる。' },
+            { n: 'オブジェクト', sub: '形に名前', name: 'Consultation', def: '{ title: string; fee: number }', c: 'type Consultation = {\n  title: string;\n  fee: number;\n};\n\nconst c: Consultation = { title: "相続", fee: 3000 };', vals: [['{ title:"相続", fee:3000 }', 1, '✓ 形が合っている'], ['{ title:"相続", fee:"無料" }', 0, "✗ fee は number（赤線）"]], why: '👉 オブジェクトも書ける。<b>interface とほぼ同じ</b>（違いは次の「比較」で）。' },
+            { n: '関数・タプル', sub: 'object 以外', name: 'Row', def: '[number, string]', c: 'type Row = [number, string];\ntype Fn = (a: number) => string;\n\nconst r: Row = [1, "A"];', vals: [['[1, "A"]', 1, '✓ 数字 → 文字の順でOK'], ['["A", 1]', 0, '✗ 順番が逆（赤線）']], why: '👉 タプルや関数の型も名前を付けられる。<b>これは interface では書けない</b>。' },
+          ];
+          const tabs = h('div', { class: 'ta-tabs' }), stage = h('div');
+          const show = (i) => {
+            const r = R[i];
+            tabs.querySelectorAll('button').forEach((b, k) => b.classList.toggle('on', k === i));
+            const res = h('div', { class: 'ta-res' }, '👆 値をクリックして、入れられるか試そう');
+            const chips = h('div', { class: 'ta-chips' }, r.vals.map(([v, ok, msg]) => h('button', { onclick: () => { res.className = 'ta-res ' + (ok ? 'ok' : 'ng'); res.textContent = 'const x: ' + r.name + ' = ' + v + '  →  ' + msg; } }, v)));
+            stage.replaceChildren(
+              h('div', { class: 'ta-fm' }, h('span', { style: { '--c': 'var(--pink)' } }, 'type', h('small', '宣言')), h('span', { style: { '--c': 'var(--ts)' } }, r.name, h('small', '名札（大文字から）')), h('i', '='), h('span', { style: { '--c': 'var(--basic)' } }, r.def, h('small', '中身の型'))),
+              h('div', { class: 'ta-duo' }, h('div', { class: 'ta-box' }, h('h5', 'コード'), code(r.c, 'ts')), h('div', { class: 'ta-box' }, h('h5', 'この名札の型に、値を入れてみよう'), chips, res)),
+              h('div', { class: 'ta-why', html: r.why }));
+          };
+          R.forEach((r, i) => tabs.append(h('button', { onclick: () => show(i) }, r.n, h('small', r.sub))));
+          el.append(tabs, stage); show(0);
         },
       },
       {

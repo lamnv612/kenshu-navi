@@ -25,13 +25,13 @@
     const tk = (ts) => ts.map((t) => T.scenes.find((s) => s.t === t)).filter(Boolean);
     const U = tk(['Union：どれか1つ', 'Enum：名前の付いた定数']);
     const I = tk(['interface：形チェッカー', 'extends と merge']);
-    const A = tk(['interface vs type', '実践：型を設計しよう']);
+    const A = tk(['type：型に名前をつける', 'interface vs type', '実践：型を設計しよう']);
     if (!U.length || !I.length || !A.length) return;
     const dr = (K.drills && K.drills['ts-types']) || {};
     const gv = (id, sc) => { K.drills = K.drills || {}; K.drills[id] = K.drills[id] || {}; sc.forEach((s) => { if (dr[s.t]) K.drills[id][s.t] = dr[s.t]; }); };
     T.scenes = U; T.title = '型の構文'; T.sub = 'Union / Enum'; gv('ts-types', U);
     K.reg({ id: 'ts-interface', track: 'ts', title: 'インタフェース', sub: 'interface', emoji: '📐', scenes: I }); gv('ts-interface', I);
-    K.reg({ id: 'ts-alias', track: 'ts', title: 'Type：型エイリアス', sub: 'interface との比較', emoji: '🏷️', scenes: A }); gv('ts-alias', A);
+    K.reg({ id: 'ts-alias', track: 'ts', title: 'Type：型エイリアス', sub: '名前をつける・interface との比較', emoji: '🏷️', scenes: A }); gv('ts-alias', A);
     if (K.tests && K.tests['ts-types']) { K.tests['ts-alias'] = K.tests['ts-types']; delete K.tests['ts-types']; }
     Object.values(K.lessons).forEach((l) => { if (l.meta && l.meta.after === 'ts-types') l.meta.after = 'ts-alias'; });
     (window.KENSHU_PRACTICE || []).forEach((p) => { if (p.lesson === 'ts-types') p.lesson = (p.scene === 'extends と merge') ? 'ts-interface' : (p.scene === 'Enum：名前の付いた定数') ? 'ts-types' : 'ts-alias'; });
