@@ -1449,7 +1449,7 @@ console.log(n.length);
         },
       },
       {
-        t: 'extends と merge', lead: 'interface は<b>足して増やせる</b>。「次へ」で2つのやり方を見よう。',
+        t: 'extends と merge', lead: 'interface は<b>足して増やせる</b>。2つのやり方をタブで見比べよう。',
         render(el) {
           const bl = (t, c, cls) => h('span', { class: 'tsx-bl ' + (cls || ''), style: { background: cls ? '' : c } }, t);
           const pointA = h('div', { class: 'tsx-card' }, h('b', 'interface Consultation'), bl('id: number', 'var(--basic)'), bl('title: string', 'var(--basic)'));
@@ -1460,20 +1460,25 @@ console.log(n.length);
           const m2 = h('div', { class: 'tsx-card' }, h('b', 'interface Consultation  // 同名'), bl('note: string', 'var(--pink)'));
           const mm = h('div', { class: 'tsx-card', style: { borderColor: 'var(--ok)' } }, h('b', '合体 → Consultation'), bl('id: number', 'var(--basic)'), bl('title: string', 'var(--basic)'), bl('note: string', 'var(--pink)'));
           const B = h('div', { class: 'tsx-sec' }, h('div', { class: 'split' }, h('div', { class: 'col' }, m1, m2), mm));
-          const cd = [code('interface Booking extends Consultation {\n  time: string; // 予約の時間だけ足す\n}', 'ts'), code('interface Consultation { id: number; title: string }\ninterface Consultation { note: string }  // 同名で合体', 'ts')];
-          const cbox = h('div');
-          el.append(stepper({
-            color: 'var(--ts)',
-            steps: [{ say: 'まず基本の <b>Consultation</b>（id, title）。' }, { say: '<b>extends</b>：予約 Booking は Consultation を引き継いで、<b>time</b> だけ追加。薄い2つは「継承したもの」。' }, { say: '<b>merge</b>：同名の interface を2回書くと…' }, { say: '自動で<b>1つに合体</b>！（type ではできない）' }],
-            init(vis) { vis.append(A, B, cbox); },
-            update(n) {
-              A.classList.toggle('off', n >= 2); B.classList.toggle('off', n < 2);
-              p3.style.opacity = n >= 1 ? 1 : .3; p3.style.borderStyle = n >= 1 ? 'solid' : 'dashed';
-              if (n === 1) { z.style.animation = 'none'; void z.offsetWidth; z.style.animation = ''; }
-              mm.style.opacity = n >= 3 ? 1 : .3; mm.style.borderStyle = n >= 3 ? 'solid' : 'dashed'; m2.style.transform = n >= 3 ? 'translateY(-30px) scale(.9)' : ''; m2.style.opacity = n >= 3 ? .35 : 1;
-              cbox.replaceChildren(cd[n >= 2 ? 1 : 0]);
-            },
-          }));
+          const say = (t) => h('div', { class: 'tslab-try', style: { marginTop: '10px' } }, icon('lightbulb'), h('div', { html: t }));
+          const tabsBar = h('div', { class: 'tsx3-tabs' }), stage = h('div');
+          let merged = false;
+          const mergeBtn = h('button', { class: 'btn primary', style: { margin: '10px 0' }, onclick: () => { merged = !merged; paintMerge(); } });
+          const mergeSay = h('div');
+          function paintMerge() {
+            mm.style.opacity = merged ? 1 : .3; mm.style.borderStyle = merged ? 'solid' : 'dashed';
+            m2.style.transform = merged ? 'translateY(-30px) scale(.9)' : ''; m2.style.opacity = merged ? .35 : 1;
+            mergeBtn.replaceChildren(icon(merged ? 'rotate-ccw' : 'merge'), merged ? 'もどす' : '同じ名前を2回書く → 合体させる');
+            mergeSay.replaceChildren(say(merged ? '1つに合体した！ <b>id・title・note</b> を全部持つ。<b>type ではできません</b>。' : '同じ名前の <b>interface</b> を2回書くと…？ ボタンを押してみよう。'));
+          }
+          const TABS = [
+            ['extends', '引き継いで足す', () => { z.style.animation = 'none'; void z.offsetWidth; z.style.animation = ''; return h('div', null, A, code('interface Booking extends Consultation {\n  time: string;   // 予約の時間だけ足す\n}', 'ts'), say('<b>extends</b>：Consultation を引き継いで <b>time</b> だけ追加。薄い2つは「引き継いだもの」。')); }],
+            ['merge', '同じ名前で合体', () => { paintMerge(); return h('div', null, B, mergeBtn, code('interface Consultation { id: number; title: string }\ninterface Consultation { note: string }   // 同名で合体', 'ts'), mergeSay); }],
+          ];
+          const showTab = (i) => { tabsBar.querySelectorAll('button').forEach((x, k) => x.classList.toggle('on', k === i)); stage.replaceChildren(TABS[i][2]()); };
+          TABS.forEach(([n, sub], i) => tabsBar.append(h('button', { class: 'tsx3-tab', onclick: () => showTab(i) }, n, h('small', sub))));
+          el.append(tabsBar, stage);
+          showTab(0);
           // 実際に型チェックしてみる（出力が変わる）
           const MODES = [['Consultation', ['x', 'y'], 'そのまま'], ['Booking', ['x', 'y', 'z'], 'extends'], ['Consultation', ['x', 'y', 'z'], 'merge 後']];
           const DN = (k) => (k === 'x' ? 'id' : k === 'y' ? 'title' : mi === 2 ? 'note' : 'time'), DV = (k) => (k === 'x' ? '1' : k === 'y' ? '"相続"' : mi === 2 ? '"急ぎ"' : '"10:00"'), DT = (k) => (k === 'x' ? 'number' : 'string');
