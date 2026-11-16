@@ -805,6 +805,15 @@
   .tv-try button.on{border-color:var(--ts);background:color-mix(in srgb,var(--ts) 20%,var(--card2))}
   .tv-try button.nx{font-family:var(--font);color:var(--ts);border-style:dashed}
   .tv-try button .ic{width:14px;height:14px}
+  .tv-fs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}@media(max-width:640px){.tv-fs{grid-template-columns:repeat(2,1fr)}}
+  .tv-fs button{all:unset;cursor:pointer;box-sizing:border-box;text-align:center;padding:.55em .8em;border-radius:8px;border:1px solid var(--line);background:var(--card2);font-weight:800;font-size:.875rem;transition:.2s}
+  .tv-fs button:hover{transform:translateY(-2px)}.tv-fs button.on{border-color:var(--c);background:color-mix(in srgb,var(--c) 20%,var(--card2))}
+  .tv-fs button.nx{color:var(--ts);border-style:dashed;display:flex;gap:.4em;align-items:center;justify-content:center}.tv-fs .ic{width:14px;height:14px}
+  .tv-stage{display:grid;gap:10px;padding:14px 16px;border-radius:10px;background:var(--code);border:1px solid var(--c);transition:.3s}
+  .tv-line{display:flex;gap:14px;align-items:center;font:700 1.125rem var(--mono);color:#eef0ff}.tv-ln{color:#667;font-size:.8125rem}
+  .tv-line .v{color:#ffd479;animation:tvpop .4s}.tv-line .v.bad{color:#ff8f9a}.tv-line .v.ok{color:#9be58b}
+  .tv-line.sq .v{text-decoration:underline wavy #ff5470;text-decoration-thickness:2px;text-underline-offset:6px}
+  .tv-say{display:flex;gap:10px;align-items:center;font-weight:700;font-size:.9375rem;color:#eef0ff;animation:tvpop .4s}.tv-lt{font-size:1.4rem}
   .tv-flowline{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:center;font-weight:800}
   .tv-flowline .st{padding:.5em 1em;border-radius:999px;background:color-mix(in srgb,var(--c) 18%,transparent);border:1px solid var(--c)}
   `);
@@ -900,6 +909,26 @@
     { em: '🎲', name: 'any / unknown', sub: '何でも', c: 'var(--bad)', box: ['res', 'unknown'], code: 'const res: unknown = JSON.parse(text);\n// res.toUpperCase();      // 赤線\nif (typeof res === "string") {\n  res.toUpperCase();      // OK\n}', real: '外部 API の返事など、何が来るか分からない値。any は何も守らない、unknown は確認してから使う', items: [{ v: '"tanaka"', ok: true, okMsg: '✓ 何でも入る' }, { v: 'res.toUpperCase()', ok: false, ngMsg: '✗ 確認するまで使えない（赤線）' }, { v: 'typeof で確認', ok: true, okMsg: '✓ 確認したら使える' }] },
     { em: '🕳️', name: 'void / null / undefined', sub: '値がない', c: 'var(--violet)', box: ['n', 'string | null'], code: 'function findName(id: number): string | null {\n  return id === 1 ? "田中" : null;\n}\nconst n = findName(2);\n// n.length;   // 赤線：null かも', real: 'ログイン前の名前、検索で見つからなかった結果、あだ名が未入力…', items: [{ v: '"田中"', ok: true }, { v: 'null', ok: true, okMsg: '✓ 「ない」を示せる' }, { v: 'undefined', ok: false, ngMsg: '✗ undefined は入らない（赤線）' }] },
   ];
+  /* 「赤線」とは何かを、1行のコードで体験する（押して進む） */
+  function flowDemo() {
+    const steps = [
+      { n: '① 書く', code: ['let age: number = ', h('b', { class: 'v' }, '20'), ';'], light: '⚪', msg: '「age は数字の箱」と書いた。まだ何も起きない。', c: 'var(--ts)' },
+      { n: '② まちがえる', code: ['let age: number = ', h('b', { class: 'v bad' }, '"二十"'), ';'], light: '🔴', msg: '文字を入れた瞬間、実行する前に赤線が出る：「文字は数字の箱に入らない」', c: 'var(--bad)', sq: true },
+      { n: '③ 直す', code: ['let age: number = ', h('b', { class: 'v ok' }, '20'), ';'], light: '🟢', msg: '数字に直すと赤線が消える。これで安心して実行できる。', c: 'var(--ok)' },
+    ];
+    const tabs = h('div', { class: 'tv-fs' }), stage = h('div', { class: 'tv-stage' });
+    const show = (i) => {
+      const t = steps[i];
+      tabs.querySelectorAll('button').forEach((b, k) => b.classList.toggle('on', k === i));
+      stage.style.setProperty('--c', t.c);
+      stage.replaceChildren(h('div', { class: 'tv-line' + (t.sq ? ' sq' : '') }, h('span', { class: 'tv-ln' }, '1'), h('code', t.code)), h('div', { class: 'tv-say' }, h('span', { class: 'tv-lt' }, t.light), h('span', t.msg)));
+    };
+    steps.forEach((t, i) => tabs.append(h('button', { style: { '--c': t.c }, onclick: () => show(i) }, t.n)));
+    tabs.append(h('button', { class: 'nx', onclick: () => show((steps.findIndex((_, k) => tabs.children[k].classList.contains('on')) + 1) % 3) }, icon('step-forward'), '次へ'));
+    const root = h('div', { class: 'tv' }, h('div', { class: 'tv-cap' }, icon('pointer'), '「赤線」ってこれ。押して順番に見よう'), tabs, stage);
+    show(0);
+    return root;
+  }
   function overviewScene(el) {
     const cards = h('div', { class: 'tv-row tv-pick' }), detail = h('div', { class: 'tv-detail' });
     const show = (i) => {
@@ -909,14 +938,13 @@
         h('div', { class: 'tv-dh', style: { '--c': t.c } }, h('span', { class: 'tv-big' }, t.em), h('b', t.name), h('span', '＝ ' + t.sub)),
         h('div', { class: 'tv-dg' },
           h('div', null, h('div', { class: 'tv-cap' }, icon('code'), 'コード'), code(t.code, 'ts', { color: t.c })),
-          h('div', null, h('div', { class: 'tv-cap' }, icon('box'), '箱に入れてみる（自動で繰り返す）'), tvDrop(t.box[0], t.box[1], t.items))),
+          h('div', null, h('div', { class: 'tv-cap' }, icon('box'), '箱に入れてみる（ボタンで試す）'), tvDrop(t.box[0], t.box[1], t.items))),
         h('div', { class: 'tv-real' }, icon('briefcase'), h('span', { html: '<b>こんな時に使う</b>　' + t.real })));
     };
     TYPES.forEach((t, i) => cards.append(h('button', { class: 'tv-card', style: { '--c': t.c }, onclick: () => show(i) }, h('h6', h('span', { class: 'tv-big' }, t.em), t.name), h('small', t.sub))));
     el.append(
       h('div', { class: 'tv' }, h('div', { class: 'tv-cap' }, icon('pointer'), '知りたい型を押す → コードと動く例が出る'), cards, detail),
-      h('div', { class: 'tv' }, h('div', { class: 'tv-cap' }, icon('route'), '学ぶ流れ'),
-        h('div', { class: 'tv-flowline' }, h('span', { class: 'st', style: { '--c': 'var(--ts)' } }, '① 型を書く'), '→', h('span', { class: 'st', style: { '--c': 'var(--bad)' } }, '② まちがえると赤線'), '→', h('span', { class: 'st', style: { '--c': 'var(--ok)' } }, '③ 直して実行'))));
+      flowDemo());
     show(0);
   }
 
