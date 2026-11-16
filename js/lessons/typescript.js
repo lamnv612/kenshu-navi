@@ -821,6 +821,7 @@
     show(0);
     return h('div', { class: heading ? 'ic-sec' : '' }, heading ? h('h4', heading) : null, pick, body);
   }
+  K.cmpSection = cmpSection;
   function extendsCompare() {
     const B = 'interface Consultation {\n  id: number;\n  title: string;\n}\n\n';
     const EX = [
@@ -2126,44 +2127,96 @@ console.log(n.length);
         },
       },
       {
-        t: '継承：親から子へ', lead: '<b>extends</b> で親の機能を丸ごと受け継ぐ。最後に <b>abstract</b> も。',
+        t: '継承：親から子へ', lead: '「<b>〜の一種</b>」を、<b>共通部分を1回だけ</b>書いて表す仕組み。まず「なし／あり」を比べよう。',
         render(el) {
-          const cls = (name, cc, members) => { const d = h('div', { class: 'tsx-cls', style: { '--cc': cc } }, h('header', name), members.map(([t, k]) => h('div', { class: k || '' }, t))); return d; };
-          const animal = cls('Booking', 'var(--team)', [['name: string'], ['issueNo()']]);
-          const absTag = h('span', { style: { fontSize: '.75rem', opacity: 0 } }, 'abstract');
-          animal.firstChild.append(absTag);
-          const dog = cls('SeminarBooking extends Booking', 'var(--ts)', [['name  ↑継承', 'inh'], ['issueNo()  ↑継承', 'inh'], ['describe() override']]);
-          const cat = cls('ConsultBooking extends Booking', 'var(--pink)', [['name  ↑継承', 'inh'], ['issueNo()  ↑継承', 'inh'], ['describe() override']]);
-          const kids = h('div', { class: 'kids' }, dog, cat);
-          const arrow = h('div', { style: { font: '900 1.6rem var(--mono)', color: 'var(--ts)', opacity: 0, transition: '.5s' } }, '⬆ extends');
-          const note = h('div', { style: { minHeight: '2.4em' } });
-          el.append(stepper({
-            color: 'var(--ts)',
-            steps: [{ say: '親クラス <b>Booking</b>：name と issueNo() を持つ。' }, { say: '<b>SeminarBooking extends Booking</b>：親を引き継ぐ矢印を引いた。' }, { say: '子は <b>name / issueNo() を書かなくても</b>最初から使える（薄い行）。' }, { say: '子ごとの個性は <b>override</b>。describe() の中身を自由に。' }, { say: '<b>abstract</b>：Booking を「設計だけ」にすると <code class="i">new Booking()</code> は禁止！' }],
-            init(vis) { vis.append(h('div', { class: 'tsx-tree' }, animal, arrow, kids), note); },
-            update(n) {
-              dog.classList.toggle('off', n < 1); cat.classList.toggle('off', n < 1); arrow.style.opacity = n >= 1 ? 1 : 0;
-              [dog, cat].forEach((c) => { c.children[1].style.opacity = n >= 2 ? .6 : 0; c.children[2].style.opacity = n >= 2 ? .6 : 0; c.children[3].style.opacity = n >= 3 ? 1 : 0; });
-              absTag.style.opacity = n >= 4 ? 1 : 0; animal.classList.remove('x');
-              note.replaceChildren();
-              if (n === 4) { animal.classList.add('x'); note.append(res(false, "Cannot create an instance of an abstract class.  new Booking() ✖"), res(true, 'new SeminarBooking("田中") ✓')); }
-            },
-          }));
-          // 実際に動かしてみる
-          const csrc = 'abstract class Booking {\n  constructor(public name: string) {}\n  issueNo() { console.log(this.name + " の受付番号を発行"); }\n  abstract describe(): void;\n}\nclass SeminarBooking extends Booking {\n  describe() { console.log("セミナーの予約です"); }\n}\nclass ConsultBooking extends Booking {\n  describe() { console.log("相談の予約です"); }\n}';
-          const ccd = code(csrc, 'ts', { file: 'booking.ts', dim: true, color: 'var(--ts)' });
-          const cout = h('div', { class: 'fo2-out' }, h('span', { class: 'mu' }, '▶ ボタンを押すと、動いた行が光って結果が出る'));
-          const RUN = [
-            ['new SeminarBooking("田中").issueNo()', [3], false, '田中 の受付番号を発行', 'SeminarBooking は issueNo() を書いていないのに使える（親から継承）'],
-            ['new SeminarBooking("田中").describe()', [7], false, 'セミナーの予約です', 'SeminarBooking の describe()（override）が動く'],
-            ['new ConsultBooking("佐藤").describe()', [10], false, '相談の予約です', '同じ describe() でも ConsultBooking は別の中身'],
-            ['new Booking("x")', [1], true, "error TS2511: Cannot create an instance of an abstract class.", 'abstract は「設計だけ」。直接 new はできない'],
+          style('inh', `
+          .ih-sec{margin-bottom:26px}.ih-sec>h4{font:900 1.05rem var(--font);margin-bottom:10px}
+          .ih-duo{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:stretch}@media(max-width:900px){.ih-duo{grid-template-columns:1fr}}
+          .ih-c{border:2px solid var(--c);border-radius:12px;background:var(--card);overflow:hidden;display:flex;flex-direction:column}
+          .ih-h{padding:.6em 1em;background:color-mix(in srgb,var(--c) 16%,var(--card2));font-weight:900;color:var(--c);display:flex;justify-content:space-between;gap:8px}.ih-h small{font-weight:700;color:var(--mute)}
+          .ih-c pre.code{margin:0;border:0;border-radius:0;font-size:.82rem;flex:1}
+          .ih-chips{display:flex;gap:6px;flex-wrap:wrap;padding:.6em 1em;border-top:1px dashed var(--line);align-items:center}
+          .ih-chips b{font-size:.75rem;color:var(--mute)}
+          .ih-chip{padding:.2em .8em;border-radius:999px;font:800 .78rem var(--mono);border:2px solid var(--c);background:color-mix(in srgb,var(--c) 18%,var(--card))}
+          .ih-chip.inh{border-style:dashed;background:transparent;color:var(--mute)}
+          .ih-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:12px 0}
+          .ih-tabs button{all:unset;cursor:pointer;box-sizing:border-box;text-align:center;padding:.55em .8em;border-radius:8px;border:1px solid var(--line);background:var(--card);font-weight:800;transition:.2s}
+          .ih-tabs button.on{border-color:var(--ts);background:color-mix(in srgb,var(--ts) 16%,var(--card))}
+          .ih-act{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 8px}
+          .ih-out{padding:.7em 1em;border-radius:10px;background:var(--code);color:#cfd5ff;font:700 .85rem/1.7 var(--mono);min-height:3.4em;white-space:pre-wrap}
+          .ih-out.ok{color:#9be58b;border:1px solid var(--ok)}.ih-out.ng{color:#ff9aa5;border:1px solid var(--bad)}
+          .ih-out small{display:block;font:700 .78rem var(--font);color:var(--mute)}
+          .ih-arrow{text-align:center;font:900 1rem var(--mono);color:var(--ts);margin:6px 0}`);
+          const PERSON = 'class Person {\n  name: string;\n\n  constructor(name: string) {\n    this.name = name;\n  }\n\n  greet() {\n    console.log("こんにちは、" + this.name + "です");\n  }\n}';
+
+          /* ① 継承なし / あり */
+          const cases = cmpSection('🤔 ① なぜ継承？ 継承なし / あり', [
+            { n: '👥 共通の項目・操作', pain: '弁護士にも事務員にも <b>name と greet() をコピペ</b>',
+              gain: '共通部分は <b>Person に1回</b>。子は「足す分」だけ',
+              a: 'class Lawyer {\n  name = "田中";\n  greet() { /* あいさつ */ }   // ← コピペ\n  license = "12345";\n}\n\nclass Staff {\n  name = "佐藤";\n  greet() { /* あいさつ */ }   // ← コピペ\n  desk = "A-12";\n}',
+              b: 'class Person {\n  name = "";\n  greet() { /* あいさつ */ }   // 1回だけ\n}\n\nclass Lawyer extends Person {\n  license = "12345";\n}\n\nclass Staff extends Person {\n  desk = "A-12";\n}' },
+            { n: '🔧 あいさつを直したい', pain: 'greet() の文言変更を、<b>全クラスで直す</b>。直し忘れが出る',
+              gain: '<b>Person の1か所</b>を直せば、子すべてに反映',
+              a: '// Lawyer の greet() を直した…\n// Staff の greet() は直し忘れ\n// Client の greet() も…\n// → 文言がバラバラに', b: 'class Person {\n  greet() {\n    console.log("いつもお世話になっております");   // ここだけ直す\n  }\n}\n// Lawyer・Staff・Client すべて自動で変わる' },
+            { n: '🏦 普通預金と定期預金', pain: '口座の基本機能を<b>2回書く</b>。片方だけ直して差が出る',
+              gain: '基本は <b>Account</b>。定期預金は「利息」だけ足す',
+              a: 'class Savings {\n  balance = 0;\n  deposit(n: number) { this.balance += n; }\n}\n\nclass Fixed {\n  balance = 0;\n  deposit(n: number) { this.balance += n; }   // ← コピペ\n  rate = 0.02;\n}',
+              b: 'class Account {\n  balance = 0;\n  deposit(n: number) { this.balance += n; }\n}\n\nclass Fixed extends Account {\n  rate = 0.02;   // 定期預金だけの項目\n}' },
+            { n: '📨 通知の送り方だけ違う', pain: '共通のログ処理も<b>別々に</b>。送り方が増えるたびにコピペ',
+              gain: '<b>送り方だけ</b>書き換え（override）。他は親のまま',
+              a: 'class MailNotice {\n  log(m: string) { console.log("LOG " + m); }\n  send() { this.log("mail"); }\n}\n\nclass SlackNotice {\n  log(m: string) { console.log("LOG " + m); }   // ← コピペ\n  send() { this.log("slack"); }\n}',
+              b: 'class Notice {\n  log(m: string) { console.log("LOG " + m); }\n  send() { this.log("base"); }\n}\n\nclass SlackNotice extends Notice {\n  send() { this.log("slack"); }   // 送り方だけ変える\n}' },
+          ], '❌ 継承なし', '✅ 継承あり');
+
+          /* ② 家系図：子は親の機能を持つ */
+          const KIDS = [
+            { n: '⚖️ 弁護士 Lawyer', cls: 'Lawyer', own: ['license', 'showLicense()'], code: 'class Lawyer extends Person {\n  license = "12345";\n\n  showLicense() {\n    console.log("登録番号 " + this.license);\n  }\n}',
+              acts: [['new Lawyer("田中").greet()', 'ok', 'こんにちは、田中です', '👍 親の greet() が使える（自分では書いていない）'], ['new Lawyer("田中").showLicense()', 'ok', '登録番号 12345', '👍 子だけの機能'], ['new Person("山本").showLicense()', 'ng', "✖ 赤線：Property 'showLicense' does not exist on type 'Person'", '😮 <b>親は子の機能を持たない</b>（一方通行）']] },
+            { n: '🗂️ 事務員 Staff', cls: 'Staff', own: ['desk', 'showDesk()'], code: 'class Staff extends Person {\n  desk = "A-12";\n\n  showDesk() {\n    console.log("席番号 " + this.desk);\n  }\n}',
+              acts: [['new Staff("佐藤").greet()', 'ok', 'こんにちは、佐藤です', '👍 親の greet() が使える'], ['new Staff("佐藤").showDesk()', 'ok', '席番号 A-12', '👍 子だけの機能'], ['new Staff("佐藤").showLicense()', 'ng', "✖ 赤線：Property 'showLicense' does not exist on type 'Staff'", '😮 <b>兄弟（Lawyer）の機能は使えない</b>']] },
           ];
-          const runI = (i) => { const [lab, ln, bad, o, why] = RUN[i]; ccd.setHi([], 'on'); ccd.setHi([], 'err'); ccd.setHi(ln, bad ? 'err' : 'on'); cout.className = 'fo2-out ' + (bad ? 'e' : 'ok'); cout.replaceChildren(h('div', { class: 'mu' }, '> ' + lab), h('div', { class: bad ? 'er' : '' }, o), h('div', { class: 'mu' }, why)); };
-          const cbtns = RUN.map(([lab], i) => h('button', { class: 'btn', onclick: () => runI(i) }, icon('play'), lab));
-          let cbusy = false;
-          const call = h('button', { class: 'btn primary', style: { '--c': 'var(--ts)' }, onclick: async () => { if (cbusy) return; cbusy = true; for (let i = 0; i < RUN.length; i++) { runI(i); await sleep(1200); } cbusy = false; } }, icon('play'), '順に実行');
-          el.append(h('div', { class: 'fo2-panel' }, lbl('動かしてみよう：継承した機能は、ちゃんと動く？'), h('div', { class: 'fo2-2' }, ccd, h('div', { class: 'col' }, h('div', { class: 'fo2-ctl', style: { margin: 0 } }, cbtns, call), cout))));
+          const kTabs = h('div', { class: 'ih-tabs' }), kBody = h('div');
+          const showKid = (i) => {
+            const k = KIDS[i];
+            kTabs.querySelectorAll('button').forEach((b, x) => b.classList.toggle('on', x === i));
+            const out = h('div', { class: 'ih-out' }, '👆 ボタンを押して、動かしてみよう');
+            const run = (a) => { out.className = 'ih-out ' + a[1]; out.replaceChildren(a[2], h('small', { html: a[3] })); };
+            kBody.replaceChildren(
+              h('div', { class: 'ih-duo' },
+                h('div', { class: 'ih-c', style: { '--c': 'var(--team)' } }, h('div', { class: 'ih-h' }, h('span', '👤 親 Person'), h('small', '共通部分')), code(PERSON, 'ts', { color: 'var(--team)' }), h('div', { class: 'ih-chips', style: { '--c': 'var(--team)' } }, h('b', '持っているもの'), h('span', { class: 'ih-chip' }, 'name'), h('span', { class: 'ih-chip' }, 'greet()'))),
+                h('div', null, h('div', { class: 'ih-arrow' }, '⬇ extends（引き継ぐ）'),
+                  h('div', { class: 'ih-c', style: { '--c': 'var(--ts)' } }, h('div', { class: 'ih-h' }, h('span', '🧒 子 ' + k.cls), h('small', '足す分だけ書く')), code(k.code, 'ts', { color: 'var(--ts)' }),
+                    h('div', { class: 'ih-chips', style: { '--c': 'var(--ts)' } }, h('b', '持っているもの'), h('span', { class: 'ih-chip inh' }, 'name ↑親'), h('span', { class: 'ih-chip inh' }, 'greet() ↑親'), k.own.map((x) => h('span', { class: 'ih-chip' }, x)))))),
+              h('div', { class: 'ih-act' }, k.acts.map((a) => h('button', { class: 'btn', onclick: () => run(a) }, icon('play'), a[0]))), out);
+          };
+          KIDS.forEach((k, i) => kTabs.append(h('button', { onclick: () => showKid(i) }, k.n)));
+          const family = h('div', { class: 'ih-sec' }, h('h4', '🌳 ② 親から子へ：何が引き継がれる？'), kTabs, kBody);
+
+          /* ③ override と super */
+          const OV = [
+            { n: 'override だけ', code: 'class Lawyer extends Person {\n  greet() {\n    console.log("弁護士の" + this.name + "です");\n  }\n}', out: ['弁護士の田中です'], note: '親の greet() は<b>置き換えられる</b>（親のあいさつは出ない）' },
+            { n: 'override ＋ super.greet()', code: 'class Lawyer extends Person {\n  greet() {\n    super.greet();   // 親のあいさつも実行\n    console.log("弁護士の" + this.name + "です");\n  }\n}', out: ['こんにちは、田中です', '弁護士の田中です'], note: '<b>super.greet()</b> で親の処理も呼べる → 親の動きに足す' },
+          ];
+          const ovTabs = h('div', { class: 'ih-tabs' }), ovBody = h('div');
+          const showOv = (i) => {
+            const o = OV[i];
+            ovTabs.querySelectorAll('button').forEach((b, x) => b.classList.toggle('on', x === i));
+            ovBody.replaceChildren(h('div', { class: 'ih-duo' }, code(o.code, 'ts', { color: 'var(--ts)' }), h('div', { class: 'ih-out ok' }, h('small', 'new Lawyer("田中").greet() の結果'), ...o.out.map((t) => h('div', '› ' + t)), h('small', { html: '👉 ' + o.note }))));
+          };
+          OV.forEach((o, i) => ovTabs.append(h('button', { onclick: () => showOv(i) }, o.n)));
+          showKid(0); showOv(0);
+          const ov = h('div', { class: 'ih-sec' }, h('h4', '🔁 ③ 親の動きを変えたい：override と super'), ovTabs, ovBody);
+
+          /* ④ abstract */
+          const abOut = h('div', { class: 'ih-out' }, '👆 ボタンを押してみよう');
+          const abAct = (ok, msg, sub) => { abOut.className = 'ih-out ' + (ok ? 'ok' : 'ng'); abOut.replaceChildren(msg, h('small', { html: sub })); };
+          const abs = h('div', { class: 'ih-sec' }, h('h4', '📐 ④ abstract：「設計だけ」の親'),
+            h('div', { class: 'ih-duo' },
+              code('abstract class Booking {\n  abstract describe(): void;   // 子が必ず書く\n}\n\nclass SeminarBooking extends Booking {\n  describe() {\n    console.log("セミナーの予約です");\n  }\n}', 'ts', { color: 'var(--ts)' }),
+              h('div', null, h('div', { class: 'ih-act', style: { marginTop: 0 } },
+                h('button', { class: 'btn', onclick: () => abAct(false, "✖ 赤線：Cannot create an instance of an abstract class.", '<b>abstract は「設計だけ」</b>。直接 new はできない') }, icon('play'), 'new Booking()'),
+                h('button', { class: 'btn', onclick: () => abAct(true, 'セミナーの予約です', '👍 子クラスなら new できる。<b>describe() を書き忘れると赤線</b>') }, icon('play'), 'new SeminarBooking().describe()')), abOut)));
+          el.append(cases, family, ov, abs);
         },
       },
       { t: 'super()：親を呼ぶ', tag: 'super', lead: '子クラスの constructor では <b>super()</b> が先。親→子の順にインスタンスが出来上がる様子を見よう。', render: superScene },
@@ -2258,13 +2311,52 @@ console.log(n.length);
         },
       },
       {
-        t: 'Array<T> と制約 extends', lead: '<code class="i">number[]</code> は <code class="i">Array&lt;number&gt;</code> のこと。<b>T extends …</b> で「T に条件」を付けられる。',
+        t: 'Array<T> と制約 extends', lead: '<code class="i">T</code> は「なんでも」。だから<b>「最低限これは持っていてね」</b>という条件を付けたい。それが <code class="i">T extends …</code>。',
         render(el) {
-          const out = h('div', { style: { minHeight: '2.4em' } });
-          const door = h('div', { class: 'tsx-door' }, '🚪');
-          const feed = (lab, ok) => { door.className = 'tsx-door ' + (ok ? 'ok' : 'ng'); door.textContent = ok ? '✅' : '⛔'; out.replaceChildren(ok ? res(true, `${lab} は length を持つ → OK`) : res(false, `Argument of type '${lab}' is not assignable to parameter of type '{ length: number; }'.`)); };
-          el.append(h('div', { class: 'split' }, h('div', { class: 'col' }, code('let a: Array<number> = [1, 2];\nlet b: number[] = [1, 2];  // 同じ意味\n\nfunction len<T extends { length: number }>(x: T) {\n  return x.length;\n}', 'ts')),
-            h('div', { class: 'col' }, h('div', { class: 'row' }, h('button', { class: 'btn', onclick: () => feed('"abc"', true) }, 'len("abc")'), h('button', { class: 'btn', onclick: () => feed('[1,2,3]', true) }, 'len([1,2,3])'), h('button', { class: 'btn', onclick: () => feed('number', false) }, 'len(42)')), door, out)));
+          style('con', `
+          .co-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:14px}@media(max-width:700px){.co-tabs{grid-template-columns:1fr}}
+          .co-tabs button{all:unset;cursor:pointer;box-sizing:border-box;text-align:center;padding:.6em .8em;border-radius:10px;border:1px solid var(--line);background:var(--card);font-weight:800;display:grid;gap:1px;transition:.2s}
+          .co-tabs button small{font:700 .72rem var(--font);color:var(--mute)}.co-tabs button:hover{transform:translateY(-2px)}
+          .co-tabs button.on{border-color:var(--ts);background:color-mix(in srgb,var(--ts) 18%,var(--card))}
+          .co-duo{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:14px;align-items:start}@media(max-width:900px){.co-duo{grid-template-columns:1fr}}
+          .co-duo pre.code{white-space:pre-wrap;word-break:break-word;font-size:.82rem}
+          .co-say{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px;padding:.7em 1em;border-radius:10px;background:color-mix(in srgb,var(--ts) 12%,var(--card));border:1px solid color-mix(in srgb,var(--ts) 40%,var(--line));font-weight:800}
+          .co-say code{font:800 .9rem var(--mono)}
+          .co-act{display:grid;gap:8px;margin-bottom:10px}.co-act button{text-align:left}
+          .co-out{padding:.7em 1em;border-radius:10px;background:var(--code);color:#cfd5ff;font:700 .85rem/1.7 var(--mono);min-height:4.2em}
+          .co-out.ok{color:#9be58b;border:1px solid var(--ok)}.co-out.ng{color:#ff9aa5;border:1px solid var(--bad)}
+          .co-out small{display:block;font:700 .78rem var(--font);color:var(--mute);margin-top:2px}
+          .co-door{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.co-door span{padding:.25em .8em;border-radius:999px;font:800 .78rem var(--mono);border:2px solid var(--c);background:color-mix(in srgb,var(--c) 16%,var(--card))}
+          .co-door span.no{border-style:dashed;background:transparent;color:var(--mute);text-decoration:line-through}`);
+          const TABS = [
+            { n: '① 条件なしの T', sub: 'なんでも入る → 困る', say: 'T は<b>なんでも</b>入る。だから「length がある」とは限らない。',
+              code: 'function longest<T>(a: T, b: T) {\n  return a.length >= b.length ? a : b;\n}',
+              door: [['文字 "apple"', 1], ['配列 [1,2]', 1], ['数字 10', 1]], doorNote: 'T の入口：<b>全部通る</b>（数字も）',
+              acts: [['TS が見る：a.length は書いていい？', 'ng', "✖ 赤線：Property 'length' does not exist on type 'T'", '😣 T が数字かもしれない。<b>length があるか分からない</b>から、TS が止める']] },
+            { n: '② T extends { length }', sub: '条件を付ける', say: '<code>T extends { length: number }</code> ＝ 「<b>length を持つものだけ</b> OK」',
+              code: 'function longest<T extends { length: number }>(a: T, b: T): T {\n  return a.length >= b.length ? a : b;\n}',
+              door: [['文字 "apple"', 1], ['配列 [1,2]', 1], ['数字 10', 0]], doorNote: 'T の入口：<b>length を持つものだけ</b>通る',
+              acts: [['longest("apple", "fig")', 'ok', 'apple', '👍 文字は length を持つ → OK'], ['longest([1, 2, 3], [1])', 'ok', '[1, 2, 3]', '👍 配列も length を持つ → OK'], ['longest(10, 20)', 'ng', "✖ 赤線：Argument of type 'number' is not assignable to parameter of type '{ length: number; }'", '🚫 数字は length を持たない → <b>入口で止まる</b>']] },
+            { n: '③ K extends keyof T', sub: 'キー名だけ許す', say: '<code>K extends keyof T</code> ＝ 「<b>T にあるキー名だけ</b> OK」',
+              code: 'function pick<T, K extends keyof T>(obj: T, key: K) {\n  return obj[key];\n}\n\nconst user = { id: 1, name: "田中" };',
+              door: [['"id"', 1], ['"name"', 1], ['"nmae"', 0]], doorNote: 'K の入口：<b>user にあるキー名だけ</b>通る',
+              acts: [['pick(user, "name")', 'ok', '田中', '👍 name は user にある'], ['pick(user, "id")', 'ok', '1', '👍 id も user にある'], ['pick(user, "nmae")', 'ng', "✖ 赤線：Argument of type '\"nmae\"' is not assignable to parameter of type '\"id\" | \"name\"'", '🚫 <b>打ち間違いのキー</b>が入口で止まる']] },
+          ];
+          const tabs = h('div', { class: 'co-tabs' }), body = h('div');
+          const show = (i) => {
+            const t = TABS[i];
+            tabs.querySelectorAll('button').forEach((b, k) => b.classList.toggle('on', k === i));
+            const out = h('div', { class: 'co-out' }, '👆 ボタンを押して、動かしてみよう');
+            const run = (a) => { out.className = 'co-out ' + a[1]; out.replaceChildren(a[2], h('small', { html: a[3] })); };
+            body.replaceChildren(
+              h('div', { class: 'co-say', html: t.say }),
+              h('div', { class: 'co-duo' },
+                h('div', null, code(t.code, 'ts', { color: 'var(--ts)' }), h('div', { class: 'co-door' }, h('small', { style: { color: 'var(--mute)', fontWeight: 800, alignSelf: 'center' }, html: t.doorNote }), t.door.map(([x, ok]) => h('span', { class: ok ? '' : 'no', style: { '--c': ok ? 'var(--ok)' : 'var(--bad)' } }, (ok ? '✓ ' : '✗ ') + x)))),
+                h('div', null, h('div', { class: 'co-act' }, t.acts.map((a) => h('button', { class: 'btn', onclick: () => run(a) }, icon('play'), a[0]))), out)));
+          };
+          TABS.forEach((t, i) => tabs.append(h('button', { onclick: () => show(i) }, t.n, h('small', t.sub))));
+          el.append(tabs, body);
+          show(0);
         },
       },
       {
