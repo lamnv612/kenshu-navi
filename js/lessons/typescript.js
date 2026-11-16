@@ -2089,6 +2089,51 @@ console.log(n.length);
           };
           TABS.forEach((t, i) => tabs.append(h('button', { onclick: () => show(i) }, W(t.mod), h('small', t.sub))));
 
+          /* ③-0 そもそも、この3者は誰？（銀行のたとえ話・ステップ表示） */
+          style('amy', `
+          .as-map{display:grid;grid-template-columns:minmax(0,.8fr) 34px minmax(0,1.2fr);gap:0;align-items:center;padding:16px;border-radius:14px;background:var(--card);border:1px solid var(--line)}
+          @media(max-width:760px){.as-map{grid-template-columns:1fr;gap:10px}.as-ar{display:none}}
+          .as-node{padding:.8em 1em;border-radius:12px;border:2px solid var(--line);background:var(--card2);transition:.35s;display:grid;gap:2px}
+          .as-node .em{font-size:1.7rem}.as-node b{font-size:1rem}.as-node small{font:700 .75rem var(--font);color:var(--mute)}
+          .as-node.hl{border-color:var(--ts);background:color-mix(in srgb,var(--ts) 18%,var(--card2));box-shadow:0 10px 24px -14px var(--ts);transform:scale(1.02)}
+          .as-ar{text-align:center;font:900 1.3rem var(--mono);color:var(--mute)}
+          .as-bank{border:2px solid var(--team);border-radius:14px;overflow:hidden;background:var(--card2);transition:.35s}.as-bank.hl{box-shadow:0 10px 24px -14px var(--team)}
+          .as-bank>header{padding:.5em 1em;background:color-mix(in srgb,var(--team) 22%,var(--card2));font:900 .95rem var(--mono);color:var(--team);display:flex;justify-content:space-between;gap:8px}
+          .as-bank>header small{font:700 .75rem var(--font);color:var(--mute)}
+          .as-row{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:.6em 1em;border-top:1px solid var(--line);transition:.3s}
+          .as-row .d{font-size:1.3rem}.as-row b{font:800 .88rem var(--mono);display:block}.as-row small{font:700 .72rem var(--font);color:var(--mute)}
+          .as-row .tag{min-width:5.2em;text-align:center;padding:.15em .7em;border-radius:999px;font-weight:900;font-size:.78rem;opacity:0;transition:.3s;border:1px solid transparent}
+          .as-row.ok{background:color-mix(in srgb,var(--ok) 16%,transparent)}.as-row.ok .tag{opacity:1;background:var(--ok);color:#06101f}
+          .as-row.ng{background:color-mix(in srgb,var(--bad) 16%,transparent)}.as-row.ng .tag{opacity:1;background:var(--bad);color:#fff}
+          .as-side{display:grid;gap:10px}.as-ext{font:700 .78rem var(--mono);color:var(--mute);text-align:center}`);
+          const asRows = [['🌐', 'public', '窓口：deposit()', [1, 1, 1]], ['🛡️', 'protected', '事務室：branch（支店）', [1, 1, 0]], ['🔒', 'private', '金庫：balance・pin', [1, 0, 0]]];
+          // actor: 0=クラスの中, 1=子クラス, 2=外のコード
+          const asStory = [
+            { say: '🏦 <b>BankAccount ＝ 銀行の口座</b>。この口座には、<b>3種類の立場</b>の人が関わる。誰が何に触れるかを決めておかないと、大変なことになる。', actor: -1, hl: [] },
+            { say: '🌍 <b>外のコード</b> ＝ 口座を<b>使うだけ</b>の人。ATM の画面や、他のファイルのコード。お客さんは<b>窓口（public）</b>でお願いするだけで、金庫の中は見られない。', actor: 2, hl: ['out'] },
+            { say: '🏠 <b>クラスの中</b> ＝ <b>口座自身</b>。窓口の係（deposit()）が、自分の金庫（balance・pin）を開けて作業する。<b>自分の持ち物だから、全部触れる</b>。', actor: 0, hl: ['bank'] },
+            { say: '🧒 <b>子クラス</b> ＝ 口座の<b>仲間</b>（定期預金口座＝ <code>Savings extends BankAccount</code>）。親の事務室（protected）までは入れるが、<b>金庫（private）は親だけのもの</b>。', actor: 1, hl: ['kid'] },
+            { say: '💡 <b>なぜ分ける？</b> お客さんが金庫を直接触れたら、残高の書き換えや暗証番号の盗み見ができてしまう。だから<b>立場ごとに「どこまで見せるか」</b>を決める。それが <b>public / protected / private</b>。', actor: -1, hl: [], all: true },
+          ];
+          const asOut = h('div', { class: 'as-node' }, h('span', { class: 'em' }, '🌍'), h('b', '外のコード'), h('small', 'ATM の画面・他のファイル'));
+          const asKid = h('div', { class: 'as-node' }, h('span', { class: 'em' }, '🧒'), h('b', '子クラス'), h('small', 'Savings extends BankAccount（定期預金口座）'));
+          const asRowEls = asRows.map(([d, m, sub]) => h('div', { class: 'as-row' }, h('span', { class: 'd' }, d), h('div', h('b', m), h('small', sub)), h('span', { class: 'tag' }, '')));
+          const asBank = h('div', { class: 'as-bank' }, h('header', h('span', '🏠 class BankAccount'), h('small', 'クラスの中 ＝ 口座自身')), ...asRowEls);
+          const story = h('div', { class: 'am-sec' }, h('h4', '🏦 そもそも「クラスの中・子クラス・外のコード」って誰？（銀行のたとえ）'),
+            stepper({ color: 'var(--ts)', interval: 3800, steps: asStory.map((x) => ({ say: x.say })),
+              init(vis) { vis.append(h('div', { class: 'as-map' }, asOut, h('div', { class: 'as-ar' }, '→'), h('div', { class: 'as-side' }, asBank, h('div', { class: 'as-ext' }, '↑ extends（継ぐ）'), asKid))); },
+              update(n) {
+                const x = asStory[n];
+                asOut.classList.toggle('hl', x.hl.includes('out')); asKid.classList.toggle('hl', x.hl.includes('kid')); asBank.classList.toggle('hl', x.hl.includes('bank'));
+                asOut.style.transform = ''; 
+                asRowEls.forEach((r, k) => {
+                  r.className = 'as-row';
+                  const tag = r.querySelector('.tag');
+                  if (x.actor >= 0) { const ok = !!asRows[k][3][x.actor]; r.classList.add(ok ? 'ok' : 'ng'); tag.textContent = ok ? '✓ 触れる' : '✖ 止める'; }
+                  else if (x.all) { r.classList.add('ok'); tag.textContent = ['誰でも', '自分＋子', '自分だけ'][k]; }
+                });
+              } }));
+
           /* ③ 誰が触れる？（訪問者を選ぶ → 3つの部屋の鍵が開く/閉まる） */
           style('amd', `
           .av-who{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:12px}@media(max-width:700px){.av-who{grid-template-columns:1fr}}
@@ -2143,7 +2188,7 @@ console.log(n.length);
           pickVis(2);
 
           el.append(lv, tabs, stage,
-            mat,
+            story, mat,
             h('div', { class: 'am-tip' }, '💡 迷ったら、まず private'));
           show(0);
         },
