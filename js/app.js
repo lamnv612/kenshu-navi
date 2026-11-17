@@ -408,6 +408,7 @@
     }
     if (GH && prScene && S.tag === 'PRACTICE' && pr.scene.length > 1) el.append(h('div', { class: 'row', style: { margin: '0 0 1em' } }, pr.scene.map((x) => ghChip({ label: x.label || x.path, url: ghUrl(x.path) }))));
     if (GH && S.gh) el.append(h('div', { class: 'row', style: { margin: '0 0 1em' } }, [].concat(S.gh).map((g) => ghChip({ label: g.label || g[0], url: ghUrl(g.path || g[1]) }))));
+    if (K.anatFor) { const an = K.anatFor(S.t); if (an) el.append(an); }
     el.append(body);
     K.sidePre && K.sidePre(el, L);
     const ctx = { steppers: [], cleanups: [], lesson: L, idx, story };
@@ -491,7 +492,8 @@
   function render() {
     const m = location.hash.match(/^#\/lesson\/([\w-]+)(?:\/(\d+))?/);
     const toExtras = location.hash === '#/extras';
-    const swap = () => {
+    const swap = () => { try { swap0(); } catch (e) { console.error(e); app.replaceChildren(h('pre', { style: { padding: '24px', color: '#ff9aa5', whiteSpace: 'pre-wrap', font: '700 13px/1.6 monospace' } }, '表示エラー: ' + (e && e.stack ? e.stack.split('\n').slice(0, 5).join('\n') : e))); } };
+    const swap0 = () => {
       current && current.cleanup && current.cleanup();
       app.replaceChildren();
       const pm = location.hash.match(/^#\/p\/(.+)/);

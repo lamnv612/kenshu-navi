@@ -150,7 +150,7 @@
   let RX = null;
   function build() {
     const by = { css: [], tag: [], attr: [], word: [], abool: [] };
-    L.forEach((e) => by[e.kind === 'attr' && e.bool ? 'abool' : (e.kind || 'word')].push(e.k));
+    L.forEach((e) => { const k = e.kind === 'attr' && e.bool ? 'abool' : (e.kind || 'word'); if (by[k]) by[k].push(e.k); });   // 'part' など検出対象外の種類は無視
     const alt = (a) => a.sort((x, y) => y.length - x.length).map(esc).join('|');
     RX = {
       css: by.css.length ? new RegExp('(?<![\\w-])(' + alt(by.css) + ')(?=\\s*:)', 'g') : null,

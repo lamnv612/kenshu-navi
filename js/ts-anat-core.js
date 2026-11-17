@@ -13,8 +13,9 @@
   K.tsAnat = (title, spec) => { SPECS[title] = spec; };
   K.tsAnatSpecs = SPECS;
 
-  function build(spec) {
+  function buildOne(spec) {
     style('tsan', `
+    .an-tabs{display:flex;gap:8px;margin-bottom:10px}.an-tabs button{all:unset;cursor:pointer;padding:.45em 1.2em;border-radius:10px;border:1px solid var(--line);background:var(--card);font-weight:800;font-size:.88rem}.an-tabs button.on{border-color:var(--ts);background:color-mix(in srgb,var(--ts) 18%,var(--card))}
     .an-sec{margin-bottom:22px}
     .an-sec>h4{font:900 1.05rem var(--font);margin-bottom:10px}
     .an-box{padding:26px 16px;border-radius:14px;background:var(--code);overflow:auto;text-align:center;white-space:pre;font:700 1.45rem/1.9 var(--mono);color:#d8dcff;transition:.3s}
@@ -50,5 +51,14 @@
     box.addEventListener('mouseleave', () => lit(null));
     return h('div', { class: 'an-sec' }, h('h4', spec.title || '🔍 構文の解剖：パーツの名前を覚えよう'), box, bar, info);
   }
-  K.tsAnatBuild = build;
+  /* spec.more（別のスペック配列）があれば、タブで切り替えられる */
+  K.tsAnatBuild = function (spec) {
+    const list = [spec].concat(spec.more || []);
+    if (list.length === 1) return buildOne(spec);
+    const wrap = h('div'), tabs = h('div', { class: 'an-tabs' }), body = h('div');
+    const show = (i) => { tabs.querySelectorAll('button').forEach((b, k) => b.classList.toggle('on', k === i)); body.replaceChildren(buildOne(list[i])); };
+    list.forEach((sp, i) => tabs.append(h('button', { onclick: () => show(i) }, sp.tab || ('例' + (i + 1)))));
+    wrap.append(tabs, body); show(0);
+    return wrap;
+  };
 })();
