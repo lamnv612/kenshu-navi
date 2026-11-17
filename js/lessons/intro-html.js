@@ -115,7 +115,7 @@
 
   const DAYS = [
     { d: '1', w: '', c: 'var(--basic)', t: 'HTML/CSS · CUI · Git', k: [['コース紹介', 'intro'], ['CUI・Vim', 'cuivim'], ['Git', 'git'], ['HTML', 'html'], ['CSS', 'css']], m: '開発の土台。ターミナル・バージョン管理・Webの骨組みと見た目。' },
-    { d: '2', w: '', c: 'var(--ts)', t: 'TypeScript ①', k: [['紹介', 'ts-intro'], ['基礎文法', 'ts-basic'], ['型の指定', 'ts-basic2'], ['データ型', 'ts-data'], ['型の構文', 'ts-types'], ['インタフェース', 'ts-interface'], ['Type', 'ts-alias'], ['クラス①', 'ts-class']], m: '型で「バグを書く前に気づく」力を付ける。' },
+    { d: '2', w: '', c: 'var(--ts)', t: 'TypeScript ①', k: [['紹介', 'ts-intro'], ['基礎文法', 'ts-basic'], ['型の指定', 'ts-basic2'], ['データ型', 'ts-data'], ['型の構文', 'ts-types'], ['Type', 'ts-alias'], ['インタフェース', 'ts-interface'], ['クラス①', 'ts-class']], m: '型で「バグを書く前に気づく」力を付ける。' },
     { d: '3', w: '', c: 'var(--ts)', t: 'TypeScript ②', k: [['クラス②', 'ts-class2'], ['ジェネリクス', 'ts-generics'], ['単体テスト入門', 'ts-test']], m: '型を設計し、テストで守る。' },
     { d: '4', w: '', c: 'var(--vue)', t: 'Vue.js ①', k: [['紹介', 'vue-intro'], ['環境設定', 'vue-env'], ['基礎', 'vue-basics'], ['コンポーネント', 'vue-comp']], m: '画面が「データに反応して」動く感覚をつかむ。' },
     { d: '5', w: '', c: 'var(--vue)', t: 'Vue.js ②', k: [['アイデア発想', 'idea'], ['Lifecycle・Computed・Watcher', 'vue-life'], ['Vue Router', 'vue-router'], ['単体テスト', 'ts-test'], ['Q&A', 'qa']], m: '応用機能を学び、チーム開発のテーマを決める。' },
