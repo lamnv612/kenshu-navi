@@ -416,6 +416,7 @@
     K.stripChoiceQuiz && K.stripChoiceQuiz(body);
     K.glossify && K.glossify(body);
     K.glossWatch && (ctx.cleanups.push(() => {}), K.ctx = ctx, K.glossWatch(body), K.ctx = null);
+    K.sideTerms && K.sideTerms(el, body, L, S);
     if (typeof clean === 'function') ctx.cleanups.push(clean);
     if (W_) story.sync(false);
     store.seen(id, idx);
