@@ -6,8 +6,8 @@
   const { h, style } = K.W;
   style('side', `
   @media(min-width:1700px){
-    .main.wide,.main:has(>.scene.hasside){max-width:1560px;position:relative}
-    .scene.hasside{padding-right:376px}
+    .main.wide,.main:has(>.scene.hasside){max-width:none;position:relative}
+    .scene.hasside{padding-right:408px}
     .scene.hasside.closed{padding-right:0}
     .scene.hasside>aside.side{display:grid}
   }
