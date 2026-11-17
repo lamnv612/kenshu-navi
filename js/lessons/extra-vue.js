@@ -357,7 +357,7 @@ onMounted(fetchCases)`;
           function draw() {
             tabs.querySelectorAll('button').forEach((b, i) => b.classList.toggle('on', i === cur));
             log.replaceChildren(chip('mounted ×' + mounted), chip('unmounted ×' + unmounted), chip(keep ? '状態は保持される' : '切替で state が消える'));
-            codeBox.replaceChildren(code(`<script setup>\nconst current = shallowRef(${names[cur]})\n</script>\n\n<template>\n${keep ? '  <KeepAlive>\n    <component :is="current" />\n  </KeepAlive>' : '  <component :is="current" />'}\n</template>`, 'html', { color: C, file: 'Tabs.vue', hi: keep ? [6, 7, 8] : [6] }));
+            codeBox.replaceChildren(code(`<script setup lang="ts">\nconst current = shallowRef(${names[cur]})\n</script>\n\n<template>\n${keep ? '  <KeepAlive>\n    <component :is="current" />\n  </KeepAlive>' : '  <component :is="current" />'}\n</template>`, 'html', { color: C, file: 'Tabs.vue', hi: keep ? [6, 7, 8] : [6] }));
           }
           const kb = h('button', { class: 'xv-btn', onclick: () => { keep = !keep; kb.classList.toggle('on', keep); kb.textContent = keep ? 'KeepAlive ON' : 'KeepAlive OFF'; mounted = 0; unmounted = 0; Object.keys(cache).forEach((k) => delete cache[k]); sw(cur, true); } }, 'KeepAlive OFF');
           el.append(sp(pane(h('div', { class: 'xv-row' }, kb), h('div', { class: 'xv-ui', style: { minHeight: '0', padding: '10px' } }, tabs, view), log), pane(codeBox, h('div', { class: 'xv-row' }, chip('用途: タブ'), chip('ウィザード（段階入力）'), chip('ページ切替は Router')))));
@@ -383,7 +383,7 @@ onMounted(fetchCases)`;
           el.append(sp(pane(h('div', { style: { display: 'grid', placeItems: 'center', minHeight: '90px' } }, btn),
             h('div', { class: 'xv-row' }, tg('active', 'isActive'), tg('error', 'hasError'), tg('attrs', 'v-bind="attrs"')), h('div', { class: 'xv-row' }, 'size', sizes, '色', col)), pane(codeBox)));
           draw();
-          el.append(h('div', { class: 'xv-pane', style: { marginTop: '14px' } }, lbl('Vue 3.2+ : <style> の中でも v-bind()'), code('<script setup>\nconst primary = ref(\'#2fd4a4\')\n</script>\n<style scoped>\nbutton { background: v-bind(primary); }\n</style>', 'html', { color: C })));
+          el.append(h('div', { class: 'xv-pane', style: { marginTop: '14px' } }, lbl('Vue 3.2+ : <style> の中でも v-bind()'), code('<script setup lang="ts">\nconst primary = ref(\'#2fd4a4\')\n</script>\n<style scoped>\nbutton { background: v-bind(primary); }\n</style>', 'html', { color: C })));
         },
       },
       {

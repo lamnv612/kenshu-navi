@@ -149,7 +149,8 @@
 
   const outPanel = (label, ...kids) => h('div', { class: 'fo3-out' }, h('small', null, label), h('div', { class: 'fo3-out-body' }, ...kids));
 
-  const tryIt = (el, title, html, js) => { el.append(h('div', { style: { marginTop: '18px' } }, lbl('✍️ 試してみよう（編集OK）'), demo(title, html, js))); };
+  const sfcDemo = (title, src) => playground({ title, mode: 'web', libs: [VUE], sfc: true, files: [{ name: 'App.vue', lang: 'vue', code: src }] });
+  const tryIt = (el, title, src) => { el.append(h('div', { style: { marginTop: '18px' } }, lbl('✍️ 試してみよう（App.vue を書き換えて ▶ 実行）'), sfcDemo(title, src))); };
 
   /* ================= vue-intro ================= */
   K.reg({
@@ -228,7 +229,7 @@
         },
       },
       {
-        t: '.vue ファイルの解剖', ref: [{"title": "script setup とは", "icon": "file-code", "html": "<table class=\"vref\"><thead><tr><th>ブロック</th><th>役割</th></tr></thead><tbody><tr><td><code>&lt;template&gt;</code></td><td>画面の形（HTML）</td></tr><tr><td><code>&lt;script setup&gt;</code></td><td>データと動き。書いた変数がそのまま template で使える</td></tr><tr><td><code>&lt;style scoped&gt;</code></td><td>この部品だけに効く CSS</td></tr></tbody></table>"}], why: {"pv": {"k": "code", "file": "フォルダ", "lang": "sh", "text": "card.html  # 形\ncard.js    # 動き\ncard.css   # 見た目", "err": [1, 2, 3], "keys": {"2": "sfc"}}, "iv": {"k": "code", "file": "Card.vue", "lang": "html", "text": "<template> 形 </template>\n<script setup> 動き </script>\n<style scoped> 見た目 </style>", "idea": [1, 2, 3], "keys": {"2": "sfc"}}, "av": {"k": "code", "file": "Card.vue", "lang": "html", "text": "<template>\n  <button>お気に入り {{ likes }}</button>\n</template>\n<script setup>…</script>\n<style scoped>…</style>", "ok": [1, 2, 3, 4, 5], "keys": {"2": "sfc"}}, "problem": "案件カード1つ直すのに、HTML・JS・CSS の3ファイルを行き来する", "idea": "<b>部品1つ = ファイル1つ</b>", "answer": "<b>.vue</b> に形・動き・見た目", "when": [["1部品だけの見た目", "<code>&lt;style scoped&gt;</code>"], ["サイト全体の共通CSS", "通常の CSS ファイル"]]}, tag: 'SFC', lead: '1つの <b>.vue</b> に「形・動き・見た目」をまとめて書く。ボタンにカーソルを乗せて、コードと右の画面の対応を見よう。',
+        t: '.vue ファイルの解剖', ref: [{"title": "script setup とは", "icon": "file-code", "html": "<table class=\"vref\"><thead><tr><th>ブロック</th><th>役割</th></tr></thead><tbody><tr><td><code>&lt;template&gt;</code></td><td>画面の形（HTML）</td></tr><tr><td><code>&lt;script setup&gt;</code></td><td>データと動き。書いた変数がそのまま template で使える</td></tr><tr><td><code>&lt;style scoped&gt;</code></td><td>この部品だけに効く CSS</td></tr></tbody></table>"}], why: {"pv": {"k": "code", "file": "フォルダ", "lang": "sh", "text": "card.html  # 形\ncard.js    # 動き\ncard.css   # 見た目", "err": [1, 2, 3], "keys": {"2": "sfc"}}, "iv": {"k": "code", "file": "Card.vue", "lang": "html", "text": "<template> 形 </template>\n<script setup lang=\"ts\"> 動き </script>\n<style scoped> 見た目 </style>", "idea": [1, 2, 3], "keys": {"2": "sfc"}}, "av": {"k": "code", "file": "Card.vue", "lang": "html", "text": "<template>\n  <button>お気に入り {{ likes }}</button>\n</template>\n<script setup lang=\"ts\">…</script>\n<style scoped>…</style>", "ok": [1, 2, 3, 4, 5], "keys": {"2": "sfc"}}, "problem": "案件カード1つ直すのに、HTML・JS・CSS の3ファイルを行き来する", "idea": "<b>部品1つ = ファイル1つ</b>", "answer": "<b>.vue</b> に形・動き・見た目", "when": [["1部品だけの見た目", "<code>&lt;style scoped&gt;</code>"], ["サイト全体の共通CSS", "通常の CSS ファイル"]]}, tag: 'SFC', lead: '1つの <b>.vue</b> に「形・動き・見た目」をまとめて書く。ボタンにカーソルを乗せて、コードと右の画面の対応を見よう。',
         render(el) {
           const src = '<template>\n  <button class="btn" @click="count++">\n    ♥ お気に入り {{ count }}\n  </button>\n</template>\n\n<script setup lang="ts">\nimport { ref } from \'vue\'\nconst count = ref(0)\n</script>\n\n<style scoped>\n.btn { color: hotpink; }\n</style>';
           const pre = code(src, 'vue', { dim: true, file: 'FavoriteButton.vue', color: C });
@@ -250,7 +251,7 @@
         },
       },
       {
-        t: 'Options API と Composition API', ref: [{"title": "書き方の対応表", "icon": "arrow-right-left", "html": "<table class=\"vref\"><thead><tr><th>Options</th><th>Composition</th></tr></thead><tbody><tr><td><code>data()</code></td><td><code>ref</code> / <code>reactive</code></td></tr><tr><td><code>methods</code></td><td>ふつうの関数</td></tr><tr><td><code>computed</code></td><td><code>computed()</code></td></tr><tr><td><code>mounted</code></td><td><code>onMounted()</code></td></tr><tr><td><code>this.count</code></td><td><code>count.value</code></td></tr></tbody></table>"}], tag: '書き方', why: {"pv": {"k": "code", "file": "Counter.vue", "lang": "ts", "text": "data() { return { favs: [], q: '' } }\nmethods: { toggleFav() { … } }\ncomputed: { hits() { … } }  // 検索", "err": [1, 2, 3], "keys": {"1": "cnt"}}, "iv": {"k": "code", "file": "Counter.vue", "lang": "ts", "text": "// お気に入り機能\nconst favs = ref([])\n// 検索機能\nconst hits = computed(…)", "idea": [2, 3, 4], "keys": {"2": "cnt"}}, "av": {"k": "code", "file": "Counter.vue", "lang": "ts", "text": "<script setup>\nconst favs = ref([])\nconst toggleFav = (id) => …\n</script>", "ok": [2, 3], "keys": {"2": "cnt"}}, "problem": "お気に入りと検索の処理が data・methods・computed に散らばり、直す場所を探し回る", "idea": "<b>機能ごと</b>に1か所へ集める", "answer": "<b>Composition API</b>（script setup）", "when": [["この研修・新規開発", "Composition API"], ["古いコードを読む", "Options API も読めると◎"]]}, lead: '同じ「カウンター + あいさつ」を2通りで書いた例。「次へ」で、<b>1つの機能のコード</b>が光ります。',
+        t: 'Options API と Composition API', ref: [{"title": "書き方の対応表", "icon": "arrow-right-left", "html": "<table class=\"vref\"><thead><tr><th>Options</th><th>Composition</th></tr></thead><tbody><tr><td><code>data()</code></td><td><code>ref</code> / <code>reactive</code></td></tr><tr><td><code>methods</code></td><td>ふつうの関数</td></tr><tr><td><code>computed</code></td><td><code>computed()</code></td></tr><tr><td><code>mounted</code></td><td><code>onMounted()</code></td></tr><tr><td><code>this.count</code></td><td><code>count.value</code></td></tr></tbody></table>"}], tag: '書き方', why: {"pv": {"k": "code", "file": "Counter.vue", "lang": "ts", "text": "data() { return { favs: [], q: '' } }\nmethods: { toggleFav() { … } }\ncomputed: { hits() { … } }  // 検索", "err": [1, 2, 3], "keys": {"1": "cnt"}}, "iv": {"k": "code", "file": "Counter.vue", "lang": "ts", "text": "// お気に入り機能\nconst favs = ref([])\n// 検索機能\nconst hits = computed(…)", "idea": [2, 3, 4], "keys": {"2": "cnt"}}, "av": {"k": "code", "file": "Counter.vue", "lang": "ts", "text": "<script setup lang=\"ts\">\nconst favs = ref([])\nconst toggleFav = (id) => …\n</script>", "ok": [2, 3], "keys": {"2": "cnt"}}, "problem": "お気に入りと検索の処理が data・methods・computed に散らばり、直す場所を探し回る", "idea": "<b>機能ごと</b>に1か所へ集める", "answer": "<b>Composition API</b>（script setup）", "when": [["この研修・新規開発", "Composition API"], ["古いコードを読む", "Options API も読めると◎"]]}, lead: '同じ「カウンター + あいさつ」を2通りで書いた例。「次へ」で、<b>1つの機能のコード</b>が光ります。',
         render(el) {
           const opt = code("export default {\n  data() {\n    return { favs: 0, keyword: '' }\n  },\n  computed: {\n    hint() { return this.keyword + ' で検索' }\n  },\n  methods: {\n    addFav() { this.favs++ }\n  }\n}", 'ts', { dim: true, color: 'var(--team)', file: 'Options API' });
           const com = code("// お気に入り機能\nconst favs = ref(0)\nconst addFav = () => favs.value++\n\n// 検索機能\nconst keyword = ref('')\nconst hint = computed(() => keyword.value + ' で検索')", 'ts', { dim: true, color: C, file: 'Composition API（script setup）' });
@@ -370,14 +371,14 @@
           const st = sbox('people', 1), dom = h('div', { class: 'v-node fresh' }, h('small', 'template'), h('b', '1 名'));
           const wrap = h('div', { class: 'v-host card v-row', style: { gap: '70px', padding: '24px' } }, st, dom, h('button', { class: 'btn primary', style: { '--c': C }, onclick: () => { v++; st.set(v); fly(wrap, st, dom, '反映', C, 500).then(() => (dom.lastChild.textContent = v + ' 名')); } }, '人数を +1'));
           let v = 1;
-          const cd = code('// 見積フォームの「参加人数」\nconst people = ref(1)\n\nconsole.log(people.value) // script は .value\npeople.value++\n\n<!-- template は自動で取り出す -->\n<p>{{ people }} 名</p>', 'ts', { dim: true, color: C });
+          const cd = code("<script setup lang=\"ts\">\nimport { ref } from 'vue'\n\nconst people = ref(1)          // 見積フォームの「参加人数」\nconsole.log(people.value)   // script は .value\npeople.value++\n</script>\n\n<template>\n  <p>{{ people }} 名</p>   <!-- template は自動で取り出す -->\n</template>", 'vue', { dim: true, color: C, file: 'PeopleCount.vue' });
           el.append(stepper({
             color: C,
             steps: [{ say: '見積フォームの参加人数。<b>ref(1)</b> で「画面とつながる変数」を作る。普通の <code>let</code> だと、変えても画面は変わらない。' }, { say: 'script の中では <b>people.value</b> で読み書き。' }, { say: 'template では <b>{{ people }}</b> と書くだけ（.value 不要）。' }, { say: '<b>人数を +1 してみて</b>：値が変わると画面が追従！' }],
             init(vis) { vis.append(h('div', { class: 'split' }, cd, wrap)); },
-            update(n) { cd.setHi([[2], [4, 5], [8], [2, 5, 8]][n]); st.classList.toggle('lit', n === 0); },
+            update(n) { cd.setHi([[4], [5, 6], [10], [4, 6, 10]][n]); st.classList.toggle('lit', n === 0); },
           }));
-          tryIt(el, 'ref', '<div id="app">\n  <p>参加人数: {{ people }} 名</p>\n  <p>見積: {{ people * 3000 }} 円</p>\n  <button @click="people++">人数を +1</button>\n</div>', 'const { createApp, ref } = Vue\ncreateApp({\n  setup() {\n    const people = ref(1)\n    return { people }\n  }\n}).mount("#app")');
+          tryIt(el, 'ref', "<script setup lang=\"ts\">\nimport { ref } from 'vue'\n\nconst people = ref(1)\n</script>\n\n<template>\n  <p>参加人数: {{ people }} 名</p>\n  <p>見積: {{ people * 3000 }} 円</p>\n  <button @click=\"people++\">人数を +1</button>\n</template>\n\n<style scoped>\nbutton { padding: 6px 14px; }\n</style>\n");
           el.append(h('div', { class: 'card', style: { marginTop: '16px' } }, h('b', null, '現場では：'), h('p', { style: { margin: '.4em 0 0', lineHeight: 1.8 }, html: '入力値・件数・開閉フラグなど、<b>画面と一緒に変わるものは ref</b>。<code>let name = ""</code> のままだと、入力しても画面は変わらない。数値や文字は <code>ref</code>、まとまったオブジェクトは <code>reactive</code>、迷ったら <code>ref</code>。' })));
         },
       },
@@ -399,7 +400,7 @@
           const cd = code('<button @click="show = !show">切替</button>\n<p v-if="show">v-if</p>\n<p v-show="show">v-show</p>', 'vue', { color: C, hi: [2, 3] });
           el.append(h('div', { class: 'col' }, h('div', { class: 'row' }, tog, h('span', { style: { color: 'var(--mute)', fontSize: '.875rem' } }, '↓ DOMインスペクタ')), h('div', { class: 'split' }, h('div', null, lbl('v-if'), A.box), h('div', null, lbl('v-show'), B.box)), prev, h('div', { class: 'split' }, h('div', null, cd), h('div', { class: 'st-cap r2c-cap' }, h('span', { html: '<b>v-if</b>：条件が偽だと DOM から<b>消える</b>（切替コスト大 / 初期コスト小）<br><b>v-show</b>：CSS の display で<b>隠すだけ</b>（頻繁な切替向き）' })))));
           draw();
-          tryIt(el, 'v-if / v-show', '<div id="app">\n  <button @click="show = !show">切替</button>\n  <p v-if="show">管理メニュー（v-if）</p>\n  <p v-show="show">料金タブ（v-show）</p>\n</div>', 'Vue.createApp({\n  data: () => ({ show: true })\n}).mount("#app")');
+          tryIt(el, 'v-if / v-show', "<script setup lang=\"ts\">\nimport { ref } from 'vue'\n\nconst show = ref(true)\n</script>\n\n<template>\n  <button @click=\"show = !show\">切替</button>\n  <p v-if=\"show\">管理メニュー（v-if）</p>\n  <p v-show=\"show\">料金タブ（v-show）</p>\n</template>\n\n<style scoped>\np { margin: 8px 0; }\n</style>\n");
           el.append(h('div', { class: 'card', style: { marginTop: '16px' } }, h('b', null, '現場では：'), h('ul', { style: { margin: '.4em 0 0', paddingLeft: '1.2em', lineHeight: 1.9 } },
             h('li', { html: '<b>管理者にだけ出すメニュー</b>・ログイン中だけの表示 → <code>v-if</code>（権限がなければ、そもそも画面に作らない）' }),
             h('li', { html: '<b>料金表と機能表のタブ</b>など、何度も行き来する切替 → <code>v-show</code>（作り直さないので軽く、入力中の文字も消えない）' }))));
@@ -420,7 +421,7 @@
             init(vis) { vis.append(cd, host); },
             update(n) { cd.replaceChildren(code(n === 1 ? Bc : A, 'vue', { color: C, file: 'template', hi: n === 1 ? [1, 2] : [1, 2] })); },
           }));
-          tryIt(el, 'v-model', '<div id="app">\n  <input v-model="title" placeholder="件名" maxlength="30">\n  <p>件名：{{ title }}（{{ title.length }}/30）</p>\n</div>', 'Vue.createApp({\n  data: () => ({ title: "" })\n}).mount("#app")');
+          tryIt(el, 'v-model', "<script setup lang=\"ts\">\nimport { ref } from 'vue'\n\nconst title = ref('')\n</script>\n\n<template>\n  <input v-model=\"title\" placeholder=\"件名\" maxlength=\"30\" />\n  <p>件名：{{ title }}（{{ title.length }}/30）</p>\n</template>\n\n<style scoped>\ninput { padding: 6px 10px; }\n</style>\n");
         },
       },
       {
@@ -447,7 +448,7 @@
             update(n) { boxes.forEach((b, j) => b.classList.toggle('lit', j === n)); cd.setHi(lines[n]); },
           }));
           el.append(h('div', { class: 'row', style: { marginTop: '12px' } }, h('button', { class: 'btn primary', style: { '--c': C }, onclick: play }, '▶ クリックを実行（通し再生）')));
-          tryIt(el, '@click', '<div id="app">\n  <button @click="reserve" :disabled="slots === 0">予約する</button>\n  <p>残り {{ slots }} 枠</p>\n</div>', 'Vue.createApp({\n  data: () => ({ slots: 3 }),\n  methods: { reserve() { this.slots-- } }\n}).mount("#app")');
+          tryIt(el, '@click', "<script setup lang=\"ts\">\nimport { ref } from 'vue'\n\nconst slots = ref(3)\n\nfunction reserve() {\n  slots.value--\n}\n</script>\n\n<template>\n  <button @click=\"reserve\" :disabled=\"slots === 0\">予約する</button>\n  <p>残り {{ slots }} 枠</p>\n</template>\n\n<style scoped>\nbutton:disabled { opacity: .4; }\n</style>\n");
         },
       },
       {
@@ -468,7 +469,7 @@
             init(vis) { vis.append(h('div', { class: 'split' }, h('div', { class: 'col' }, cd, list), h('div', null, lbl('items（データ）'), json))); draw(); },
             update(n) { cd.setHi([[2, 3], [4], [5]][n]); },
           }));
-          tryIt(el, 'v-for + :class', '<div id="app">\n  <ul>\n    <li v-for="c in cases" :key="c.id"\n        :class="{ done: c.done }"\n        @click="c.done = !c.done">\n      {{ c.title }}\n    </li>\n  </ul>\n</div>\n<style>.done{text-decoration:line-through;color:#999}li{cursor:pointer}</style>', 'Vue.createApp({\n  data: () => ({ cases: [\n    { id: 1, title: "未払い残業代の相談", done: false },\n    { id: 2, title: "契約書チェックの依頼", done: true },\n  ] })\n}).mount("#app")');
+          tryIt(el, 'v-for + :class', "<script setup lang=\"ts\">\nimport { ref } from 'vue'\n\nconst cases = ref([\n  { id: 1, title: '未払い残業代の相談', done: false },\n  { id: 2, title: '契約書チェックの依頼', done: true },\n])\n</script>\n\n<template>\n  <ul>\n    <li\n      v-for=\"c in cases\"\n      :key=\"c.id\"\n      :class=\"{ done: c.done }\"\n      @click=\"c.done = !c.done\"\n    >\n      {{ c.title }}\n    </li>\n  </ul>\n</template>\n\n<style scoped>\n.done { text-decoration: line-through; color: #999; }\nli { cursor: pointer; }\n</style>\n");
           const keyList = (byId) => {
             const data = [{ t: '未払い残業代の相談' }, { t: '契約書チェックの依頼' }, { t: '交通事故の示談' }], nodes = [], box = h('div', { class: 'v-todo' });
             const rm = (i) => { if (byId) { nodes[i].remove(); nodes.splice(i, 1); data.splice(i, 1); } else { data.splice(i, 1); nodes.pop().remove(); nodes.forEach((n, k) => { n.lab.textContent = data[k].t; }); } };

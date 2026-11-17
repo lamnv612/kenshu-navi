@@ -165,7 +165,7 @@
     W('defineEmits', '子から親へ知らせる合図（イベント）を宣言する。', 'const emit = defineEmits<{ (e: "delete", id: number): void }>();', '「削除ボタンが押された」を親に知らせ、親が持つ一覧を更新できる。'),
     W('defineModel', '親と子で値を共有する v-model を、1行で作れる。', 'const value = defineModel<string>();', '検索ボックスなどの部品を、<SearchBox v-model="keyword"> の形で使えるようにする。'),
     W('emit', '子から親に「起きたよ」と知らせる。親は @名前 で受け取る。', 'emit("delete", item.id);', '子は親のデータを直接書き換えず、合図だけ送る。データの持ち主が1か所で済む。'),
-    W('setup', 'Vue の部品の準備をする場所。<script setup> と書くと、中で宣言したものがそのまま template で使える。', '<script setup>\nconst count = ref(0);\n</script>', '新しく書くコードは <script setup> が基本。短く書けて、型もつきやすい。'),
+    W('setup', 'Vue の部品の準備をする場所。<script setup> と書くと、中で宣言したものがそのまま template で使える。', '<script setup lang="ts">\nconst count = ref(0);\n</script>', '新しく書くコードは <script setup lang="ts"> が基本。短く書けて、型もつきやすい。'),
     W('v-if', '条件が true のときだけ、要素を作る（false なら存在しない）。', '<p v-if="error">{{ error }}</p>', 'エラーメッセージや、管理者にだけ見せるメニュー。出さない間は DOM に無いので軽い。'),
     W('v-else', 'v-if が false のときに表示する。直前の v-if / v-else-if とセットで使う。', '<p v-if="user">ようこそ</p>\n<p v-else>ログインしてください</p>', 'ログイン前後の表示の切り替え。'),
     W('v-else-if', 'v-if の次の条件。', '<p v-if="loading">読み込み中</p>\n<p v-else-if="error">失敗</p>\n<p v-else>{{ list.length }} 件</p>', '読み込み中 / 失敗 / 成功、のように状態ごとに表示を分けるとき。'),

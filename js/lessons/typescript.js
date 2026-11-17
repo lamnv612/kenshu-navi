@@ -406,8 +406,42 @@
       ['Terminal', 'sh', '$ npm run test\n\n ✓ __test__/isAdult.test.ts (1 test)\n   ✓ isAdult\n\n Test Files  1 passed (1)\n      Tests  1 passed (1)'],
     ];
     const host = h('div');
-    const MS = [['toBe', 'expect(isAdult(20)).toBe(true)', () => Object.is(true, true)], ['toEqual', 'expect({a:1}).toEqual({a:1})', () => true], ['toBeTruthy', 'expect("abc").toBeTruthy()', () => !!'abc'], ['toBeGreaterThan', 'expect(10).toBeGreaterThan(3)', () => 10 > 3], ['toContain', 'expect([1,2,3]).toContain(2)', () => [1, 2, 3].includes(2)], ['toThrow', 'expect(() => { throw new Error() }).toThrow()', () => { try { (() => { throw new Error(); })(); return false; } catch { return true; } }]];
-    const mg = h('div', { class: 'split', style: { gridTemplateColumns: 'repeat(auto-fill,minmax(240px,1fr))' } }, MS.map(([n, ex, f]) => { const out = h('div'); return h('button', { class: 'tsx-flip', style: { '--c': 'var(--ts)' }, onclick: () => out.replaceChildren(res(f(), f() ? 'PASS' : 'FAIL')) }, h('b', '.' + n + '()'), ex, out); }));
+    const isAdult = (age) => age >= 18;
+    const createUser = (name, role = 'member') => ({ name, role });
+    const findUser = (id) => (id === 1 ? { id: 1, name: 'Lam' } : undefined);
+    const calcTotal = (items) => items.reduce((s, i) => s + i.price * i.qty, 0);
+    const getRoles = (r) => (r === 'admin' ? ['read', 'write', 'delete'] : ['read']);
+    const parseAge = (v) => { const n = Number(v); if (Number.isNaN(n)) throw new Error('数字ではありません'); return n; };
+    const deq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+    const fmt = (v) => (v === undefined ? 'undefined' : JSON.stringify(v));
+    // [名前, 説明, 関数コード, [OKの expect行, 実行], [NGの expect行, 実行]] ／ 実行 → [合否, Expected, Received]
+    const MS = [
+      ['toBe', '同じ値か（===）。数値・文字列・true/false に', 'function isAdult(age: number) {\n  return age >= 18;\n}',
+        ['expect(isAdult(20)).toBe(true)', () => [isAdult(20) === true, 'true', fmt(isAdult(20))]], ['expect(isAdult(17)).toBe(true)', () => [isAdult(17) === true, 'true', fmt(isAdult(17))]]],
+      ['toEqual', '中身が同じか。オブジェクト・配列に（toBe だと別物扱い）', 'function createUser(name: string, role = "member") {\n  return { name, role };\n}',
+        ['expect(createUser("Lam")).toEqual({ name: "Lam", role: "member" })', () => [deq(createUser('Lam'), { name: 'Lam', role: 'member' }), '{"name":"Lam","role":"member"}', fmt(createUser('Lam'))]], ['expect(createUser("Lam")).toEqual({ name: "Lam", role: "admin" })', () => [deq(createUser('Lam'), { name: 'Lam', role: 'admin' }), '{"name":"Lam","role":"admin"}', fmt(createUser('Lam'))]]],
+      ['toBeTruthy', '「ある」ことを確認。null / undefined / 0 / "" だと失敗', 'function findUser(id: number) {\n  return id === 1 ? { id, name: "Lam" } : undefined;\n}',
+        ['expect(findUser(1)).toBeTruthy()', () => [!!findUser(1), 'truthy な値', fmt(findUser(1))]], ['expect(findUser(999)).toBeTruthy()', () => [!!findUser(999), 'truthy な値', fmt(findUser(999))]]],
+      ['toBeGreaterThan', 'n より大きいか。合計金額・件数・残高に', 'function calcTotal(items: Item[]) {\n  return items.reduce((s, i) => s + i.price * i.qty, 0);\n}',
+        ['expect(calcTotal([{price:500, qty:2}])).toBeGreaterThan(0)', () => [calcTotal([{ price: 500, qty: 2 }]) > 0, '> 0', fmt(calcTotal([{ price: 500, qty: 2 }]))]], ['expect(calcTotal([])).toBeGreaterThan(0)', () => [calcTotal([]) > 0, '> 0', fmt(calcTotal([]))]]],
+      ['toContain', '配列・文字列に含まれるか。権限・タグ・メッセージに', 'function getRoles(role: string) {\n  return role === "admin" ? ["read", "write", "delete"] : ["read"];\n}',
+        ['expect(getRoles("admin")).toContain("delete")', () => [getRoles('admin').includes('delete'), '"delete" を含む', fmt(getRoles('admin'))]], ['expect(getRoles("guest")).toContain("delete")', () => [getRoles('guest').includes('delete'), '"delete" を含む', fmt(getRoles('guest'))]]],
+      ['toThrow', '例外が投げられるか。入力チェックのエラー確認に', 'function parseAge(v: string) {\n  const n = Number(v);\n  if (Number.isNaN(n)) throw new Error("数字ではありません");\n  return n;\n}',
+        ['expect(() => parseAge("abc")).toThrow()', () => { let t = false; try { parseAge('abc'); } catch { t = true; } return [t, 'エラーが投げられる', t ? 'Error: 数字ではありません' : 'エラーなし']; }], ['expect(() => parseAge("20")).toThrow()', () => { let t = false; try { parseAge('20'); } catch { t = true; } return [t, 'エラーが投げられる', t ? 'Error' : 'エラーなし（20 を返した）']; }]],
+    ];
+    const mg = h('div', { style: { display: 'grid', gap: '12px' } }, MS.map(([n, desc, fn, okc, ngc]) => {
+      const out = h('div'), exp = h('div');
+      let ng = false;
+      const drawExp = () => { const c = ng ? ngc : okc; exp.replaceChildren(code(c[0], 'ts', { color: 'var(--ts)', file: 'test' })); out.replaceChildren(); };
+      const run = () => { const [ok, e, r] = (ng ? ngc : okc)[1](); out.replaceChildren(ok ? res(true, 'PASS') : h('div', null, res(false, 'FAIL'), h('div', { style: { marginTop: '6px', fontFamily: 'var(--mono)', fontSize: '.8rem', whiteSpace: 'pre-wrap', color: 'var(--bad)', padding: '8px 10px', borderRadius: '6px', background: 'color-mix(in srgb,var(--bad) 12%,var(--card))' } }, 'Expected: ' + e + '\nReceived: ' + r))); };
+      const tg = h('button', { class: 'btn', onclick: () => { ng = !ng; tg.textContent = ng ? '✓ 成功する例に戻す' : '⚠ わざと失敗させる'; drawExp(); } }, '⚠ わざと失敗させる');
+      drawExp();
+      return h('div', { style: { padding: '14px', borderRadius: '10px', background: 'var(--card)', border: '1px solid var(--line)', display: 'grid', gap: '8px' } },
+        h('div', { style: { color: 'var(--ts)', font: '800 1.05rem var(--mono)' } }, '.' + n + '()'),
+        h('div', { style: { fontSize: '.85rem', color: 'var(--mute)' } }, desc),
+        code(fn, 'ts', { color: 'var(--basic)', file: '関数（例）' }), exp,
+        h('div', { style: { display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' } }, h('button', { class: 'btn primary', style: { '--c': 'var(--ts)' }, onclick: run }, '▶ 実行'), tg), out);
+    }));
     // race: 目視 vs test
     const bM = h('b'), bT = h('b'), tM = h('span', '–'), tT = h('span', '–');
     const race = h('div', { class: 'gap-race' }, h('div', { class: 'rr' }, '目視確認', h('i', bM), tM), h('div', { class: 'rr v' }, 'npm run test', h('i', bT), tT));
@@ -422,7 +456,7 @@
       steps: [{ say: '<b>① インストール</b>：プロジェクト内で <code class="i">npm install -D vitest</code>（-D = 開発用）。' }, { say: '<b>② scripts に test を追加</b>：これで <code class="i">npm run test</code> が使える。' }, { say: '<b>③ 関数とテストを書く</b>：isAdult が 20 → true、17 → false を確認。' }, { say: '<b>④ 実行！</b> 緑のチェックが出れば合格。変更のたびに一瞬で再確認できる。' }],
       init(vis) { vis.append(host); },
       update(n) { const [f, l, c] = FILES[n]; host.replaceChildren(code(c, l, { file: f, color: n === 3 ? 'var(--ok)' : 'var(--ts)', hi: n === 1 ? [6] : n === 3 ? [3, 4] : null })); },
-    }), h('div', { class: 'split r2b-top', style: { marginTop: '18px' } }, h('div', { class: 'col' }, lbl('マッチャー（クリックで判定）'), mg), h('div', { class: 'col' }, lbl('なぜ自動テスト？ 目視 vs テスト'), race, go)));
+    }), h('div', { style: { marginTop: '18px', display: 'grid', gap: '18px', minWidth: 0 } }, h('div', { class: 'col' }, lbl('なぜ自動テスト？ 目視 vs テスト'), race, go), h('div', { class: 'col', style: { minWidth: 0 } }, lbl('マッチャー：コード例 → 実行して判定'), mg)));
   }
 
   /* ================= ts-intro ================= */
@@ -2562,15 +2596,47 @@ console.log(n.length);
         },
       },
       {
-        t: 'describe / it / expect 早見表', lead: 'カードを<b>クリック</b>すると、実際に評価した結果が出ます。',
+        t: 'describe / it / expect 早見表', lead: '左の<b>日本語の流れ</b>と右の<b>コード</b>を行ごとに対応させて見よう。行を<b>クリック</b>→ 対応するコードが光る。▶ で実行、🐛 で失敗も体験。',
         render(el) {
-          el.append(code('import { describe, it, expect } from "vitest";\n\ndescribe("Cart クラス", () => {      // グループ\n  it("合計が計算できる", () => {    // 1つのテスト\n    expect(cart.total()).toBe(1000); // 確認\n  });\n});', 'ts', { color: 'var(--ts)' }));
-          const M = [['toBe', 'expect(2 + 3).toBe(5)', '同じ値か（===）', () => Object.is(2 + 3, 5)], ['toEqual', 'expect({a:1}).toEqual({a:1})', '中身が同じか', () => equalJ({ a: 1 }, { a: 1 })], ['toBe ※落とし穴', 'expect({a:1}).toBe({a:1})', 'オブジェクトは別物 → 失敗', () => Object.is({ a: 1 }, { a: 1 })], ['toContain', 'expect([1,2,3]).toContain(2)', '配列に含まれるか', () => [1, 2, 3].includes(2)], ['toThrow', 'expect(() => JSON.parse("{")).toThrow()', 'エラーが出るか', () => { try { JSON.parse('{'); return false; } catch { return true; } }], ['not', 'expect(1).not.toBe(2)', '否定', () => !Object.is(1, 2)]];
-          el.append(h('div', { style: { height: '14px' } }), h('div', { class: 'split', style: { gridTemplateColumns: 'repeat(auto-fill,minmax(230px,1fr))' } }, M.map(([n, ex, d, f]) => {
-            const out = h('div');
-            const b = h('button', { class: 'tsx-flip', style: { '--c': 'var(--ts)' }, onclick: () => out.replaceChildren(res(f(), f() ? 'PASS' : 'FAIL')) }, h('b', '.' + n + '()'), ex, h('small', d), out);
-            return b;
-          })));
+          class Cart { constructor(bug) { this.items = []; this.bug = bug; } add(i, q = 1) { if (q <= 0) throw new Error('数量は 1 以上'); this.items.push({ ...i, q }); } total() { return this.items.reduce((t, i) => t + i.price * (this.bug ? 1 : i.q), 0); } }
+          const pen = { name: 'ペン', price: 500 };
+          const SRC = ['describe("Cart（買い物かご）", () => {', '  const pen = { name: "ペン", price: 500 };', '', '  it("商品を足すと合計が増える", () => {', '    const cart = new Cart();', '    cart.add(pen, 2);', '    expect(cart.total()).toBe(1000);', '  });', '', '  it("空のかごは 0 円", () => {', '    expect(new Cart().total()).toBe(0);', '  });', '', '  it("数量 0 はエラー", () => {', '    expect(() => new Cart().add(pen, 0)).toThrow();', '  });', '});'].join('\n');
+          const T = [
+            { n: '商品を足すと合計が増える', hi: [4, 5, 6, 7], say: 'ペン(500円)を 2 個入れたら、合計は 1000 円のはず。', ex: 'total() が 1000', run: (b) => { const c = new Cart(b); c.add(pen, 2); const v = c.total(); return [v === 1000, '1000', String(v)]; } },
+            { n: '空のかごは 0 円', hi: [10, 11], say: '何も入れていない時は 0 円。「何もない時」も大事なテスト。', ex: 'total() が 0', run: (b) => { const v = new Cart(b).total(); return [v === 0, '0', String(v)]; } },
+            { n: '数量 0 はエラー', hi: [14, 15], say: '0 個の注文は受け付けない。「失敗するべき時に失敗する」を確かめる。', ex: 'add(pen, 0) がエラー', run: (b) => { let t = false; try { new Cart(b).add(pen, 0); } catch { t = true; } return [t, 'エラーが出る', t ? 'エラーが出た' : 'エラーなし']; } },
+          ];
+          const pre = code(SRC, 'ts', { color: 'var(--ts)', file: 'Cart.test.ts' });
+          const sum = h('div', { style: { fontFamily: 'var(--mono)', fontWeight: 800, fontSize: '.85rem', color: 'var(--mute)' } }, '▶ を押すとテストを実行');
+          const say = h('div', { style: { padding: '10px 12px', borderRadius: '8px', background: 'var(--card2)', border: '1px solid var(--line)', fontWeight: 700, minHeight: '3em' } }, '👆 行をクリックすると、右のコードの対応部分が光る');
+          let bug = false, sel = -1;
+          const rows = T.map((t, i) => {
+            const st = h('span'), det = h('div', { style: { display: 'none', color: 'var(--bad)', fontFamily: 'var(--mono)', fontSize: '.78rem', whiteSpace: 'pre-wrap' } });
+            const row = h('div', { style: { padding: '10px 12px', borderRadius: '8px', background: 'var(--card)', border: '1px solid var(--line)', cursor: 'pointer', display: 'grid', gap: '4px', transition: '.2s' }, onclick: () => { sel = i; pre.setHi(t.hi); say.textContent = '💬 ' + t.say; rows.forEach((r, j) => { r.row.style.borderColor = j === i ? 'var(--ts)' : 'var(--line)'; }); } },
+              h('div', { style: { display: 'flex', justifyContent: 'space-between', gap: '8px', alignItems: 'center' } }, h('span', null, h('b', { style: { color: 'var(--ts)', fontFamily: 'var(--mono)' } }, 'it '), '「' + t.n + '」'), st),
+              h('div', { style: { fontSize: '.8rem', color: 'var(--mute)' } }, '└ expect：' + t.ex), det);
+            return { row, st, det, t };
+          });
+          const run = async () => {
+            sum.textContent = '実行中…'; let ok = 0;
+            for (const r of rows) {
+              r.st.replaceChildren(); r.det.style.display = 'none'; await K.W.sleep(260);
+              const [pass, e, got] = r.t.run(bug);
+              if (pass) ok++;
+              r.st.replaceChildren(res(pass, pass ? 'PASS' : 'FAIL'));
+              if (!pass) { r.det.style.display = ''; r.det.textContent = 'Expected: ' + e + '\nReceived: ' + got; }
+            }
+            sum.textContent = `Tests  ${ok} passed` + (ok < rows.length ? ` | ${rows.length - ok} failed` : ' ✓ 全部合格');
+            sum.style.color = ok < rows.length ? 'var(--bad)' : 'var(--ok)';
+          };
+          const bb = h('button', { class: 'btn', onclick: () => { bug = !bug; bb.textContent = bug ? '✓ バグを直す' : '🐛 total() にバグを入れる'; sum.textContent = bug ? '（total() が数量を無視するようになった。もう一度 ▶）' : '（直した。もう一度 ▶）'; sum.style.color = 'var(--mute)'; rows.forEach((r) => { r.st.replaceChildren(); r.det.style.display = 'none'; }); } }, '🐛 total() にバグを入れる');
+          const grp = h('div', { style: { padding: '12px', borderRadius: '10px', border: '2px dashed var(--ts)', display: 'grid', gap: '8px', cursor: 'pointer' } },
+            h('div', { onclick: () => { pre.setHi([1, 17]); say.textContent = '💬 describe ＝ 関連するテストを束ねる「グループ」。ここでは Cart 用。'; }, style: { fontWeight: 800 } }, h('b', { style: { color: 'var(--ts)', fontFamily: 'var(--mono)' } }, 'describe '), '「Cart（買い物かご）」', h('small', { style: { color: 'var(--mute)', marginLeft: '8px' } }, '← グループ')), ...rows.map((r) => r.row));
+          el.append(h('div', { class: 'split', style: { gridTemplateColumns: 'minmax(0,1fr) minmax(0,1.1fr)', alignItems: 'start' } },
+            h('div', { class: 'col', style: { minWidth: 0, display: 'grid', gap: '10px' } }, lbl('日本語で言うと（行をクリック）'), grp, say, h('div', { style: { display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' } }, h('button', { class: 'btn primary', style: { '--c': 'var(--ts)' }, onclick: run }, '▶ テスト実行'), bb), sum),
+            h('div', { class: 'col', style: { minWidth: 0 } }, lbl('コードで書くと'), pre)));
+          el.append(h('div', { style: { height: '12px' } }), h('div', { class: 'split', style: { gridTemplateColumns: 'repeat(3,minmax(0,1fr))' } },
+            ...[['describe', 'グループ', '「何のテストか」の見出し。1ファイルに1つが目安', 'var(--ts)'], ['it', '1つの確認', '「〜できる」と日本語で書く。失敗した時に読みやすい', 'var(--basic)'], ['expect', '答え合わせ', '実際の値 vs 期待する値を比べる。it の中に書く', 'var(--team)']].map(([n, j, d, c]) => h('div', { style: { padding: '10px 12px', borderRadius: '8px', border: '1px solid ' + c, background: 'var(--card)' } }, h('b', { style: { color: c, fontFamily: 'var(--mono)' } }, n), ' ＝ ' + j, h('div', { style: { fontSize: '.8rem', color: 'var(--mute)', marginTop: '2px' } }, d)))));
         },
       },
       {

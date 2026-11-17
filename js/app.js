@@ -21,31 +21,34 @@
   const CELLS = [
     [0, 10, 10, 'コース紹介', '', 'intro', 'basic', '🚀'],
     [0, 11, 11, 'CUI ・ Vim', 'ターミナル', 'cuivim', 'basic', '⌨️'],
-    [0, 13, 13, 'Git', 'バージョン管理', 'git', 'basic', '🌿'],
+    [0, 12, 12, 'Git', 'バージョン管理', 'git', 'basic', '🌿'],
     [0, 14, 16, 'HTML', '構造をつくる', 'html', 'basic', '🧱'],
     [0, 17, 18, 'CSS', '見た目をつくる', 'css', 'basic', '🎨'],
     [1, 10, 10, '紹介', 'TypeScriptとは', 'ts-intro', 'ts', '✨'],
     [1, 11, 11, '基礎文法', '宣言の公式', 'ts-basic', 'ts', '📘'],
-    [1, 13, 13, '基礎文法', '型の指定', 'ts-basic2', 'ts', '📘'],
+    [1, 12, 12, '基礎文法', '型の指定', 'ts-basic2', 'ts', '📘'],
     [1, 14, 14, 'データ型', '配列・タプル・Object', 'ts-data', 'ts', '🧩'],
     [1, 15, 15, '型の構文', 'Union / Enum', 'ts-types', 'ts', '🔀'],
     [1, 16, 16, 'Type', '型エイリアス', 'ts-alias', 'ts', '🏷️'],
     [1, 17, 17, 'インタフェース', 'interface ＋ typeとの比較', 'ts-interface', 'ts', '📐'],
     [1, 18, 18, 'クラス ①', '設計図・アクセス修飾子', 'ts-class', 'ts', '🏭'],
-    [2, 10, 11, 'クラス ②', 'getter・継承', 'ts-class2', 'ts', '🏭'],
-    [2, 13, 13, 'ジェネリクス', 'Generics', 'ts-generics', 'ts', '📦'],
-    [2, 14, 17, 'TypeScript\n単体テスト入門 (Jest)', 'テストを書こう', 'ts-test', 'ts', '🧪'],
+    [2, 10, 10, 'クラス ②', 'getter・継承', 'ts-class2', 'ts', '🏭'],
+    [2, 11, 12, 'アイデア発想', '', 'idea', 'team', '💡'],
+    [2, 14, 14, 'ジェネリクス', 'Generics', 'ts-generics', 'ts', '📦'],
+    [2, 15, 18, 'TypeScript\n単体テスト入門 (Jest)', 'テストを書こう', 'ts-test', 'ts', '🧪'],
     [3, 10, 10, '紹介', 'Vue.jsとは', 'vue-intro', 'vue', '💚'],
     [3, 11, 11, '環境設定', 'プロジェクト作成', 'vue-env', 'vue', '🛠️'],
-    [3, 13, 16, '基礎', 'ref・v-if・v-model・イベント', 'vue-basics', 'vue', '⚡'],
+    [3, 12, 12, '基礎', 'ref・v-if・v-model・イベント', 'vue-basics', 'vue', '⚡'],
+    [3, 14, 16, '基礎', 'ref・v-if・v-model・イベント', 'vue-basics', 'vue', '⚡'],
     [3, 17, 18, 'コンポーネント', 'props / emit', 'vue-comp', 'vue', '🧬'],
     [4, 11, 11, 'アイデア発想', '', 'idea', 'team', '💡'],
-    [4, 13, 13, 'Life Cycle、Computed、\nWatcher …他', '', 'vue-life', 'vue', '⏱️'],
+    [4, 12, 12, 'Life Cycle、Computed、\nWatcher …他', '', 'vue-life', 'vue', '⏱️'],
     [4, 14, 14, 'Vue Router', 'ページ遷移', 'vue-router', 'vue', '🧭'],
     [4, 15, 17, '単体テスト\n入門 (Jest)', '', 'vue-test', 'vue', '🧪'],
     [4, 18, 18, 'Q&A', '', 'qa', 'vue', '🙋'],
     [5, 10, 11, 'アイデア発想 → 発表', 'ブレスト', 'idea', 'team', '🎯'],
-    [5, 13, 14, '開発', 'チーム開発', 'dev', 'team', '💻'],
+    [5, 12, 12, '開発', 'チーム開発', 'dev', 'team', '💻'],
+    [5, 14, 14, '開発', 'チーム開発', 'dev', 'team', '💻'],
     [5, 15, 16, '準備', '発表の準備', 'prep', 'team', '📝'],
     [5, 17, 18, '成果発表', 'Demo Day', 'demo', 'team', '🏆'],
   ];
@@ -89,7 +92,7 @@
     const all = PRACTICE.filter((x) => x.lesson === id);
     return { scene: all.filter((x) => x.scene && x.scene === title), lesson: all.filter((x) => !x.scene) };
   };
-  const extrasOf = (id) => Object.values(K.lessons).filter((l) => l.track === 'extra' && l.meta && l.meta.after === id);
+  const extrasOf = (id) => Object.values(K.lessons).filter((l) => (l.track === 'extra' || l.track === 'team') && l.meta && l.meta.after === id);
   const ghChip = (g) => h('a', { class: 'gh', href: g.url, target: '_blank', rel: 'noopener' }, K.W.icon('github-mark'), h('span', { class: 'gl' }, g.label), K.W.icon('external-link'));
 
   const app = document.getElementById('app');
@@ -173,7 +176,8 @@
               extrasOf(id).length && CELLS.findIndex((x) => x[5] === id) === CELLS.indexOf(c) ? h('span', { class: 'xtra' }, K.W.icon('sparkles'), '補足 +' + extrasOf(id).length) : null),
             h('span', { class: 'am-em' }, em), h('span', { class: 'bar', style: { '--p': p } }));
           const out = [row];
-          if (nx && b <= 11 && nx[1] >= 13) out.push(h('div', { class: 'am-lunch' }, '昼休み 12:00'));
+          const lu = 13;   // 昼休みは全日 13:00
+          if (nx && b < lu && nx[1] > lu) out.push(h('div', { class: 'am-lunch' }, '昼休み ' + lu + ':00'));
           return out;
         }));
     }
@@ -199,7 +203,7 @@
         { basic: 'HTML/CSS · CUI · Git', ts: 'TypeScript', vue: 'Vue.js' }[t]));
     });
     for (let hr = 10; hr <= 18; hr++) g.append(h('div', { class: 'sh time', style: { gridColumn: 1, gridRow: row(hr) } }, hr));
-    g.append(h('div', { class: 'lunch', style: { gridRow: 5 } }, '昼　休　み'));
+    g.append(h('div', { class: 'lunch', style: { gridRow: 6 } }, '昼　休　み'));   // 全日 13:00
     CELLS.forEach(([di, a, b, label, sub, id, track, em], i) => {
       const d = DAYS[di], p = progressOf(id);
       g.append(h('a', {

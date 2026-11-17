@@ -1107,3 +1107,6 @@ a.btn{text-decoration:none}
 .gap-chip.on{background:color-mix(in srgb,var(--c,var(--ts)) 24%,var(--card));border-color:var(--c,var(--ts));box-shadow:0 0 0 1px var(--c,var(--ts)) inset}
 
 .gl-y{display:flex;flex-wrap:wrap;align-items:baseline;gap:.2em .6em;padding:.45em .9em;border-top:1px solid var(--line);background:color-mix(in srgb,var(--gk) 7%,transparent)}.gl-y .gl-l{flex:0 0 auto}.gl-yr{font-weight:900;color:var(--gk)}.gl-yo{font-size:.78rem;font-weight:700;color:var(--mute)}
+
+pre.code.editable{cursor:text;outline:none}pre.code.editable:focus{box-shadow:0 0 0 2px color-mix(in srgb,var(--c,var(--ts)) 60%,transparent)}
+.an-box [contenteditable]{outline:none;cursor:text}

@@ -61,11 +61,21 @@
   function code(text, lang, opts = {}) {
     const pre = h('pre', { class: 'code' + (opts.dim ? ' dim' : ''), 'data-file': opts.file || null, 'data-lang': lang || null });
     if (opts.color) pre.style.setProperty('--c', opts.color);
-    const lines = text.replace(/\n$/, '').split('\n').map((l) => h('span', { class: 'ln', html: hl(l, lang) || '&nbsp;' }));
-    pre.append(...lines);
-    pre.setHi = (arr = [], cls = 'on') => lines.forEach((el, i) => { el.classList.toggle(cls, arr.includes(i + 1)); });
-    pre.lines = lines;
+    const mk = (t) => t.replace(/\n$/, '').split('\n').map((l) => h('span', { class: 'ln', html: hl(l, lang) || '&nbsp;' }));
+    pre.lines = mk(text);
+    pre.append(...pre.lines);
+    pre.setHi = (arr = [], cls = 'on') => pre.lines.forEach((el, i) => { el.classList.toggle(cls, arr.includes(i + 1)); });
     if (opts.hi) pre.setHi(opts.hi);
+    /* どのコードも、その場で書き換えられる（クリックして直接入力。外すと色が付き直る） */
+    if (opts.edit !== false) {
+      try { pre.contentEditable = 'plaintext-only'; if (pre.contentEditable !== 'plaintext-only') pre.contentEditable = 'true'; } catch (e) { pre.contentEditable = 'true'; }
+      pre.spellcheck = false; pre.classList.add('editable'); pre.title = 'クリックして書き換えられます';
+      pre.addEventListener('keydown', (e) => { if (e.key === 'Tab') { e.preventDefault(); document.execCommand('insertText', false, '  '); } e.stopPropagation(); });
+      pre.addEventListener('blur', () => {
+        const t = [...pre.children].filter((x) => x.classList && x.classList.contains('ln')).map((x) => x.textContent.replace(/\u00a0/g, '')).join('\n');
+        pre.lines = mk(t); pre.replaceChildren(...pre.lines);
+      });
+    }
     return pre;
   }
 
@@ -249,7 +259,15 @@ declare function Boolean(v:any):boolean;
     const byLang = (l) => (o.files.find((f) => f.lang === l) || {}).name;
 
     function buildDoc() {
-      const html = get(byLang('html') || 'index.html'), css = get(byLang('css') || 'style.css'), js = get(byLang('js') || 'main.js');
+      let html = get(byLang('html') || 'index.html'), css = get(byLang('css') || 'style.css'), js = get(byLang('js') || 'main.js');
+      if (o.sfc && byLang('vue')) {   /* .vue（<template> / <script setup> / <style>）をそのまま書ける簡易ランナー */
+        const src = get(byLang('vue')), pick = (re) => (src.match(re) || [])[1] || '';
+        let scr = pick(/<script[^>]*>([\s\S]*?)<\/script>/); const vn = [];
+        scr = scr.replace(/import\s*\{([^}]*)\}\s*from\s*['"]vue['"]\s*;?/g, (m, n) => { vn.push(n.trim()); return ''; }).replace(/^\s*import .*$/gm, '');
+        const names = [...scr.matchAll(/^(?:const|let|var|function|async function)\s+([A-Za-z_$][\w$]*)/gm)].map((m) => m[1]);
+        html = '<div id="app">' + pick(/<template>([\s\S]*)<\/template>/) + '</div>'; css = pick(/<style[^>]*>([\s\S]*?)<\/style>/);
+        js = 'const { createApp' + (vn.length ? ', ' + vn.join(', ') : '') + ' } = Vue\ncreateApp({ setup() {\n' + scr + '\nreturn { ' + names.join(', ') + ' }\n} }).mount("#app")';
+      }
       const libs = (o.libs || []).map((u) => `<script src="${u}"><\/script>`).join('');
       const bridge = `<script>(function(){var s=function(k,a){parent.postMessage({kenshu:1,k:k,t:[].slice.call(a).map(function(x){try{return typeof x==='string'?x:JSON.stringify(x)}catch(e){return String(x)}}).join(' ')},'*')};console.log=function(){s('l',arguments)};console.error=function(){s('e',arguments)};window.onerror=function(m){s('e',[m])}})()<\/script>`;
       const base = `<meta charset="utf-8"><style>body{font-family:system-ui,'Hiragino Sans',sans-serif;margin:14px;line-height:1.6}</style>`;

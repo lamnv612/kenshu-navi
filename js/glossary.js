@@ -102,6 +102,7 @@
   K.glossAdd = function (list) { list.forEach((e) => { const i = L.findIndex((x) => x.k === e.k && x.kind === e.kind); if (i >= 0) L[i] = Object.assign(L[i], e); else L.push(e); }); dirty = true; };
   K.glossAdd(Object.entries(G).map(([k, m]) => ({ k, kind: 'css', m })));
   K.gloss = G;
+  K.glossWords = () => L.filter((x) => x.kind === 'word');
   K.glossEntry = (k, kind) => L.find((x) => x.k === k && (!kind || x.kind === kind));
 
   /* ---- ツールチップ（クリップされないよう fixed で出す） ---- */

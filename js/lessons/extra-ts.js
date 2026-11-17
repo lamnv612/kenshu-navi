@@ -414,6 +414,36 @@
     return h('div', null, h('div', { class: 'xt-eq' }, h('div', { class: 'xt-panel' }, pre, picks, out), h('div', { class: 'xt-panel' }, flow)));
   }
 
+  function bangScene() {
+    const st = { mode: 0, has: true };
+    const MODES = [
+      { l: '何もしない', c: 'var(--pink)', code: 'const el = document.getElementById("app");\nel.textContent = "hi";', ty: "✖ 'el' is possibly 'null'", tk: 'e' },
+      { l: '! を付ける', c: 'var(--ts)', code: 'const el = document.getElementById("app")!;\nel.textContent = "hi";', ty: '✓ コンパイルOK（null ではないと TS が信じる）', tk: 'ok' },
+      { l: 'if で確認', c: 'var(--basic)', code: 'const el = document.getElementById("app");\nif (el) {\n  el.textContent = "hi";\n}', ty: '✓ コンパイルOK（TS が自分で確認できた）', tk: 'ok' },
+    ];
+    const seg2 = h('div', { class: 'xt-row' }, ...MODES.map((m, i) => { const c = chip(m.l, m.c, 'btn2' + (i ? ' off' : '')); c.onclick = () => { st.mode = i; seg2.querySelectorAll('.xt-c').forEach((x, j) => x.classList.toggle('off', j !== i)); draw(); }; return c; }));
+    const has = chip('HTML に id="app" がある', 'var(--team)', 'btn2'); has.onclick = () => { st.has = !st.has; has.classList.toggle('off', !st.has); has.lastChild.textContent = st.has ? 'HTML に id="app" がある' : 'HTML に id="app" がない'; draw(); };
+    const box = h('div'), o1 = msg(), o2 = msg(), tipBox = h('div');
+    const draw = () => {
+      const m = MODES[st.mode];
+      box.replaceChildren(code(m.code, 'ts', { color: m.c, file: 'main.ts' }));
+      setMsg(o1, '🛠 コンパイル： ' + m.ty, m.tk);
+      if (m.tk === 'e') setMsg(o2, '▶ 実行：（コンパイルが通らないので動かせない）', 'w');
+      else if (st.has) setMsg(o2, '▶ 実行： ✓ 画面に "hi" が出る', 'ok');
+      else if (st.mode === 1) setMsg(o2, "▶ 実行： ✖ TypeError: Cannot set properties of null  ← ! は嘘をついたまま通してしまう", 'e');
+      else setMsg(o2, '▶ 実行： ✓ if の中は動かない → 落ちずに何も起きない', 'ok');
+    };
+    draw();
+    const card = (ttl, c, ...kids) => h('div', { class: 'xt-panel', style: { borderLeft: '4px solid ' + c } }, h('div', { class: 'label' }, ttl), ...kids);
+    const li = (t) => h('div', { style: { fontSize: '13px' } }, t);
+    return h('div', null, h('div', { class: 'xt-eq' },
+      h('div', { class: 'xt-panel' }, h('div', { class: 'label' }, '! ＝「null じゃないと約束する」'), seg2, has, box, o1, o2),
+      h('div', { style: { display: 'grid', gap: '10px', alignContent: 'start' } },
+        card('✓ 使ってよい場面', 'var(--basic)', li('・自分で必ず用意した要素（index.html に確実にある）'), li('・直前の処理で「あるはず」と確定済みの値'), li('・テストコード')),
+        card('✖ 避ける場面', 'var(--pink)', li('・API の返り値・ユーザー入力・URL パラメータ'), li('・「たぶんある」程度の予想'), li('→ 外れると実行時に落ちる。迷ったら if か ?. を使う')),
+        card('もうひとつの ! ： プロパティ名!: 型', 'var(--ts)', h('div', { class: 'xt-big', style: { padding: '8px 12px' } }, 'class A { name!: string; }'), li('「初期化はあとで必ずやる」という宣言（Vue のクラス・DI など）。これも約束なので、守れないと落ちる。')))));
+  }
+
   function optChainScene() {
     const st = { addr: true, city: true };
     const L = {
@@ -455,6 +485,7 @@
       { t: 'どの型に何が入る？', tag: 'any / unknown', lead: '行を<b>クリック</b>して、型ごとの違いを比べよう。<b>any と unknown</b> の差に注目。', render(el) { el.append(matrixScene()); } },
       { t: '絞り込み（narrowing）', tag: 'typeof', lead: '<b>if で分岐するたびに x の型が絞られる</b>。値を選んで、道筋をたどろう。', render(el) { el.append(narrowScene()); } },
       { t: '?. と ??', tag: '安全に書く', lead: '「無いかも」を<b>1行で</b>安全に扱う書き方。トグルで状況を変えてみよう。', render(el) { el.append(optChainScene()); } },
+      { t: '! 「絶対ある」宣言', tag: '非 null アサーション', lead: '<b>!</b> は「これは null じゃない」と TS に<b>約束</b>する書き方。モードと HTML の有無を切り替えて、<b>約束を破ったとき</b>を見よう。', render(el) { el.append(bangScene()); } },
       { t: '実践：null を安全に扱う', tag: 'PRACTICE', lead: 'ミッションは3つ。<code class="i">x.toString()</code> の赤線を、<b>if で null を先に分けて</b>消そう。',
         render(el) {
           el.append(tsPractice("function describe(x: string | number | null): string {\n  // ここを直す：null → \"なし\" / 文字 → そのまま / 数字 → 文字にして返す\n  return x.toString();\n}\n\nconsole.log(describe(\"hi\"));\nconsole.log(describe(42));\nconsole.log(describe(null));\n", (v, c, ed) => [
@@ -776,6 +807,92 @@
     scenes: [
       { t: '保存で整う', tag: 'Prettier', lead: 'バラバラに書いても、<b>保存すると全員同じ見た目</b>に。オプションを変えて確かめよう。', render(el) { el.append(prettierTry(VI)); } },
       { t: '設定のしかた', tag: 'setup', lead: '<b>4ステップ</b>で、プロジェクトも VS Code も自動整形に。コードにマウスを乗せるとコピーできる。', render(el) { el.append(prettierSetup(VI)); } },
+    ],
+  });
+
+  /* =====================================================================
+     x-ts-comment
+     ===================================================================== */
+  function commentKinds() {
+    const KINDS = [
+      { k: '// 1行', c: 'var(--basic)', code: '// 税込み価格にする（税率 10%）\nconst total = price * 1.1;\n\nconst tax = 0.1; // 税率', use: '1行の補足。行末にも書ける', ng: '' },
+      { k: '/* 複数行 */', c: 'var(--team)', code: '/*\n * 割引のルール\n * ・会員は 10% 引き\n * ・3点以上は 5% 引き\n */\nfunction discount() {}', use: '長めの説明。ブロックをまとめて無効にする時にも', ng: '⚠ /* の中に /* */ は入れ子にできない（途中で閉じてしまう）' },
+      { k: '/** JSDoc */', c: 'var(--ts)', code: '/** 税込み価格を返す */\nfunction withTax(price: number) {\n  return price * 1.1;\n}', use: '関数・クラス・型の「説明書」。呼ぶ側の VS Code に表示される', ng: '' },
+    ];
+    let i = 0; const box = h('div'), use = h('div', { class: 'xt-msg w' }), tip = h('div');
+    const draw = () => {
+      const K0 = KINDS[i];
+      box.replaceChildren(code(K0.code, 'ts', { color: K0.c, file: 'sample.ts' }));
+      use.textContent = '使う場面： ' + K0.use + (K0.ng ? '\n' + K0.ng : '');
+      tip.replaceChildren();
+      if (i === 2) tip.append(h('div', { style: { padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--line)', background: 'var(--card2)', display: 'grid', gap: '4px', font: '700 .85rem var(--mono)' } },
+        h('div', { style: { color: 'var(--mute)', fontSize: '.75rem' } }, '💡 withTax( にマウスを乗せると…（他のファイルからでも）'),
+        h('div', { style: { color: 'var(--ts)' } }, 'function withTax(price: number): number'), h('div', { style: { fontFamily: 'inherit' } }, '税込み価格を返す')));
+    };
+    const picks = h('div', { class: 'xt-row' }, ...KINDS.map((K0, j) => { const c = chip(K0.k, K0.c, 'btn2' + (j ? ' off' : '')); c.onclick = () => { i = j; picks.querySelectorAll('.xt-c').forEach((x, n) => x.classList.toggle('off', n !== j)); draw(); }; return c; }));
+    draw();
+    // コメントアウト体験
+    const L = ['console.log("A");', 'console.log("B");', 'console.log("C");']; const off = [false, false, false];
+    const lines = h('div', { class: 'xt-big', style: { padding: '8px 12px', display: 'grid', gap: '4px' } }), out = h('div', { class: 'xt-msg' });
+    const drawL = () => {
+      lines.replaceChildren(...L.map((t, n) => { const r = h('div', { style: { cursor: 'pointer', display: 'flex', gap: '8px', color: off[n] ? 'var(--mute)' : 'inherit' }, onclick: () => { off[n] = !off[n]; drawL(); } }, h('span', { style: { opacity: .6 } }, off[n] ? '☐' : '☑'), (off[n] ? '// ' : '') + t); return r; }));
+      const o = L.map((_, n) => (off[n] ? null : 'ABC'[n])).filter(Boolean);
+      setMsg(out, '実行結果： ' + (o.length ? o.join('  ') : '（何も出ない）'), o.length ? 'ok' : 'w');
+    };
+    drawL();
+    return h('div', { class: 'xt-eq' },
+      h('div', { class: 'xt-panel' }, h('div', { class: 'label' }, '3 種類のコメント'), picks, box, use, tip),
+      h('div', { class: 'xt-panel' }, h('div', { class: 'label' }, 'コメントアウト体験（行をクリック）'), lines, out,
+        h('div', { class: 'xt-msg w' }, '⌨ ショートカット：Mac は ⌘ + /　Windows は Ctrl + /\n選択した行をまとめて // 付き・なしに切り替えられる')));
+  }
+
+  function commentWhy() {
+    const P = [
+      { bad: '// 税率\nconst t = 0.1;', good: 'const TAX_RATE = 0.1;', why: '名前で説明できるなら、コメントは要らない' },
+      { bad: '// ユーザーを取得する\nconst user = getUser();', good: '// 退会済みだと null が返る（仕様）\nconst user = getUser();', why: 'コードを読めば分かる「何を」ではなく、「なぜ」「注意点」を書く' },
+      { bad: 'const a = 1;\n// const b = 2;\n// const c = 3;\n// console.log(b + c);', good: 'const a = 1;', why: '使わない古いコードは消す。履歴は Git に残っている' },
+      { bad: '// あとで直す\nconst data = fetchAll();', good: '// TODO(lam): ページング対応 #123\nconst data = fetchAll();', why: '誰が・何を・いつまでに（チケット番号）が分かる形に' },
+    ];
+    const rows = P.map((p) => {
+      const why = h('div', { class: 'xt-msg w', style: { display: 'none' } }, '👉 ' + p.why);
+      const row = h('div', { class: 'xt-panel', style: { cursor: 'pointer' }, onclick: () => { why.style.display = why.style.display === 'none' ? '' : 'none'; } },
+        h('div', { class: 'xt-eq' }, h('div', null, h('div', { class: 'label', style: { color: 'var(--pink)' } }, '✖ こうなりがち'), code(p.bad, 'ts', { color: 'var(--pink)' })), h('div', null, h('div', { class: 'label', style: { color: 'var(--basic)' } }, '✓ こう書く'), code(p.good, 'ts', { color: 'var(--basic)' }))), why);
+      return row;
+    });
+    return h('div', { style: { display: 'grid', gap: '12px' } }, h('div', { class: 'xt-row' }, chip('What ではなく Why', 'var(--ts)'), chip('名前で伝わるなら消す', 'var(--team)'), chip('TODO は担当と番号つき', 'var(--basic)')), ...rows, h('div', { class: 'xt-msg w' }, '各行をクリックすると理由が出る'));
+  }
+
+  function commentDoc() {
+    const S = [
+      { k: '関数', c: 'var(--ts)', code: '/**\n * 税込み価格を返す。\n * @param price 税抜き価格（円）\n * @param rate  税率。省略すると 10%\n * @returns 税込み価格（小数点以下は切り捨て）\n * @example withTax(1000) // 1100\n */\nfunction withTax(\n  price: number,\n  rate = 0.1,\n): number {\n  return Math.floor(price * (1 + rate));\n}', call: 'withTax(', sig: 'function withTax(price: number, rate?: number): number', doc: ['税込み価格を返す。', '@param price — 税抜き価格（円）', '@param rate — 税率。省略すると 10%', '@returns 税込み価格（小数点以下は切り捨て）'] },
+      { k: 'クラス', c: 'var(--team)', code: '/** 買い物かご。商品の追加と合計の計算を行う。 */\nclass Cart {\n  /** 商品の一覧（外から直接さわらない） */\n  private items: Item[] = [];\n\n  /**\n   * 商品を追加する。\n   * @throws 数量が 0 以下のとき\n   */\n  add(item: Item, qty = 1): void {\n    // …\n  }\n}', call: 'cart.add(', sig: '(method) Cart.add(item: Item, qty?: number): void', doc: ['商品を追加する。', '@throws 数量が 0 以下のとき'] },
+      { k: '型（interface）', c: 'var(--basic)', code: '/** ユーザー情報（API /users の返り値） */\ninterface User {\n  /** 会員番号（変更不可） */\n  readonly id: number;\n  /** 表示名。未設定なら null */\n  name: string | null;\n}', call: 'user.name', sig: '(property) User.name: string | null', doc: ['表示名。未設定なら null'] },
+    ];
+    let i = 0; const box = h('div'), hov = h('div');
+    const draw = () => {
+      const D = S[i];
+      box.replaceChildren(code(D.code, 'ts', { color: D.c, file: 'ここで書く' }));
+      hov.replaceChildren(h('div', { style: { padding: '10px 12px', borderRadius: '8px', background: 'var(--bg2)', border: '1px solid var(--line)', font: '700 .875rem var(--mono)' } }, '他のファイル：  ', h('span', { style: { color: D.c, textDecoration: 'underline dotted' } }, D.call), h('span', { style: { color: 'var(--mute)' } }, '…')),
+        h('div', { style: { marginTop: '6px', padding: '10px 12px', borderRadius: '8px', border: '1px solid ' + D.c, background: 'var(--card2)', display: 'grid', gap: '4px' } }, h('div', { style: { font: '800 .85rem var(--mono)', color: D.c } }, D.sig), ...D.doc.map((t) => h('div', { style: { fontSize: '.85rem' } }, t))));
+    };
+    const picks = h('div', { class: 'xt-row' }, ...S.map((D, j) => { const c = chip(D.k, D.c, 'btn2' + (j ? ' off' : '')); c.onclick = () => { i = j; picks.querySelectorAll('.xt-c').forEach((x, n) => x.classList.toggle('off', n !== j)); draw(); }; return c; }));
+    draw();
+    const tag = (t, d) => h('div', { class: 'xt-row', style: { gap: '8px' } }, chip(t, 'var(--ts)'), h('span', { style: { fontSize: '.85rem' } }, d));
+    return h('div', null, picks, h('div', { class: 'xt-eq', style: { marginTop: '10px' } },
+      h('div', { class: 'xt-panel', style: { minWidth: 0, overflow: 'auto' } }, h('div', { class: 'label' }, '書く側'), box),
+      h('div', { class: 'xt-panel' }, h('div', { class: 'label' }, '使う側（マウスを乗せた時の表示）'), hov,
+        h('div', { class: 'label' }, 'よく使うタグ'), tag('@param', '引数の説明'), tag('@returns', '戻り値の説明'), tag('@throws', '投げる例外'), tag('@example', '使い方の例'), tag('@deprecated', '非推奨（取り消し線で表示）'),
+        h('div', { class: 'xt-msg w' }, 'TypeScript では型は書かない（✖ @param {number} price）。型は TS が知っているので、意味だけ書く'))));
+  }
+
+  K.reg({
+    id: 'x-ts-comment', track: 'extra', title: 'コメントの書き方', sub: '// と /** */ をどう使い分ける？', emoji: '💬',
+    gh: [{ label: 'typescript/ のサンプル', path: 'typescript' }],
+    meta: meta({ day: '2日目', when: '実践の前の5分（関数・クラスの後）', mins: 8, order: 25, level: '入門', after: 'x-ts-format', why: '半年後の自分とチームのために。何を書き、何は書かないかで読みやすさが決まる' }),
+    scenes: [
+      { t: '3 種類のコメント', tag: '// /* /**', lead: '種類を選んで違いを見よう。右では<b>行をクリック</b>して、コメントアウトの効果を体験。', render(el) { el.append(commentKinds()); } },
+      { t: '何を書く？書かない？', tag: 'Why', lead: '<b>「何をしているか」ではなく「なぜ」</b>を書く。左（✖）と右（✓）を見比べよう。', render(el) { el.append(commentWhy()); } },
+      { t: '関数・クラスの説明書き', tag: 'JSDoc', lead: '<code class="i">/** … */</code> で書くと、<b>呼ぶ側にマウスを乗せるだけで説明が出る</b>。', render(el) { el.append(commentDoc()); } },
     ],
   });
 

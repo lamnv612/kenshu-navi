@@ -25,7 +25,7 @@
   .sd-tip{padding:.6em .9em;border-top:1px solid var(--line);font:700 .8rem/1.65 var(--font)}.sd-tip:first-of-type{border-top:0}.sd-tip b{font-family:var(--mono)}
   .sd-note{padding:.65em .9em;font:700 .78rem/1.6 var(--font);color:var(--mute)}`);
 
-  const isTs = (L) => L && (L.track === 'ts' || /^x-ts|^x-js|^x-async/.test(L.id));
+  const isTs = (L) => L && (L.track === 'ts' || L.track === 'vue' || L.track === 'team' || /^x-ts|^x-js|^x-async|^x-vue|^pj-/.test(L.id));
   /* 描画の前に、右の余白をあらかじめ空けておく（図の幅の測り直しを防ぐ） */
   K.sidePre = function (el, L) {
     if (!isTs(L) || !window.matchMedia('(min-width:1700px)').matches) return;
@@ -47,11 +47,17 @@
       // 1) この図解（解剖図）のパーツ  2) シーンに出てくる用語
       const sp = K.tsAnatSpecs && K.tsAnatSpecs[el.__title];
       const terms = [];
+      ((K.sceneTerms && K.sceneTerms[el.__title]) || []).forEach((t) => terms.push({ k: t.k, m: t.m, r: t.r, yomi: t.y, kind: 'word' }));
       if (sp) Object.values(sp.parts).forEach(([nm, , desc]) => {
         const kw = (nm.match(/[（(]([^）)]+)[）)]/) || [])[1] || nm;
         terms.push({ k: kw.replace(/[()（）]/g, ''), m: desc, shown: nm });
       });
       seen.forEach((e) => { if (!terms.some((t) => t.k === e.k)) terms.push(e); });
+      /* 用語が少ないシーンは、画面の文字に出てくる用語集の言葉を拾って補う */
+      if (terms.length < 6 && K.glossWords) {
+        const txt = body.textContent || '';
+        K.glossWords().filter((e) => e.k.length >= 2 && txt.includes(e.k) && !terms.some((t) => t.k === e.k)).sort((a, b) => txt.indexOf(a.k) - txt.indexOf(b.k)).slice(0, 8 - terms.length).forEach((e) => terms.push(e));
+      }
       terms.splice(8);
       if (terms.length < 2) { el.classList.remove('hasside'); return; }
       const reading = (e) => { const y = K.yomiOf ? K.yomiOf(e.k) : ''; return y ? y.split('｜')[0] : ''; };
@@ -60,6 +66,7 @@
       const nameOf = (e) => (e.shown && e.shown !== e.k ? e.shown : e.k);
       // 右端に出す読み：日本語の用語 → ひらがな / 英語のキーワード → カタカナ
       const readingOf = (e) => {
+        if (e.yomi) return e.yomi;
         const ja = K.kana ? K.kana(nameOf(e).replace(/[（(][^）)]*[）)]/g, '')) : '';
         const en = yom(e);
         return [ja, en].filter(Boolean).join('　');
@@ -72,7 +79,7 @@
         return b;
       };
       const cards = [
-        h('div', { class: 'sd-card', style: { '--c': 'var(--ts)' } }, h('h5', '📚 このシーンの用語（読み方）'),
+        h('div', { class: 'sd-card', style: { '--c': (L.track === 'vue' || /^x-vue/.test(L.id)) ? 'var(--vue)' : (L.track === 'team' || /^pj-/.test(L.id)) ? 'var(--team)' : 'var(--ts)' } }, h('h5', '📚 このシーンの用語（読み方）'),
           ...terms.map((e) => h('div', { class: 'sd-term' }, h('div', { class: 'sd-hd' }, nameEl(e), readingOf(e) ? h('i', readingOf(e)) : null), h('p', (origin(e) ? origin(e) + '　' : '') + (e.m || ''))))),
       ];
       const tips = terms.filter((e) => e.r).slice(0, 3);

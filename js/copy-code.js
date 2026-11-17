@@ -8,7 +8,7 @@
   const btn = h('button', { class: 'cpbtn', type: 'button', title: 'コードをコピー', 'aria-label': 'コードをコピー' }, icon('copy'));
   document.body.append(btn);
   let cur = null, timer = null;
-  const target = (el) => (el && el.closest ? el.closest('pre.code, .ed') : null);
+  const target = (el) => (el && el.closest ? el.closest('pre.code, .ed, .an-box') : null);
   const textOf = (b) => {
     const ta = b.querySelector && b.querySelector('textarea');
     if (ta) return ta.value;

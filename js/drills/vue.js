@@ -287,4 +287,85 @@
         T('【実際】に、起きたことの事実（エラー・表示・数字など）を書く', 2, c.length >= 4 && /Error|エラー|undefined|null|表示|0|動かな|変わらな|出ない|出て/.test(c), ['例: ボタンを押しても 0 のまま。Console に Error が出ている']),
       ]; }),
   };
+  /* ===================== 紹介・基礎の冒頭（新シーン）===================== */
+  D['vue-intro']['フロントエンドって何？'] = text('flow.txt', 'txt',
+    '# 「予約する」を押したときの流れを、正しい順に並べ替えよう（上から順に）\n画面に「予約しました」と表示（フロントエンド）\nデータベースに保存\n「この日時で予約して」とサーバーにお願い（API）\n予約ボタンが押される（フロントエンド）\n「保存できたよ」とサーバーが返事\n',
+    '行を上下に入れ替えて、順番を直そう。',
+    { 'flow.txt': '予約ボタンが押される（フロントエンド）\n「この日時で予約して」とサーバーにお願い（API）\nデータベースに保存\n「保存できたよ」とサーバーが返事\n画面に「予約しました」と表示（フロントエンド）\n' },
+    (v) => { const L = lines(v['flow.txt']); const at = (re) => L.findIndex((x) => re.test(x)); const a = at(/押される/), b = at(/お願い/), c = at(/データベース/), d = at(/返事/), e = at(/表示/); return [
+      T('最初は「予約ボタンが押される」', 1, a === 0, ['すべての始まりは、ユーザーの操作（フロントエンド）。']),
+      T('「サーバーにお願い」→「データベースに保存」の順', 2, b >= 0 && c > b, ['フロントはデータベースに直接さわらず、サーバー（API）経由で頼む。']),
+      T('最後は「返事」→「画面に表示」で終わる', 3, d > c && e > d && e === L.length - 1, ['保存できたと分かってから、画面を更新する。']),
+    ]; });
+  D['vue-intro']['HTML・CSS・JavaScript'] = web(
+    '<h3>弁護士に相談</h3>\n<button id="btn">予約する</button>\n<!-- ② ここに <style> を書いて、h3 の色を変える -->\n<!-- ③ ここに <p> で説明文を足す -->',
+    "// ① ボタンを押したら、文字を「予約しました ✓」に変える\nconst btn = document.getElementById('btn')\n",
+    { 'index.html': '<style>h3 { color: teal }</style>\n<h3>弁護士に相談</h3>\n<button id="btn">予約する</button>\n<p>初回は30分無料です。</p>', 'main.js': "const btn = document.getElementById('btn')\nbtn.onclick = () => {\n  btn.textContent = '予約しました ✓'\n}\n" },
+    (v, c) => [
+      T('① ボタンを押すと「予約しました」に変わる（JavaScript）', 1, (() => { const b = $q(c, '#btn'); if (!b) return false; try { b.click(); } catch (e) { return false; } return /予約しました/.test(b.textContent); })(), ['btn.onclick = () => { btn.textContent = "予約しました ✓" }']),
+      T('② <style> で h3 の色を変える（CSS）', 2, /<style[^>]*>[\s\S]*h3[\s\S]*color[\s\S]*<\/style>/.test(v['index.html']), ['<style>h3 { color: teal }</style>']),
+      T('③ <p> で説明文を足す（HTML）', 3, !!$q(c, 'p') && $q(c, 'p').textContent.trim().length >= 4, ['<p>初回は30分無料です。</p>']),
+    ]);
+  D['vue-intro']['フレームワークって？'] = text('choice.md', 'md',
+    '# 次の4つは、素の JS と Vue のどちらで作る？（? を「素の JS」か「Vue」に直す）\n会社紹介の1ページ（文字と画像だけ）: ?\nお問い合わせフォーム1つ: ?\n予約の管理画面（一覧・詳細・編集）: ?\n社内ダッシュボード（更新が多く、部品も多い）: ?\n',
+    '? を「素の JS」か「Vue」に書き換えよう。',
+    { 'choice.md': '会社紹介の1ページ（文字と画像だけ）: 素の JS\nお問い合わせフォーム1つ: 素の JS\n予約の管理画面（一覧・詳細・編集）: Vue\n社内ダッシュボード（更新が多く、部品も多い）: Vue\n' },
+    (v) => { const L = lines(v['choice.md']).filter((x) => /:/.test(x)); const ans = (i) => (L[i] || '').split(':').pop(); return [
+      T('動きのほとんど無い「会社紹介の1ページ」は、素の JS で十分', 1, /素/.test(ans(0)), ['画面が1つで変化も少ないなら、準備の重い Vue は大げさ。']),
+      T('画面が多く、データが何か所にも出る「予約の管理画面」は Vue', 2, /Vue/i.test(ans(2)), ['同じデータが複数の場所に出ると、手で直し忘れが起きる。']),
+      T('更新が多く部品も多い「社内ダッシュボード」も Vue', 3, /Vue/i.test(ans(3)), ['自動更新と部品化が効く場面。']),
+    ]; });
+  D['vue-basics']['Vue の考え方：3ステップ'] = web(
+    '<div id="app">\n  <input v-model="name" />\n  <p>こんにちは、{{ name }} さん</p>\n</div>',
+    HEAD + "createApp({ setup() {\n  const name = ref('Lam'); // ① 自分の名前に変える\n  return { name };" + MOUNT,
+    { 'index.html': '<div id="app">\n  <input v-model="name" />\n  <p>こんにちは、{{ name }} さん</p>\n  <p>文字数：{{ name.length }}</p>\n</div>', 'main.js': HEAD + "createApp({ setup() {\n  const name = ref('田中');\n  return { name };" + MOUNT },
+    (v, c) => [
+      T('① name の初期値を、自分の名前に変える（データ）', 1, /ref\(\s*['"][^'"]+['"]\s*\)/.test(v['main.js']) && !/ref\(\s*['"]Lam['"]\s*\)/.test(v['main.js']) && /こんにちは、\S+\s*さん/.test(appText(c)), ['ref("Lam") の Lam を書き換える。画面の名前も変わる。']),
+      T('② 文字数を表示する <p> を足す（{{ name.length }}）', 2, /\{\{\s*name\.length\s*\}\}/.test(v['index.html']), ['<p>文字数：{{ name.length }}</p>']),
+      T('③ 入力欄に打つと、画面の名前も変わる（v-model）', 3, /v-model\s*=\s*["']name["']/.test(v['index.html']), ['<input v-model="name" /> が付いているか確認。']),
+    ]);
+  D['vue-basics']['ref を1つずつ'] = web(
+    '<div id="app">\n  <p>カウント：{{ count }}</p>\n  <button @click="add">+1</button>\n</div>',
+    HEAD + "createApp({ setup() {\n  let count = 0;   // ① ref にする\n  function add() {\n    count++;       // ② .value を付ける\n  }\n  return { count, add };" + MOUNT,
+    { 'index.html': '<div id="app">\n  <p>カウント：{{ count }}</p>\n  <button @click="add">+1</button>\n  <button @click="reset">リセット</button>\n</div>', 'main.js': HEAD + "createApp({ setup() {\n  const count = ref(0);\n  function add() {\n    count.value++;\n  }\n  function reset() {\n    count.value = 0;\n  }\n  return { count, add, reset };" + MOUNT },
+    (v, c) => [
+      T('① count を ref(0) にする', 1, /count\s*=\s*ref\s*\(\s*0\s*\)/.test(v['main.js']), ['let count = 0 を const count = ref(0) に。']),
+      T('② add の中で count.value++ にして、押すと画面の数が増える', 2, /count\.value\s*(\+\+|\+=\s*1)/.test(v['main.js']), ['script の中は .value を付ける。']),
+      T('③ 「リセット」ボタンを足し、count.value = 0 に戻す', 3, /@click\s*=\s*["']reset["']/.test(v['index.html']) && /count\.value\s*=\s*0/.test(v['main.js']), ['function reset() { count.value = 0 } を作り、@click="reset" で呼ぶ。']),
+    ]);
+  D['vue-basics']['部品に分ける'] = text('parts.md', 'md',
+    '# 画面を部品に分けよう（予約一覧ページ）\n# ① 次の画面を、<部品名 /> の形で3つ以上書き出す: ヘッダー / 検索欄 / 相談カード（3枚）/ フッター\n# ② 同じ部品を繰り返すものに ★ を付ける\n',
+    '部品名は PascalCase（AppHeader のように大文字始まり）で書く。',
+    { 'parts.md': '<AppHeader />\n<SearchBox />\n<CaseCard />  ★ 3枚ぶん使い回す\n<AppFooter />\n' },
+    (v) => { const L = lines(v['parts.md']); const comps = L.filter((x) => /<[A-Z][A-Za-z]+\s*\/>/.test(x)); return [
+      T('部品を3つ以上、<部品名 /> の形で書く', 1, comps.length >= 3, ['<AppHeader /> のように書く。']),
+      T('部品名は大文字で始める（PascalCase）', 2, comps.length >= 3 && comps.every((x) => /<[A-Z]/.test(x)), ['小文字始まり（<header />）は HTML のタグと区別がつかない。']),
+      T('繰り返し使う部品に ★ を付ける', 3, L.some((x) => /<[A-Z][A-Za-z]+\s*\/>.*★/.test(x)), ['カードのように何度も出るものが部品向き。']),
+    ]; });
+
+  D['vue-comp'] = D['vue-comp'] || {};
+  D['vue-comp']['コンポーネントって？'] = text('tree.md', 'md',
+    '# 相談一覧ページを、部品の入れ子で書き出そう\n# ① ページ全体 → ヘッダー・検索欄・相談一覧 → 相談カード（インデントで入れ子を表す）\n# ② 相談カードが親から受け取る値（props）を書く\n# ③ 相談カードが親に知らせるイベント（emit）を書く\nApp\n',
+    '入れ子はインデント（スペース2つ）で表す。',
+    { 'tree.md': 'App\n  AppHeader\n  SearchBox\n  CaseList\n    CaseCard   props: item / emit: toggle\n  AppFooter\n' },
+    (v) => { const L = v['tree.md'].split('\n').filter((x) => x.trim() && !x.trim().startsWith('#')); const has = (re) => L.some((x) => re.test(x)); const ind = (re) => { const x = L.find((l) => re.test(l)); return x ? x.match(/^\s*/)[0].length : -1; }; return [
+      T('App の下に、ヘッダー・検索欄・相談一覧・相談カードを書く', 1, has(/Header/i) && has(/Search/i) && has(/CaseList|List/i) && has(/CaseCard|Card/i), ['App の下に、4つの部品名を並べる。']),
+      T('相談カードを、相談一覧より深くインデントする（入れ子）', 2, ind(/Card/i) > ind(/List/i) && ind(/List/i) > ind(/^App/i), ['CaseCard は CaseList の中にいる。']),
+      T('相談カードの props（item）と emit（toggle）を書く', 3, /props\s*[:：]?\s*item/i.test(v['tree.md']) && /emit\s*[:：]?\s*toggle/i.test(v['tree.md']), ['CaseCard   props: item / emit: toggle のように書く。']),
+    ]; });
+
+  D['vue-basics']['JS の基本：変数と関数'] = text('basics.js', 'js',
+    "// ① 変えない値 title を const で宣言（値は '相談ナビ'）\n\n// ② 2倍にする関数 double(n) を作る（アロー関数でも function でもOK）\n\n// ③ cases から、未完了(done が false)だけを取り出す\nconst cases = [\n  { title: '離婚の相談', done: false },\n  { title: '労働の相談', done: true },\n]\n",
+    '3つとも、書き方を見ながら埋めてみよう。',
+    { 'basics.js': "const title = '相談ナビ'\n\nconst double = (n) => n * 2\n\nconst cases = [\n  { title: '離婚の相談', done: false },\n  { title: '労働の相談', done: true },\n]\nconst open = cases.filter((c) => !c.done)\n" },
+    (v) => { const s = v['basics.js']; return [
+      T('① const title = \'相談ナビ\' と書く', 1, /const\s+title\s*=\s*['"`]相談ナビ['"`]/.test(s), ['変えない値は const。']),
+      T('② 数を2倍にして返す関数 double を作る', 2, /(function\s+double\s*\(\s*\w+\s*\)\s*\{[\s\S]*return[\s\S]*\*\s*2|const\s+double\s*=\s*\(?\s*\w+\s*\)?\s*=>[\s\S]*\*\s*2)/.test(s), ['const double = (n) => n * 2']),
+      T('③ cases.filter で未完了だけ取り出す', 3, /cases\s*\.filter\s*\(/.test(s) && /!\s*\w+\.done|\.done\s*===?\s*false/.test(s), ['cases.filter((c) => !c.done)']),
+    ]; });
+
+  /* 紹介 → 基礎の冒頭へ移したシーンの練習 */
+  ['データを変えるだけ', 'リアクティブの仕組み', '.vue ファイルの解剖'].forEach((t) => { if (D['vue-intro'] && D['vue-intro'][t]) { (D['vue-basics'] = D['vue-basics'] || {})[t] = D['vue-intro'][t]; delete D['vue-intro'][t]; } });
+  /* HMR の題名を変えたぶん */
+  if (D['vue-env'] && D['vue-env']['開発サーバーとHMR']) D['vue-env']['開発サーバーと自動更新（HMR）'] = D['vue-env']['開発サーバーとHMR'];
 })();
