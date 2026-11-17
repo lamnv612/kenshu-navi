@@ -20,7 +20,6 @@
   .sd-term{padding:.55em .9em;border-top:1px solid var(--line);cursor:default}.sd-term:first-of-type{border-top:0}
   .sd-term:hover{background:color-mix(in srgb,var(--c) 8%,transparent)}
   .sd-term b{font:800 .88rem var(--mono);color:var(--text)}.sd-term i{font-style:normal;margin-left:.5em;font:800 .75rem var(--font);color:var(--c)}
-  .sd-card rt{font-size:.5em;font-weight:700;color:var(--ts)}
   .sd-term p{margin-top:2px;font:700 .78rem/1.55 var(--font);color:var(--mute)}
   .sd-tip{padding:.6em .9em;border-top:1px solid var(--line);font:700 .8rem/1.65 var(--font)}.sd-tip:first-of-type{border-top:0}.sd-tip b{font-family:var(--mono)}
   .sd-note{padding:.65em .9em;font:700 .78rem/1.6 var(--font);color:var(--mute)}`);

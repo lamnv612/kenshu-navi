@@ -12,12 +12,13 @@
     '公開': 'こうかい', '非公開': 'ひこうかい', '書き換え': 'かきかえ', '禁止': 'きんし', '代入': 'だいにゅう', '例外': 'れいがい', '失敗': 'しっぱい', '成功': 'せいこう',
     '赤線': 'あかせん', '型': 'かた', '親': 'おや', '子': 'こ', '元': 'もと', '名': 'な', '足す': 'たす', '比べる': 'くらべる', '無い': 'ない', '取り出す': 'とりだす',
     '代わり': 'かわり', '包む': 'つつむ', '決まる': 'きまる', '渡す': 'わたす', '使う': 'つかう', '持つ': 'もつ', '最初': 'さいしょ', '書く': 'かく', '新しい': 'あたらしい',
-    '使おう': 'つかおう', '操作': 'そうさ', '一部': 'いちぶ', '必須': 'ひっす', '可能': 'かのう', '削除': 'さくじょ', '更新': 'こうしん', '作成': 'さくせい', '取得': 'しゅとく',
+    '使おう': 'つかおう', '文字列': 'もじれつ', '識別番号': 'しきべつばんごう', '候補': 'こうほ', '結果': 'けっか', '画面': 'がめん', '付ける': 'つける', '打ち間違い': 'うちまちがい', '選べる': 'えらべる', '記録': 'きろく', '残高': 'ざんだか', '入金': 'にゅうきん', '年齢': 'ねんれい', '予約': 'よやく', '相談': 'そうだん', '弁護士': 'べんごし', '設計': 'せっけい', '呼ぶ': 'よぶ', '押す': 'おす', '押し': 'おし', '見る': 'みる', '見せる': 'みせる', '操作': 'そうさ', '一部': 'いちぶ', '必須': 'ひっす', '可能': 'かのう', '削除': 'さくじょ', '更新': 'こうしん', '作成': 'さくせい', '取得': 'しゅとく',
   };
   const keys = Object.keys(JA).sort((a, b) => b.length - a.length);
   const rx = new RegExp(keys.map((k) => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|'), 'g');
   const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  K.ruby = (text) => { let out = '', last = 0, m; rx.lastIndex = 0; const t = String(text || ''); while ((m = rx.exec(t))) { out += esc(t.slice(last, m.index)) + '<ruby>' + esc(m[0]) + '<rt>' + JA[m[0]] + '</rt></ruby>'; last = m.index + m[0].length; } return out + esc(t.slice(last)); };
+  if (K.W && K.W.style) K.W.style('rd', '.rd{font-size:.95em;font-weight:800;color:var(--ts);margin:0 .15em 0 .1em;white-space:nowrap}.rd::before{content:"（";opacity:.7}.rd::after{content:"）";opacity:.7}');
+  K.ruby = (text) => { let out = '', last = 0, m; rx.lastIndex = 0; const t = String(text || ''); while ((m = rx.exec(t))) { out += esc(t.slice(last, m.index)) + esc(m[0]) + '<span class="rd">' + JA[m[0]] + '</span>'; last = m.index + m[0].length; } return out + esc(t.slice(last)); };
   /* 英語キーワードの読み（足りない分） */
   const Y = { Status: 'ステータス｜status ＝ 状態', Consultation: 'コンサルテーション｜consultation ＝ 相談', Booking: 'ブッキング｜booking ＝ 予約', Person: 'パーソン｜person ＝ 人', Lawyer: 'ローヤー｜lawyer ＝ 弁護士', Age: 'エイジ｜age ＝ 年齢', Id: 'アイディー｜id ＝ 識別番号', balance: 'バランス｜balance ＝ 残高', deposit: 'ディポジット｜deposit ＝ 入金', name: 'ネーム｜name ＝ 名前', age: 'エイジ｜age ＝ 年齢', number: 'ナンバー｜number ＝ 数字', string: 'ストリング｜string ＝ 文字列', boolean: 'ブーリアン｜boolean ＝ 真偽値', const: 'コンスト｜constant ＝ 定数', let: 'レット｜let ＝ 〜させる', function: 'ファンクション｜function ＝ 関数', return: 'リターン｜return ＝ 返す', if: 'イフ｜if ＝ もし', typeof: 'タイプオブ｜type of ＝ 〜の型', Draft: 'ドラフト｜draft ＝ 下書き', Role: 'ロール｜role ＝ 役割', Action: 'アクション｜action ＝ 操作', Partial: 'パーシャル｜partial ＝ 一部の', T: 'ティー｜Type の頭文字', 'as': 'アズ｜as ＝ 〜として', set: 'セット｜set ＝ 設定する', get: 'ゲット｜get ＝ 取得する', 'UPPER_SNAKE_CASE': 'アッパースネークケース｜大文字＋_', isLoggedIn: 'イズ ログドイン｜is logged in ＝ ログイン中か', checkLogin: 'チェックログイン｜check login ＝ ログイン確認' };
   K.yomi = K.yomi || {}; Object.keys(Y).forEach((k) => { if (!K.yomi[k]) K.yomi[k] = Y[k]; });

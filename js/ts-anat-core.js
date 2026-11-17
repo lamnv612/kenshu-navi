@@ -25,7 +25,6 @@
     .an-parts button{all:unset;cursor:pointer;padding:.4em 1em;border-radius:10px;border:2px solid var(--pc);background:transparent;font-weight:800;font-size:.9rem;color:var(--pc);transition:.2s}
     .an-parts button:hover,.an-parts button.lit{background:color-mix(in srgb,var(--pc) 22%,transparent);transform:translateY(-2px)}
     .an-info{padding:.8em 1em;border-radius:10px;background:color-mix(in srgb,var(--ts) 10%,var(--card));border:1px solid color-mix(in srgb,var(--ts) 35%,var(--line));font-weight:700;line-height:1.7;min-height:3.2em}
-    .an-parts rt,.an-info rt{font-size:.5em;font-weight:700}
     .an-info b{color:var(--pc,var(--ts))}`);
     const box = h('div', { class: 'an-box' }), inner = h('div', { style: { display: 'inline-block', textAlign: 'left' } });
     // 前後の空白・改行は光らせない（中身の文字だけ光る）
