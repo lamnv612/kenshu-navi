@@ -378,7 +378,7 @@
     const det = h('div', { style: { minHeight: '120px' } });
     const rowOf = (items) => h('div', { class: 'tsx-tl' }, items.map(([t, k, m]) => h('div', { class: 'tsx-t ' + k }, h('i', k === 'ok' ? '✓' : k === 'ng' ? '✖' : '·'), t, m ? h('em', m) : null)));
     const DET = [
-      () => code('test("20歳は成人", () => {\n  expect(isAdult(20)).toBe(true);\n});\ntest("17歳は未成年", () => {\n  expect(isAdult(17)).toBe(false);\n});\ntest("18歳ちょうどは成人", () => {\n  expect(isAdult(18)).toBe(true);   // 境界の値\n});', 'ts', { file: 'isAdult.test.ts', color: 'var(--ts)' }),
+      () => code('it("20歳は成人", () => {\n  expect(isAdult(20)).toBe(true);\n});\nit("17歳は未成年", () => {\n  expect(isAdult(17)).toBe(false);\n});\nit("18歳ちょうどは成人", () => {\n  expect(isAdult(18)).toBe(true);   // 境界の値\n});', 'ts', { file: 'isAdult.test.ts', color: 'var(--ts)' }),
       () => rowOf([['isAdult(20)', 'ok', '期待 true / 実際 true'], ['isAdult(17)', 'ok', '期待 false / 実際 false']]),
       () => h('div', { class: 'col' }, rowOf([['isAdult(20)', 'ok', ''], ['isAdult(17)', 'ok', ''], ['isAdult(18)', 'ng', '期待 true / 実際 false']]), code('function isAdult(age: number) {\n  return age > 18;   // ← 18 のとき false になる（バグ）\n}', 'ts', { file: 'isAdult.ts（今の実装）', color: 'var(--bad)', hi: [2] })),
       () => h('div', { class: 'col' }, code('function isAdult(age: number) {\n  return age >= 18;   // ← 18歳も成人！ > を >= に直す\n}', 'ts', { file: 'isAdult.ts（直した後）', color: 'var(--basic)', hi: [2] }), rowOf([['isAdult(20)', 'ok', ''], ['isAdult(17)', 'ok', ''], ['isAdult(18)', 'ok', '期待 true / 実際 true']])),
@@ -402,7 +402,7 @@
     const FILES = [
       ['Terminal', 'sh', '$ npm install -D vitest\n\nadded 42 packages in 3s\n  vitest@latest が devDependencies に入った'],
       ['package.json', 'json', '{\n  "scripts": {\n    "dev": "vite",\n    "build": "tsc && vite build",\n    "preview": "vite preview",\n    "test": "vitest"   // ← 追加\n  }\n}'],
-      ['isAdult.ts ＋ isAdult.test.ts', 'ts', '// src/example/isAdult.ts\nexport default function isAdult(age: number): boolean {\n  return age >= 18;\n}\n\n// __test__/isAdult.test.ts\nimport { expect, test } from "vitest";\nimport isAdult from "@/example/isAdult";\n\ntest("isAdult", () => {\n  expect(isAdult(20)).toBe(true);\n  expect(isAdult(17)).toBe(false);\n});'],
+      ['isAdult.ts ＋ isAdult.test.ts', 'ts', '// src/example/isAdult.ts\nexport default function isAdult(age: number): boolean {\n  return age >= 18;\n}\n\n// __test__/isAdult.test.ts\nimport { expect, it } from "vitest";\nimport isAdult from "@/example/isAdult";\n\nit("isAdult", () => {\n  expect(isAdult(20)).toBe(true);\n  expect(isAdult(17)).toBe(false);\n});'],
       ['Terminal', 'sh', '$ npm run test\n\n ✓ __test__/isAdult.test.ts (1 test)\n   ✓ isAdult\n\n Test Files  1 passed (1)\n      Tests  1 passed (1)'],
     ];
     const host = h('div');
@@ -2571,28 +2571,54 @@ console.log(n.length);
         },
       },
       {
-        t: 'ミニテストランナー', tag: 'LIVE', lead: '左の関数を<b>書き換える</b>と、右のテストがリアルタイムで ✓ / ✖ に。全部緑にしよう！',
+        t: 'ミニテストランナー', tag: 'LIVE', lead: '<b>関数を書く → テストが呼ぶ → ✅❌</b>。左を書き換えると結果が変わる。▶ で1つずつ実行も見られる。全部緑にしよう！',
         render(el) {
           const init = '// 18歳以上なら成人（true）\nfunction isAdult(age) {\n  return age > 18;\n}\n';
-          const T = [['20歳は成人', () => [isAdult(20), true], 'isAdult(20)'], ['18歳ちょうどは成人', () => [isAdult(18), true], 'isAdult(18)'], ['17歳は未成年', () => [isAdult(17), false], 'isAdult(17)'], ['マイナスは false', () => [isAdult(-1), false], 'isAdult(-1)']];
-          let isAdult = () => undefined; const list = h('div', { class: 'tsx-tl' }), light = h('div', { class: 'tsx-light' }); let won = false;
-          const run = (src) => {
+          const T = [['20歳は成人', 20, true], ['18歳ちょうどは成人', 18, true], ['17歳は未成年', 17, false], ['マイナスは false', -1, false]];
+          const TSRC = ['import { it, expect } from "vitest";', 'import { isAdult } from "./isAdult";', ''];
+          const HI = T.map(() => []);
+          T.forEach(([n, v, ex], i) => { const st = TSRC.length; TSRC.push(`it("${n}", () => {`, `  expect(isAdult(${v})).toBe(${ex});`, '});', ''); HI[i] = [st + 1, st + 2, st + 3]; });
+          let isAdult = () => undefined, won = false, busy = false, hint = false, src = init;
+          const bar = h('div', { style: { display: 'flex', gap: '6px' } }, ...T.map(() => h('i', { style: { flex: 1, height: '12px', borderRadius: '6px', background: 'var(--line)', transition: '.3s', display: 'block' } })));
+          const lamp = h('div', { class: 'tsx-light' });
+          const tcode = code(TSRC.join('\n'), 'ts', { color: 'var(--ts)', file: 'isAdult.test.ts（テスト：触らない）', dim: true, edit: false });
+          const cards = T.map(([n, v, ex], i) => {
+            const st = h('span', { style: { fontSize: '1.4rem' } }, '⏳'), got = h('b', '–'), msg = h('div', { style: { fontSize: '.74rem', color: 'var(--mute)', fontWeight: 700 } });
+            const el2 = h('div', { class: 'tsx-t', style: { display: 'grid', gridTemplateColumns: 'auto 1fr auto auto auto', gap: '12px', alignItems: 'center', cursor: 'pointer', padding: '10px 14px' }, onmouseenter: () => tcode.setHi(HI[i]), onmouseleave: () => tcode.setHi([]) },
+              st, h('div', null, h('b', n), msg),
+              h('div', { style: { textAlign: 'center' } }, h('small', { style: { color: 'var(--mute)', display: 'block', fontSize: '.64rem' } }, '入力'), h('b', { style: { fontFamily: 'var(--mono)' } }, String(v))),
+              h('div', { style: { textAlign: 'center' } }, h('small', { style: { color: 'var(--mute)', display: 'block', fontSize: '.64rem' } }, '期待'), h('b', { style: { fontFamily: 'var(--mono)', color: 'var(--ts)' } }, String(ex))),
+              h('div', { style: { textAlign: 'center' } }, h('small', { style: { color: 'var(--mute)', display: 'block', fontSize: '.64rem' } }, '実際'), got));
+            return { el: el2, st, got, msg };
+          });
+          const paint = (i, ok, a) => { const c = cards[i]; c.el.className = 'tsx-t ' + (ok ? 'ok' : 'ng'); c.st.textContent = ok ? '✅' : '❌'; c.got.textContent = String(a); c.got.style.fontFamily = 'var(--mono)'; c.got.style.color = ok ? 'var(--ok)' : 'var(--bad)'; c.msg.textContent = ok ? '' : `期待 ${T[i][2]} なのに ${a} が返った`; bar.children[i].style.background = ok ? 'var(--ok)' : 'var(--bad)'; };
+          const evalAll = (animate) => {
             let err = null;
             try { isAdult = new Function(src + '\n;return isAdult;')(); } catch (e) { err = e; isAdult = () => undefined; }
-            let pass = 0;
-            list.replaceChildren(...T.map(([n, f, call]) => {
-              let ok = false, m = '';
-              try { const [a, b] = f(); ok = a === b; m = ok ? '' : `期待 ${b} / 実際 ${a}`; } catch (e) { m = String(e); }
-              if (ok) pass++;
-              return h('div', { class: 'tsx-t ' + (ok ? 'ok' : 'ng') }, h('i', ok ? '✓' : '✖'), n, h('em', h('div', 'expect(' + call + ')'), m));
-            }));
-            if (err) list.prepend(res(false, String(err.message || err)));
-            const g = pass === T.length; light.className = 'tsx-light ' + (g ? 'g' : 'r'); light.replaceChildren(h('b', g ? '🟢' : '🔴'), `${pass} / ${T.length} PASS`);
-            if (g && !won) { won = true; celebrate(); }
+            return T.map(([, v, ex]) => { let a; try { a = isAdult(v); } catch (e) { a = '例外'; } return [a === ex, a]; });
           };
-          const ed = codeEditor(init, 'js', run); ed.style.borderRadius = '14px'; ed.style.minHeight = '230px';
-          el.append(h('div', { class: 'split' }, h('div', { class: 'col' }, lbl('isAdult.js（編集OK）'), ed, h('p', { style: { color: 'var(--mute)', fontSize: '.875rem' } }, '💡 ヒント：境界値（ちょうど18歳）に注目。')), h('div', { class: 'col' }, light, list)));
-          run(init);
+          const show = async (animate) => {
+            if (busy) return; busy = true;
+            const rs = evalAll();
+            if (animate) { cards.forEach((c) => { c.el.className = 'tsx-t'; c.st.textContent = '⏳'; c.got.textContent = '–'; c.msg.textContent = ''; }); [...bar.children].forEach((b) => { b.style.background = 'var(--line)'; }); lamp.className = 'tsx-light'; lamp.replaceChildren(h('b', '🏃'), '実行中…'); }
+            for (let i = 0; i < T.length; i++) { if (animate) { tcode.setHi(HI[i]); await K.W.sleep(380); } paint(i, rs[i][0], rs[i][1]); }
+            tcode.setHi([]);
+            const pass = rs.filter((x) => x[0]).length, g = pass === T.length;
+            lamp.className = 'tsx-light ' + (g ? 'g' : 'r'); lamp.replaceChildren(h('b', g ? '🟢' : '🔴'), `${pass} / ${T.length} PASS`, g ? ' ← 全部合格！' : ' ← 赤を探して直そう');
+            if (g && !won) { won = true; celebrate(); }
+            busy = false;
+          };
+          const ed = codeEditor(init, 'js', (v) => { src = v; if (!busy) show(false); });
+          ed.style.borderRadius = '14px'; ed.style.minHeight = '170px';
+          const hintBox = h('div', { class: 'tsx-res', style: { display: 'none' } });
+          const runB = h('button', { class: 'btn primary', style: { '--c': 'var(--ts)' }, onclick: () => show(true) }, '▶ テストを実行（1つずつ）');
+          const hintB = h('button', { class: 'btn', onclick: () => { hint = !hint; hintBox.style.display = hint ? '' : 'none'; hintBox.className = 'tsx-res ok'; hintBox.textContent = '💡 「18歳以上」＝ 18 を含む。> ではなく >= を使おう（境界値＝ちょうど 18 のテストが落ちている）'; } }, '💡 ヒント');
+          const flow = h('div', { class: 'vi-row', style: { justifyContent: 'center', gap: '10px', fontWeight: 900 } }, ...[['✏️ 関数を書く', 'var(--basic)'], ['🧪 テストが呼ぶ', 'var(--ts)'], ['✅❌ 結果', 'var(--team)']].flatMap(([t, c], i) => [h('span', { style: { padding: '.3em .9em', borderRadius: '999px', border: '2px solid ' + c, fontSize: '.8rem' } }, t), i < 2 ? h('span', { style: { color: 'var(--mute)' } }, '➜') : null].filter(Boolean)));
+          el.append(h('div', { style: { display: 'grid', gap: '14px' } }, flow,
+            h('div', { style: { display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)', gap: '14px', alignItems: 'start' } },
+              h('div', { class: 'col', style: { minWidth: 0 } }, lbl('① 関数（ここを書き換える）'), ed, lbl('② テスト（関数を呼んで答え合わせ。行にカーソルを乗せると対応が光る）'), tcode),
+              h('div', { class: 'col', style: { minWidth: 0 } }, lbl('③ 結果'), lamp, bar, ...cards.map((c) => c.el), h('div', { class: 'vi-row' }, runB, hintB), hintBox))));
+          show(false);
         },
       },
       {
@@ -2637,6 +2663,24 @@ console.log(n.length);
             h('div', { class: 'col', style: { minWidth: 0 } }, lbl('コードで書くと'), pre)));
           el.append(h('div', { style: { height: '12px' } }), h('div', { class: 'split', style: { gridTemplateColumns: 'repeat(3,minmax(0,1fr))' } },
             ...[['describe', 'グループ', '「何のテストか」の見出し。1ファイルに1つが目安', 'var(--ts)'], ['it', '1つの確認', '「〜できる」と日本語で書く。失敗した時に読みやすい', 'var(--basic)'], ['expect', '答え合わせ', '実際の値 vs 期待する値を比べる。it の中に書く', 'var(--team)']].map(([n, j, d, c]) => h('div', { style: { padding: '10px 12px', borderRadius: '8px', border: '1px solid ' + c, background: 'var(--card)' } }, h('b', { style: { color: c, fontFamily: 'var(--mono)' } }, n), ' ＝ ' + j, h('div', { style: { fontSize: '.8rem', color: 'var(--mute)', marginTop: '2px' } }, d)))));
+          /* 使う／使わない を並べて見る */
+          const KW = [
+            { k: 'expect', ic: '🔍', say: 'expect が無いと、何も確認していない', mk: (on, bug) => ({ code: 'it("合計が出る", () => {\n  const cart = new Cart();\n  cart.add(pen, 2);\n' + (on ? '  expect(cart.total()).toBe(1000);\n' : '') + '});', out: on ? (bug ? [false, 'FAIL  合計が出る', 'Expected: 1000\nReceived: 500'] : [true, 'PASS  合計が出る', '1 passed']) : [true, 'PASS  合計が出る', '1 passed ← でも、合計が合っているかは誰も見ていない（バグがあっても緑）'] }), noteOn: 'expect があれば、バグを入れると赤になる', noteOff: 'expect が無いと、バグがあっても緑のまま（いちばん危険）', tog: ['expect あり', 'expect なし'] },
+            { k: 'it', ic: '🧪', say: 'it で包まないと、どのテストか分からない', mk: (on, bug) => ({ code: on ? 'it("合計が出る", () => {\n  expect(cart.total()).toBe(1000);\n});\n\nit("空は0円", () => {\n  expect(new Cart().total()).toBe(0);\n});' : 'expect(cart.total()).toBe(1000);\n\nexpect(new Cart().total()).toBe(0);', out: on ? (bug ? [false, 'FAIL  合計が出る\nPASS  空は0円', '1 failed | 1 passed ← どれが壊れたか名前で分かる'] : [true, 'PASS  合計が出る\nPASS  空は0円', '2 passed']) : [false, 'FAIL  no test suite found', 'テストが1件も登録されない。名前も無いので、何が壊れたか分からない'] }), noteOn: 'it に日本語の名前を付けると、壊れた所が一目で分かる', noteOff: 'it が無いと、テストとして数えられない', tog: ['it あり', 'it なし'] },
+            { k: 'describe', ic: '📂', say: 'describe があると、結果がグループで読める', mk: (on, bug) => ({ code: on ? 'describe("Cart", () => {\n  it("合計が出る", ...);\n  it("空は0円", ...);\n});\n\ndescribe("isAdult", () => {\n  it("20歳は成人", ...);\n});' : 'it("合計が出る", ...);\nit("空は0円", ...);\nit("20歳は成人", ...);', out: on ? [true, 'Cart\n  ✓ 合計が出る\n  ✓ 空は0円\nisAdult\n  ✓ 20歳は成人', '何のテストか、まとまりで読める'] : [true, '✓ 合計が出る\n✓ 空は0円\n✓ 20歳は成人', '動くけれど、テストが増えるほど何のテストか分からなくなる'] }), noteOn: 'describe があると、テストが100件になっても迷子にならない', noteOff: 'describe が無くても動く。でも一覧が読みにくい（任意だが、あると親切）', tog: ['describe あり', 'describe なし'] },
+          ];
+          let ki = 0, on = true, ubug = false;
+          const uTabs = h('div', { class: 'row' }), uCode = h('div'), uOut = h('div'), uMsg = h('div', { class: 'tsx-res' }), uBtns = h('div', { class: 'row' });
+          const uDraw = () => {
+            const K0 = KW[ki], r = K0.mk(on, ubug);
+            uTabs.replaceChildren(...KW.map((x, i) => h('button', { class: 'btn' + (i === ki ? ' primary' : ''), style: { '--c': 'var(--ts)' }, onclick: () => { ki = i; on = true; ubug = false; uDraw(); } }, x.ic + ' ' + x.k)));
+            uBtns.replaceChildren(...K0.tog.map((t, i) => h('button', { class: 'btn' + ((i === 0) === on ? ' primary' : ''), style: { '--c': i === 0 ? 'var(--ok)' : 'var(--bad)' }, onclick: () => { on = i === 0; uDraw(); } }, (i === 0 ? '✓ ' : '✖ ') + t)), h('button', { class: 'btn' + (ubug ? ' primary' : ''), style: { '--c': 'var(--bad)' }, onclick: () => { ubug = !ubug; uDraw(); } }, bug ? '🐛 バグあり（押すと直す）' : '🐛 total() にバグを入れる'));
+            uCode.replaceChildren(code(r.code, 'ts', { color: on ? 'var(--ok)' : 'var(--bad)', file: K0.k + (on ? ' あり' : ' なし') }));
+            uOut.replaceChildren(h('div', { style: { padding: '12px 14px', borderRadius: '10px', border: '2px solid ' + (r.out[0] ? 'var(--ok)' : 'var(--bad)'), background: 'var(--card)', fontFamily: 'var(--mono)', fontSize: '.8rem', whiteSpace: 'pre-wrap', lineHeight: 1.7 } }, h('b', { style: { color: r.out[0] ? 'var(--ok)' : 'var(--bad)' } }, r.out[1]), '\n', h('span', { style: { color: 'var(--mute)' } }, r.out[2])));
+            uMsg.className = 'tsx-res ' + (on ? 'ok' : 'ng'); uMsg.textContent = (on ? '✓ ' : '✖ ') + (on ? K0.noteOn : K0.noteOff);
+          };
+          uDraw();
+          el.append(h('div', { style: { height: '16px' } }), lbl('使うと／使わないと、どうなる？（切り替えて結果を見る）'), h('div', { style: { display: 'grid', gap: '10px' } }, uTabs, uBtns, h('div', { class: 'split', style: { gridTemplateColumns: 'repeat(2,minmax(0,1fr))', alignItems: 'start' } }, h('div', { class: 'col', style: { minWidth: 0 } }, lbl('コード'), uCode), h('div', { class: 'col', style: { minWidth: 0 } }, lbl('テスト結果（npm run test）'), uOut)), uMsg));
         },
       },
       {
@@ -2888,7 +2932,7 @@ console.log(n.length);
     'ts-test': {
       'なぜテストを書くの？': { problem: '税計算を直したら別画面の請求額がズレた', idea: '確認をコードにして、自動にする', answer: '<code>test</code> ＋ <code>expect</code>',
         pv: T('tax.js', 'function calcTax(price) {\n  return price * 0.8; // バグ（0.08 のつもり）\n}\n// 手で全画面を確認…', { lang: 'js', err: [2], keys: { 2: 'test' } }),
-        iv: T('tax.test.ts', 'test("1000円の税は80円", () => {\n  expect(calcTax(1000)).toBe(80);\n});', { idea: [2], keys: { 2: 'test' } }),
+        iv: T('tax.test.ts', 'it("1000円の税は80円", () => {\n  expect(calcTax(1000)).toBe(80);\n});', { idea: [2], keys: { 2: 'test' } }),
         av: T('terminal', '$ npm run test\n✖ calcTax: 80 のはずが 800\n// 本番に出る前に気づけた', { lang: 'sh', err: [2], keys: { 2: 'test' } }) },
       'テストの種類': { problem: '画面操作のテストだけで遅く、すぐ壊れる', idea: '速い小さなテストを多く、大きいのは少し', answer: 'ユニットを土台にする',
         pv: T('e2e.ts', '// すべて画面の操作テスト\nclick("ログイン"); // 遅い\ntype("email", "a@b.c"); // 壊れやすい', { err: [2, 3], keys: { 1: 'pyr' } }),
