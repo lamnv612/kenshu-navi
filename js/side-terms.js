@@ -19,7 +19,7 @@
   .sd-card>h5{padding:.55em .9em;font:900 .84rem var(--font);background:color-mix(in srgb,var(--c) 14%,var(--card2));color:var(--c);border-bottom:1px solid var(--line)}
   .sd-term{padding:.55em .9em;border-top:1px solid var(--line);cursor:default}.sd-term:first-of-type{border-top:0}
   .sd-term:hover{background:color-mix(in srgb,var(--c) 8%,transparent)}
-  .sd-term b{font:800 .88rem var(--mono);color:var(--text)}.sd-term i{font-style:normal;margin-left:.5em;font:800 .75rem var(--font);color:var(--c)}
+  .sd-hd{display:flex;align-items:baseline;justify-content:space-between;gap:10px}.sd-term b{font:800 .9rem var(--mono);color:var(--text)}.sd-term i{font-style:normal;font:800 .95rem var(--font);color:var(--c);text-align:right;white-space:nowrap}
   .sd-term p{margin-top:2px;font:700 .78rem/1.55 var(--font);color:var(--mute)}
   .sd-tip{padding:.6em .9em;border-top:1px solid var(--line);font:700 .8rem/1.65 var(--font)}.sd-tip:first-of-type{border-top:0}.sd-tip b{font-family:var(--mono)}
   .sd-note{padding:.65em .9em;font:700 .78rem/1.6 var(--font);color:var(--mute)}`);
@@ -54,15 +54,21 @@
       terms.splice(8);
       if (terms.length < 2) { el.classList.remove('hasside'); return; }
       const reading = (e) => { const y = K.yomiOf ? K.yomiOf(e.k) : ''; return y ? y.split('｜')[0] : ''; };
-      const rb = (t) => (K.ruby ? K.ruby(t) : t);
-      const nameOf = (e) => e.shown && e.shown !== e.k ? e.shown : e.k;
+      const yom = (e) => { const y = K.yomiOf ? K.yomiOf(e.k) : ''; return y ? y.split('｜')[0] : ''; };
       const origin = (e) => { const y = K.yomiOf ? K.yomiOf(e.k) : ''; return y && y.split('｜')[1] ? y.split('｜')[1] : ''; };
+      const nameOf = (e) => (e.shown && e.shown !== e.k ? e.shown : e.k);
+      // 右端に出す読み：日本語の用語 → ひらがな / 英語のキーワード → カタカナ
+      const readingOf = (e) => {
+        const ja = K.kana ? K.kana(nameOf(e).replace(/[（(][^）)]*[）)]/g, '')) : '';
+        const en = yom(e);
+        return [ja, en].filter(Boolean).join('　');
+      };
       const cards = [
         h('div', { class: 'sd-card', style: { '--c': 'var(--ts)' } }, h('h5', '📚 このシーンの用語（読み方）'),
-          ...terms.map((e) => h('div', { class: 'sd-term' }, h('b', { html: rb(nameOf(e)) }), reading(e) ? h('i', reading(e)) : null, h('p', { html: (origin(e) ? rb(origin(e)) + '　' : '') + rb(e.m || '') })))),
+          ...terms.map((e) => h('div', { class: 'sd-term' }, h('div', { class: 'sd-hd' }, h('b', nameOf(e)), readingOf(e) ? h('i', readingOf(e)) : null), h('p', (origin(e) ? origin(e) + '　' : '') + (e.m || ''))))),
       ];
       const tips = terms.filter((e) => e.r).slice(0, 3);
-      if (tips.length) cards.push(h('div', { class: 'sd-card', style: { '--c': 'var(--ok)' } }, h('h5', '💡 現場では'), ...tips.map((e) => h('div', { class: 'sd-tip' }, h('b', e.k + '：'), h('span', { html: rb(e.r) })))));
+      if (tips.length) cards.push(h('div', { class: 'sd-card', style: { '--c': 'var(--ok)' } }, h('h5', '💡 現場では'), ...tips.map((e) => h('div', { class: 'sd-tip' }, h('b', e.k + '：'), e.r))));
       cards.push(h('div', { class: 'sd-card', style: { '--c': 'var(--violet)' } }, h('div', { class: 'sd-note' }, '👆 コードや図の上の用語にカーソルを乗せても、同じ説明が出ます。')));
       let open = true; try { open = localStorage.getItem('kenshu.side') !== '0'; } catch (e) {}
       const tg = h('button', { class: 'sd-tg', type: 'button' });
