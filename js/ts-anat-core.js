@@ -25,6 +25,7 @@
     .an-parts button{all:unset;cursor:pointer;padding:.4em 1em;border-radius:10px;border:2px solid var(--pc);background:transparent;font-weight:800;font-size:.9rem;color:var(--pc);transition:.2s}
     .an-parts button:hover,.an-parts button.lit{background:color-mix(in srgb,var(--pc) 22%,transparent);transform:translateY(-2px)}
     .an-info{padding:.8em 1em;border-radius:10px;background:color-mix(in srgb,var(--ts) 10%,var(--card));border:1px solid color-mix(in srgb,var(--ts) 35%,var(--line));font-weight:700;line-height:1.7;min-height:3.2em}
+    .an-parts rt,.an-info rt{font-size:.5em;font-weight:700}
     .an-info b{color:var(--pc,var(--ts))}`);
     const box = h('div', { class: 'an-box' }), inner = h('div', { style: { display: 'inline-block', textAlign: 'left' } });
     // 前後の空白・改行は光らせない（中身の文字だけ光る）
@@ -43,9 +44,9 @@
       toks.forEach((tk, i) => { const on = !!key && spec.tokens[i][1].includes(key); tk.classList.toggle('lit', on); tk.style.setProperty('--pc', p ? p[1] : 'var(--ts)'); });
       bar.querySelectorAll('button').forEach((b) => b.classList.toggle('lit', b.dataset.k === key));
       info.style.setProperty('--pc', p ? p[1] : 'var(--ts)');
-      info.innerHTML = p ? `<b>${p[0]}</b>：${p[2]}` : '👆 パーツにカーソルを乗せてね（名前と役割が出る）';
+      info.innerHTML = p ? `<b>${K.ruby ? K.ruby(p[0]) : p[0]}</b>：${K.ruby ? K.ruby(p[2]) : p[2]}` : '👆 パーツにカーソルを乗せてね（名前と役割が出る）';
     };
-    Object.entries(spec.parts).forEach(([k, p]) => bar.append(h('button', { 'data-k': k, style: { '--pc': p[1] }, onmouseenter: () => lit(k), onfocus: () => lit(k), onclick: () => lit(k) }, p[0])));
+    Object.entries(spec.parts).forEach(([k, p]) => bar.append(h('button', { 'data-k': k, style: { '--pc': p[1] }, onmouseenter: () => lit(k), onfocus: () => lit(k), onclick: () => lit(k) }, h('span', { html: K.ruby ? K.ruby(p[0]) : p[0] }))));
     toks.forEach((tk, i) => { const ks = spec.tokens[i][1]; if (ks.length) { tk.addEventListener('mouseenter', () => lit(ks[0])); tk.style.cursor = 'pointer'; tk.addEventListener('click', () => lit(ks[0])); } });
     box.addEventListener('mouseleave', () => lit(null));
     return h('div', { class: 'an-sec' }, h('h4', spec.title || '🔍 構文の解剖：パーツの名前を覚えよう'), box, bar, info);

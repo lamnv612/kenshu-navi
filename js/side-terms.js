@@ -20,6 +20,7 @@
   .sd-term{padding:.55em .9em;border-top:1px solid var(--line);cursor:default}.sd-term:first-of-type{border-top:0}
   .sd-term:hover{background:color-mix(in srgb,var(--c) 8%,transparent)}
   .sd-term b{font:800 .88rem var(--mono);color:var(--text)}.sd-term i{font-style:normal;margin-left:.5em;font:800 .75rem var(--font);color:var(--c)}
+  .sd-card rt{font-size:.5em;font-weight:700;color:var(--ts)}
   .sd-term p{margin-top:2px;font:700 .78rem/1.55 var(--font);color:var(--mute)}
   .sd-tip{padding:.6em .9em;border-top:1px solid var(--line);font:700 .8rem/1.65 var(--font)}.sd-tip:first-of-type{border-top:0}.sd-tip b{font-family:var(--mono)}
   .sd-note{padding:.65em .9em;font:700 .78rem/1.6 var(--font);color:var(--mute)}`);
@@ -54,14 +55,15 @@
       terms.splice(8);
       if (terms.length < 2) { el.classList.remove('hasside'); return; }
       const reading = (e) => { const y = K.yomiOf ? K.yomiOf(e.k) : ''; return y ? y.split('｜')[0] : ''; };
+      const rb = (t) => (K.ruby ? K.ruby(t) : t);
       const nameOf = (e) => e.shown && e.shown !== e.k ? e.shown : e.k;
       const origin = (e) => { const y = K.yomiOf ? K.yomiOf(e.k) : ''; return y && y.split('｜')[1] ? y.split('｜')[1] : ''; };
       const cards = [
         h('div', { class: 'sd-card', style: { '--c': 'var(--ts)' } }, h('h5', '📚 このシーンの用語（読み方）'),
-          ...terms.map((e) => h('div', { class: 'sd-term' }, h('b', nameOf(e)), reading(e) ? h('i', reading(e)) : null, h('p', (origin(e) ? origin(e) + '　' : '') + (e.m || ''))))),
+          ...terms.map((e) => h('div', { class: 'sd-term' }, h('b', { html: rb(nameOf(e)) }), reading(e) ? h('i', reading(e)) : null, h('p', { html: (origin(e) ? rb(origin(e)) + '　' : '') + rb(e.m || '') })))),
       ];
       const tips = terms.filter((e) => e.r).slice(0, 3);
-      if (tips.length) cards.push(h('div', { class: 'sd-card', style: { '--c': 'var(--ok)' } }, h('h5', '💡 現場では'), ...tips.map((e) => h('div', { class: 'sd-tip' }, h('b', e.k + '：'), e.r))));
+      if (tips.length) cards.push(h('div', { class: 'sd-card', style: { '--c': 'var(--ok)' } }, h('h5', '💡 現場では'), ...tips.map((e) => h('div', { class: 'sd-tip' }, h('b', e.k + '：'), h('span', { html: rb(e.r) })))));
       cards.push(h('div', { class: 'sd-card', style: { '--c': 'var(--violet)' } }, h('div', { class: 'sd-note' }, '👆 コードや図の上の用語にカーソルを乗せても、同じ説明が出ます。')));
       let open = true; try { open = localStorage.getItem('kenshu.side') !== '0'; } catch (e) {}
       const tg = h('button', { class: 'sd-tg', type: 'button' });
