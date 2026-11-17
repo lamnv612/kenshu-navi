@@ -66,7 +66,7 @@
       const nameOf = (e) => (e.shown && e.shown !== e.k ? e.shown : e.k);
       // 右端に出す読み：日本語の用語 → ひらがな / 英語のキーワード → カタカナ
       const readingOf = (e) => {
-        if (e.yomi) return e.yomi;
+        if (e.yomi || e.y) return e.yomi || e.y;
         const ja = K.kana ? K.kana(nameOf(e).replace(/[（(][^）)]*[）)]/g, '')) : '';
         const en = yom(e);
         return [ja, en].filter(Boolean).join('　');
