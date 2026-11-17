@@ -21,7 +21,7 @@
     .an-box{padding:26px 16px;border-radius:14px;background:var(--code);overflow:auto;text-align:center;white-space:pre;font:700 1.45rem/1.9 var(--mono);color:#d8dcff;transition:.3s}
     @media(max-width:700px){.an-box{font-size:1.05rem;text-align:left}}
     .an-box .tk{border-radius:8px;padding:.05em .08em;transition:.25s;cursor:default;border-bottom:2px dotted transparent}
-    .an-box.dim .tk{opacity:.28}.an-box .tk.lit{opacity:1;background:color-mix(in srgb,var(--pc) 28%,transparent);border-bottom-color:var(--pc);color:#fff;box-shadow:0 0 0 2px color-mix(in srgb,var(--pc) 55%,transparent)}
+    .an-box.dim .tk{opacity:.28}.an-box .tk.lit{opacity:1;background:color-mix(in srgb,var(--pc) 30%,transparent);border-bottom:3px solid var(--pc);border-radius:0;padding:.05em 0;color:#fff;box-shadow:none}.an-box .tk.lit.gs{border-radius:8px 0 0 8px;padding-left:.2em}.an-box .tk.lit.ge{border-radius:0 8px 8px 0;padding-right:.2em}.an-box .tk.lit.gs.ge{border-radius:8px}
     .an-parts{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:14px 0 10px}
     .an-parts button{all:unset;cursor:pointer;padding:.4em 1em;border-radius:10px;border:2px solid var(--pc);background:transparent;font-weight:800;font-size:.9rem;color:var(--pc);transition:.2s}
     .an-parts button:hover,.an-parts button.lit{background:color-mix(in srgb,var(--pc) 22%,transparent);transform:translateY(-2px)}
@@ -55,6 +55,7 @@
     } else {
       toks = spec.tokens.map(([t]) => { const m = t.match(/^(\s*)([\s\S]*?)(\s*)$/); const core = h('span', { class: 'tk' }, m[2]); inner.append(document.createTextNode(m[1]), core, document.createTextNode(m[3])); return [core]; });
     }
+    toks.forEach((g) => { if (g.length) { g[0].classList.add('gs'); g[g.length - 1].classList.add('ge'); } });
     try { inner.contentEditable = 'plaintext-only'; if (inner.contentEditable !== 'plaintext-only') inner.contentEditable = 'true'; } catch (e) { /* 編集できない環境 */ }
     inner.spellcheck = false;
     box.append(inner);

@@ -53,7 +53,16 @@
     p.remove();
   }
   const lns = (src, keys) => { const o = []; src.split('\n').forEach((l, i) => { if (keys.some((k) => l.includes(k))) o.push(i + 1); }); return o; };
-  const fileBox = (kind, name, src, extra) => { const pre = code(src, 'vue', { color: kind === 'p' ? 'var(--ts)' : C, file: name, dim: true }); return { pre, el: h('div', { class: 'vc-file ' + kind }, h('div', { class: 'vc-tag' }, kind === 'p' ? '👨 親' : '👶 子', ' ', name), pre, extra || null) }; };
+  const SRC = {
+    app: "<script setup lang=\"ts\">\nimport { ref } from 'vue'\nimport AppHeader from './AppHeader.vue'\nimport SearchBox from './SearchBox.vue'\nimport CaseList from './CaseList.vue'\nimport AppFooter from './AppFooter.vue'\n\nconst keyword = ref('')\nconst cases = ref<Case[]>([\n  { id: 1, title: '離婚の相談', done: false },\n  { id: 2, title: '相続の相談', done: true },\n])\n</script>\n\n<template>\n  <AppHeader title=\"相談ナビ\" />\n  <SearchBox v-model=\"keyword\" />\n  <CaseList :items=\"cases\" />\n  <AppFooter />\n</template>",
+    hd: "<script setup lang=\"ts\">\ndefineProps<{ title: string }>()\n</script>\n\n<template>\n  <header>\n    <h1>{{ title }}</h1>\n  </header>\n</template>",
+    sb: "<script setup lang=\"ts\">\nconst model = defineModel<string>()\n</script>\n\n<template>\n  <input v-model=\"model\" placeholder=\"分野で検索\" />\n</template>",
+    ls: "<script setup lang=\"ts\">\nimport CaseCard from './CaseCard.vue'\n\ndefineProps<{ items: Case[] }>()\nconst emit = defineEmits<{ toggle: [id: number] }>()\n</script>\n\n<template>\n  <CaseCard\n    v-for=\"c in items\"\n    :key=\"c.id\"\n    :item=\"c\"\n    @toggle=\"emit('toggle', $event)\"\n  />\n</template>",
+    cd: "<script setup lang=\"ts\">\ndefineProps<{ item: Case }>()\nconst emit = defineEmits<{ toggle: [id: number] }>()\n</script>\n\n<template>\n  <article class=\"card\">\n    <h3>{{ item.title }}</h3>\n    <button @click=\"emit('toggle', item.id)\">\n      {{ item.done ? '✓ 完了' : '完了にする' }}\n    </button>\n  </article>\n</template>",
+  };
+  const TYPES = "export interface Case {\n  id: number\n  title: string\n  done: boolean\n}\n";
+  const FILES = { './AppHeader.vue': ['AppHeader.vue', SRC.hd], './SearchBox.vue': ['SearchBox.vue', SRC.sb], './CaseList.vue': ['CaseList.vue', SRC.ls], './CaseCard.vue': ['CaseCard.vue', SRC.cd], './AppFooter.vue': ['AppFooter.vue', "<script setup lang=\"ts\">\n</script>\n\n<template>\n  <footer>© 相談ナビ</footer>\n</template>"], '@/types/case': ['types/case.ts', TYPES, 'ts'] };
+  const fileBox = (kind, name, src, extra) => { const pre = code(src, 'vue', { color: kind === 'p' ? 'var(--ts)' : C, file: name, dim: true }); K.linkFiles && K.linkFiles(pre, FILES); const chips = K.linkChips ? K.linkChips(pre, FILES) : null; extra = extra || chips; return { pre, el: h('div', { class: 'vc-file ' + kind }, h('div', { class: 'vc-tag' }, kind === 'p' ? '👨 親' : '👶 子', ' ', name), pre, extra || null) }; };
   const dosDonts = (ok, ng) => h('div', { class: 'vi-eq' },
     h('div', { class: 'vc-do' }, h('b', '✓ こうするとよい'), ...ok.map(([t, s]) => h('div', null, t, s ? h('small', ' ' + s) : null))),
     h('div', { class: 'vc-dont' }, h('b', '✖ こうしない'), ...ng.map(([t, s]) => h('div', null, t, s ? h('small', ' ' + s) : null))));
@@ -67,13 +76,6 @@
       { k: 'ls', n: 'CaseList.vue', d: 1, role: '相談カードを並べる', pr: 'items', em: 'toggle', st: '—' },
       { k: 'cd', n: 'CaseCard.vue', d: 2, role: '相談1件ぶんのカード（3枚ぶん使い回す）', pr: 'item', em: 'toggle', st: '—' },
     ];
-    const SRC = {
-      app: "<script setup lang=\"ts\">\nimport { ref } from 'vue'\nimport AppHeader from './AppHeader.vue'\nimport SearchBox from './SearchBox.vue'\nimport CaseList from './CaseList.vue'\nimport AppFooter from './AppFooter.vue'\n\nconst keyword = ref('')\nconst cases = ref([\n  { id: 1, title: '離婚の相談', done: false },\n  { id: 2, title: '相続の相談', done: true },\n])\n</script>\n\n<template>\n  <AppHeader title=\"相談ナビ\" />\n  <SearchBox v-model=\"keyword\" />\n  <CaseList :items=\"cases\" />\n  <AppFooter />\n</template>",
-      hd: "<script setup lang=\"ts\">\ndefineProps({ title: String })\n</script>\n\n<template>\n  <header>\n    <h1>{{ title }}</h1>\n  </header>\n</template>",
-      sb: "<script setup lang=\"ts\">\nconst model = defineModel()\n</script>\n\n<template>\n  <input v-model=\"model\" placeholder=\"分野で検索\" />\n</template>",
-      ls: "<script setup lang=\"ts\">\nimport CaseCard from './CaseCard.vue'\n\ndefineProps({ items: Array })\nconst emit = defineEmits(['toggle'])\n</script>\n\n<template>\n  <CaseCard\n    v-for=\"c in items\"\n    :key=\"c.id\"\n    :item=\"c\"\n    @toggle=\"emit('toggle', $event)\"\n  />\n</template>",
-      cd: "<script setup lang=\"ts\">\ndefineProps({ item: Object })\nconst emit = defineEmits(['toggle'])\n</script>\n\n<template>\n  <article class=\"card\">\n    <h3>{{ item.title }}</h3>\n    <button @click=\"emit('toggle', item.id)\">\n      {{ item.done ? '✓ 完了' : '完了にする' }}\n    </button>\n  </article>\n</template>",
-    };
     const FILE = { app: 'App.vue', hd: 'AppHeader.vue', sb: 'SearchBox.vue', ls: 'CaseList.vue', cd: 'CaseCard.vue' };
     const PARENT = { hd: 'app', sb: 'app', ls: 'app', cd: 'ls' };
     const USE = { hd: ['<AppHeader'], sb: ['<SearchBox'], ls: ['<CaseList'], cd: [':item=', 'v-for', '@toggle', '<CaseCard'] };
@@ -121,9 +123,9 @@
 
   /* ============ ② props ============ */
   function propsScene() {
-    const P = "<script setup lang=\"ts\">\nimport { ref } from 'vue'\nimport CaseCard from './CaseCard.vue'\n\nconst cases = ref([\n  { id: 1, title: '離婚の相談', done: false },\n  { id: 2, title: '相続の相談', done: true },\n])\n</script>\n\n<template>\n  <CaseCard v-for=\"c in cases\" :key=\"c.id\" :item=\"c\" />\n</template>";
-    const Ch = "<script setup lang=\"ts\">\ndefineProps({ item: Object })\n</script>\n\n<template>\n  <article class=\"card\">\n    <h3>{{ item.title }}</h3>\n    <span v-if=\"item.done\">✓ 完了</span>\n  </article>\n</template>";
-    const NG = "<script setup lang=\"ts\">\nconst props = defineProps({ item: Object })\n\n// ✖ 子で props を書き換える\nprops.item.done = true\n</script>\n\n<template>\n  <article class=\"card\">{{ item.title }}</article>\n</template>";
+    const P = "<script setup lang=\"ts\">\nimport { ref } from 'vue'\nimport CaseCard from './CaseCard.vue'\n\nimport type { Case } from '@/types/case'\n\nconst cases = ref<Case[]>([\n  { id: 1, title: '離婚の相談', done: false },\n  { id: 2, title: '相続の相談', done: true },\n])\n</script>\n\n<template>\n  <CaseCard v-for=\"c in cases\" :key=\"c.id\" :item=\"c\" />\n</template>";
+    const Ch = "<script setup lang=\"ts\">\nimport type { Case } from '@/types/case'\n\ndefineProps<{ item: Case }>()\n</script>\n\n<template>\n  <article class=\"card\">\n    <h3>{{ item.title }}</h3>\n    <span v-if=\"item.done\">✓ 完了</span>\n  </article>\n</template>";
+    const NG = "<script setup lang=\"ts\">\nimport type { Case } from '@/types/case'\n\nconst props = defineProps<{ item: Case }>()\n\n// ✖ 子で props を書き換える\nprops.item.done = true\n</script>\n\n<template>\n  <article class=\"card\">{{ item.title }}</article>\n</template>";
     let mode = 0;
     const data = [{ id: 1, title: '離婚の相談', done: false }, { id: 2, title: '相続の相談', done: true }];
     const pf = fileBox('p', 'CaseList.vue', P), cf = fileBox('c', 'CaseCard.vue', Ch);
@@ -150,8 +152,8 @@
 
   /* ============ ③ emit ============ */
   function emitScene() {
-    const P = "<script setup lang=\"ts\">\nimport { ref } from 'vue'\nimport CaseCard from './CaseCard.vue'\n\nconst cases = ref([\n  { id: 1, title: '離婚の相談', done: false },\n  { id: 2, title: '相続の相談', done: false },\n])\n\nfunction toggle(id) {\n  const c = cases.value.find((x) => x.id === id)\n  c.done = !c.done\n}\n</script>\n\n<template>\n  <CaseCard v-for=\"c in cases\" :key=\"c.id\" :item=\"c\" @toggle=\"toggle\" />\n</template>";
-    const Ch = "<script setup lang=\"ts\">\ndefineProps({ item: Object })\nconst emit = defineEmits(['toggle'])\n</script>\n\n<template>\n  <article class=\"card\">\n    <h3>{{ item.title }}</h3>\n    <button @click=\"emit('toggle', item.id)\">\n      {{ item.done ? '✓ 完了' : '完了にする' }}\n    </button>\n  </article>\n</template>";
+    const P = "<script setup lang=\"ts\">\nimport { ref } from 'vue'\nimport CaseCard from './CaseCard.vue'\n\nimport type { Case } from '@/types/case'\n\nconst cases = ref<Case[]>([\n  { id: 1, title: '離婚の相談', done: false },\n  { id: 2, title: '相続の相談', done: false },\n])\n\nfunction toggle(id: number) {\n  const c = cases.value.find((x) => x.id === id)\n  c.done = !c.done\n}\n</script>\n\n<template>\n  <CaseCard v-for=\"c in cases\" :key=\"c.id\" :item=\"c\" @toggle=\"toggle\" />\n</template>";
+    const Ch = "<script setup lang=\"ts\">\nimport type { Case } from '@/types/case'\n\ndefineProps<{ item: Case }>()\nconst emit = defineEmits<{ toggle: [id: number] }>()\n</script>\n\n<template>\n  <article class=\"card\">\n    <h3>{{ item.title }}</h3>\n    <button @click=\"emit('toggle', item.id)\">\n      {{ item.done ? '✓ 完了' : '完了にする' }}\n    </button>\n  </article>\n</template>";
     const data = [{ id: 1, title: '離婚の相談', done: false }, { id: 2, title: '相続の相談', done: false }];
     const pf = fileBox('p', 'CaseList.vue', P), cf = fileBox('c', 'CaseCard.vue', Ch);
     const stage = h('div', { class: 'vc-stage' }, pf.el, h('div', { class: 'vc-mid' }, h('span', { class: 'up' }, '@toggle'), h('i', { class: 'up' }, '➜'), h('span', { class: 'up' }, 'emit'), h('span', { style: { fontSize: '.64rem' } }, '（知らせるだけ）')), cf.el);
@@ -175,8 +177,8 @@
   /* ============ ④ v-model を部品に ============ */
   function modelScene() {
     const P = "<script setup lang=\"ts\">\nimport { ref } from 'vue'\nimport SearchBox from './SearchBox.vue'\n\nconst keyword = ref('')\n</script>\n\n<template>\n  <SearchBox v-model=\"keyword\" />\n  <p>検索ワード：{{ keyword }}</p>\n</template>";
-    const SH = "<script setup lang=\"ts\">\nconst model = defineModel()\n</script>\n\n<template>\n  <input v-model=\"model\" placeholder=\"分野で検索\" />\n</template>";
-    const LG = "<script setup lang=\"ts\">\ndefineProps({ modelValue: String })\nconst emit = defineEmits(['update:modelValue'])\n</script>\n\n<template>\n  <input\n    :value=\"modelValue\"\n    @input=\"emit('update:modelValue', $event.target.value)\"\n    placeholder=\"分野で検索\"\n  />\n</template>";
+    const SH = "<script setup lang=\"ts\">\nconst model = defineModel<string>()\n</script>\n\n<template>\n  <input v-model=\"model\" placeholder=\"分野で検索\" />\n</template>";
+    const LG = "<script setup lang=\"ts\">\ndefineProps<{ modelValue: string }>()\nconst emit = defineEmits<{ 'update:modelValue': [value: string] }>()\n</script>\n\n<template>\n  <input\n    :value=\"modelValue\"\n    @input=\"emit('update:modelValue', $event.target.value)\"\n    placeholder=\"分野で検索\"\n  />\n</template>";
     let long = false, val = '';
     const pf = fileBox('p', 'App.vue', P); let cf = fileBox('c', 'SearchBox.vue', SH);
     const stage = h('div', { class: 'vc-stage' });

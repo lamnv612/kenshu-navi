@@ -64,7 +64,10 @@
       if (!f) { codeBox.replaceChildren(h('div', { class: 'vi-scr', style: { minHeight: 0 } }, h('div', { style: { fontSize: '2rem' } }, TREE.find((t) => t[0] === cur)[2]), h('b', TREE.find((t) => t[0] === cur)[3]), h('div', NOCODE[cur]))); if (cur === 'nm') codeBox.append(code('node_modules', 'text', { color: C, file: '.gitignore' })); links.replaceChildren(); info.replaceChildren(); [...map.querySelectorAll('.ve-mn')].forEach((m) => m.classList.remove('on')); return; }
       const pre = code(f.src, f.lang, { color: C, file: f.n, dim: true });
       f.marks.forEach((m, i) => pre.setHi(src(f.src, m), 'h' + (i + 1)));
-      codeBox.replaceChildren(pre);
+      const IMP = { './App.vue': 'app', './router': 'router', '../views/CaseListView.vue': 'list', '../components/CaseCard.vue': 'card' };
+      const MAP = {}; Object.keys(IMP).forEach((k) => { MAP[k] = [F[IMP[k]].n, F[IMP[k]].src]; });
+      if (K.linkFiles) K.linkFiles(pre, MAP, (k) => { cur = IMP[k]; draw(); });
+      codeBox.replaceChildren(pre); const lc = K.linkChips && K.linkChips(pre, MAP, (k) => { cur = IMP[k]; draw(); }); if (lc) codeBox.append(lc);
       links.replaceChildren(h('span', { class: 'vi-lb' }, 'つながり：'), ...f.links.map(([to, lab, ci]) => h('span', { class: 've-lk', style: { '--n': COL[ci] }, onmouseenter: () => btns[to] && btns[to].classList.add('glow'), onmouseleave: () => btns[to] && btns[to].classList.remove('glow'), onclick: () => { cur = to; draw(); } }, '➜ ' + F[to].n.split('/').pop() + '　', h('small', { style: { color: 'var(--mute)', fontWeight: 700 } }, lab))));
       if (!f.links.length) links.append(h('span', { class: 'vi-lb' }, '（他のファイルから使われる側）'));
       info.replaceChildren(h('small', f.n), h('b', f.b + ' ' + BADGE[f.b] + '　／　' + f.role));

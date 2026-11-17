@@ -363,7 +363,7 @@
 
   /* ================= vue-basics ================= */
   K.reg({
-    id: 'vue-basics', track: 'vue', title: 'Vue 基礎', sub: 'ref・v-if・v-model・イベント', emoji: '⚡',
+    id: 'vue-basics', track: 'vue', title: 'Vue 基礎', sub: 'ref・イベント・v-if・v-model', emoji: '⚡',
     scenes: [
       {
         t: 'ref：状態と画面', ref: [{"title": ".value のルール", "icon": "book-open", "html": "<table class=\"vref\"><thead><tr><th>場所</th><th>書き方</th></tr></thead><tbody><tr><td>script</td><td><code>count.value</code></td></tr><tr><td>template</td><td><code>{{ count }}</code>（.value は書かない）</td></tr><tr><td>ref と reactive</td><td>ref = 1つの値 / reactive = オブジェクト</td></tr><tr><td>注意</td><td>template で .value が要らないのは、一番外側の ref だけ</td></tr><tr><td>注意</td><td>reactive は、分割代入（const { a } = state）すると追いかけなくなる</td></tr></tbody></table>"}], why: {"pv": {"k": "code", "file": "App.vue", "lang": "ts", "text": "let people = 1\npeople = 3   // 人数を増やした\n// <p>{{ total }}円</p> は古いまま", "err": [2, 3], "keys": {"1": "ref"}}, "iv": {"k": "code", "file": "Vue の中", "lang": "ts", "text": "ref(1)  →  { value: 1 }\n// Vue が見張る「箱」", "idea": [1], "keys": {"1": "ref"}}, "av": {"k": "code", "file": "App.vue", "lang": "ts", "text": "const people = ref(1)\npeople.value++\n<!-- template -->\n<p>{{ people }}名</p>", "ok": [1, 2, 4], "keys": {"1": "ref"}}, "problem": "見積フォームの人数を変えても、画面の金額が変わらない", "idea": "Vue が見張る<b>箱</b>に入れる", "answer": "<b>ref(0)</b>、script は .value", "when": [["数値・文字・真偽の1つの値", "ref"], ["オブジェクトをまとめて", "reactive でも可（迷ったら ref）"]]}, tag: 'ref', lead: '<b>ref</b> は「画面とつながった変数」。script では <code>.value</code> を付け、template では付けない。',
@@ -448,7 +448,7 @@
             update(n) { boxes.forEach((b, j) => b.classList.toggle('lit', j === n)); cd.setHi(lines[n]); },
           }));
           el.append(h('div', { class: 'row', style: { marginTop: '12px' } }, h('button', { class: 'btn primary', style: { '--c': C }, onclick: play }, '▶ クリックを実行（通し再生）')));
-          tryIt(el, '@click', "<script setup lang=\"ts\">\nimport { ref } from 'vue'\n\nconst slots = ref(3)\n\nfunction reserve() {\n  slots.value--\n}\n</script>\n\n<template>\n  <button @click=\"reserve\" :disabled=\"slots === 0\">予約する</button>\n  <p>残り {{ slots }} 枠</p>\n</template>\n\n<style scoped>\nbutton:disabled { opacity: .4; }\n</style>\n");
+          tryIt(el, '@click', "<script setup lang=\"ts\">\nimport { ref } from 'vue'\n\nconst slots = ref(3)\n\nfunction reserve(): void {\n  slots.value--\n}\n</script>\n\n<template>\n  <button @click=\"reserve\" :disabled=\"slots === 0\">予約する</button>\n  <p>残り {{ slots }} 枠</p>\n</template>\n\n<style scoped>\nbutton:disabled { opacity: .4; }\n</style>\n");
         },
       },
       {
@@ -469,7 +469,7 @@
             init(vis) { vis.append(h('div', { class: 'split' }, h('div', { class: 'col' }, cd, list), h('div', null, lbl('items（データ）'), json))); draw(); },
             update(n) { cd.setHi([[2, 3], [4], [5]][n]); },
           }));
-          tryIt(el, 'v-for + :class', "<script setup lang=\"ts\">\nimport { ref } from 'vue'\n\nconst cases = ref([\n  { id: 1, title: '未払い残業代の相談', done: false },\n  { id: 2, title: '契約書チェックの依頼', done: true },\n])\n</script>\n\n<template>\n  <ul>\n    <li\n      v-for=\"c in cases\"\n      :key=\"c.id\"\n      :class=\"{ done: c.done }\"\n      @click=\"c.done = !c.done\"\n    >\n      {{ c.title }}\n    </li>\n  </ul>\n</template>\n\n<style scoped>\n.done { text-decoration: line-through; color: #999; }\nli { cursor: pointer; }\n</style>\n");
+          tryIt(el, 'v-for + :class', "<script setup lang=\"ts\">\nimport { ref } from 'vue'\n\ninterface Case { id: number; title: string; done: boolean }\n\nconst cases = ref<Case[]>([\n  { id: 1, title: '未払い残業代の相談', done: false },\n  { id: 2, title: '契約書チェックの依頼', done: true },\n])\n</script>\n\n<template>\n  <ul>\n    <li\n      v-for=\"c in cases\"\n      :key=\"c.id\"\n      :class=\"{ done: c.done }\"\n      @click=\"c.done = !c.done\"\n    >\n      {{ c.title }}\n    </li>\n  </ul>\n</template>\n\n<style scoped>\n.done { text-decoration: line-through; color: #999; }\nli { cursor: pointer; }\n</style>\n");
           const keyList = (byId) => {
             const data = [{ t: '未払い残業代の相談' }, { t: '契約書チェックの依頼' }, { t: '交通事故の示談' }], nodes = [], box = h('div', { class: 'v-todo' });
             const rm = (i) => { if (byId) { nodes[i].remove(); nodes.splice(i, 1); data.splice(i, 1); } else { data.splice(i, 1); nodes.pop().remove(); nodes.forEach((n, k) => { n.lab.textContent = data[k].t; }); } };

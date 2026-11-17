@@ -64,14 +64,38 @@
     },
   });
 
+  /* ⟦キー|文字⟧ で光らせる範囲を指定（全文のコードをそのまま書く） */
+  const tk = (src) => { const out = []; let last = 0; src.replace(/⟦([^|⟧]*)\|([^⟧]*)⟧/g, (m, k, x, i) => { if (i > last) out.push([src.slice(last, i), []]); out.push([x, k.split(',').map((y) => y.trim()).filter(Boolean)]); last = i + m.length; return m; }); if (last < src.length) out.push([src.slice(last), []]); return out; };
+
   K.tsAnat('テストの型：Arrange → Act → Assert', {
-    title: '🔍 AAA の解剖：準備 → 実行 → 確認',
-    tokens: [['const items = [100, 200];', ['arrange']], ['\n', []], ['const sum = total(items);', ['act']], ['\n', []], ['expect(sum).toBe(300);', ['assert']]],
+    title: '🔍 AAA の解剖：calcTotal.test.ts まるごと',
+    split: true,
+    tokens: tk(`import { ⟦imp|it, expect⟧ } from "vitest";
+import { ⟦tgt|calcTotal⟧ } from "./calcTotal";
+
+⟦it|it⟧(⟦name|"商品2点の合計が出る"⟧, () => {
+  ⟦arr|// ① 準備（Arrange）
+  const items = [{ price: 100, qty: 1 }, { price: 200, qty: 1 }];⟧
+
+  ⟦act|// ② 実行（Act）
+  const total = calcTotal(items);⟧
+
+  ⟦ast|// ③ 確認（Assert）
+  expect(total)⟧⟦ast,mat|.toBe(⟧⟦ast,exp|300⟧⟦ast,mat|)⟧⟦ast|;⟧
+});
+`),
     parts: {
-      arrange: ['準備（Arrange）', C.type, 'テストに使うデータや状態を用意する'],
-      act: ['実行（Act）', C.bad, 'テストしたい関数を1回だけ動かす'],
-      assert: ['確認（Assert）', C.ok, '結果が期待どおりかを判定する'],
+      it: ['it（1件のテスト）', C.kw, 'テストを1件書く関数。中に 準備 → 実行 → 確認 を入れる'],
+      name: ['テスト名', C.val, '「何を確かめるか」を日本語で。失敗したとき一番に目に入る'],
+      arr: ['① 準備（Arrange）', C.type, '使うデータを用意する。ここでは商品2点（100円・200円）'],
+      act: ['② 実行（Act）', C.bad, 'テストしたい関数を、1回だけ動かす。結果を total に受け取る'],
+      ast: ['③ 確認（Assert）', C.ok, '結果が期待どおりかを判定する。expect(結果)'],
+      mat: ['マッチャー（toBe）', C.v, '「同じ値か」の比べ方。期待値を () の中に入れる'],
+      exp: ['期待値（300）', C.val, '100 + 200 ＝ 300 になるはず、と先に決めておく答え'],
+      tgt: ['テスト対象', C.name, 'テストしたい関数。別ファイルから import して使う'],
+      imp: ['道具（it / expect）', C.sym, 'vitest から、テストを書く道具を借りる'],
     },
+    flow: { title: '3つの段階は、データでつながる', nodes: [['arr', '🧺', '① 準備', 'items（データ）を作る'], ['act', '⚙️', '② 実行', 'calcTotal(items) → total'], ['ast', '✅', '③ 確認', 'total が 300 か？']], edges: ['items を渡す', 'total（結果）を渡す'], order: '順番は必ず 準備 → 実行 → 確認。実行は1テストにつき1回だけ' },
   });
 
   K.tsAnat('ミニテストランナー', {

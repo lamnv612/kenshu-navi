@@ -263,6 +263,10 @@ declare function Boolean(v:any):boolean;
       if (o.sfc && byLang('vue')) {   /* .vue（<template> / <script setup> / <style>）をそのまま書ける簡易ランナー */
         const src = get(byLang('vue')), pick = (re) => (src.match(re) || [])[1] || '';
         let scr = pick(/<script[^>]*>([\s\S]*?)<\/script>/); const vn = [];
+        if (/<script[^>]*lang\s*=\s*["']ts["']/.test(src)) {   /* lang="ts" は、TypeScript の型を取り除いてから動かす */
+          if (window.ts) { try { scr = window.ts.transpileModule(scr, { compilerOptions: { target: window.ts.ScriptTarget.ES2020, module: window.ts.ModuleKind.ESNext } }).outputText; } catch (e) { /* 失敗したらそのまま */ } }
+          else { loadTS().then(() => schedule()).catch(() => {}); return '<!doctype html><meta charset="utf-8"><body style="font:14px sans-serif;color:#889;padding:14px">TypeScript を読み込み中…</body>'; }
+        }
         scr = scr.replace(/import\s*\{([^}]*)\}\s*from\s*['"]vue['"]\s*;?/g, (m, n) => { vn.push(n.trim()); return ''; }).replace(/^\s*import .*$/gm, '');
         const names = [...scr.matchAll(/^(?:const|let|var|function|async function)\s+([A-Za-z_$][\w$]*)/gm)].map((m) => m[1]);
         html = '<div id="app">' + pick(/<template>([\s\S]*)<\/template>/) + '</div>'; css = pick(/<style[^>]*>([\s\S]*?)<\/style>/);

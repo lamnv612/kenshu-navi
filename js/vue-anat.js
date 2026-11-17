@@ -14,7 +14,7 @@ import { ⟦ri|ref⟧ } from 'vue'
 
 ⟦kw|const⟧ ⟦name|count⟧ = ⟦ref|ref⟧(⟦init|0⟧)
 
-function add() {
+function add(): void {
   count⟦value|.value⟧++
 }
 </script>
@@ -119,7 +119,9 @@ button:disabled { opacity: .4; }
     `<script setup lang="ts">
 import { ref } from 'vue'
 
-const cases = ⟦list|ref([
+interface Case { id: number; title: string; done: boolean }
+
+const cases = ⟦list|ref<Case[]>([
   { id: 1, title: '未払い残業代の相談', done: false },
   { id: 2, title: '契約書チェックの依頼', done: true },
 ])⟧
@@ -179,7 +181,9 @@ const props = ⟦dp|defineProps⟧<{ ⟦pn|item⟧: ⟦pt|Item⟧ }>()
 import { ref } from 'vue'
 ⟦imp|import CaseCard from './CaseCard.vue'⟧
 
-const cases = ref([
+interface Item { title: string; done: boolean }
+
+const cases = ref<Item[]>([
   { id: 1, title: '離婚の相談', done: false },
   { id: 2, title: '相続の相談', done: true },
 ])
@@ -230,7 +234,7 @@ import { ref } from 'vue'
 import ConfirmModal from './ConfirmModal.vue'
 
 const open = ref(true)
-⟦hf|function hide() {
+⟦hf|function hide(): void {
   open.value = false
 }⟧
 </script>

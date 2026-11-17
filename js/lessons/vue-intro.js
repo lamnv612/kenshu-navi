@@ -111,7 +111,7 @@
         h('div', { class: 'vi-panel' }, lbl('画面に出る結果（種類を押すと光る）'), pv, h('div', { class: 'vi-eq' }, h('div', { class: 'vc-do' }, h('b', '✓ const が基本'), h('small', '変えない値は const。迷ったら const')), h('div', { class: 'vc-dont' }, h('b', '✖ let は必要なときだけ'), h('small', '書き換える値だけ。var は使わない'))), h('div', { class: 'vi-msg w' }, '⚠ let の count を変えても、画面は変わらない → 次の「ref」で解決')));
     };
     const fnTab = () => {
-      const src = () => `<script setup lang="ts">\nfunction double(n) {\n  return n * 2\n}\n\nconst triple = (n) => n * 3\n</script>\n\n<template>\n  <p>double(${n}) ＝ {{ double(${n}) }}</p>\n  <p>triple(${n}) ＝ {{ triple(${n}) }}</p>\n</template>`;
+      const src = () => `<script setup lang="ts">\nfunction double(n: number): number {\n  return n * 2\n}\n\nconst triple = (n: number) => n * 3\n</script>\n\n<template>\n  <p>double(${n}) ＝ {{ double(${n}) }}</p>\n  <p>triple(${n}) ＝ {{ triple(${n}) }}</p>\n</template>`;
       const host = h('div'), out = h('div', { class: 'vi-scr', style: { minHeight: 0 } }), flow = h('div', { class: 'vi-row', style: { justifyContent: 'center', fontWeight: 900, fontSize: '1.1rem' } });
       const inp = h('input', { type: 'number', value: n, style: { width: '90px', padding: '.4em .6em', borderRadius: '8px', border: '1px solid var(--line)', background: 'var(--bg2)', color: 'var(--text)', font: '800 1rem var(--mono)' }, oninput: (e) => { n = +e.target.value || 0; paint(true); } });
       const paint = (pop) => {
@@ -175,9 +175,9 @@
     const HTML = '<p id="remain">残り 3 枠</p>\n<span id="badge">受付中</span>\n<button id="btn">予約する</button>\n\n<script src="main.js"></script>';
     const jsSrc = () => {
       const L = ["remainEl.textContent = '残り ' + slots + ' 枠'", "badgeEl.textContent = slots === 0 ? '満席' : '受付中'", 'btnEl.disabled = slots === 0'].map((t, i) => (wrote[i] ? '  ' : '  // ') + t);
-      return `const remainEl = document.getElementById('remain')\nconst badgeEl = document.getElementById('badge')\nconst btnEl = document.getElementById('btn')\n\nlet slots = 3\n\nfunction reserve() {\n  slots--\n${L.join('\n')}\n}\n\nbtnEl.addEventListener('click', reserve)`;
+      return `const remainEl = document.getElementById('remain')\nconst badgeEl = document.getElementById('badge')\nconst btnEl = document.getElementById('btn')\n\nlet slots = 3\n\nfunction reserve(): void {\n  slots--\n${L.join('\n')}\n}\n\nbtnEl.addEventListener('click', reserve)`;
     };
-    const VUE = "<script setup lang=\"ts\">\nimport { ref } from 'vue'\n\nconst slots = ref(3)\n\nfunction reserve() {\n  slots.value--\n}\n</script>\n\n<template>\n  <p>残り {{ slots }} 枠</p>\n  <span>{{ slots === 0 ? '満席' : '受付中' }}</span>\n  <button :disabled=\"slots === 0\" @click=\"reserve\">予約する</button>\n</template>";
+    const VUE = "<script setup lang=\"ts\">\nimport { ref } from 'vue'\n\nconst slots = ref(3)\n\nfunction reserve(): void {\n  slots.value--\n}\n</script>\n\n<template>\n  <p>残り {{ slots }} 枠</p>\n  <span>{{ slots === 0 ? '満席' : '受付中' }}</span>\n  <button :disabled=\"slots === 0\" @click=\"reserve\">予約する</button>\n</template>";
     const KEYS = { m_html: [['id="remain"'], ['id="badge"'], ['id="btn"']], m_js: [['remainEl'], ['badgeEl'], ['btnEl']], v: [['{{ slots }}'], ["slots === 0 ? '満席'"], [':disabled']] };
     const DATA = { m_js: ['let slots', 'slots--'], v: ['ref(3)', 'slots.value--'] };
     const lines = (src, keys) => { const o = []; src.split('\n').forEach((l, i) => { if (keys.some((k) => l.includes(k))) o.push(i + 1); }); return o; };
@@ -351,12 +351,12 @@
         links: [], pv(st, S) { return st === 0 ? [h('div', { style: { color: '#889' } }, '（画面にはまだ何も出ていない）'), h('div', { style: { font: '800 1rem var(--mono)', color: '#0a7' } }, 'name ＝ "Lam"')] : [st === 2 ? S.inp : null, S.p].filter(Boolean); } },
       { k: '🎫 予約カード（2ファイル）', note: '親がデータを持ち、子が表示する。ボタンの知らせは子 → 親へ戻る',
         files: [{ n: 'App.vue（親）', src: "<script setup lang=\"ts\">\nimport { ref } from 'vue'\nimport ReserveCard from './ReserveCard.vue'\n\nconst slots = ref(3)\n</script>\n\n<template>\n  <ReserveCard :slots=\"slots\" @reserve=\"slots--\" />\n</template>", hi: [['const slots'], [':slots='], ['@reserve']] },
-          { n: 'ReserveCard.vue（子）', src: "<script setup lang=\"ts\">\ndefineProps({ slots: Number })\ndefineEmits(['reserve'])\n</script>\n\n<template>\n  <div class=\"card\">\n    <p>残り {{ slots }} 枠</p>\n    <button :disabled=\"slots === 0\" @click=\"$emit('reserve')\">予約する</button>\n  </div>\n</template>", hi: [[], ['defineProps', '{{ slots }}'], ['@click', 'defineEmits']] }],
+          { n: 'ReserveCard.vue（子）', src: "<script setup lang=\"ts\">\ndefineProps<{ slots: number }>()\ndefineEmits<{ reserve: [] }>()\n</script>\n\n<template>\n  <div class=\"card\">\n    <p>残り {{ slots }} 枠</p>\n    <button :disabled=\"slots === 0\" @click=\"$emit('reserve')\">予約する</button>\n  </div>\n</template>", hi: [[], ['defineProps', '{{ slots }}'], ['@click', 'defineEmits']] }],
         links: ['親 → 子　:slots（props）', '子 → 親　@reserve（emit）'], pv(st, S) { return st === 0 ? [h('div', { style: { color: '#889' } }, '（親が slots ＝ 3 を持っただけ。画面にはまだ出ない）')] : [S.card]; } },
       { k: '🔍 相談検索（3ファイル）', note: '入力 → 親のデータ → 一覧。3つのファイルが1つのデータでつながる',
         files: [{ n: 'App.vue（親）', src: "<script setup lang=\"ts\">\nimport { ref, computed } from 'vue'\nimport SearchBox from './SearchBox.vue'\nimport CaseList from './CaseList.vue'\n\nconst keyword = ref('')\nconst cases = ['離婚の相談', '相続の相談', '労働の相談', '交通事故の相談']\nconst hits = computed(() => cases.filter((c) => c.includes(keyword.value)))\n</script>\n\n<template>\n  <SearchBox v-model=\"keyword\" />\n  <CaseList :items=\"hits\" />\n</template>", hi: [['const keyword', 'const cases'], [':items='], ['v-model', 'computed']] },
-          { n: 'SearchBox.vue', src: "<script setup lang=\"ts\">\nconst keyword = defineModel()\n</script>\n\n<template>\n  <input v-model=\"keyword\" placeholder=\"分野で検索\" />\n</template>", hi: [[], [], ['v-model', 'defineModel']] },
-          { n: 'CaseList.vue', src: "<script setup lang=\"ts\">\ndefineProps({ items: Array })\n</script>\n\n<template>\n  <ul>\n    <li v-for=\"c in items\" :key=\"c\">{{ c }}</li>\n  </ul>\n</template>", hi: [[], ['defineProps', '{{ c }}', 'v-for'], []] }],
+          { n: 'SearchBox.vue', src: "<script setup lang=\"ts\">\nconst keyword = defineModel<string>()\n</script>\n\n<template>\n  <input v-model=\"keyword\" placeholder=\"分野で検索\" />\n</template>", hi: [[], [], ['v-model', 'defineModel']] },
+          { n: 'CaseList.vue', src: "<script setup lang=\"ts\">\ndefineProps<{ items: string[] }>()\n</script>\n\n<template>\n  <ul>\n    <li v-for=\"c in items\" :key=\"c\">{{ c }}</li>\n  </ul>\n</template>", hi: [[], ['defineProps', '{{ c }}', 'v-for'], []] }],
         links: ['親 → 子　:items（props）', '子 ⇄ 親　v-model（入力とデータ）'], pv(st, S) { return st === 0 ? [h('div', { style: { color: '#889' } }, '（keyword と cases を親が持っただけ。画面にはまだ出ない）')] : [st === 2 ? S.search : null, S.list].filter(Boolean); } },
     ];
     let cur = 0;
@@ -386,9 +386,9 @@
     const TPL = '  <p>{{ count }}</p>\n  <button @click="add">+1</button>';
     const ST = [
       { say: '<b>① ふつうの変数</b>。<code>let</code> で作った変数は、変えても画面は変わらない。', code: SFC('let count = 0\n\nfunction add() {\n  count++\n}', TPL), hi: [2, 5], mode: 'mem', n: '変数は 1 になった。でも画面は 0 のまま…（Vue は変わったことに気づけない）' },
-      { say: '<b>② ref で包む</b>。「変わったら画面を直してね」と Vue に頼める箱にする。', code: SFC("import { ref } from 'vue'\n\nconst count = ref(0)\n\nfunction add() {\n  count.value++\n}", TPL), hi: [2, 4, 7], mode: 'auto', n: '画面が自動で変わった。画面を書き換える行は、1行も書いていない。' },
-      { say: '<b>③ .value は script の中だけ</b>。template では {{ count }} と書くだけ。', code: SFC("import { ref } from 'vue'\n\nconst count = ref(0)\n\nfunction add() {\n  count.value++\n}", TPL), hi: [7, 12], mode: 'auto', n: 'script は count.value、template は count。これだけ覚えれば OK。' },
-      { say: '<b>④ 箱の中身が .value</b>。console.log で見ると、箱と中身の違いが分かる。', code: SFC("import { ref } from 'vue'\n\nconst count = ref(0)\nconsole.log(count)         // { value: 0 }  ← 箱\nconsole.log(count.value)   // 0             ← 中身\n\nfunction add() {\n  count.value++\n}", TPL), hi: [4, 5, 6], box: true, mode: 'auto', n: '箱（ref）の中に value がある。script では .value で中身をさわる。' },
+      { say: '<b>② ref で包む</b>。「変わったら画面を直してね」と Vue に頼める箱にする。', code: SFC("import { ref } from 'vue'\n\nconst count = ref(0)\n\nfunction add(): void {\n  count.value++\n}", TPL), hi: [2, 4, 7], mode: 'auto', n: '画面が自動で変わった。画面を書き換える行は、1行も書いていない。' },
+      { say: '<b>③ .value は script の中だけ</b>。template では {{ count }} と書くだけ。', code: SFC("import { ref } from 'vue'\n\nconst count = ref(0)\n\nfunction add(): void {\n  count.value++\n}", TPL), hi: [7, 12], mode: 'auto', n: 'script は count.value、template は count。これだけ覚えれば OK。' },
+      { say: '<b>④ 箱の中身が .value</b>。console.log で見ると、箱と中身の違いが分かる。', code: SFC("import { ref } from 'vue'\n\nconst count = ref(0)\nconsole.log(count)         // { value: 0 }  ← 箱\nconsole.log(count.value)   // 0             ← 中身\n\nfunction add(): void {\n  count.value++\n}", TPL), hi: [4, 5, 6], box: true, mode: 'auto', n: '箱（ref）の中に value がある。script では .value で中身をさわる。' },
     ];
     let mem = 0, scr = 0, stage = 0;
     const host = h('div'), memB = h('div', { class: 'vi-st' }), scrB = h('div', { class: 'vi-st' }), msg = note('', 'w');
@@ -588,7 +588,7 @@
   if (BASICS) {
     /* 基礎は、やさしい順：ファイルの形 → 変数と関数 → データと画面 → ref → 各ディレクティブ → 実践 → 発展 */
     const all = {}; moved.concat(BASICS.scenes).forEach((x) => { all[x.t] = x; });
-    const ORDER = ['.vue ファイルの解剖', 'script の lang="ts" って？', 'JS の基本：変数と関数', 'データを変えるだけ', 'Vue の考え方：3ステップ', 'ref を1つずつ', 'ref：状態と画面', 'v-if と v-show', 'v-model：双方向', 'イベント処理 @click', ':class と v-for', '実践：ミニTodo', 'リアクティブの仕組み'];
+    const ORDER = ['.vue ファイルの解剖', 'script の lang="ts" って？', 'JS の基本：変数と関数', 'データを変えるだけ', 'Vue の考え方：3ステップ', 'ref を1つずつ', 'ref：状態と画面', 'イベント処理 @click', 'v-if と v-show', ':class と v-for', 'v-model：双方向', '実践：ミニTodo', 'リアクティブの仕組み'];
     BASICS.scenes = ORDER.map((t) => all[t]).filter(Boolean);
   } else L.scenes = list;
 })();
