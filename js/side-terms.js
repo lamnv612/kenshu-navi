@@ -11,7 +11,7 @@
     .scene.hasside.closed{padding-right:0}
     .scene.hasside>aside.side{display:grid}
   }
-  aside.side{display:none;position:absolute;top:64px;right:clamp(18px,3vw,40px);width:312px;gap:12px;align-content:start;z-index:2}
+  aside.side{display:none;position:absolute;top:0;right:clamp(18px,3vw,40px);width:312px;gap:12px;align-content:start;z-index:2}
   .scene.hasside.closed>aside.side{width:auto}.scene.hasside.closed>aside.side>.sd-card{display:none}
   .sd-tg{all:unset;cursor:pointer;display:flex;align-items:center;gap:.4em;justify-self:end;padding:.35em .8em;border-radius:999px;border:1px solid var(--line);background:var(--card);font:800 .78rem var(--font);color:var(--mute);transition:.2s}
   .sd-tg:hover{color:var(--text);border-color:var(--ts)}.sd-tg .ic{width:15px;height:15px}
