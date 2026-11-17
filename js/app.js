@@ -409,6 +409,7 @@
     if (GH && prScene && S.tag === 'PRACTICE' && pr.scene.length > 1) el.append(h('div', { class: 'row', style: { margin: '0 0 1em' } }, pr.scene.map((x) => ghChip({ label: x.label || x.path, url: ghUrl(x.path) }))));
     if (GH && S.gh) el.append(h('div', { class: 'row', style: { margin: '0 0 1em' } }, [].concat(S.gh).map((g) => ghChip({ label: g.label || g[0], url: ghUrl(g.path || g[1]) }))));
     el.append(body);
+    K.sidePre && K.sidePre(el, L);
     const ctx = { steppers: [], cleanups: [], lesson: L, idx, story };
     K.ctx = ctx;
     const clean = S.render(body, ctx);
