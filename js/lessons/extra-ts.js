@@ -25,6 +25,7 @@
   .xt-c small{font-size:.7em;opacity:.75;font-weight:700}
   .xt-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;min-height:52px;padding-bottom:4px}
   .xt-msg{font:700 .875rem var(--mono);min-height:1.7em;padding:.35em .8em;border-radius:6px;background:var(--code);color:#cfd5ff;transition:.3s}
+  .xt-msg:empty{display:none}
   .xt-msg.e{color:#ff8f9a;animation:shake .4s}.xt-msg.ok{color:var(--ok)}.xt-msg.w{color:#ffd37a}
   .xt-val{font:900 1.5rem var(--mono);color:var(--c,var(--violet))}
   .xt-bar{height:10px;border-radius:6px;background:var(--line);overflow:hidden}
@@ -250,6 +251,70 @@
     return root;
   }
 
+
+  /* ---------- 配列の基本メソッド ---------- */
+  function arrayMethods(color) {
+    const M = [
+      { k: 'push', code: 'arr.push(9)', mut: true, f: (a) => { const n = a.length + 1; return [[...a, 9], n, '追加後の長さ ' + n]; }, use: 'カートに商品を追加 / ログを1件足す', mark: 'end' },
+      { k: 'pop', code: 'arr.pop()', mut: true, f: (a) => [a.slice(0, -1), a[a.length - 1], '取り出した最後の値'], use: '「元に戻す」で直前の操作を取り消す', mark: 'last' },
+      { k: 'includes', code: 'arr.includes(3)', mut: false, f: (a) => [a, a.includes(3), '3 は入っている？'], use: '選択済みか？ 権限リストに含まれるか？' },
+      { k: 'find', code: 'arr.find(x => x > 3)', mut: false, f: (a) => [a, a.find((x) => x > 3), '条件に合う最初の1つ（無ければ undefined）'], use: 'ID でユーザー1人を探す' },
+      { k: 'slice', code: 'arr.slice(1, 3)', mut: false, f: (a) => [a, a.slice(1, 3), '一部のコピー（元はそのまま）'], use: '最初の3件だけ表示 / ページ分け' },
+      { k: 'splice', code: 'arr.splice(1, 2)', mut: true, f: (a) => { const b = a.slice(); const r = b.splice(1, 2); return [b, r, '削除した要素']; }, use: '途中の要素を消す（1番目から2個）', mark: 'mid' },
+      { k: 'sort', code: 'arr.sort((a, b) => a - b)', mut: true, f: (a) => [a.slice().sort((x, y) => x - y), null, '昇順に並べ替え'], use: '価格の安い順に並べる' },
+      { k: 'join', code: 'arr.join("-")', mut: false, f: (a) => [a, a.join('-'), '文字列にまとめる'], use: 'タグを「A, B, C」と表示する' },
+    ];
+    let cur = M[0], base = [5, 2, 8, 3, 6], lock = false;
+    const inRow = h('div', { class: 'xt-row' }), outRow = h('div', { class: 'xt-row' }), codeHost = h('div'), say = h('div', { class: 'xt-msg w' }), badge = h('div'), use = h('div', { class: 'xt-msg' });
+    const fmt = (v) => (v === undefined ? 'undefined' : JSON.stringify(v));
+    const draw = (row, a, hi) => row.replaceChildren(...a.map((n, i) => { const c = chip(String(n), 'var(--ts)'); if (hi && hi.includes(i)) c.classList.add('cur'); return c; }), ...(a.length ? [] : [h('span', { style: { color: 'var(--mute)' } }, '（空）')]));
+    const reset = () => {
+      draw(inRow, base); outRow.replaceChildren(h('span', { style: { color: 'var(--mute)' } }, '▶ 実行を押す'));
+      codeHost.replaceChildren(code(`const arr = [${base.join(', ')}];\n${cur.code};`, 'js', { hi: [2], color }));
+      badge.replaceChildren(h('span', { class: 'xt-c', style: { '--cc': cur.mut ? 'var(--pink)' : 'var(--basic)' } }, cur.mut ? '⚠ 元の配列を変える' : '✓ 元の配列はそのまま'));
+      use.innerHTML = '<b>使う場面：</b>' + cur.use; say.textContent = '';
+    };
+    const run = async () => {
+      if (lock) return; lock = true; reset();
+      const [after, ret, note] = cur.f(base.slice()); const hi = cur.mark === 'last' ? [base.length - 1] : cur.mark === 'mid' ? [1, 2] : null;
+      if (hi) { draw(inRow, base, hi); await sleep(500); }
+      draw(outRow, after, cur.mark === 'end' ? [after.length - 1] : null);
+      say.innerHTML = `戻り値 → <b>${fmt(ret)}</b>　<span style="opacity:.7">(${note})</span>`; lock = false;
+    };
+    const root = h('div', { class: 'xt-panel' },
+      h('div', { class: 'row' }, seg(M.map((m) => [m.k, m.k]), 'push', (k) => { cur = M.find((m) => m.k === k); reset(); }, color), h('span', { style: { flex: 1 } }),
+        h('button', { class: 'btn', onclick: () => { base = Array.from({ length: 5 }, () => 1 + Math.floor(Math.random() * 9)); reset(); } }, '🎲'), h('button', { class: 'btn primary', style: { '--c': color }, onclick: run }, '▶ 実行')),
+      h('div', { class: 'label' }, '実行前 arr'), inRow, codeHost, h('div', { class: 'label' }, '実行後 arr'), outRow, say, badge, use);
+    reset(); return root;
+  }
+
+  /* ---------- Prettier ---------- */
+  const PSRC = ['const name = "Lam"', 'const items = [1,2,3]', 'function greet(user){', 'console.log("Hi, "+user)', '}', 'greet(name)'];
+  function prettierTry(color) {
+    const O = { semi: true, single: false, tab: 2 };
+    const q = (t) => (O.single ? t.replace(/"/g, "'") : t);
+    const fmt = () => {
+      const sp = ' '.repeat(O.tab), e = O.semi ? ';' : '';
+      return [`${q('const name = "Lam"')}${e}`, `const items = [1, 2, 3]${e}`, '', 'function greet(user) {', `${sp}${q('console.log("Hi, " + user)')}${e}`, '}', '', `greet(name)${e}`].join('\n');
+    };
+    const out = h('div'), rc = h('div'), say = h('div', { class: 'xt-msg w' });
+    const draw = (done) => { out.replaceChildren(done ? code(fmt(), 'ts', { color, file: 'After（保存後）' }) : h('div', { class: 'xt-msg', style: { minHeight: '150px' } }, '💾 保存を押すと整う')); rc.replaceChildren(code(`{\n  "semi": ${O.semi},\n  "singleQuote": ${O.single},\n  "tabWidth": ${O.tab}\n}`, 'json', { color, file: '.prettierrc' })); };
+    const tg = (key, label) => h('button', { class: 'btn', onclick: () => { O[key] = !O[key]; draw(false); say.textContent = '設定を変えた → もう一度保存'; } }, label);
+    const tab = h('button', { class: 'btn', onclick: () => { O.tab = O.tab === 2 ? 4 : 2; tab.textContent = 'tabWidth ' + O.tab; draw(false); } }, 'tabWidth 2');
+    draw(false);
+    return h('div', { class: 'xt-eq' },
+      h('div', { class: 'xt-panel' }, h('div', { class: 'label' }, 'Before（バラバラ）'), code(PSRC.join('\n'), 'ts', { color: 'var(--pink)', file: 'main.ts' }), say),
+      h('div', { class: 'xt-panel' }, h('div', { class: 'row' }, h('button', { class: 'btn primary', style: { '--c': color }, onclick: () => { draw(true); say.textContent = '✓ 全員同じ見た目に。差分は本当の変更だけ'; } }, '💾 保存（Prettier）'), tg('semi', 'semi ;'), tg('single', "singleQuote '"), tab), out, rc));
+  }
+  function prettierSetup(color) {
+    const step = (n, t, c, lang, note) => h('div', { class: 'xt-panel' }, h('div', { class: 'label' }, `${n}. ${t}`), code(c, lang || 'sh', { color }), h('div', { class: 'xt-msg' }, note));
+    return h('div', { class: 'xt-eq' },
+      step(1, '入れる', 'npm i -D prettier', 'sh', 'プロジェクトに入れる（-D = 開発用）'),
+      step(2, '設定ファイル', '{\n  "semi": true,\n  "singleQuote": true,\n  "tabWidth": 2\n}', 'json', '.prettierrc をルートに置く＝全員同じルール'),
+      step(3, 'VS Code で自動化', '// settings.json\n{\n  "editor.defaultFormatter": "esbenp.prettier-vscode",\n  "editor.formatOnSave": true\n}', 'json', '拡張機能 Prettier を入れて、保存時に自動整形'),
+      step(4, '一括で整える', 'npx prettier --write src/\nnpx prettier --check src/', 'sh', 'まとめて整形 / チェックだけ（CI で使う）'));
+  }
+
   function modulesStepper() {
     const S = [
       { say: 'ファイルを分けると部品として使い回せる。でも今は <b>main から add が見えない</b>。', m: 'const add = (a, b) => a + b;\nconst PI = 3.14;', mh: [], n: 'console.log(add(1, 2));\n// ✖ add is not defined', nh: [], e: true, pk: false },
@@ -291,6 +356,7 @@
         } },
       { t: 'map / filter / reduce', tag: 'JS', lead: '配列を<b>1つずつ関数に通す</b>と考えるとわかりやすい。種類を選んで「流す」を押そう。',
         render(el) { const p = pipeline(VI); el.append(p); return p.stop; } },
+      { t: '配列の基本メソッド', tag: 'push / splice …', lead: '<b>push・pop・includes・find…</b>を選んで実行。配列がどう変わるか、<b>元の配列が変わるか</b>に注目。', render(el) { el.append(arrayMethods(VI)); } },
       { t: 'import / export', tag: 'JS', lead: 'ファイル間で部品を受け渡す仕組み。TypeScript・Vue では毎日使う。', render(el) { el.append(modulesStepper()); } },
     ],
   });
@@ -700,6 +766,16 @@
     scenes: [
       { t: '4つの書き方', tag: 'case', lead: '単語を入れると、<b>4つのケース</b>に変換。何に使うかも一緒に覚えよう。', render(el) { el.append(caseScene(), caseBuild(), caseUse(), caseBug()); } },
       { t: '名前をつけよう', tag: 'review', lead: '実際のレビューで直される名前を、前と後で見比べよう。ボタンで切り替え。名前を考える練習は右上の「練習」アイコンから。', render(el) { el.append(nameKinds(), namingGame()); } },
+    ],
+  });
+
+  K.reg({
+    id: 'x-ts-format', track: 'extra', title: 'コード整形（Prettier）', sub: '保存するだけで見た目が揃う', emoji: '✨',
+    gh: [{ label: 'typescript/ のサンプル', path: 'typescript' }],
+    meta: meta({ day: '2日目', when: '実践の前の5分（環境づくり）', mins: 5, order: 24, level: '入門', after: 'x-ts-naming', why: '空白や引用符の違いでレビューが荒れる。整形は機械に任せて、人は中身を見る' }),
+    scenes: [
+      { t: '保存で整う', tag: 'Prettier', lead: 'バラバラに書いても、<b>保存すると全員同じ見た目</b>に。オプションを変えて確かめよう。', render(el) { el.append(prettierTry(VI)); } },
+      { t: '設定のしかた', tag: 'setup', lead: '<b>4ステップ</b>で、プロジェクトも VS Code も自動整形に。コードにマウスを乗せるとコピーできる。', render(el) { el.append(prettierSetup(VI)); } },
     ],
   });
 
