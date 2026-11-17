@@ -19,7 +19,8 @@
   .sd-card>h5{padding:.55em .9em;font:900 .84rem var(--font);background:color-mix(in srgb,var(--c) 14%,var(--card2));color:var(--c);border-bottom:1px solid var(--line)}
   .sd-term{padding:.55em .9em;border-top:1px solid var(--line);cursor:default}.sd-term:first-of-type{border-top:0}
   .sd-term:hover{background:color-mix(in srgb,var(--c) 8%,transparent)}
-  .sd-hd{display:flex;align-items:baseline;justify-content:space-between;gap:10px}.sd-term b{font:800 .9rem var(--mono);color:var(--text)}.sd-term i{font-style:normal;font:800 .95rem var(--font);color:var(--c);text-align:right;white-space:nowrap}
+  .sd-term b.gl{color:var(--team);border-bottom:1px dotted var(--team);cursor:help}
+  .sd-hd{display:flex;align-items:baseline;justify-content:space-between;gap:10px}.sd-term b{font:800 .9rem var(--mono);color:var(--team)}.sd-term i{font-style:normal;font:800 .95rem var(--font);color:var(--c);text-align:right;white-space:nowrap}
   .sd-term p{margin-top:2px;font:700 .78rem/1.55 var(--font);color:var(--mute)}
   .sd-tip{padding:.6em .9em;border-top:1px solid var(--line);font:700 .8rem/1.65 var(--font)}.sd-tip:first-of-type{border-top:0}.sd-tip b{font-family:var(--mono)}
   .sd-note{padding:.65em .9em;font:700 .78rem/1.6 var(--font);color:var(--mute)}`);
@@ -63,9 +64,16 @@
         const en = yom(e);
         return [ja, en].filter(Boolean).join('　');
       };
+      // 用語にカーソルを乗せると、HTML/CSS の用語と同じツールチップを出す
+      const nameEl = (e) => {
+        const key = nameOf(e), kind = e.shown ? 'part' : (e.kind || 'word');
+        if (e.shown && K.glossAdd) K.glossAdd([{ k: key, kind: 'part', m: e.m, y: readingOf(e).replace(/　/g, ' / '), t: '用語' }]);
+        const b = h('b', { class: 'gl', tabindex: '0', 'data-gk': key, 'data-gt': kind }, key);
+        return b;
+      };
       const cards = [
         h('div', { class: 'sd-card', style: { '--c': 'var(--ts)' } }, h('h5', '📚 このシーンの用語（読み方）'),
-          ...terms.map((e) => h('div', { class: 'sd-term' }, h('div', { class: 'sd-hd' }, h('b', nameOf(e)), readingOf(e) ? h('i', readingOf(e)) : null), h('p', (origin(e) ? origin(e) + '　' : '') + (e.m || ''))))),
+          ...terms.map((e) => h('div', { class: 'sd-term' }, h('div', { class: 'sd-hd' }, nameEl(e), readingOf(e) ? h('i', readingOf(e)) : null), h('p', (origin(e) ? origin(e) + '　' : '') + (e.m || ''))))),
       ];
       const tips = terms.filter((e) => e.r).slice(0, 3);
       if (tips.length) cards.push(h('div', { class: 'sd-card', style: { '--c': 'var(--ok)' } }, h('h5', '💡 現場では'), ...tips.map((e) => h('div', { class: 'sd-tip' }, h('b', e.k + '：'), e.r))));
