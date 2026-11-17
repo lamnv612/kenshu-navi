@@ -1110,3 +1110,6 @@ a.btn{text-decoration:none}
 
 pre.code.editable{cursor:text;outline:none}pre.code.editable:focus{box-shadow:0 0 0 2px color-mix(in srgb,var(--c,var(--ts)) 60%,transparent)}
 .an-box [contenteditable]{outline:none;cursor:text}
+
+.cell.short{padding:.3em .6em .2em .75em;gap:0;min-width:0}.cell.short b{font-size:.9rem;line-height:1.25;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;padding-right:2.6em}.cell.short b br{display:none}.cell.short small{font-size:.66rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:2.4em}
+.cell.short .em{font-size:1.5rem}

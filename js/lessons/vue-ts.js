@@ -10,6 +10,7 @@
   style('vts', `
   .vt-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}
   @media(max-width:980px){.vt-grid{grid-template-columns:1fr}}
+  @media(min-width:981px){.vt-grid>:nth-child(2){position:sticky;top:12px}}
   .vt-stage{display:grid;gap:8px;background:#fff;color:#223;border-radius:12px;padding:14px;border:1px solid var(--line);min-height:120px;align-content:start}
   .vt-tree{display:grid;gap:3px;font:700 .8rem var(--mono)}
   .vt-it{all:unset;cursor:pointer;box-sizing:border-box;display:flex;gap:6px;align-items:center;padding:6px 8px;border-radius:7px;border:1px solid transparent;transition:.2s}
@@ -103,8 +104,8 @@ onMounted(load)
     const show = (e) => { stage.replaceChildren(h('div', { class: 'vt-err' }, e[1]), h('div', { class: 'vt-ok' }, '✓ ' + e[2])); pre.setHi(lines(SRC, e[3]), 'h3'); msg.textContent = e[0]; };
     return h('div', { style: { display: 'grid', gap: '12px' } },
       h('div', { class: 'vt-grid' },
-        h('div', { class: 'vi-panel' }, lbl('1つの .vue に、型・状態・計算・API・画面ぜんぶ'), chips([[pre, SRC]], P), pre),
-        h('div', { class: 'vi-panel' }, lbl('型があると、何が助かる？（間違いを入れてみる）'), h('div', { class: 'vi-row' }, ...ERR.map((e) => h('button', { class: 'btn', onclick: () => show(e) }, '🐛 ' + e[0].replace('…', '')))), msg, stage,
+        h('div', { class: 'vi-panel' }, lbl('1つの .vue に、型・状態・計算・API・画面ぜんぶ'), pre),
+        h('div', { class: 'vi-panel' }, lbl('① 部分を選ぶ → 左のコードが光る'), chips([[pre, SRC]], P), lbl('② 型があると、何が助かる？（間違いを入れてみる）'), h('div', { class: 'vi-row' }, ...ERR.map((e) => h('button', { class: 'btn', onclick: () => show(e) }, '🐛 ' + e[0].replace('…', '')))), msg, stage,
           h('div', { class: 'vi-box' }, h('small', 'このファイルの問題点'), h('b', '全部入りで 50 行をこえた。型を他の画面でも使いたくなったら、分けどき（次のシーン〜）')))),
       dd(['小さい画面・試作は、1ファイルで十分', '型は script の一番上にまとめる（読む人が先に形を知れる）', '候補が決まっている値は union（Status）にする'], ['型が同じなのに、画面ごとにコピペする', '何でも string や any にして、型の恩恵を捨てる']));
   }
@@ -159,8 +160,8 @@ function update(patch: UserPatch): void {
     const bad = h('div'), tryB = h('button', { class: 'btn', onclick: () => { pre.setHi(lines(SRC, ['type Role']), 'h3'); bad.replaceChildren(h('div', { class: 'vt-err' }, "form.value.role = 'boss'  →  Type '\"boss\"' is not assignable to type 'Role'"), h('div', { class: 'vt-ok' }, '✓ union のおかげで、候補にない値は入らない（select の value の打ち間違いも気づける）')); } }, "🐛 role に 'boss' を入れてみる");
     return h('div', { style: { display: 'grid', gap: '12px' } },
       h('div', { class: 'vt-grid' },
-        h('div', { class: 'vi-panel' }, lbl('型の道具箱：1つのファイルで全部使う'), chips([[pre, SRC]], P), pre),
-        h('div', { class: 'vi-panel' }, lbl('どの道具を、いつ使う？（押して選ぶ）'), h('div', { class: 'vi-row' }, ...USES.map((u) => h('span', { class: 'vi-chip', style: { '--cc': C }, onclick: () => showU(u) }, u[0]))), info, tryB, bad)),
+        h('div', { class: 'vi-panel' }, lbl('型の道具箱：1つのファイルで全部使う'), pre),
+        h('div', { class: 'vi-panel' }, lbl('① 部分を選ぶ → 左のコードが光る'), chips([[pre, SRC]], P), lbl('② どの道具を、いつ使う？（押して選ぶ）'), h('div', { class: 'vi-row' }, ...USES.map((u) => h('span', { class: 'vi-chip', style: { '--cc': C }, onclick: () => showU(u) }, u[0]))), info, tryB, bad)),
       dd(['フォームは「全項目の型」から Omit / Partial で作る（型を2回書かない）', 'ステータスは union にして、select の候補とそろえる', '? を付けた項目は、使うとき undefined を考える'], ['type と interface を混ぜて悩む（Vue では interface で形、type で候補、と覚える）', 'any で逃げる（型チェックが全部止まる）']));
   }
 
@@ -261,8 +262,8 @@ onMounted(async () => {
     const P = [['① 状態の型（union）', { a: '// 3つの状態', b: "  | { status: 'success'" }], ['② 状態を持つ ref', ['const state']], ['③ 取得して切り替える', { a: 'onMounted(async', b: '})' }], ['④ 画面で出し分け', { a: '<p v-if', b: '  </ul>' }], ['⑤ import（クリックで中身）', ["import type", 'import { fetchCases']]];
     return h('div', { style: { display: 'grid', gap: '12px' } },
       h('div', { class: 'vt-grid' },
-        h('div', { class: 'vi-panel' }, lbl('通信の3つの状態を、型で1つにまとめる'), chips([[pre, SRC]], P), pre, lc, note('import の行（または下のボタン）を押すと、そのファイルの中身が開く', 'w')),
-        h('div', { class: 'vi-panel' }, lbl('状態を切り替える（コードの対応行が光る）'), h('div', { class: 'vi-row' }, ...[['loading', '⏳ 通信中'], ['error', '⚠ 失敗'], ['success', '✅ 成功']].map(([k, t]) => h('button', { class: 'btn primary', style: { '--c': BR[k].c }, onclick: () => set(k) }, t))), stage, tip,
+        h('div', { class: 'vi-panel' }, lbl('通信の3つの状態を、型で1つにまとめる'), pre, lc, note('import の行（または下のボタン）を押すと、そのファイルの中身が開く', 'w')),
+        h('div', { class: 'vi-panel' }, lbl('① 部分を選ぶ → 左のコードが光る'), chips([[pre, SRC]], P), lbl('② 状態を切り替える（コードの対応行が光る）'), h('div', { class: 'vi-row' }, ...[['loading', '⏳ 通信中'], ['error', '⚠ 失敗'], ['success', '✅ 成功']].map(([k, t]) => h('button', { class: 'btn primary', style: { '--c': BR[k].c }, onclick: () => set(k) }, t))), stage, tip,
           h('div', { class: 'vi-box' }, h('small', '型のうれしさ'), h('b', "state.status === 'success' の分岐の中でだけ、state.data が使える（TypeScript が自動で絞り込む）")))),
       dd(["通信の状態は union（loading / error / success）で1つにまとめる", 'fetch の結果は as Case[] ではなく、型を付けた api 関数に包んで返す', '型は types/、通信は api/ に出して、画面は呼ぶだけにする'], ['loading・error・data を別々の ref にして、同時に true になる矛盾を作る', 'res.json() の結果を any のまま使う']));
   }

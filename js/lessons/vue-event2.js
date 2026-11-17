@@ -11,6 +11,7 @@
   style('ve2', `
   .ev-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}
   @media(max-width:980px){.ev-grid{grid-template-columns:1fr}}
+  @media(min-width:981px){.ev-grid>:nth-child(2){position:sticky;top:12px}}
   .ev-stage{display:grid;gap:10px;background:#fff;color:#223;border-radius:12px;padding:14px;border:1px solid var(--line)}
   .ev-row{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center;padding:8px 10px;border-radius:10px;border:2px solid #dfe3ee;transition:.2s}
   .ev-row.on{border-color:var(--n);background:color-mix(in srgb,var(--n) 12%,#fff)}
@@ -154,7 +155,7 @@
       const rep = btn('🔁 別の案件に丸ごと入れ替える', () => { pre.setHi(lns(src, ['function replace', 'item = {', 'item.value = {'])); if (x.rep) { st.title = '相続の相談'; st.done = false; paint(); msg.className = 'vi-msg ok'; msg.textContent = '✓ ref なら、丸ごと入れ替えてもちゃんと画面が変わる'; } else { msg.className = 'vi-msg ng'; msg.textContent = '✖ reactive は丸ごと入れ替えると、画面とのつながりが切れる（const なのでエラーにもなる）'; } }, 'var(--team)');
       const rs = h('button', { class: 'btn', onclick: () => { st.title = '離婚の相談'; st.done = false; paint(); msg.className = 'vi-msg w'; msg.textContent = '👆 ボタンを押して、画面の変化を見よう'; pre.setHi([]); } }, '↺');
       const seg = h('div', { class: 'vi-row' }, ...S.map((y, i) => h('span', { class: 'vi-chip' + (i === which ? '' : ' off'), style: { '--cc': y.c }, onclick: () => { which = i; draw(); } }, y.n)));
-      return h('div', { style: { display: 'grid', gap: '12px' } }, seg, h('div', { class: 'ev-grid' }, h('div', { class: 'vi-panel' }, lbl('書き方'), chips, pre), h('div', { class: 'vi-panel' }, lbl('動かす'), view, h('div', { class: 'vi-row' }, mod, rep, rs), msg, note(x.note, 'w'))),
+      return h('div', { style: { display: 'grid', gap: '12px' } }, seg, h('div', { class: 'ev-grid' }, h('div', { class: 'vi-panel' }, lbl('書き方'), pre), h('div', { class: 'vi-panel' }, lbl('① 部分を選ぶ → 左のコードが光る'), chips, lbl('② 動かす'), view, h('div', { class: 'vi-row' }, mod, rep, rs), msg, note(x.note, 'w'))),
         dd(['ふつうは ref だけでOK（数も文字もオブジェクトも）', '.value を付ける、と1つのルールで統一できる', 'オブジェクトは interface で形を決めてから ref<Case>(...)'], ['reactive は「入れ替えない」と決めたオブジェクトだけ。迷ったら ref', 'reactive の中身を分割代入（const { title } = item）で取り出すと、つながりが切れる']));
     };
 

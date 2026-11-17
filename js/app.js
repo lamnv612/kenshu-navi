@@ -42,7 +42,7 @@
     [3, 14, 16, '基礎', 'ref・イベント・v-if・v-model', 'vue-basics', 'vue', '⚡'],
     [3, 17, 18, 'コンポーネント', 'props / emit', 'vue-comp', 'vue', '🧬'],
     [4, 11, 11, 'アイデア発想', '', 'idea', 'team', '💡'],
-    [4, 12, 12, 'Life Cycle、Computed、\nWatcher …他', '', 'vue-life', 'vue', '⏱️'],
+    [4, 12, 12, 'Life Cycle 他', 'Computed・Watch', 'vue-life', 'vue', '⏱️'],
     [4, 14, 14, 'Vue Router', 'ページ遷移', 'vue-router', 'vue', '🧭'],
     [4, 15, 17, '単体テスト\n入門 (Jest)', '', 'vue-test', 'vue', '🧪'],
     [4, 18, 18, 'Q&A', '', 'qa', 'vue', '🙋'],
@@ -207,7 +207,7 @@
     CELLS.forEach(([di, a, b, label, sub, id, track, em], i) => {
       const d = DAYS[di], p = progressOf(id);
       g.append(h('a', {
-        class: 'cell' + (p >= 1 ? ' done' : ''), href: '#/lesson/' + id,
+        class: 'cell' + (p >= 1 ? ' done' : '') + (a === b ? ' short' : ''), href: '#/lesson/' + id,
         style: { gridColumn: d.col, gridRow: `${row(a)} / ${row(b) + 1}`, '--c': TRACKS[track].color, '--i': i, '--p': p },
         title: label.replace('\n', ' '),
       }, h('b', { html: label.replace('\n', '<br>') }), sub ? h('small', sub) : null, h('span', { class: 'em' }, em), extrasOf(id).length && i === CELLS.findIndex((c) => c[5] === id) ? h('span', { class: 'xtra', title: '補足トピックあり' }, K.W.icon('sparkles'), '+' + extrasOf(id).length) : null, h('span', { class: 'bar' })));
