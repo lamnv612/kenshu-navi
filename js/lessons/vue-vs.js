@@ -34,7 +34,7 @@
   .vs-ui{position:relative;border-radius:12px;background:#f4f6fb;color:#1f2a44;padding:14px;min-height:190px;display:grid;gap:8px;align-content:start;min-width:0}
   .vs-ui [data-k]{border-radius:8px;outline:2px solid transparent;outline-offset:2px;transition:outline-color .15s,background .15s;cursor:default}
   .vs-ui [data-k].vs-hot{outline-color:var(--c,#2f7bff)}
-  .vs-ui [data-k].vs-hot:not(button):not(input):not(select):not(textarea){background:color-mix(in srgb,var(--c,#2f7bff) 14%,transparent)}
+  .vs-ui [data-k].vs-hot:not(button):not(input):not(select):not(textarea):not([class*='pin']):not([class*='badge']):not([class*='chip']){background:color-mix(in srgb,var(--c,#2f7bff) 14%,transparent)}
   .vs-code{min-width:0;max-height:360px;overflow:auto;border-radius:10px;display:flex;flex-direction:column}
   .vs-code>pre.code{flex:1 1 auto}
   .vs-fold{display:block;cursor:pointer;color:var(--mute);font-style:italic;padding:3px 0;opacity:.85;user-select:none}.vs-fold:hover{color:var(--text);opacity:1}
@@ -47,7 +47,8 @@
   const COLORS = ['#ff6b9d', '#5b9dff', '#ffb454', '#2fd4a4', '#a98bff', '#ff8a5b'];
   style('vsHotLink', `
   [data-k].vs-hot{outline:2px solid var(--c,#2f7bff)!important;outline-offset:2px;box-shadow:0 0 0 5px color-mix(in srgb,var(--c,#2f7bff) 22%,transparent)}
-  [data-k].vs-hot:not(button):not(input):not(select):not(textarea):not(.btn){background-color:color-mix(in srgb,var(--c,#2f7bff) 14%,transparent)}
+  [data-k].vs-hot:not(button):not(input):not(select):not(textarea):not(.btn):not([class*='pin']):not([class*='badge']):not([class*='chip']){background-color:color-mix(in srgb,var(--c,#2f7bff) 14%,transparent)}
+  [data-k].vs-hot[class*='pin']{background:var(--c,#2f7bff)!important;color:#06101f!important;transform:scale(1.2)}
   button[data-k].vs-hot,[data-k].vs-hot button{filter:none!important;opacity:1!important}
   `);
   K.vs = {
