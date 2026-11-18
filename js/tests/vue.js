@@ -7,28 +7,33 @@
   const type = async (win, el, v) => { el.value = v; el.dispatchEvent(new win.Event('input', { bubbles: true })); await nt(win); };
   const langOf = (n) => (n.endsWith('.html') ? 'html' : 'js');
 
-  /* web モード：starter に steps（上級まで積み上げる編集）を当てた状態が「答え」 */
+  /* web モード：starter に steps（上級まで積み上げる編集）を当てた状態が「答え」。
+     出題は .vue ファイル。旧形式（index.html ＋ main.js）の starter は、自動で .vue に直して出す */
   function web(cfg) {
     const libs = cfg.libs || [VUE];
+    const native = Object.keys(cfg.starter).some((n) => /\.vue$/.test(n));
+    const lang = (n) => (/\.vue$/.test(n) ? 'vue' : /\.ts$/.test(n) ? 'ts' : langOf(n));
+    const conv = (f) => (native ? f : { 'App.vue': K.vueTools.toSfc(f) });
     const apply = (upto) => {
       const f = Object.assign({}, cfg.starter);
-      cfg.steps.slice(0, upto + 1).forEach((s) => s.edits.forEach(([a, b]) => {
-        if (!f[s.file].includes(a)) throw new Error('test step: text not found: ' + a);
-        f[s.file] = f[s.file].replace(a, b);
-      }));
+      cfg.steps.slice(0, upto + 1).forEach((s) => {
+        s.edits.forEach(([a, b]) => { if (!f[s.file].includes(a)) throw new Error('test step: text not found: ' + a); f[s.file] = f[s.file].replace(a, b); });
+        (s.also || []).forEach(([fn, a, b]) => { if (!f[fn].includes(a)) throw new Error('test step: text not found: ' + a); f[fn] = f[fn].replace(a, b); });
+      });
       return f;
     };
     const probe = K.vueTools.makeProbe(cfg.probe, libs);
+    const start = conv(cfg.starter);
     return {
-      mode: 'web', libs, height: cfg.height || 250,
-      files: Object.keys(cfg.starter).map((n) => ({ name: n, lang: langOf(n), code: cfg.starter[n] })),
-      solution: apply(cfg.steps.length - 1),
+      mode: 'web', sfc: true, libs, height: cfg.height || 250,
+      files: Object.keys(start).map((n) => ({ name: n, lang: lang(n), code: start[n] })),
+      solution: conv(apply(cfg.steps.length - 1)),
       tasks: (v, c) => {
         const d = c.doc && c.doc();
         const ifr = d && d.defaultView && d.defaultView.frameElement;
         if (ifr) probe.kick(v, ifr);
         const R = probe.res;
-        return cfg.steps.map((s, i) => ({ level: s.level, label: s.label, hint: s.hint, ok: !!R[s.key], answer: { code: apply(i)[s.file], lang: langOf(s.file), mode: 'replace' } }));
+        return cfg.steps.map((s, i) => { const fl = native ? s.file : 'App.vue', all = apply(i); return { level: s.level, label: s.label, hint: s.hint, ok: !!R[s.key], answer: { code: native ? all[s.file] : K.vueTools.toSfc(all), lang: lang(fl), file: fl, mode: 'replace' } }; });
       },
     };
   }
@@ -82,16 +87,13 @@
   };
 
   /* ---------- vue-basics：v-model / v-if / v-for + :class ---------- */
-  T['vue-basics'] = web({
+T['vue-basics'] = web({
     height: 280,
-    starter: {
-      'index.html': '<div id="app">\n  <!-- ① 件名欄と title をつなぐ -->\n  <input placeholder="相談の件名">\n  <p>件名：{{ title }}</p>\n  <button @click="showTips = !showTips">入力のコツ</button>\n  <!-- ② showTips が true のときだけ見せる -->\n  <p>具体的な日付や金額を書くと、回答が早くなります</p>\n  <!-- ③ cases を並べ、urgent が true の案件に class="urgent" を付ける -->\n  <ul>\n    <li>（ここを書き換える）</li>\n  </ul>\n</div>\n<style>.urgent{color:#e11;font-weight:700}</style>',
-      'main.js': 'const { createApp, ref } = Vue\n\ncreateApp({\n  setup() {\n    const title = ref(\'\')\n    const showTips = ref(false)\n    const cases = ref([\n      { id: 1, title: \'未払い残業代の相談\', urgent: true },\n      { id: 2, title: \'契約書チェックの依頼\', urgent: false },\n      { id: 3, title: \'交通事故の示談\', urgent: true },\n    ])\n    return { title, showTips, cases }\n  },\n}).mount(\'#app\')',
-    },
+    starter: {"App.vue": "<script setup lang=\"ts\">\nimport { ref } from 'vue'\nimport type { Case } from './types'\n\nconst title = ref('')\nconst showTips = ref(false)\nconst cases = ref<Case[]>([\n  { id: 1, title: '未払い残業代の相談', urgent: true },\n  { id: 2, title: '契約書チェックの依頼', urgent: false },\n  { id: 3, title: '交通事故の示談', urgent: true },\n])\n</script>\n\n<template>\n  <!-- ① 件名欄と title をつなぐ -->\n  <input placeholder=\"相談の件名\">\n  <p>件名：{{ title }}</p>\n  <button @click=\"showTips = !showTips\">入力のコツ</button>\n  <!-- ② showTips が true のときだけ見せる -->\n  <p>具体的な日付や金額を書くと、回答が早くなります</p>\n  <!-- ③ cases を並べ、urgent が true の案件に class=\"urgent\" を付ける -->\n  <ul>\n    <li>（ここを書き換える）</li>\n  </ul>\n</template>\n\n<style scoped>\n.urgent { color: #e11; font-weight: 700; }\n</style>\n", "types.ts": "// 案件の「形」を決める型。App.vue から import type { Case } で借りている\nexport interface Case {\n  id: number\n  title: string\n  urgent: boolean\n}\n"},
     steps: [
-      { key: 'm1', level: 1, file: 'index.html', label: '入力した件名が「件名：◯◯」に出る', hint: ['入力欄とデータをつなぐのは <code>v-model</code>。', '<code>&lt;input v-model="title" placeholder="相談の件名"&gt;</code>'], edits: [['<input placeholder="相談の件名">', '<input v-model="title" placeholder="相談の件名">']] },
-      { key: 'm2', level: 2, file: 'index.html', label: '最初は入力のコツが見えず、「入力のコツ」ボタンを押すと出る', hint: ['出したり消したりは <code>v-if</code>（または v-show）。条件は showTips。', '<code>&lt;p v-if="showTips"&gt;具体的な日付や金額を…&lt;/p&gt;</code>'], edits: [['<p>具体的な日付や金額を書くと、回答が早くなります</p>', '<p v-if="showTips">具体的な日付や金額を書くと、回答が早くなります</p>']] },
-      { key: 'm3', level: 3, file: 'index.html', label: '相談を3件並べ、急ぎの2件だけ赤くする（v-for + :class）', hint: ['並べるのは <code>v-for="c in cases" :key="c.id"</code>。', '赤くするのは <code>:class="{ urgent: c.urgent }"</code>。'], edits: [['<li>（ここを書き換える）</li>', '<li v-for="c in cases" :key="c.id" :class="{ urgent: c.urgent }">{{ c.title }}</li>']] },
+      {"key": "m1", "level": 1, "file": "App.vue", "label": "入力した件名が「件名：◯◯」に出る", "hint": ["入力欄とデータをつなぐのは <code>v-model</code>。", "<code>&lt;input v-model=\"title\" placeholder=\"相談の件名\"&gt;</code>"], "edits": [["<input placeholder=\"相談の件名\">", "<input v-model=\"title\" placeholder=\"相談の件名\">"]]},
+      {"key": "m2", "level": 2, "file": "App.vue", "label": "最初は入力のコツが見えず、「入力のコツ」ボタンを押すと出る", "hint": ["出したり消したりは <code>v-if</code>（または v-show）。条件は showTips。", "<code>&lt;p v-if=\"showTips\"&gt;具体的な日付や金額を…&lt;/p&gt;</code>"], "edits": [["<p>具体的な日付や金額を書くと、回答が早くなります</p>", "<p v-if=\"showTips\">具体的な日付や金額を書くと、回答が早くなります</p>"]]},
+      {"key": "m3", "level": 3, "file": "App.vue", "label": "相談を3件並べ、急ぎの2件だけ赤くする（v-for + :class）", "hint": ["並べるのは <code>v-for=\"c in cases\" :key=\"c.id\"</code>。cases の型は types.ts の <code>Case</code>。", "赤くするのは <code>:class=\"{ urgent: c.urgent }\"</code>。"], "edits": [["<li>（ここを書き換える）</li>", "<li v-for=\"c in cases\" :key=\"c.id\" :class=\"{ urgent: c.urgent }\">{{ c.title }}</li>"]]},
     ],
     probe: async (win, doc) => {
       const out = {};
@@ -111,16 +113,18 @@
     },
   });
 
-  /* ---------- vue-comp：props / emit / v-model（案件カード。1ファイルで完結） ---------- */
+  /* ---------- vue-comp：props / emit / v-model（案件カード。親 App.vue と、子 2 つ） ---------- */
   T['vue-comp'] = web({
     height: 330,
     starter: {
-      'index.html': '<div id="app">\n  <p>案件数：{{ count }}</p>\n  <!-- ① title を渡す（労働問題 と 契約トラブル） -->\n  <case-card></case-card>\n  <case-card></case-card>\n  <!-- ② 削除が押されたら count を減らす（@remove） -->\n  <hr>\n  <!-- ③ v-model で name とつなぐ -->\n  <name-input></name-input>\n  <p>お名前：{{ name }}</p>\n</div>\n<script>\nconst CaseCard = {\n  props: [],   // ① title を受け取る\n  template: \'<div><span>{{ title }}</span> <button @click="$emit(\\\'remove\\\')">削除</button></div>\',\n}\nconst NameInput = {\n  props: [],   // ③ modelValue を受け取る\n  template: \'<input :value="modelValue" @input="$emit(\\\'update:modelValue\\\', $event.target.value)">\',\n}\nVue.createApp({\n  components: { CaseCard, NameInput },\n  data: () => ({ count: 2, name: \'たろう\' }),\n}).mount(\'#app\')\n</script>',
+      'App.vue': "<script setup lang=\"ts\">\nimport { ref } from 'vue'\nimport CaseCard from './CaseCard.vue'\nimport NameInput from './NameInput.vue'\n\nconst count = ref(2)\nconst name = ref('たろう')\n</script>\n\n<template>\n  <p>案件数：{{ count }}</p>\n  <!-- ① title を渡す（労働問題 と 契約トラブル） -->\n  <CaseCard />\n  <CaseCard />\n  <!-- ② 削除が押されたら count を減らす（@remove） -->\n  <hr />\n  <!-- ③ v-model で name とつなぐ -->\n  <NameInput />\n  <p>お名前：{{ name }}</p>\n</template>\n",
+      'CaseCard.vue': "<script setup lang=\"ts\">\n// ① title を受け取る（props）\nconst emit = defineEmits<{ remove: [] }>()\n</script>\n\n<template>\n  <div>\n    <span>{{ title }}</span>\n    <button @click=\"emit('remove')\">削除</button>\n  </div>\n</template>\n",
+      'NameInput.vue': "<script setup lang=\"ts\">\n// ③ modelValue を受け取る（props）\nconst emit = defineEmits<{ 'update:modelValue': [value: string] }>()\n</script>\n\n<template>\n  <input :value=\"modelValue\" @input=\"emit('update:modelValue', $event.target.value)\" />\n</template>\n",
     },
     steps: [
-      { key: 'm1', level: 1, file: 'index.html', label: '子の部品に title を渡して、カードに「労働問題」「契約トラブル」と出る（props）', hint: ['子は <code>props: [\'title\']</code> で受け取る。', '親は <code>&lt;case-card title="労働問題"&gt;&lt;/case-card&gt;</code> のように渡す。'], edits: [["props: [],   // ① title を受け取る", "props: ['title'],"], ['  <case-card></case-card>\n  <case-card></case-card>', '  <case-card title="労働問題"></case-card>\n  <case-card title="契約トラブル"></case-card>']] },
-      { key: 'm2', level: 2, file: 'index.html', label: '「削除」を押すたびに案件数が 2 → 1 → 0 と減る（@remove）', hint: ['子は <code>$emit(\'remove\')</code> で知らせている。親は <code>@remove</code> で受け取る。', '<code>&lt;case-card title="労働問題" @remove="count--"&gt;</code>'], edits: [['<case-card title="労働問題"></case-card>\n  <case-card title="契約トラブル"></case-card>', '<case-card title="労働問題" @remove="count--"></case-card>\n  <case-card title="契約トラブル" @remove="count--"></case-card>']] },
-      { key: 'm3', level: 3, file: 'index.html', label: '部品に v-model を使い、入力欄に「たろう」が入り、書き換えると名前も変わる', hint: ['子は <code>props: [\'modelValue\']</code> を受け取る（update:modelValue はもう emit している）。', '親は <code>&lt;name-input v-model="name"&gt;&lt;/name-input&gt;</code>。'], edits: [["props: [],   // ③ modelValue を受け取る", "props: ['modelValue'],"], ['<name-input></name-input>', '<name-input v-model="name"></name-input>']] },
+      { key: 'm1', level: 1, file: 'App.vue', label: '子の部品に title を渡して、カードに「労働問題」「契約トラブル」と出る（props）', hint: ['子（CaseCard.vue）は <code>defineProps&lt;{ title: string }&gt;()</code> で受け取る。', '親（App.vue）は <code>&lt;CaseCard title="労働問題" /&gt;</code> のように渡す。'], edits: [['  <CaseCard />\n  <CaseCard />', '  <CaseCard title="労働問題" />\n  <CaseCard title="契約トラブル" />']], also: [['CaseCard.vue', '// ① title を受け取る（props）\n', 'defineProps<{ title: string }>()\n']] },
+      { key: 'm2', level: 2, file: 'App.vue', label: '「削除」を押すたびに案件数が 2 → 1 → 0 と減る（@remove）', hint: ['子は <code>emit(\'remove\')</code> で知らせている。親は <code>@remove</code> で受け取る。', '<code>&lt;CaseCard title="労働問題" @remove="count--" /&gt;</code>'], edits: [['<CaseCard title="労働問題" />\n  <CaseCard title="契約トラブル" />', '<CaseCard title="労働問題" @remove="count--" />\n  <CaseCard title="契約トラブル" @remove="count--" />']] },
+      { key: 'm3', level: 3, file: 'App.vue', label: '部品に v-model を使い、入力欄に「たろう」が入り、書き換えると名前も変わる', hint: ['子（NameInput.vue）は <code>defineProps&lt;{ modelValue: string }&gt;()</code> を受け取る（update:modelValue はもう emit している）。', '親は <code>&lt;NameInput v-model="name" /&gt;</code>。'], edits: [['<NameInput />', '<NameInput v-model="name" />']], also: [['NameInput.vue', '// ③ modelValue を受け取る（props）\n', 'defineProps<{ modelValue: string }>()\n']] },
     ],
     probe: async (win, doc) => {
       const out = {};
@@ -149,7 +153,7 @@
       'main.js': 'const { createApp, ref, computed, watch, onMounted } = Vue\n\ncreateApp({\n  setup() {\n    const price = ref(100)\n    const qty = ref(1)\n    const msg = ref(\'案件を読み込み中…\')\n    const history = ref(0)\n\n    // ① 合計 total を computed で作る（price × qty）\n\n    // ② 表示された直後に、msg を \'取得完了\' にする（onMounted）\n\n    // ③ total が変わるたびに、history を 1 増やす（watch）\n\n    return { price, qty, msg, history }   // total も返す\n  },\n}).mount(\'#app\')',
     },
     steps: [
-      { key: 'm1', level: 1, file: 'main.js', label: '合計が自動で計算される（100円 × 1個 = 100、個数を変えると変わる）', hint: ['材料から計算で作る値は <code>computed</code>。', '<code>const total = computed(() =&gt; price.value * qty.value)</code>。return に total を足すのを忘れずに。'], edits: [['    // ① 合計 total を computed で作る（price × qty）\n', '    const total = computed(() => price.value * qty.value)\n'], ['return { price, qty, msg, history }   // total も返す', 'return { price, qty, total, msg, history }']] },
+      { key: 'm1', level: 1, file: 'main.js', label: '合計が自動で計算される（100円 × 1個 = 100、個数を変えると変わる）', hint: ['材料から計算で作る値は <code>computed</code>。', '<code>const total = computed&lt;number&gt;(() =&gt; price.value * qty.value)</code>（&lt;number&gt; は結果の型）。'], edits: [['    // ① 合計 total を computed で作る（price × qty）\n', '    const total = computed<number>(() => price.value * qty.value)\n'], ['return { price, qty, msg, history }   // total も返す', 'return { price, qty, total, msg, history }']] },
       { key: 'm2', level: 2, file: 'main.js', label: '画面が出た直後に、メッセージが「取得完了」になる（onMounted）', hint: ['表示された直後に1回だけ動かすのは <code>onMounted</code>。', '<code>onMounted(() =&gt; { msg.value = \'取得完了\' })</code>'], edits: [["    // ② 表示された直後に、msg を '取得完了' にする（onMounted）\n", "    onMounted(() => { msg.value = '取得完了' })\n"]] },
       { key: 'm3', level: 3, file: 'main.js', label: '合計が変わるたびに「金額の変更」の回数が 1 ずつ増える（watch）', hint: ['決めた値の変化を見張るのは <code>watch(total, …)</code>。', '<code>watch(total, () =&gt; { history.value++ })</code>'], edits: [['    // ③ total が変わるたびに、history を 1 増やす（watch）\n', '    watch(total, () => { history.value++ })\n']] },
     ],
@@ -172,17 +176,20 @@
     },
   });
 
-  /* ---------- vue-router：ルート定義 / 動的ルート / ガード ---------- */
+  /* ---------- vue-router：ルート定義 / 動的ルート / ガード（router.ts ＋ 各画面 .vue） ---------- */
   T['vue-router'] = web({
     libs: [VUE, VROUTER], height: 320,
     starter: {
-      'index.html': '<div id="app">\n  <nav>\n    <router-link to="/">Home</router-link> |\n    <router-link to="/cases/7">案件 7</router-link> |\n    <router-link to="/cases/42">案件 42</router-link> |\n    <router-link to="/admin">管理</router-link>\n  </nav>\n  <router-view></router-view>\n</div>',
-      'main.js': 'const Home = { template: \'<h2>Home</h2>\' }\nconst Admin = { template: \'<h2>管理画面</h2>\' }\nconst CaseDetail = {\n  setup() { return { route: VueRouter.useRoute() } },\n  template: \'<h2>案件</h2>\',   // ② URL の id も出す（{{ route.params.id }}）\n}\n\nconst loggedIn = false\n\nconst routes = [\n  { path: \'/\', component: Home },\n  { path: \'/admin\', component: Admin },\n  // ① /cases/:id のルートを足す\n]\n\n// このページの中で動かすので createMemoryHistory を使う\nconst router = VueRouter.createRouter({\n  history: VueRouter.createMemoryHistory(),\n  routes,\n})\n\n// ③ ログインしていないとき、/admin に入れず / に戻す（beforeEach）\n\nVue.createApp({}).use(router).mount(\'#app\')',
+      'router.ts': "import { createRouter, createMemoryHistory } from 'vue-router'\nimport HomeView from './HomeView.vue'\nimport AdminView from './AdminView.vue'\nimport CaseDetail from './CaseDetail.vue'\n\nconst loggedIn = false\n\nconst routes = [\n  { path: '/', component: HomeView },\n  { path: '/admin', component: AdminView },\n  // ① /cases/:id のルートを足す\n]\n\n// このページの中で動かすので createMemoryHistory を使う（本番は createWebHistory）\nconst router = createRouter({\n  history: createMemoryHistory(),\n  routes,\n})\n\n// ③ ログインしていないとき、/admin に入れず / に戻す（beforeEach）\n\nexport default router\n",
+      'App.vue': "<script setup lang=\"ts\">\n</script>\n\n<template>\n  <nav>\n    <RouterLink to=\"/\">Home</RouterLink> |\n    <RouterLink to=\"/cases/7\">案件 7</RouterLink> |\n    <RouterLink to=\"/cases/42\">案件 42</RouterLink> |\n    <RouterLink to=\"/admin\">管理</RouterLink>\n  </nav>\n  <RouterView />\n</template>\n",
+      'HomeView.vue': "<script setup lang=\"ts\">\n</script>\n\n<template>\n  <h2>Home</h2>\n</template>\n",
+      'AdminView.vue': "<script setup lang=\"ts\">\n</script>\n\n<template>\n  <h2>管理画面</h2>\n</template>\n",
+      'CaseDetail.vue': "<script setup lang=\"ts\">\nimport { useRoute } from 'vue-router'\n\nconst route = useRoute()\n</script>\n\n<template>\n  <h2>案件</h2>   <!-- ② URL の id も出す（{{ route.params.id }}） -->\n</template>\n",
     },
     steps: [
-      { key: 'm1', level: 1, file: 'main.js', label: '「案件 7」を押すと、案件の画面が出る（/cases/:id）', hint: ['URL の一部を変数にするには、path に <code>:id</code> と書く。', '<code>{ path: \'/cases/:id\', component: CaseDetail }</code> を routes に足す。'], edits: [["  // ① /cases/:id のルートを足す\n", "  { path: '/cases/:id', component: CaseDetail },\n"]] },
-      { key: 'm2', level: 2, file: 'main.js', label: '画面に URL の id が出る（7 を押せば 7、42 を押せば 42）', hint: ['今の URL の値は <code>route.params.id</code>。', "template を <code>'&lt;h2&gt;案件 {{ route.params.id }}&lt;/h2&gt;'</code> にする。"], edits: [["template: '<h2>案件</h2>',   // ② URL の id も出す（{{ route.params.id }}）", "template: '<h2>案件 {{ route.params.id }}</h2>',"]] },
-      { key: 'm3', level: 3, file: 'main.js', label: 'ログインしていないと「管理」を押しても入れず、Home に戻る（beforeEach）', hint: ['移動の前に動くのは <code>router.beforeEach</code>。', "<code>router.beforeEach((to) =&gt; { if (to.path === '/admin' &amp;&amp; !loggedIn) return '/' })</code>"], edits: [['// ③ ログインしていないとき、/admin に入れず / に戻す（beforeEach）\n', "router.beforeEach((to) => {\n  if (to.path === '/admin' && !loggedIn) return '/'\n})\n"]] },
+      { key: 'm1', level: 1, file: 'router.ts', label: '「案件 7」を押すと、案件の画面が出る（/cases/:id）', hint: ['URL の一部を変数にするには、path に <code>:id</code> と書く。', '<code>{ path: \'/cases/:id\', component: CaseDetail }</code> を routes に足す。'], edits: [["  // ① /cases/:id のルートを足す\n", "  { path: '/cases/:id', component: CaseDetail },\n"]] },
+      { key: 'm2', level: 2, file: 'CaseDetail.vue', label: '画面に URL の id が出る（7 を押せば 7、42 を押せば 42）', hint: ['今の URL の値は <code>route.params.id</code>。', "template を <code>&lt;h2&gt;案件 {{ route.params.id }}&lt;/h2&gt;</code> にする。"], edits: [["  <h2>案件</h2>   <!-- ② URL の id も出す（{{ route.params.id }}） -->", "  <h2>案件 {{ route.params.id }}</h2>"]] },
+      { key: 'm3', level: 3, file: 'router.ts', label: 'ログインしていないと「管理」を押しても入れず、Home に戻る（beforeEach）', hint: ['移動の前に動くのは <code>router.beforeEach</code>。', "<code>router.beforeEach((to) =&gt; { if (to.path === '/admin' &amp;&amp; !loggedIn) return '/' })</code>"], edits: [['// ③ ログインしていないとき、/admin に入れず / に戻す（beforeEach）\n', "router.beforeEach((to) => {\n  if (to.path === '/admin' && !loggedIn) return '/'\n})\n"]] },
     ],
     probe: async (win, doc) => {
       const out = {};

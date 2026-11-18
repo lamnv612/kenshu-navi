@@ -97,6 +97,30 @@
 
   /* ---------- practice kit: missions tick from real behaviour, hints + answers per mission ---------- */
   const pLang = (n) => (n.endsWith('.html') ? 'html' : 'js');
+  /* ---- 旧形式（index.html ＋ main.js）→ .vue への変換と、その逆の読み取り ---- */
+  const dedent = (t) => { const L = t.split('\n'), ind = Math.min(...L.filter((l) => l.trim()).map((l) => l.match(/^\s*/)[0].length), 99); return L.map((l) => l.slice(Math.min(ind, l.length))).join('\n'); };
+  function toSfc(f) {
+    const html = f['index.html'] || '', js = f['main.js'] || '';
+    const st = html.indexOf('<div id="app">'); let tpl = '', rest = '';
+    if (st >= 0) { const after = html.slice(st + 14); const cut = after.search(/\n<(style|script)/); const seg = cut < 0 ? after : after.slice(0, cut); const end = seg.lastIndexOf('</div>'); tpl = seg.slice(0, end).replace(/^\n/, '').replace(/\n$/, ''); rest = cut < 0 ? '' : after.slice(cut); }
+    const css = (rest.match(/<style>([\s\S]*?)<\/style>/) || [])[1] || '';
+    const names = ((js.match(/const\s*\{([^}]*)\}\s*=\s*Vue;?/) || [])[1] || '').split(',').map((x) => x.trim()).filter((x) => x && x !== 'createApp');
+    const sm = js.match(/createApp\(\{\s*setup\(\)\s*\{([\s\S]*)\}\s*,?\s*\}\)\.mount\(['"]#app['"]\);?\s*$/);
+    let body = sm ? sm[1] : js;
+    const pre = sm ? js.slice(0, js.indexOf('createApp(')).replace(/const\s*\{[^}]*\}\s*=\s*Vue;?\n*/, '') : '';
+    body = body.replace(/\n[ \t]*return\s*\{[^}]*\};?[^\n]*(?=\s*$)/, '');
+    body = (pre.trim() ? dedent(pre.trim()) + '\n\n' : '') + dedent(body.replace(/^\n+/, '').replace(/\s+$/, ''));
+    return '<script setup lang="ts">\n' + (names.length ? "import { " + names.join(', ') + " } from 'vue'\n\n" : '') + body + '\n</script>\n\n<template>\n' + tpl + '\n</template>' + (css.trim() ? '\n\n<style scoped>\n' + css.trim().replace(/\}\s*(?=[.#a-z])/g, '}\n') + '\n</style>' : '') + '\n';
+  }
+  /* App.vue から、旧形式の v（index.html / main.js）を読み取る（既存の判定式をそのまま使うため） */
+  function shim(v) {
+    const src = v['App.vue'] || '';
+    const t = src.indexOf('<template>'), e = src.lastIndexOf('</template>');
+    const sc = (src.match(/<script[^>]*>([\s\S]*?)<\/script>/) || [])[1] || '';
+    const tpl = t >= 0 && e > t ? src.slice(t + 10, e).replace(/^\n/, '').replace(/\n$/, '') : '';
+    const css = (src.match(/<style[^>]*>([\s\S]*?)<\/style>/) || [])[1] || '';
+    return Object.assign({}, v, { 'index.html': '<div id="app">\n' + tpl + '\n</div>' + (css ? '\n<style>' + css + '</style>' : ''), 'main.js': sc });
+  }
   const applySteps = (starter, steps, upto) => {
     const f = Object.assign({}, starter);
     steps.slice(0, upto + 1).forEach((s) => { (s.edits || []).forEach(([a, b]) => { if (!f[s.file].includes(a)) throw new Error('practice step: text not found'); f[s.file] = f[s.file].replace(a, b); }); });
@@ -104,7 +128,11 @@
   };
   function makeProbe(run, libs) {
     let last = null, res = {}, token = 0, alive = true, hid = null;
-    const docFor = (v) => '<!doctype html><html><head><meta charset="utf-8">' + libs.map((u) => '<script src="' + u + '"><\/script>').join('') + '<script>window.__logs=[];console.log=function(){window.__logs.push([].slice.call(arguments).join(" "))};<\/script></head><body>' + (v['index.html'] || '') + '<script>' + (v['main.js'] || '') + '<\/script></body></html>';
+    const docFor = (v) => {
+      let html = v['index.html'] || '', js = v['main.js'] || '', css = '';
+      if (v['App.vue'] != null) { const bd = K.W.sfcBuild(v); html = bd.html; js = bd.js; css = bd.css; }
+      return '<!doctype html><html><head><meta charset="utf-8">' + libs.map((u) => '<script src="' + u + '"><\/script>').join('') + '<style>' + css + '</style><script>window.__logs=[];console.log=function(){window.__logs.push([].slice.call(arguments).join(" "))};<\/script></head><body>' + html + '<script>' + js + '<\/script></body></html>';
+    };
     return {
       get res() { return res; },
       stop() { alive = false; token++; if (hid) hid.remove(); },
@@ -117,6 +145,7 @@
           f.setAttribute('sandbox', 'allow-scripts allow-same-origin'); f.setAttribute('aria-hidden', 'true'); f.tabIndex = -1;
           f.style.cssText = 'position:fixed;left:-9999px;top:0;width:600px;height:400px;opacity:0;pointer-events:none;border:0';
           document.body.append(f); hid = f;
+          if (v['App.vue'] != null && !window.ts) { try { await K.W.loadTS(); } catch (e) { /* offline */ } }
           await new Promise((r) => { f.onload = r; f.srcdoc = docFor(v); setTimeout(r, 6000); });
           let out = {};
           try { await sleep(200); out = (await run(f.contentWindow, f.contentDocument)) || {}; } catch (e) { out = {}; }
@@ -129,23 +158,28 @@
   }
   function practice(el, ctx, cfg) {
     const libs = cfg.libs || [VUE];
-    const files = Object.keys(cfg.starter).map((n) => ({ name: n, lang: pLang(n), code: cfg.starter[n] }));
+    const native = Object.keys(cfg.starter).some((n) => /\.vue$/.test(n));   // 最初から .vue で書かれた練習
+    const fileOf = (f) => (native ? f : { 'App.vue': toSfc(f) });
+    const lng = (n) => (/\.vue$/.test(n) ? 'vue' : /\.ts$/.test(n) ? 'ts' : pLang(n));
+    const start = fileOf(cfg.starter);
+    const files = Object.keys(start).map((n) => ({ name: n, lang: lng(n), code: start[n] }));
     const req = cfg.steps.filter((s) => !s.optional);
-    const solution = applySteps(cfg.starter, req, req.length - 1);
+    const solution = fileOf(applySteps(cfg.starter, req, req.length - 1));
     const probe = cfg.probe ? makeProbe(cfg.probe, libs) : null;
     if (probe) ctx.cleanups.push(() => probe.stop());
     el.append(playground({
-      title: cfg.title || 'Vue', mode: 'web', libs, files, solution,
+      title: cfg.title || 'Vue', mode: 'web', libs, files, solution, sfc: true,
       tasks: (v, c) => {
         const d = c.doc && c.doc();
         const ifr = d && d.defaultView && d.defaultView.frameElement;
         if (probe && ifr) probe.kick(v, ifr);
         const R = probe ? probe.res : {};
-        return cfg.steps.map((s, i) => ({ label: s.label, ok: !!s.ok(R, d, v), optional: !!s.optional, level: s.level, hint: s.hint, answer: { code: applySteps(cfg.starter, cfg.steps, i)[s.file], lang: pLang(s.file), mode: 'replace' } }));
+        const vv = native ? v : shim(v);
+        return cfg.steps.map((s, i) => { const all = applySteps(cfg.starter, cfg.steps, i), fl = native ? s.file : 'App.vue'; return { label: s.label, ok: !!s.ok(R, d, vv), optional: !!s.optional, level: s.level, hint: s.hint, answer: { code: native ? all[s.file] : toSfc(all), lang: lng(fl), file: fl, mode: 'replace' } }; });
       },
     }));
   }
-  K.vueTools = { practice, makeProbe, applySteps, VUE };
+  K.vueTools = { practice, makeProbe, applySteps, VUE, toSfc, shim };
 
   const outPanel = (label, ...kids) => h('div', { class: 'fo3-out' }, h('small', null, label), h('div', { class: 'fo3-out-body' }, ...kids));
 
@@ -491,7 +525,7 @@
       {
         t: '実践：ミニTodo', tag: 'PRACTICE', lead: "3つのミッションを、上から順に。コードの <b>TODO コメント</b>を書き換えるだけ。困ったら 💡 でヒントが見られる。",
         render(el, ctx) {
-          K.vueTools.practice(el, ctx, { title: "Vue", starter: {"index.html": "<div id=\"app\">\n  <!-- ① 入力欄と text をつなぐ（v-model） -->\n  <input placeholder=\"やること\">\n  <!-- ③ ボタンを押したら add を動かす（@click） -->\n  <button>追加</button>\n  <p>入力中：{{ text }}</p>\n  <ul>\n    <!-- ② todos を1件ずつ並べる（v-for） -->\n    <li>（ここを書き換える）</li>\n  </ul>\n</div>", "main.js": "const { createApp, ref } = Vue\n\ncreateApp({\n  setup() {\n    const text = ref('')\n    const todos = ref(['契約書を確認する'])\n    const add = () => {\n      if (!text.value) return\n      todos.value.push(text.value)\n      text.value = ''\n    }\n    return { text, todos, add }\n  },\n}).mount('#app')"}, steps: [
+          K.vueTools.practice(el, ctx, { title: "Vue", starter: {"index.html": "<div id=\"app\">\n  <!-- ① 入力欄と text をつなぐ（v-model） -->\n  <input placeholder=\"やること\">\n  <!-- ③ ボタンを押したら add を動かす（@click） -->\n  <button>追加</button>\n  <p>入力中：{{ text }}</p>\n  <ul>\n    <!-- ② todos を1件ずつ並べる（v-for） -->\n    <li>（ここを書き換える）</li>\n  </ul>\n</div>", "main.js": "const { createApp, ref } = Vue\n\ncreateApp({\n  setup() {\n    const text = ref('')\n    const todos = ref<string[]>(['契約書を確認する'])\n    const add = (): void => {\n      if (!text.value) return\n      todos.value.push(text.value)\n      text.value = ''\n    }\n    return { text, todos, add }\n  },\n}).mount('#app')"}, steps: [
       Object.assign({"file": "index.html", "label": "入力した文字が「入力中：」に出る（v-model）", "hint": ["入力欄と text をつなぐのは <code>v-model</code>。", "<code>&lt;input v-model=\"text\"&gt;</code> と書く。"], "edits": [["<input placeholder=\"やること\">", "<input v-model=\"text\" placeholder=\"やること\">"]]}, { ok: (R) => R.m1 }),
       Object.assign({"file": "index.html", "label": "リストに「契約書を確認する」が出る（v-for）", "hint": ["リストを並べるのは <code>v-for</code>。<code>&lt;li&gt;</code> に書く。", "<code>&lt;li v-for=\"t in todos\" :key=\"t\"&gt;{{ t }}&lt;/li&gt;</code>"], "edits": [["<li>（ここを書き換える）</li>", "<li v-for=\"t in todos\" :key=\"t\">{{ t }}</li>"]]}, { ok: (R) => R.m2 }),
       Object.assign({"file": "index.html", "label": "「追加」を押すと、リストが1つ増える（@click）", "hint": ["クリックは <code>@click</code>。呼ぶ関数は add。", "<code>&lt;button @click=\"add\"&gt;追加&lt;/button&gt;</code>"], "edits": [["<button>追加</button>", "<button @click=\"add\">追加</button>"]]}, { ok: (R) => R.m3 }),
@@ -643,13 +677,13 @@
       {
         t: '実践：カード部品', tag: 'PRACTICE', lead: "カードを<b>部品</b>にしよう。TODO コメントの所を書き換えるだけ。困ったら 💡 でヒント。",
         render(el, ctx) {
-          K.vueTools.practice(el, ctx, { title: "Vue component", starter: {"index.html": "<div id=\"app\">\n  <h3>いいね: {{ likes }}</h3>\n  <!-- ② 子の 👍 を受け取って likes を増やす（@like） -->\n  <my-card title=\"労働問題\"></my-card>\n  <my-card title=\"契約トラブル\"></my-card>\n</div>", "main.js": "const app = Vue.createApp({\n  data: () => ({ likes: 0 })\n})\n\napp.component('my-card', {\n  // ① 親から title を受け取る（props）\n  template: `\n    <div style=\"border:1px solid #ccc;padding:8px;margin:6px 0;border-radius:8px\">\n      <b>{{ title }}</b>\n      <button @click=\"$emit('like')\">👍</button>\n    </div>`\n})\n\napp.mount('#app')"}, steps: [
-      Object.assign({"file": "main.js", "label": "2枚のカードに「労働問題」「契約トラブル」と出る（props）", "hint": ["子が受け取るデータは <code>props</code> に書く。", "<code>props: ['title']</code> をコンポーネントに足す。"], "edits": [["  // ① 親から title を受け取る（props）\n", "  props: ['title'],\n"]]}, { ok: (R) => R.m1 }),
-      Object.assign({"file": "index.html", "label": "1枚目の 👍 を押すと、上の「いいね」が 1 増える（@like）", "hint": ["子の <code>$emit('like')</code> を、親が <code>@like</code> で受け取る。", "<code>&lt;my-card ... @like=\"likes++\"&gt;</code>"], "edits": [["<my-card title=\"労働問題\"></my-card>", "<my-card title=\"労働問題\" @like=\"likes++\"></my-card>"]]}, { ok: (R) => R.m2 }),
-      Object.assign({"file": "index.html", "label": "2枚目の 👍 も数えられる", "hint": ["2枚目にも、同じように書く。", "同じ <code>@like=\"likes++\"</code> を足す。"], "edits": [["<my-card title=\"契約トラブル\"></my-card>", "<my-card title=\"契約トラブル\" @like=\"likes++\"></my-card>"]]}, { ok: (R) => R.m3 }),
-      Object.assign({"file": "main.js", "label": "カードごとに「押した回数」を、ボタンの横に出す（子が自分のデータを持つ）", "hint": ["子コンポーネントにも <code>data</code> が書ける。カードごとに別々に数えられる。", "<code>data: () => ({ n: 0 })</code> を足し、ボタンを <code>@click=\"n++; $emit('like')\"</code> にして <code>{{ n }}</code> を表示。"], "edits": [["app.component('my-card', {\n", "app.component('my-card', {\n  data: () => ({ n: 0 }),\n"], ["      <button @click=\"$emit('like')\">👍</button>", "      <button @click=\"n++; $emit('like')\">👍 {{ n }}</button>"]], "optional": true, "level": 1}, { ok: (R) => R.o1 }),
-      Object.assign({"file": "index.html", "label": "いいねが 5 以上になったら、「🔥 人気！」と出る（v-if）", "hint": ["親が持っている <code>likes</code> を使って、条件つきで表示する。出し入れは <code>v-if</code>。", "<code>&lt;p v-if=\"likes &gt;= 5\"&gt;🔥 人気！&lt;/p&gt;</code> を <code>&lt;h3&gt;</code> の下に置く。"], "edits": [["<h3>いいね: {{ likes }}</h3>\n", "<h3>いいね: {{ likes }}</h3>\n  <p v-if=\"likes >= 5\">🔥 人気！</p>\n"]], "optional": true, "level": 2}, { ok: (R) => R.o2 }),
-      Object.assign({"file": "index.html", "label": "カードを v-for で並べ、3枚目「交通事故」も出す（👍 も数えられる）", "hint": ["同じ部品を何枚も出すなら <code>v-for</code>。配列は <code>['労働問題', '契約トラブル', '交通事故']</code> のように、その場で書いてもよい。", "<code>&lt;my-card v-for=\"t in ['労働問題', '契約トラブル', '交通事故']\" :key=\"t\" :title=\"t\" @like=\"likes++\"&gt;&lt;/my-card&gt;</code> の1行で3枚。元の2行は消す。"], "edits": [["  <my-card title=\"労働問題\" @like=\"likes++\"></my-card>\n  <my-card title=\"契約トラブル\" @like=\"likes++\"></my-card>", "  <my-card v-for=\"t in ['労働問題', '契約トラブル', '交通事故']\" :key=\"t\" :title=\"t\" @like=\"likes++\"></my-card>"]], "optional": true, "level": 3}, { ok: (R, d, v) => !!R.o3 && /v-for/.test(v['index.html'] || '') }),
+          K.vueTools.practice(el, ctx, { title: "Vue component", starter: {"App.vue": "<script setup lang=\"ts\">\nimport { ref } from 'vue'\nimport MyCard from './MyCard.vue'\n\nconst likes = ref(0)\n</script>\n\n<template>\n  <h3>いいね: {{ likes }}</h3>\n  <!-- ② 子の 👍 を受け取って likes を増やす（@like） -->\n  <MyCard title=\"労働問題\" />\n  <MyCard title=\"契約トラブル\" />\n</template>\n", "MyCard.vue": "<script setup lang=\"ts\">\n// ① 親から title を受け取る（props）\nconst emit = defineEmits<{ like: [] }>()\n</script>\n\n<template>\n  <div style=\"border:1px solid #ccc;padding:8px;margin:6px 0;border-radius:8px\">\n    <b>{{ title }}</b>\n    <button @click=\"emit('like')\">👍</button>\n  </div>\n</template>\n"}, steps: [
+      Object.assign({"file": "MyCard.vue", "label": "2枚のカードに「労働問題」「契約トラブル」と出る（props）", "hint": ["子（MyCard.vue）が受け取るデータは <code>defineProps</code> で宣言する。", "<code>defineProps&lt;{ title: string }&gt;()</code> を子に足す。"], "edits": [["// ① 親から title を受け取る（props）\n", "defineProps<{ title: string }>()\n"]]}, { ok: (R) => R.m1 }),
+      Object.assign({"file": "App.vue", "label": "1枚目の 👍 を押すと、上の「いいね」が 1 増える（@like）", "hint": ["子の <code>emit('like')</code> を、親が <code>@like</code> で受け取る。", "<code>&lt;MyCard ... @like=\"likes++\" /&gt;</code>"], "edits": [["<MyCard title=\"労働問題\" />", "<MyCard title=\"労働問題\" @like=\"likes++\" />"]]}, { ok: (R) => R.m2 }),
+      Object.assign({"file": "App.vue", "label": "2枚目の 👍 も数えられる", "hint": ["2枚目にも、同じように書く。", "同じ <code>@like=\"likes++\"</code> を足す。"], "edits": [["<MyCard title=\"契約トラブル\" />", "<MyCard title=\"契約トラブル\" @like=\"likes++\" />"]]}, { ok: (R) => R.m3 }),
+      Object.assign({"file": "MyCard.vue", "label": "カードごとに「押した回数」を、ボタンの横に出す（子が自分のデータを持つ）", "hint": ["子にも <code>ref</code> が書ける。カードごとに別々に数えられる。", "<code>const n = ref(0)</code> を足し、ボタンを <code>@click=\"n++; emit('like')\"</code> にして <code>{{ n }}</code> を表示。"], "edits": [["<script setup lang=\"ts\">\n", "<script setup lang=\"ts\">\nimport { ref } from 'vue'\n"], ["const emit = defineEmits<{ like: [] }>()", "const emit = defineEmits<{ like: [] }>()\nconst n = ref(0)"], ["<button @click=\"emit('like')\">👍</button>", "<button @click=\"n++; emit('like')\">👍 {{ n }}</button>"]], "optional": true, "level": 1}, { ok: (R) => R.o1 }),
+      Object.assign({"file": "App.vue", "label": "いいねが 5 以上になったら、「🔥 人気！」と出る（v-if）", "hint": ["親が持っている <code>likes</code> を使って、条件つきで表示する。出し入れは <code>v-if</code>。", "<code>&lt;p v-if=\"likes &gt;= 5\"&gt;🔥 人気！&lt;/p&gt;</code> を <code>&lt;h3&gt;</code> の下に置く。"], "edits": [["<h3>いいね: {{ likes }}</h3>\n", "<h3>いいね: {{ likes }}</h3>\n  <p v-if=\"likes >= 5\">🔥 人気！</p>\n"]], "optional": true, "level": 2}, { ok: (R) => R.o2 }),
+      Object.assign({"file": "App.vue", "label": "カードを v-for で並べ、3枚目「交通事故」も出す（👍 も数えられる）", "hint": ["同じ部品を何枚も出すなら <code>v-for</code>。配列は <code>['労働問題', '契約トラブル', '交通事故']</code> のように、その場で書いてもよい。", "<code>&lt;MyCard v-for=\"t in ['労働問題', '契約トラブル', '交通事故']\" :key=\"t\" :title=\"t\" @like=\"likes++\" /&gt;</code> の1行で3枚。元の2行は消す。"], "edits": [["  <MyCard title=\"労働問題\" @like=\"likes++\" />\n  <MyCard title=\"契約トラブル\" @like=\"likes++\" />", "  <MyCard v-for=\"t in ['労働問題', '契約トラブル', '交通事故']\" :key=\"t\" :title=\"t\" @like=\"likes++\" />"]], "optional": true, "level": 3}, { ok: (R, d, v) => !!R.o3 && /v-for/.test(v['App.vue'] || '') }),
     ], probe: async (win, doc) => {
       const nt = async () => { await win.Vue.nextTick(); await new Promise((r) => setTimeout(r, 40)); };
       const bs = [...doc.querySelectorAll('b')].map((b) => b.textContent.trim());
@@ -749,7 +783,7 @@
       {
         t: '実践：ライフサイクル+計算', tag: 'PRACTICE', lead: "合計の計算、表示直後、値の変化。3つのフックを使ってみよう。TODO コメントを書き換える。",
         render(el, ctx) {
-          K.vueTools.practice(el, ctx, { title: "Vue", starter: {"index.html": "<div id=\"app\">\n  <p>単価 100円 × <input type=\"number\" v-model.number=\"qty\" style=\"width:60px\"> 個</p>\n  <h3>合計: {{ total }} 円</h3>\n</div>", "main.js": "const { createApp, ref, computed, watch, onMounted } = Vue\n\ncreateApp({\n  setup() {\n    const qty = ref(1)\n    // ① 合計を computed で作る（100円 × 数量）\n    const total = 0\n    // ② 表示された直後に、console.log('mounted!') を出す\n    // ③ 数量が変わったら、console.log('qty:', n) を出す\n    return { qty, total }\n  }\n}).mount('#app')"}, steps: [
+          K.vueTools.practice(el, ctx, { title: "Vue", starter: {"index.html": "<div id=\"app\">\n  <p>単価 100円 × <input type=\"number\" v-model.number=\"qty\" style=\"width:60px\"> 個</p>\n  <h3>合計: {{ total }} 円</h3>\n</div>", "main.js": "const { createApp, ref, computed, watch, onMounted } = Vue\n\ncreateApp({\n  setup() {\n    const qty = ref(1)\n    // ① 合計を computed で作る（100円 × 数量）。結果の型も書く: computed<number>(…)\n    const total = 0\n    // ② 表示された直後に、console.log('mounted!') を出す\n    // ③ 数量が変わったら、console.log('qty:', n) を出す\n    return { qty, total }\n  }\n}).mount('#app')"}, steps: [
       Object.assign({"file": "main.js", "label": "数量を 3 にすると、合計が 300 円になる（computed）", "hint": ["他の値から作る値は <code>computed</code>。", "<code>computed(() => qty.value * 100)</code>"], "edits": [["    const total = 0\n", "    const total = computed(() => qty.value * 100)\n"]]}, { ok: (R) => R.m1 }),
       Object.assign({"file": "main.js", "label": "表示された直後に「mounted!」がログに出る（onMounted）", "hint": ["表示された直後に動かすのは <code>onMounted</code>。", "<code>onMounted(() => console.log('mounted!'))</code>"], "edits": [["    // ② 表示された直後に、console.log('mounted!') を出す\n", "    onMounted(() => console.log('mounted!'))\n"]]}, { ok: (R) => R.m2 }),
       Object.assign({"file": "main.js", "label": "数量を変えると、ログが出る（watch）", "hint": ["値が変わったときに動かすのは <code>watch</code>。", "<code>watch(qty, (n) => console.log('qty:', n))</code>"], "edits": [["    // ③ 数量が変わったら、console.log('qty:', n) を出す\n", "    watch(qty, (n) => console.log('qty:', n))\n"]]}, { ok: (R) => R.m3 }),
@@ -856,13 +890,13 @@
       {
         t: '実践：ルーターを動かす', tag: 'PRACTICE', lead: "ナビに <b>About</b> を足して、ページを行き来できるようにしよう。",
         render(el, ctx) {
-          K.vueTools.practice(el, ctx, { libs: [VUE, VROUTER], title: "Vue Router", starter: {"index.html": "<div id=\"app\">\n  <nav>\n    <router-link to=\"/\">Home</router-link> |\n    <!-- ① About へのリンクを足す -->\n    <router-link to=\"/user/42\">ユーザー 42</router-link>\n  </nav>\n  <router-view></router-view>\n</div>", "main.js": "const Home = { template: '<h2>Home</h2>' }\nconst About = { template: '<h2>About</h2>' }\n\nconst routes = [\n  { path: '/', component: Home },\n  // ② /about のルートを足す\n]\n\n// このページの中で動かすので createMemoryHistory を使う\nconst router = VueRouter.createRouter({\n  history: VueRouter.createMemoryHistory(),\n  routes,\n})\n\nVue.createApp({}).use(router).mount('#app')"}, steps: [
-      Object.assign({"file": "index.html", "label": "ナビに「About」のリンクが出る", "hint": ["ナビのリンクは <code>&lt;router-link to=\"…\"&gt;</code>。", "<code>&lt;router-link to=\"/about\"&gt;About&lt;/router-link&gt;</code>"], "edits": [["    <!-- ① About へのリンクを足す -->\n", "    <router-link to=\"/about\">About</router-link> |\n"]]}, { ok: (R) => R.m1 }),
-      Object.assign({"file": "main.js", "label": "「About」を押すと、About の画面が出る", "hint": ["どの URL でどの部品を出すか、<code>routes</code> に1行足す。", "<code>{ path: '/about', component: About }</code>"], "edits": [["  // ② /about のルートを足す\n", "  { path: '/about', component: About },\n"]]}, { ok: (R) => R.m2 }),
-      Object.assign({"file": "main.js", "label": "「Home」を押すと、Home の画面に戻る", "hint": ["Home のリンクはもうある。ルートが2つあれば、行き来できる。", "② が書けていれば、自然に戻れる。"], "edits": []}, { ok: (R) => R.m3 }),
-      Object.assign({"file": "main.js", "label": "「ユーザー 42」を押すと「ユーザー 42」と出る（URL の一部を変数で受け取る）", "hint": ["URL の一部を変数にするには、path に <code>:id</code> と書く。画面では <code>$route.params.id</code> で読める。", "<code>{ path: '/user/:id', component: User }</code> と、<code>{{ $route.params.id }}</code> を出す User 部品を作る。"], "edits": [["const About = { template: '<h2>About</h2>' }\n", "const About = { template: '<h2>About</h2>' }\nconst User = { template: '<h2>ユーザー {{ $route.params.id }}</h2>' }\n"], ["  { path: '/about', component: About },\n", "  { path: '/about', component: About },\n  { path: '/user/:id', component: User },\n"]], "optional": true, "level": 1}, { ok: (R) => R.o1 }),
-      Object.assign({"file": "index.html", "label": "いま開いているページのリンクだけ太字にする（router-link-exact-active）", "hint": ["リンクには、今のページと合うと自動で class が付く。<code>router-link-active</code> と <code>router-link-exact-active</code> の2種類がある。", "<code>.router-link-exact-active { font-weight: bold }</code> を &lt;style&gt; に書く。Home（/）は <code>-active</code> だと全ページで太字になるので、<b>exact</b> のほうを使う。"], "edits": [["  <router-view></router-view>\n</div>", "  <router-view></router-view>\n</div>\n<style>\n  .router-link-exact-active { font-weight: bold }\n</style>"]], "optional": true, "level": 2}, { ok: (R) => R.o2 }),
-      Object.assign({"file": "main.js", "label": "存在しない URL を開いたら「404」と出る（どれにも合わないルート）", "hint": ["routes の一番最後に、「どれにも合わない」ルートを足す。path に <code>:pathMatch(.*)*</code> と書くと、残り全部に合う。", "<code>{ path: '/:pathMatch(.*)*', component: NotFound }</code> を最後に足し、<code>const NotFound = { template: '&lt;h2&gt;404&lt;/h2&gt;' }</code> を作る。"], "edits": [["const User = { template: '<h2>ユーザー {{ $route.params.id }}</h2>' }\n", "const User = { template: '<h2>ユーザー {{ $route.params.id }}</h2>' }\nconst NotFound = { template: '<h2>404 ページが見つかりません</h2>' }\n"], ["  { path: '/user/:id', component: User },\n", "  { path: '/user/:id', component: User },\n  { path: '/:pathMatch(.*)*', component: NotFound },\n"]], "optional": true, "level": 3}, { ok: (R) => R.o3 }),
+          K.vueTools.practice(el, ctx, { libs: [VUE, VROUTER], title: "Vue Router", starter: {"router.ts": "import { createRouter, createMemoryHistory } from 'vue-router'\nimport HomeView from './HomeView.vue'\nimport AboutView from './AboutView.vue'\nimport UserView from './UserView.vue'\nimport NotFound from './NotFound.vue'\n\nconst routes = [\n  { path: '/', component: HomeView },\n  // ② /about のルートを足す\n]\n\n// このページの中で動かすので createMemoryHistory を使う（本番は createWebHistory）\nconst router = createRouter({\n  history: createMemoryHistory(),\n  routes,\n})\n\nexport default router\n", "App.vue": "<script setup lang=\"ts\">\n</script>\n\n<template>\n  <nav>\n    <RouterLink to=\"/\">Home</RouterLink> |\n    <!-- ① About へのリンクを足す -->\n    <RouterLink to=\"/user/42\">ユーザー 42</RouterLink>\n  </nav>\n  <RouterView />\n</template>\n", "HomeView.vue": "<script setup lang=\"ts\">\n</script>\n\n<template>\n  <h2>Home</h2>\n</template>\n", "AboutView.vue": "<script setup lang=\"ts\">\n</script>\n\n<template>\n  <h2>About</h2>\n</template>\n", "UserView.vue": "<script setup lang=\"ts\">\nimport { useRoute } from 'vue-router'\n\nconst route = useRoute()\n</script>\n\n<template>\n  <h2>ユーザー {{ route.params.id }}</h2>\n</template>\n", "NotFound.vue": "<script setup lang=\"ts\">\n</script>\n\n<template>\n  <h2>404 ページが見つかりません</h2>\n</template>\n"}, steps: [
+      Object.assign({"file": "App.vue", "label": "ナビに「About」のリンクが出る", "hint": ["ナビのリンクは <code>&lt;RouterLink to=\"…\"&gt;</code>。", "<code>&lt;RouterLink to=\"/about\"&gt;About&lt;/RouterLink&gt;</code>"], "edits": [["    <!-- ① About へのリンクを足す -->\n", "    <RouterLink to=\"/about\">About</RouterLink> |\n"]]}, { ok: (R) => R.m1 }),
+      Object.assign({"file": "router.ts", "label": "「About」を押すと、About の画面が出る", "hint": ["どの URL でどの部品を出すか、<code>routes</code> に1行足す。", "<code>{ path: '/about', component: AboutView }</code>"], "edits": [["  // ② /about のルートを足す\n", "  { path: '/about', component: AboutView },\n"]]}, { ok: (R) => R.m2 }),
+      Object.assign({"file": "router.ts", "label": "「Home」を押すと、Home の画面に戻る", "hint": ["Home のリンクはもうある。ルートが2つあれば、行き来できる。", "② が書けていれば、自然に戻れる。"], "edits": []}, { ok: (R) => R.m3 }),
+      Object.assign({"file": "router.ts", "label": "「ユーザー 42」を押すと「ユーザー 42」と出る（URL の一部を変数で受け取る）", "hint": ["URL の一部を変数にするには、path に <code>:id</code> と書く。画面では <code>route.params.id</code> で読める（UserView.vue は用意済み）。", "<code>{ path: '/user/:id', component: UserView }</code> を routes に足す。"], "edits": [["  { path: '/about', component: AboutView },\n", "  { path: '/about', component: AboutView },\n  { path: '/user/:id', component: UserView },\n"]], "optional": true, "level": 1}, { ok: (R) => R.o1 }),
+      Object.assign({"file": "App.vue", "label": "いま開いているページのリンクだけ太字にする（router-link-exact-active）", "hint": ["リンクには、今のページと合うと自動で class が付く。<code>router-link-active</code> と <code>router-link-exact-active</code> の2種類がある。", "<code>.router-link-exact-active { font-weight: bold }</code> を &lt;style&gt; に書く。Home（/）は <code>-active</code> だと全ページで太字になるので、<b>exact</b> のほうを使う。"], "edits": [["  <RouterView />\n</template>\n", "  <RouterView />\n</template>\n\n<style scoped>\n.router-link-exact-active { font-weight: bold }\n</style>\n"]], "optional": true, "level": 2}, { ok: (R) => R.o2 }),
+      Object.assign({"file": "router.ts", "label": "存在しない URL を開いたら「404」と出る（どれにも合わないルート）", "hint": ["routes の一番最後に、「どれにも合わない」ルートを足す。path に <code>:pathMatch(.*)*</code> と書くと、残り全部に合う（NotFound.vue は用意済み）。", "<code>{ path: '/:pathMatch(.*)*', component: NotFound }</code> を最後に足す。"], "edits": [["  { path: '/user/:id', component: UserView },\n", "  { path: '/user/:id', component: UserView },\n  { path: '/:pathMatch(.*)*', component: NotFound },\n"]], "optional": true, "level": 3}, { ok: (R) => R.o3 }),
     ], probe: async (win, doc) => {
       const wait = (ms) => new Promise((r) => setTimeout(r, ms));
       const out = { m1: false, m2: false, m3: false };

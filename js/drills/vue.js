@@ -8,11 +8,22 @@
   const appText = (c) => { const d = c.doc && c.doc(); const a = d && d.querySelector('#app'); return a ? a.textContent.replace(/\s+/g, ' ').trim() : ''; };
   const $q = (c, s) => { const d = c.doc && c.doc(); return d ? d.querySelector(s) : null; };
   const $all = (c, s) => { const d = c.doc && c.doc(); return d ? [...d.querySelectorAll(s)] : []; };
-  const web = (html, js, sol, tasks, o) => Object.assign({ mode: 'web', libs: [VUE], height: 260,
+  /* 旧形式の書き方（index.html ＋ main.js）を、出題は .vue ファイルに直して出す */
+  const VT = K.vueTools;
+  const web = (html, js, sol, tasks, o) => Object.assign({ mode: 'web', sfc: true, libs: [VUE], height: 260,
+    files: [{ name: 'App.vue', lang: 'vue', code: VT.toSfc({ 'index.html': html, 'main.js': js }) }],
+    solution: { 'App.vue': VT.toSfc(sol) }, tasks: (v, c) => tasks(VT.shim(v), c) }, o || {});
+  /* Vue を使わない練習（HTML / JavaScript だけ） */
+  const plain = (html, js, sol, tasks, o) => Object.assign({ mode: 'web', libs: [], height: 260,
     files: [{ name: 'index.html', lang: 'html', code: html }, { name: 'main.js', lang: 'js', code: js }], solution: sol, tasks }, o || {});
+  /* 複数の .vue（親・子）や router.ts で出す練習。files = { ファイル名: 中身 } */
+  const multi = (files, sol, tasks, o) => Object.assign({ mode: 'web', sfc: true, libs: [VUE], height: 280,
+    files: Object.keys(files).map((n) => ({ name: n, lang: /\.vue$/.test(n) ? 'vue' : 'ts', code: files[n] })), solution: sol, tasks }, o || {});
   const text = (name, lang, code, note, sol, tasks) => ({ mode: 'text', height: 240, files: [{ name, lang, code }], note, solution: sol, tasks });
   const lines = (s) => s.split('\n').map((x) => x.trim()).filter((x) => x && !x.startsWith('#'));
-  const T = (label, level, ok, hint) => ({ level, label, ok: !!ok, hint });
+  /* ヒントに <button> のようなタグが入っていても、そのまま見えるように（<code> などの装飾が無い文字は escape して code 表示） */
+  const fixHint = (t) => (typeof t !== 'string' || /<(code|b|br|small|i|kbd)\b/.test(t) ? t : (/^[\x20-\x7E\n]+$/.test(t) && /[<>@=(){}.;]/.test(t) ? { code: t, lang: /<|@|v-/.test(t) ? 'vue' : 'ts' } : t));
+  const T = (label, level, ok, hint) => ({ level, label, ok: !!ok, hint: [].concat(hint || []).map(fixHint) });
   const lastIdx = (ls, re) => { for (let i = ls.length - 1; i >= 0; i--) if (re.test(ls[i])) return i; return -1; };
 
   const HEAD = "const { createApp, ref } = Vue;\n";
@@ -37,22 +48,20 @@
         T('ボタンを押すと unread が 0 になる（script では .value を付けて代入）', 2, /@click|v-on:click/.test(v['index.html']) && /unread\.value\s*=/.test(v['main.js']), ['unread.value = 0']),
       ]),
     '.vue ファイルの解剖': text('FavoriteButton.vue', 'html',
-      "<script setup>\nimport { ref } from 'vue'\nconst likes = ref(0)\n</script>\n\n",
+      "<script setup lang=\"ts\">\nimport { ref } from 'vue'\nconst likes = ref(0)\n</script>\n\n",
       '<b>.vue は 3つの箱</b><br>script（動き）／ template（形）／ style（見た目）。<br>足りない箱を書き足そう。（お気に入りボタン部品）',
-      "<script setup>\nimport { ref } from 'vue'\nconst likes = ref(0)\n</script>\n\n<template>\n  <button>お気に入り {{ likes }}</button>\n</template>\n\n<style scoped>\nbutton { color: tomato; }\n</style>\n",
+      "<script setup lang=\"ts\">\nimport { ref } from 'vue'\nconst likes = ref(0)\n</script>\n\n<template>\n  <button>お気に入り {{ likes }}</button>\n</template>\n\n<style scoped>\nbutton { color: tomato; }\n</style>\n",
       (v) => { const s = v['FavoriteButton.vue']; return [
         T('template を書き、{{ likes }} を表示する', 1, /<template>[\s\S]*\{\{\s*likes\s*\}\}[\s\S]*<\/template>/.test(s), ['<template><button>お気に入り {{ likes }}</button></template>']),
         T('style scoped を書き、button の色を決める', 2, /<style[^>]*scoped[^>]*>[\s\S]*button\s*\{[^}]*color\s*:[^}]+\}[\s\S]*<\/style>/.test(s), ['<style scoped>\nbutton { color: tomato; }\n</style>']),
         T('3つの箱の順番は script → template → style（上から）', 3, (() => { const a = s.indexOf('<script'), b = s.indexOf('<template'), c = s.indexOf('<style'); return a >= 0 && b > a && c > b; })(), ['script / template / style の順に並べる']),
       ]; }),
-    'Options API と Composition API': web(
-      '<div id="app">\n  <p>{{ title }}</p>\n  <p>お気に入り: {{ likes }}</p>\n  <button @click="likes++">お気に入り</button>\n</div>',
-      "const { createApp, ref } = Vue;\n// Options API で書かれている。Composition API（setup）に書き直そう\ncreateApp({\n  data() { return { likes: 0, title: '相談予約' }; }\n}).mount('#app');",
-      { 'index.html': '<div id="app">\n  <p>{{ title }}</p>\n  <p>お気に入り: {{ likes }}</p>\n  <button @click="addLike">お気に入り</button>\n</div>', 'main.js': "const { createApp, ref } = Vue;\ncreateApp({\n  setup() {\n    const likes = ref(0);\n    const title = ref('相談予約');\n    const addLike = () => { likes.value++; };\n    return { likes, title, addLike };\n  }\n}).mount('#app');" },
-      (v, c) => [
-        T('data() をやめて setup() + ref で書き直す（画面は同じまま）', 1, /setup\s*\(/.test(v['main.js']) && /ref\s*\(/.test(v['main.js']) && !/\bdata\s*\(/.test(v['main.js']) && /お気に入り:\s*0/.test(appText(c)) && /相談予約/.test(appText(c)), ["createApp({ setup() { const likes = ref(0); const title = ref('相談予約'); return { likes, title }; } })"]),
-        T('addLike 関数を作り、ボタンの @click から呼ぶ（.value を使う）', 2, /@click\s*=\s*["']addLike(\(\))?["']/.test(v['index.html']) && /addLike[\s\S]{0,40}likes\.value/.test(v['main.js']), ['const addLike = () => { likes.value++; };']),
-      ]),
+    'Options API と Composition API': multi({ 'App.vue': "<script lang=\"ts\">\n// Options API で書かれている。<script setup>（Composition API）に書き直そう\nexport default {\n  data() {\n    return { likes: 0, title: '相談予約' }\n  },\n}\n</script>\n\n<template>\n  <p>{{ title }}</p>\n  <p>お気に入り: {{ likes }}</p>\n  <button @click=\"likes++\">お気に入り</button>\n</template>\n" },
+      { 'App.vue': "<script setup lang=\"ts\">\nimport { ref } from 'vue'\n\nconst likes = ref(0)\nconst title = ref('相談予約')\nconst addLike = (): void => {\n  likes.value++\n}\n</script>\n\n<template>\n  <p>{{ title }}</p>\n  <p>お気に入り: {{ likes }}</p>\n  <button @click=\"addLike\">お気に入り</button>\n</template>\n" },
+      (v, c) => { const f = v['App.vue']; return [
+        T('data() をやめて <script setup> + ref で書き直す（画面は同じまま）', 1, /<script[^>]*\bsetup\b/.test(f) && /ref\s*\(/.test(f) && !/\bdata\s*\(/.test(f) && !/export\s+default/.test(f) && /お気に入り:\s*0/.test(appText(c)) && /相談予約/.test(appText(c)), ["<script setup lang=\"ts\">\nimport { ref } from 'vue'\nconst likes = ref(0)\nconst title = ref('相談予約')\n</script>"]),
+        T('addLike 関数を作り、ボタンの @click から呼ぶ（.value を使う）', 2, /@click\s*=\s*["']addLike(\(\))?["']/.test(f) && /addLike[\s\S]{0,60}likes\.value/.test(f), ['const addLike = () => { likes.value++ }', '<button @click="addLike">']),
+      ]; }),
   };
 
   /* ===================== vue-env ===================== */
@@ -109,48 +118,50 @@
       ]; }),
     'イベント処理 @click': web(
       '<div id="app">\n  <p>残り枠: {{ slots }}</p>\n  <button>1枠予約</button>\n  <button>3枠まとめて予約</button>\n</div>',
-      HEAD + "createApp({ setup() {\n  const slots = ref(10);\n  // ① 1枠減らす  ② 数字を受け取って減らす関数\n  return { slots };" + MOUNT,
-      { 'index.html': '<div id="app">\n  <p>残り枠: {{ slots }}</p>\n  <button @click="slots--">1枠予約</button>\n  <button @click="reserve(3)">3枠まとめて予約</button>\n</div>', 'main.js': HEAD + "createApp({ setup() {\n  const slots = ref(10);\n  const reserve = (n) => { slots.value -= n; };\n  return { slots, reserve };" + MOUNT },
+      HEAD + "createApp({ setup() {\n  const slots = ref(10);\n  // ① 1枠減らす  ② 数字を受け取って減らす関数（引数 n には number 型を付ける）\n  return { slots };" + MOUNT,
+      { 'index.html': '<div id="app">\n  <p>残り枠: {{ slots }}</p>\n  <button @click="slots--">1枠予約</button>\n  <button @click="reserve(3)">3枠まとめて予約</button>\n</div>', 'main.js': HEAD + "createApp({ setup() {\n  const slots = ref(10);\n  const reserve = (n: number): void => { slots.value -= n; };\n  return { slots, reserve };" + MOUNT },
       (v) => [
         T('「1枠予約」ボタンを @click で動かし、slots を 1 減らす', 1, /<button[^>]*@click\s*=\s*["'][^"']*(slots\s*--|slots\s*-=\s*1|reserve\w*\(\s*1\s*\)|\w+(\(\))?)["']/.test(v['index.html']) && /(--|-=)/.test(v['index.html'] + v['main.js']), ['<button @click="slots--">1枠予約</button>']),
         T('「3枠まとめて」は、数字を引数で渡す（@click="reserve(3)"）', 2, /@click\s*=\s*["']\w+\(\s*3\s*\)["']/.test(v['index.html']) && /\.value\s*-=\s*\w+/.test(v['main.js']), ['@click="reserve(3)"', 'const reserve = (n) => { slots.value -= n; };']),
+        T('引数 n に number 型を付ける（n: number）。型があると、reserve("3") のような間違いが赤線になる', 3, /reserve\s*=\s*\(\s*n\s*:\s*number\s*\)|function\s+reserve\s*\(\s*n\s*:\s*number\s*\)/.test(v['main.js']), ['const reserve = (n: number): void => { slots.value -= n }']),
       ]),
     ':class と v-for': web(
       '<div id="app">\n  <ul>\n    <li>{{ items[0] }}</li>\n  </ul>\n</div>\n<style>.on { color: tomato; font-weight: bold; }</style>',
-      HEAD + "createApp({ setup() {\n  const items = ref(['労働問題', '契約トラブル', '交通事故']);\n  const selected = ref('契約トラブル');\n  return { items, selected };" + MOUNT,
-      { 'index.html': '<div id="app">\n  <ul>\n    <li v-for="item in items" :key="item" :class="{ on: item === selected }" @click="selected = item">{{ item }}</li>\n  </ul>\n</div>\n<style>.on { color: tomato; font-weight: bold; }</style>', 'main.js': HEAD + "createApp({ setup() {\n  const items = ref(['労働問題', '契約トラブル', '交通事故']);\n  const selected = ref('契約トラブル');\n  return { items, selected };" + MOUNT },
+      HEAD + "createApp({ setup() {\n  // ※ 配列の ref には、中身の型も書く（文字の配列）\n  const items = ref(['労働問題', '契約トラブル', '交通事故']);\n  const selected = ref('契約トラブル');\n  return { items, selected };" + MOUNT,
+      { 'index.html': '<div id="app">\n  <ul>\n    <li v-for="item in items" :key="item" :class="{ on: item === selected }" @click="selected = item">{{ item }}</li>\n  </ul>\n</div>\n<style>.on { color: tomato; font-weight: bold; }</style>', 'main.js': HEAD + "createApp({ setup() {\n  const items = ref<string[]>(['労働問題', '契約トラブル', '交通事故']);\n  const selected = ref('契約トラブル');\n  return { items, selected };" + MOUNT },
       (v, c) => [
         T('v-for と :key で、3つの案件を並べる', 1, /v-for\s*=/.test(v['index.html']) && /:key\s*=/.test(v['index.html']) && $all(c, '#app li').length === 3, ['<li v-for="item in items" :key="item">{{ item }}</li>']),
         T(':class で、選ばれている（selected）案件に on クラスを付ける', 2, /:class\s*=\s*["'][^"']*on[^"']*["']/.test(v['index.html']) && $all(c, '#app li.on').length === 1 && ($q(c, '#app li.on') || { textContent: '' }).textContent.trim() === '契約トラブル', [':class="{ on: item === selected }"']),
+        T('items に型を付ける（ref<string[]>）。文字の配列だと TypeScript に教える', 3, /ref\s*<\s*string\s*\[\s*\]\s*>\s*\(/.test(v['main.js']), ["const items = ref<string[]>(['労働問題', '契約トラブル', '交通事故'])"]),
       ]),
   };
 
   /* ===================== vue-comp ===================== */
   const CHILD_HEAD = HEAD;
   D['vue-comp'] = {
-    'props：親から子へ': web(
-      '<div id="app">\n  <case-card></case-card>\n</div>',
-      CHILD_HEAD + "const CaseCard = {\n  template: '<p>相談案件: {{ title }}</p>'\n};\ncreateApp({ components: { CaseCard }, setup() {\n  const caseTitle = ref('労働問題');\n  return { caseTitle };" + MOUNT,
-      { 'index.html': '<div id="app">\n  <case-card :title="caseTitle"></case-card>\n</div>', 'main.js': CHILD_HEAD + "const CaseCard = {\n  props: ['title'],\n  template: '<p>相談案件: {{ title }}</p>'\n};\ncreateApp({ components: { CaseCard }, setup() {\n  const caseTitle = ref('労働問題');\n  return { caseTitle };" + MOUNT },
+    'props：親から子へ': multi({
+      'App.vue': "<script setup lang=\"ts\">\nimport { ref } from 'vue'\nimport CaseCard from './CaseCard.vue'\n\nconst caseTitle = ref('労働問題')\n</script>\n\n<template>\n  <CaseCard />\n</template>\n",
+      'CaseCard.vue': "<script setup lang=\"ts\">\n// ① 親から title を受け取る（props）。型も書く: defineProps<{ title: string }>()\n</script>\n\n<template>\n  <p>相談案件: {{ title }}</p>\n</template>\n" },
+      { 'App.vue': "<script setup lang=\"ts\">\nimport { ref } from 'vue'\nimport CaseCard from './CaseCard.vue'\n\nconst caseTitle = ref('労働問題')\n</script>\n\n<template>\n  <CaseCard :title=\"caseTitle\" />\n</template>\n", 'CaseCard.vue': "<script setup lang=\"ts\">\ndefineProps<{ title: string }>()\n</script>\n\n<template>\n  <p>相談案件: {{ title }}</p>\n</template>\n" },
       (v, c) => [
-        T('子に props: [\'title\'] を宣言し、親から title を渡して「相談案件: ◯◯」と出す', 1, /props\s*:/.test(v['main.js']) && /相談案件:\s*\S+/.test(appText(c)), ["props: ['title']", '<case-card title="契約トラブル"></case-card>']),
-        T('親のデータ caseTitle を :title で渡す（v-bind）', 2, /<case-card[^>]*(:title|v-bind:title)\s*=\s*["']caseTitle["']/.test(v['index.html']) && /相談案件:\s*労働問題/.test(appText(c)), ['<case-card :title="caseTitle"></case-card>']),
+        T('子（CaseCard.vue）に defineProps<{ title: string }>() で title を宣言し（型も書く）、親から渡して「相談案件: ◯◯」と出す', 1, /defineProps\s*<\s*\{[^}]*title\s*:\s*string/.test(v['CaseCard.vue']) && /相談案件:\s*\S+/.test(appText(c)), ['defineProps<{ title: string }>()', '<CaseCard title="契約トラブル" />']),
+        T('親のデータ caseTitle を :title で渡す（v-bind）', 2, /<CaseCard[^>]*(:title|v-bind:title)\s*=\s*["']caseTitle["']/.test(v['App.vue']) && /相談案件:\s*労働問題/.test(appText(c)), ['<CaseCard :title="caseTitle" />']),
       ]),
-    'emit：子から親へ': web(
-      '<div id="app">\n  <p>案件数: {{ count }}</p>\n  <case-row></case-row>\n</div>',
-      CHILD_HEAD + "const CaseRow = {\n  template: '<button>削除</button>'\n};\ncreateApp({ components: { CaseRow }, setup() {\n  const count = ref(3);\n  return { count };" + MOUNT,
-      { 'index.html': '<div id="app">\n  <p>案件数: {{ count }}</p>\n  <case-row @remove="count--"></case-row>\n</div>', 'main.js': CHILD_HEAD + "const CaseRow = {\n  emits: ['remove'],\n  template: '<button @click=\"$emit(\\'remove\\')\">削除</button>'\n};\ncreateApp({ components: { CaseRow }, setup() {\n  const count = ref(3);\n  return { count };" + MOUNT },
+    'emit：子から親へ': multi({
+      'App.vue': "<script setup lang=\"ts\">\nimport { ref } from 'vue'\nimport CaseRow from './CaseRow.vue'\n\nconst count = ref(3)\n</script>\n\n<template>\n  <p>案件数: {{ count }}</p>\n  <CaseRow />\n</template>\n",
+      'CaseRow.vue': "<script setup lang=\"ts\">\n// ① 削除が押されたことを、親に知らせる（emit）。型も書く: defineEmits<{ remove: [] }>()\n</script>\n\n<template>\n  <button>削除</button>\n</template>\n" },
+      { 'App.vue': "<script setup lang=\"ts\">\nimport { ref } from 'vue'\nimport CaseRow from './CaseRow.vue'\n\nconst count = ref(3)\n</script>\n\n<template>\n  <p>案件数: {{ count }}</p>\n  <CaseRow @remove=\"count--\" />\n</template>\n", 'CaseRow.vue': "<script setup lang=\"ts\">\nconst emit = defineEmits<{ remove: [] }>()\n</script>\n\n<template>\n  <button @click=\"emit('remove')\">削除</button>\n</template>\n" },
       (v) => [
-        T('子の削除ボタンを押すと、$emit(\'remove\') でイベントを出す', 1, /\$?emit\(\s*(\\)?['"]remove(\\)?['"]/.test(v['main.js']) && /@click|v-on:click/.test(v['main.js']), ["<button @click=\"$emit('remove')\">削除</button>"]),
-        T('親で @remove を受け取り、count を減らす（消すのは親）', 2, /<case-row[^>]*@remove\s*=\s*["'][^"']*count[^"']*["']/.test(v['index.html']), ['<case-row @remove="count--"></case-row>']),
+        T('子（CaseRow.vue）で defineEmits<{ remove: [] }>() と型を書き、削除ボタンを押すと emit(\'remove\') でイベントを出す', 1, /emit\(\s*['"]remove['"]/.test(v['CaseRow.vue']) && /@click|v-on:click/.test(v['CaseRow.vue']) && /defineEmits\s*<[\s\S]*remove/.test(v['CaseRow.vue']), ["const emit = defineEmits<{ remove: [] }>()", "<button @click=\"emit('remove')\">削除</button>"]),
+        T('親（App.vue）で @remove を受け取り、count を減らす（消すのは親）', 2, /<CaseRow[^>]*@remove\s*=\s*["'][^"']*count[^"']*["']/.test(v['App.vue']), ['<CaseRow @remove="count--" />']),
       ]),
-    'v-model を部品に': web(
-      '<div id="app">\n  <name-input></name-input>\n  <p>お名前: {{ name }}</p>\n</div>',
-      CHILD_HEAD + "const NameInput = {\n  // ① modelValue を受け取る  ② 入力で update:modelValue を出す\n  template: '<input placeholder=\"お名前\">'\n};\ncreateApp({ components: { NameInput }, setup() {\n  const name = ref('');\n  return { name };" + MOUNT,
-      { 'index.html': '<div id="app">\n  <name-input v-model="name"></name-input>\n  <p>お名前: {{ name }}</p>\n</div>', 'main.js': CHILD_HEAD + "const NameInput = {\n  props: ['modelValue'],\n  emits: ['update:modelValue'],\n  template: '<input placeholder=\"お名前\" :value=\"modelValue\" @input=\"$emit(\\'update:modelValue\\', $event.target.value)\">'\n};\ncreateApp({ components: { NameInput }, setup() {\n  const name = ref('');\n  return { name };" + MOUNT },
+    'v-model を部品に': multi({
+      'App.vue': "<script setup lang=\"ts\">\nimport { ref } from 'vue'\nimport NameInput from './NameInput.vue'\n\nconst name = ref('')\n</script>\n\n<template>\n  <NameInput />\n  <p>お名前: {{ name }}</p>\n</template>\n",
+      'NameInput.vue': "<script setup lang=\"ts\">\n// ① modelValue（string）を受け取る  ② 入力で update:modelValue を出す（どちらも型を書く）\n</script>\n\n<template>\n  <input placeholder=\"お名前\" />\n</template>\n" },
+      { 'App.vue': "<script setup lang=\"ts\">\nimport { ref } from 'vue'\nimport NameInput from './NameInput.vue'\n\nconst name = ref('')\n</script>\n\n<template>\n  <NameInput v-model=\"name\" />\n  <p>お名前: {{ name }}</p>\n</template>\n", 'NameInput.vue': "<script setup lang=\"ts\">\ndefineProps<{ modelValue: string }>()\nconst emit = defineEmits<{ 'update:modelValue': [value: string] }>()\n</script>\n\n<template>\n  <input placeholder=\"お名前\" :value=\"modelValue\" @input=\"emit('update:modelValue', $event.target.value)\" />\n</template>\n" },
       (v) => [
-        T('子で props: [\'modelValue\'] を受け取り、入力で update:modelValue を emit する', 1, /props\s*:\s*\[\s*['"]modelValue['"]/.test(v['main.js']) && /update:modelValue/.test(v['main.js']) && /\$?emit\(/.test(v['main.js']), ["props: ['modelValue']", "$emit('update:modelValue', $event.target.value)"]),
-        T('親では、部品に v-model="name" を付ける', 2, /<name-input[^>]*v-model\s*=\s*["']name["']/.test(v['index.html']), ['<name-input v-model="name"></name-input>']),
+        T('子（NameInput.vue）で modelValue（string）を defineProps<…>() で受け取り、defineEmits<…>() 経由で update:modelValue を emit する', 1, /defineProps\s*<\s*\{[^}]*modelValue\s*:\s*string/.test(v['NameInput.vue']) && /defineEmits\s*</.test(v['NameInput.vue']) && /update:modelValue/.test(v['NameInput.vue']) && /emit\(/.test(v['NameInput.vue']), ['defineProps<{ modelValue: string }>()', "emit('update:modelValue', $event.target.value)"]),
+        T('親（App.vue）では、部品に v-model="name" を付ける', 2, /<NameInput[^>]*v-model\s*=\s*["']name["']/.test(v['App.vue']), ['<NameInput v-model="name" />']),
       ]),
     '使い分け：どう渡す？': text('choose.md', 'text',
       '# 場面ごとに props / emit / v-model のどれかを書こう\n案件名を、親から案件カードへ渡す:\nカードの「削除」を、親の案件リストに知らせる:\n氏名の入力欄の値を、親と子で共有する:\n',
@@ -176,19 +187,21 @@
       ]),
     'computed：賢い計算': web(
       '<div id="app">\n  <p>小計: {{ price * qty }}</p>\n  <p>税込: {{ price * qty * 1.1 }}</p>\n</div>',
-      LHEAD + "createApp({ setup() {\n  const price = ref(1000);\n  const qty = ref(2);\n  // ① total = computed で price × qty\n  // ② withTax = computed で total の 1.1 倍（四捨五入）\n  return { price, qty };" + MOUNT,
-      { 'index.html': '<div id="app">\n  <p>小計: {{ total }}</p>\n  <p>税込: {{ withTax }}</p>\n</div>', 'main.js': LHEAD + "createApp({ setup() {\n  const price = ref(1000);\n  const qty = ref(2);\n  const total = computed(() => price.value * qty.value);\n  const withTax = computed(() => Math.round(total.value * 1.1));\n  return { price, qty, total, withTax };" + MOUNT },
+      LHEAD + "createApp({ setup() {\n  const price = ref(1000);\n  const qty = ref(2);\n  // ① total = computed で price × qty\n  // ② withTax = computed で total の 1.1 倍（四捨五入）\n  // ③ computed に、結果の型（数）を付ける\n  return { price, qty };" + MOUNT,
+      { 'index.html': '<div id="app">\n  <p>小計: {{ total }}</p>\n  <p>税込: {{ withTax }}</p>\n</div>', 'main.js': LHEAD + "createApp({ setup() {\n  const price = ref(1000);\n  const qty = ref(2);\n  const total = computed<number>(() => price.value * qty.value);\n  const withTax = computed<number>(() => Math.round(total.value * 1.1));\n  return { price, qty, total, withTax };" + MOUNT },
       (v, c) => [
-        T('total を computed で作り、{{ total }} で小計 2000 を出す', 1, /total\s*=\s*computed\s*\(/.test(v['main.js']) && /\{\{\s*total\s*\}\}/.test(v['index.html']) && /小計:\s*2000/.test(appText(c)), ['const total = computed(() => price.value * qty.value);']),
-        T('withTax も computed（total を使って 1.1 倍）にして、税込 2200 を出す', 2, (v['main.js'].match(/computed\s*\(/g) || []).length >= 2 && /withTax[\s\S]{0,80}total\.value/.test(v['main.js']) && /税込:\s*2200/.test(appText(c)), ['const withTax = computed(() => Math.round(total.value * 1.1));']),
+        T('total を computed で作り、{{ total }} で小計 2000 を出す', 1, /total\s*=\s*computed\s*(<[^>]*>)?\s*\(/.test(v['main.js']) && /\{\{\s*total\s*\}\}/.test(v['index.html']) && /小計:\s*2000/.test(appText(c)), ['const total = computed(() => price.value * qty.value);']),
+        T('withTax も computed（total を使って 1.1 倍）にして、税込 2200 を出す', 2, (v['main.js'].match(/computed\s*(<[^>]*>)?\s*\(/g) || []).length >= 2 && /withTax[\s\S]{0,80}total\.value/.test(v['main.js']) && /税込:\s*2200/.test(appText(c)), ['const withTax = computed(() => Math.round(total.value * 1.1));']),
+        T('computed に結果の型を付ける（computed<number>）。数のはずが文字になると赤線で気づける', 3, /computed\s*<\s*number\s*>\s*\(/.test(v['main.js']), ['const total = computed<number>(() => price.value * qty.value)']),
       ]),
     'watch / watchEffect': web(
       '<div id="app">\n  <input v-model="keyword" placeholder="検索キーワード">\n  <p>{{ log }}</p>\n  <p>表示中: {{ shown }}</p>\n</div>',
       LHEAD + "createApp({ setup() {\n  const keyword = ref('');\n  const log = ref('');\n  const shown = ref('');\n  // ① watch で keyword の変化に反応して log を書く\n  // ② watchEffect で shown = '検索: ' + keyword を自動で作る\n  return { keyword, log, shown };" + MOUNT,
-      { 'index.html': '<div id="app">\n  <input v-model="keyword" placeholder="検索キーワード">\n  <p>{{ log }}</p>\n  <p>表示中: {{ shown }}</p>\n</div>', 'main.js': LHEAD + "createApp({ setup() {\n  const keyword = ref('');\n  const log = ref('');\n  const shown = ref('');\n  watch(keyword, (n) => { log.value = '検索 API を呼ぶ: ' + n; });\n  watchEffect(() => { shown.value = '検索: ' + keyword.value; });\n  return { keyword, log, shown };" + MOUNT },
+      { 'index.html': '<div id="app">\n  <input v-model="keyword" placeholder="検索キーワード">\n  <p>{{ log }}</p>\n  <p>表示中: {{ shown }}</p>\n</div>', 'main.js': LHEAD + "createApp({ setup() {\n  const keyword = ref('');\n  const log = ref('');\n  const shown = ref('');\n  watch(keyword, (n: string) => { log.value = '検索 API を呼ぶ: ' + n; });\n  watchEffect(() => { shown.value = '検索: ' + keyword.value; });\n  return { keyword, log, shown };" + MOUNT },
       (v, c) => [
         T('watch(keyword, ...) で、keyword が変わったときだけ log を書き換える', 1, /watch\s*\(\s*(keyword\b|\(\s*\)\s*=>\s*keyword\.value)/.test(v['main.js']) && /log\.value\s*=/.test(v['main.js']), ["watch(keyword, (n) => { log.value = '検索 API を呼ぶ: ' + n; });"]),
         T('watchEffect で shown を「検索: ＋ keyword」にする（最初から「表示中: 検索: 」）', 2, /watchEffect\s*\(/.test(v['main.js']) && /表示中:\s*検索:/.test(appText(c)), ["watchEffect(() => { shown.value = '検索: ' + keyword.value; });"]),
+        T('watch の引数（新しい値 n）に string 型を付ける（n: string）', 3, /watch\s*\(\s*keyword\s*,\s*\(\s*\w+\s*:\s*string\s*[,)]/.test(v['main.js']), ["watch(keyword, (n: string) => { log.value = '検索 API を呼ぶ: ' + n })"]),
       ]),
     '使い分け：computed / method / watch / フック': text('choose.md', 'text',
       '# computed / method / watch / onMounted のどれかを書こう\n値から計算して表示する（材料が変わった時だけ）:\nボタンを押したときに処理する:\n値が変わったら API を呼ぶなどの副作用:\n画面が表示された直後に1回だけ、初期データを読む:\n',
@@ -202,31 +215,36 @@
 
   /* ===================== vue-router ===================== */
   const RHEAD = "const { createApp } = Vue;\nconst { createRouter, createMemoryHistory } = VueRouter;\n";
-  const rweb = (html, js, sol, tasks) => web(html, js, sol, tasks, { libs: [VUE, VROUTER], height: 280 });
+  const rmulti = (files, sol, tasks) => multi(files, sol, tasks, { libs: [VUE, VROUTER], height: 280 });
+  const VIEW = (h2) => '<script setup lang="ts">\n</script>\n\n<template>\n  <h3>' + h2 + '</h3>\n</template>\n';
   D['vue-router'] = {
-    'URL ↔ コンポーネント': rweb(
-      '<div id="app">\n  <nav>\n    <router-link to="/">ホーム</router-link>\n    <!-- ② 案件一覧へのリンクを足す -->\n  </nav>\n  <router-view></router-view>\n</div>',
-      RHEAD + "const Home = { template: '<h3>ホーム</h3>' };\nconst CaseList = { template: '<h3>相談案件の一覧</h3>' };\nconst router = createRouter({\n  history: createMemoryHistory(),\n  routes: [\n    { path: '/', component: Home },\n    // ① /cases のルートを足す\n  ]\n});\ncreateApp({}).use(router).mount('#app');",
-      { 'index.html': '<div id="app">\n  <nav>\n    <router-link to="/">ホーム</router-link>\n    <router-link to="/cases">案件一覧</router-link>\n  </nav>\n  <router-view></router-view>\n</div>', 'main.js': RHEAD + "const Home = { template: '<h3>ホーム</h3>' };\nconst CaseList = { template: '<h3>相談案件の一覧</h3>' };\nconst router = createRouter({\n  history: createMemoryHistory(),\n  routes: [\n    { path: '/', component: Home },\n    { path: '/cases', component: CaseList },\n  ]\n});\ncreateApp({}).use(router).mount('#app');" },
+    'URL ↔ コンポーネント': rmulti({
+      'router.ts': "import { createRouter, createMemoryHistory } from 'vue-router'\nimport HomeView from './HomeView.vue'\nimport CaseList from './CaseList.vue'\n\nconst router = createRouter({\n  history: createMemoryHistory(),\n  routes: [\n    { path: '/', component: HomeView },\n    // ① /cases のルートを足す\n  ],\n})\n\nexport default router\n",
+      'App.vue': "<script setup lang=\"ts\">\n</script>\n\n<template>\n  <nav>\n    <RouterLink to=\"/\">ホーム</RouterLink>\n    <!-- ② 案件一覧へのリンクを足す -->\n  </nav>\n  <RouterView />\n</template>\n",
+      'HomeView.vue': VIEW('ホーム'), 'CaseList.vue': VIEW('相談案件の一覧') },
+      { 'router.ts': "import { createRouter, createMemoryHistory } from 'vue-router'\nimport HomeView from './HomeView.vue'\nimport CaseList from './CaseList.vue'\n\nconst router = createRouter({\n  history: createMemoryHistory(),\n  routes: [\n    { path: '/', component: HomeView },\n    { path: '/cases', component: CaseList },\n  ],\n})\n\nexport default router\n", 'App.vue': "<script setup lang=\"ts\">\n</script>\n\n<template>\n  <nav>\n    <RouterLink to=\"/\">ホーム</RouterLink>\n    <RouterLink to=\"/cases\">案件一覧</RouterLink>\n  </nav>\n  <RouterView />\n</template>\n" },
       (v, c) => [
-        T('routes に、/cases と CaseList 部品を結ぶルートを足す', 1, /path\s*:\s*['"]\/cases['"][^}]*component\s*:\s*CaseList/.test(v['main.js']), ["{ path: '/cases', component: CaseList }"]),
-        T('router-link で /cases へのリンクを作る', 2, /<router-link[^>]*to\s*=\s*["']\/cases["']/.test(v['index.html']) && !!$q(c, '#app a[href*="/cases"]'), ['<router-link to="/cases">案件一覧</router-link>']),
+        T('router.ts の routes に、/cases と CaseList 部品を結ぶルートを足す', 1, /path\s*:\s*['"]\/cases['"][^}]*component\s*:\s*CaseList/.test(v['router.ts']), ["{ path: '/cases', component: CaseList }"]),
+        T('App.vue に、RouterLink で /cases へのリンクを作る', 2, /<RouterLink[^>]*to\s*=\s*["']\/cases["']/.test(v['App.vue']) && !!$q(c, '#app a[href*="/cases"]'), ['<RouterLink to="/cases">案件一覧</RouterLink>']),
       ]),
-    '動的ルート /users/:id': rweb(
-      '<div id="app">\n  <nav>\n    <router-link to="/">ホーム</router-link>\n    <router-link to="/cases/42">案件 42</router-link>\n  </nav>\n  <router-view></router-view>\n</div>',
-      RHEAD + "const Home = { template: '<h3>ホーム</h3>' };\n// ② id を表示する（$route.params.id）\nconst CaseDetail = { template: '<p>案件番号: </p>' };\nconst router = createRouter({\n  history: createMemoryHistory(),\n  routes: [\n    { path: '/', component: Home },\n    // ① /cases/:id のルートを足す\n  ]\n});\ncreateApp({}).use(router).mount('#app');",
-      { 'index.html': '<div id="app">\n  <nav>\n    <router-link to="/">ホーム</router-link>\n    <router-link to="/cases/42">案件 42</router-link>\n  </nav>\n  <router-view></router-view>\n</div>', 'main.js': RHEAD + "const Home = { template: '<h3>ホーム</h3>' };\nconst CaseDetail = { template: '<p>案件番号: {{ $route.params.id }}</p>' };\nconst router = createRouter({\n  history: createMemoryHistory(),\n  routes: [\n    { path: '/', component: Home },\n    { path: '/cases/:id', component: CaseDetail },\n  ]\n});\ncreateApp({}).use(router).mount('#app');" },
+    '動的ルート /users/:id': rmulti({
+      'router.ts': "import { createRouter, createMemoryHistory } from 'vue-router'\nimport HomeView from './HomeView.vue'\nimport CaseDetail from './CaseDetail.vue'\n\nconst router = createRouter({\n  history: createMemoryHistory(),\n  routes: [\n    { path: '/', component: HomeView },\n    // ① /cases/:id のルートを足す\n  ],\n})\n\nexport default router\n",
+      'App.vue': "<script setup lang=\"ts\">\n</script>\n\n<template>\n  <nav>\n    <RouterLink to=\"/\">ホーム</RouterLink>\n    <RouterLink to=\"/cases/42\">案件 42</RouterLink>\n  </nav>\n  <RouterView />\n</template>\n",
+      'HomeView.vue': VIEW('ホーム'),
+      'CaseDetail.vue': "<script setup lang=\"ts\">\nimport { useRoute } from 'vue-router'\n\nconst route = useRoute()\n</script>\n\n<template>\n  <!-- ② id を表示する（route.params.id） -->\n  <p>案件番号: </p>\n</template>\n" },
+      { 'router.ts': "import { createRouter, createMemoryHistory } from 'vue-router'\nimport HomeView from './HomeView.vue'\nimport CaseDetail from './CaseDetail.vue'\n\nconst router = createRouter({\n  history: createMemoryHistory(),\n  routes: [\n    { path: '/', component: HomeView },\n    { path: '/cases/:id', component: CaseDetail },\n  ],\n})\n\nexport default router\n", 'CaseDetail.vue': "<script setup lang=\"ts\">\nimport { useRoute } from 'vue-router'\n\nconst route = useRoute()\n</script>\n\n<template>\n  <p>案件番号: {{ route.params.id }}</p>\n</template>\n" },
       (v) => [
-        T('/cases/:id のルートを足す（URL の一部を変数にする）', 1, /path\s*:\s*['"]\/cases\/:id['"][^}]*component\s*:\s*CaseDetail/.test(v['main.js']), ["{ path: '/cases/:id', component: CaseDetail }"]),
-        T('CaseDetail 部品で $route.params.id を使い、届いた案件番号を表示する', 2, /\{\{\s*\$route\.params\.id\s*\}\}/.test(v['main.js']), ['{{ $route.params.id }}']),
+        T('router.ts に、/cases/:id のルートを足す（URL の一部を変数にする）', 1, /path\s*:\s*['"]\/cases\/:id['"][^}]*component\s*:\s*CaseDetail/.test(v['router.ts']), ["{ path: '/cases/:id', component: CaseDetail }"]),
+        T('CaseDetail.vue で route.params.id を使い、届いた案件番号を表示する', 2, /\{\{\s*(\$route|route)\.params\.id\s*\}\}/.test(v['CaseDetail.vue']), ['{{ route.params.id }}']),
       ]),
-    'ナビゲーションガード': rweb(
-      '<div id="app">\n  <nav>\n    <router-link to="/">ホーム</router-link>\n    <router-link to="/admin">管理画面</router-link>\n  </nav>\n  <router-view></router-view>\n</div>',
-      RHEAD + "const Home = { template: '<h3>ホーム</h3>' };\nconst Admin = { template: '<h3>管理画面</h3>' };\nconst Login = { template: '<h3>ログインしてください</h3>' };\nconst isLoggedIn = false;\nconst router = createRouter({\n  history: createMemoryHistory(),\n  routes: [\n    { path: '/', component: Home },\n    { path: '/admin', component: Admin },\n    { path: '/login', component: Login },\n  ]\n});\n// ここに「関所」を書く\ncreateApp({}).use(router).mount('#app');",
-      { 'index.html': '<div id="app">\n  <nav>\n    <router-link to="/">ホーム</router-link>\n    <router-link to="/admin">管理画面</router-link>\n  </nav>\n  <router-view></router-view>\n</div>', 'main.js': RHEAD + "const Home = { template: '<h3>ホーム</h3>' };\nconst Admin = { template: '<h3>管理画面</h3>' };\nconst Login = { template: '<h3>ログインしてください</h3>' };\nconst isLoggedIn = false;\nconst router = createRouter({\n  history: createMemoryHistory(),\n  routes: [\n    { path: '/', component: Home },\n    { path: '/admin', component: Admin },\n    { path: '/login', component: Login },\n  ]\n});\nrouter.beforeEach((to) => {\n  if (to.path === '/admin' && !isLoggedIn) return '/login';\n});\ncreateApp({}).use(router).mount('#app');" },
-      (v) => { const js = v['main.js']; const i = js.indexOf('router.beforeEach'); const rest = i >= 0 ? js.slice(i) : ''; return [
-        T('router.beforeEach で、移動前の「関所」を作る', 1, i >= 0 && /router\.beforeEach\s*\(\s*(\(?\s*\w*\s*(,\s*\w+\s*)*\)?\s*=>|function)/.test(rest), ['router.beforeEach((to) => { ... });']),
-        T('ログインしていない（isLoggedIn が false）なら /login へ戻す', 2, i >= 0 && /isLoggedIn/.test(rest) && /['"]\/login['"]/.test(rest) && /return\s*['"]\/login['"]|next\(\s*['"]\/login['"]|path\s*:\s*['"]\/login['"]/.test(rest), ["if (!isLoggedIn) return '/login';"]),
+    'ナビゲーションガード': rmulti({
+      'router.ts': "import { createRouter, createMemoryHistory } from 'vue-router'\nimport HomeView from './HomeView.vue'\nimport AdminView from './AdminView.vue'\nimport LoginView from './LoginView.vue'\n\nconst isLoggedIn = false\n\nconst router = createRouter({\n  history: createMemoryHistory(),\n  routes: [\n    { path: '/', component: HomeView },\n    { path: '/admin', component: AdminView },\n    { path: '/login', component: LoginView },\n  ],\n})\n\n// ここに「関所」を書く\n\nexport default router\n",
+      'App.vue': "<script setup lang=\"ts\">\n</script>\n\n<template>\n  <nav>\n    <RouterLink to=\"/\">ホーム</RouterLink>\n    <RouterLink to=\"/admin\">管理画面</RouterLink>\n  </nav>\n  <RouterView />\n</template>\n",
+      'HomeView.vue': VIEW('ホーム'), 'AdminView.vue': VIEW('管理画面'), 'LoginView.vue': VIEW('ログインしてください') },
+      { 'router.ts': "import { createRouter, createMemoryHistory } from 'vue-router'\nimport HomeView from './HomeView.vue'\nimport AdminView from './AdminView.vue'\nimport LoginView from './LoginView.vue'\n\nconst isLoggedIn = false\n\nconst router = createRouter({\n  history: createMemoryHistory(),\n  routes: [\n    { path: '/', component: HomeView },\n    { path: '/admin', component: AdminView },\n    { path: '/login', component: LoginView },\n  ],\n})\n\nrouter.beforeEach((to) => {\n  if (to.path === '/admin' && !isLoggedIn) return '/login'\n})\n\nexport default router\n" },
+      (v) => { const js = v['router.ts']; const i = js.indexOf('router.beforeEach'); const rest = i >= 0 ? js.slice(i) : ''; return [
+        T('router.beforeEach で、移動前の「関所」を作る', 1, i >= 0 && /router\.beforeEach\s*\(\s*(\(?\s*\w*\s*(,\s*\w+\s*)*\)?\s*=>|function)/.test(rest), ['router.beforeEach((to) => { ... })']),
+        T('ログインしていない（isLoggedIn が false）なら /login へ戻す', 2, i >= 0 && /isLoggedIn/.test(rest) && /['"]\/login['"]/.test(rest) && /return\s*['"]\/login['"]|next\(\s*['"]\/login['"]|path\s*:\s*['"]\/login['"]/.test(rest), ["if (!isLoggedIn) return '/login'"]),
       ]; }),
     '使い分け：RouterLink と push': text('choose.md', 'text',
       '# RouterLink / router.push / router.back のどれかを書こう\n人がクリックして移動するメニューのリンク:\n保存が終わったら、コードで一覧ページへ移動する:\n「戻る」ボタンで1つ前のページへ:\n',
@@ -297,7 +315,7 @@
       T('「サーバーにお願い」→「データベースに保存」の順', 2, b >= 0 && c > b, ['フロントはデータベースに直接さわらず、サーバー（API）経由で頼む。']),
       T('最後は「返事」→「画面に表示」で終わる', 3, d > c && e > d && e === L.length - 1, ['保存できたと分かってから、画面を更新する。']),
     ]; });
-  D['vue-intro']['HTML・CSS・JavaScript'] = web(
+  D['vue-intro']['HTML・CSS・JavaScript'] = plain(
     '<h3>弁護士に相談</h3>\n<button id="btn">予約する</button>\n<!-- ② ここに <style> を書いて、h3 の色を変える -->\n<!-- ③ ここに <p> で説明文を足す -->',
     "// ① ボタンを押したら、文字を「予約しました ✓」に変える\nconst btn = document.getElementById('btn')\n",
     { 'index.html': '<style>h3 { color: teal }</style>\n<h3>弁護士に相談</h3>\n<button id="btn">予約する</button>\n<p>初回は30分無料です。</p>', 'main.js': "const btn = document.getElementById('btn')\nbtn.onclick = () => {\n  btn.textContent = '予約しました ✓'\n}\n" },
@@ -354,15 +372,24 @@
       T('相談カードの props（item）と emit（toggle）を書く', 3, /props\s*[:：]?\s*item/i.test(v['tree.md']) && /emit\s*[:：]?\s*toggle/i.test(v['tree.md']), ['CaseCard   props: item / emit: toggle のように書く。']),
     ]; });
 
-  D['vue-basics']['JS の基本：変数と関数'] = text('basics.js', 'js',
-    "// ① 変えない値 title を const で宣言（値は '相談ナビ'）\n\n// ② 2倍にする関数 double(n) を作る（アロー関数でも function でもOK）\n\n// ③ cases から、未完了(done が false)だけを取り出す\nconst cases = [\n  { title: '離婚の相談', done: false },\n  { title: '労働の相談', done: true },\n]\n",
-    '3つとも、書き方を見ながら埋めてみよう。',
-    { 'basics.js': "const title = '相談ナビ'\n\nconst double = (n) => n * 2\n\nconst cases = [\n  { title: '離婚の相談', done: false },\n  { title: '労働の相談', done: true },\n]\nconst open = cases.filter((c) => !c.done)\n" },
-    (v) => { const s = v['basics.js']; return [
-      T('① const title = \'相談ナビ\' と書く', 1, /const\s+title\s*=\s*['"`]相談ナビ['"`]/.test(s), ['変えない値は const。']),
-      T('② 数を2倍にして返す関数 double を作る', 2, /(function\s+double\s*\(\s*\w+\s*\)\s*\{[\s\S]*return[\s\S]*\*\s*2|const\s+double\s*=\s*\(?\s*\w+\s*\)?\s*=>[\s\S]*\*\s*2)/.test(s), ['const double = (n) => n * 2']),
-      T('③ cases.filter で未完了だけ取り出す', 3, /cases\s*\.filter\s*\(/.test(s) && /!\s*\w+\.done|\.done\s*===?\s*false/.test(s), ['cases.filter((c) => !c.done)']),
+  D['vue-basics']['JS の基本：変数と関数'] = text('Basics.vue', 'vue',
+    "<script setup lang=\"ts\">\n// ① 変えない値 title を const で宣言（値は '相談ナビ'）\n\n// ② 2倍にする関数 double(n) を作る（アロー関数でも function でもOK）\n\n// ③ cases から、未完了(done が false)だけを取り出して open に入れる\nconst cases = [\n  { title: '離婚の相談', done: false },\n  { title: '労働の相談', done: true },\n]\n</script>\n\n<template>\n  <h1>{{ title }}</h1>\n  <p>21 の2倍は {{ double(21) }}</p>\n  <p>未完了は {{ open.length }} 件</p>\n</template>\n",
+    '3つとも、書き方を見ながら埋めてみよう。（template はもう書いてある。script の名前がそのまま使われる）',
+    { 'Basics.vue': "<script setup lang=\"ts\">\nconst title = '相談ナビ'\n\nconst double = (n: number): number => n * 2\n\nconst cases = [\n  { title: '離婚の相談', done: false },\n  { title: '労働の相談', done: true },\n]\nconst open = cases.filter((c) => !c.done)\n</script>\n\n<template>\n  <h1>{{ title }}</h1>\n  <p>21 の2倍は {{ double(21) }}</p>\n  <p>未完了は {{ open.length }} 件</p>\n</template>\n" },
+    (v) => { const s0 = v['Basics.vue']; return [
+      T('① const title = \'相談ナビ\' と書く', 1, /const\s+title\s*=\s*['"`]相談ナビ['"`]/.test(s0), ['変えない値は const。', "const title = '相談ナビ'"]),
+      T('② 数を2倍にして返す関数 double を作る', 2, /(function\s+double\s*\(\s*\w+(\s*:\s*\w+)?\s*\)[^{]*\{[\s\S]*return[\s\S]*\*\s*2|const\s+double\s*=\s*\(?\s*\w+(\s*:\s*\w+)?\s*\)?\s*(:\s*\w+\s*)?=>[\s\S]*\*\s*2)/.test(s0), ['const double = (n: number): number => n * 2']),
+      T('③ cases.filter で未完了だけ取り出して open に入れる', 3, /const\s+open\s*=\s*cases\s*\.filter\s*\(/.test(s0) && /!\s*\w+\.done|\.done\s*===?\s*false/.test(s0), ['const open = cases.filter((c) => !c.done)']),
     ]; });
+
+  D['vue-basics']['ref と reactive・型（interface）'] = multi({
+    'App.vue': "<script setup lang=\"ts\">\nimport { ref } from 'vue'\n\n// ① 案件の形を interface で決める（id: number / title: string / done: boolean）\n\n// ② item を ref<Case> で作る\nconst item = ref({ id: 1, title: '離婚の相談', done: false })\n\n// ③ item の done を true にする関数 finish を作る\n</script>\n\n<template>\n  <p>{{ item.title }}：{{ item.done ? '完了' : '未完了' }}</p>\n  <button @click=\"finish\">完了にする</button>\n</template>\n" },
+    { 'App.vue': "<script setup lang=\"ts\">\nimport { ref } from 'vue'\n\ninterface Case {\n  id: number\n  title: string\n  done: boolean\n}\n\nconst item = ref<Case>({ id: 1, title: '離婚の相談', done: false })\n\nfunction finish(): void {\n  item.value.done = true\n}\n</script>\n\n<template>\n  <p>{{ item.title }}：{{ item.done ? '完了' : '未完了' }}</p>\n  <button @click=\"finish\">完了にする</button>\n</template>\n" },
+    (v, c) => { const f = v['App.vue']; return [
+      T('interface Case で、案件の形（id・title・done とその型）を決める', 1, /interface\s+Case\s*\{[\s\S]*id\s*:\s*number[\s\S]*title\s*:\s*string[\s\S]*done\s*:\s*boolean[\s\S]*\}/.test(f), ['interface Case {\n  id: number\n  title: string\n  done: boolean\n}']),
+      T('item を ref<Case>(…) で作る（型を付けた ref）', 2, /ref\s*<\s*Case\s*>\s*\(/.test(f) && /離婚の相談/.test(appText(c)), ["const item = ref<Case>({ id: 1, title: '離婚の相談', done: false })"]),
+      T('完了にする関数 finish を作り、item.value.done を true にする（script では .value）', 3, /(function\s+finish|const\s+finish\s*=)[\s\S]*item\.value\.done\s*=\s*true/.test(f), ['function finish(): void {\n  item.value.done = true\n}']),
+    ]; }, { height: 300 });
 
   /* 紹介 → 基礎の冒頭へ移したシーンの練習 */
   ['データを変えるだけ', 'リアクティブの仕組み', '.vue ファイルの解剖'].forEach((t) => { if (D['vue-intro'] && D['vue-intro'][t]) { (D['vue-basics'] = D['vue-basics'] || {})[t] = D['vue-intro'][t]; delete D['vue-intro'][t]; } });

@@ -40,7 +40,9 @@
     json: [['str', /"(?:[^"\\]|\\.)*"/], ['num', /\b-?\d+(?:\.\d+)?\b/], ['kw', /\b(?:true|false|null)\b/]],
     text: [],
   };
-  LANGS.js = LANGS.ts; LANGS.vue = LANGS.html; LANGS.bash = LANGS.sh; LANGS.git = LANGS.sh;
+  /* .vue：タグ・属性に加えて、script の中の const / ref(…) / 型 なども色が付く */
+  LANGS.vue = [['cm', /<!--[\s\S]*?-->|\/\/.*/], ['str', /`[^`]*`|"[^"]*"|'(?:[^'\\]|\\.)*'/], ['tag', /<\/?[A-Za-z][\w-]*|\/?>/], ['attr', /[\w:@.#-]+(?==)/], ['kw', new RegExp('\\b(?:' + TSKW + ')\\b')], ['ty', /\b(?:number|string|boolean|any|unknown|never|object|[A-Z][A-Za-z0-9]*)\b/], ['num', /\b\d+(?:\.\d+)?\b/], ['fn', /\b[a-z_$][\w$]*(?=\()/]];
+  LANGS.js = LANGS.ts; LANGS.bash = LANGS.sh; LANGS.git = LANGS.sh;
   const RX = {};
   function hl(code, lang) {
     const def = LANGS[lang] || [];
@@ -230,6 +232,48 @@ declare function Boolean(v:any):boolean;
     setTimeout(() => w.remove(), 2600);
   }
 
+  /* ---------- .vue（複数ファイル）を、ブラウザの中でそのまま動かす簡易ランナー ----------
+     App.vue ＋ 他の .vue（部品）＋ router.ts（任意）。<script setup lang="ts"> と defineProps / defineEmits / defineModel に対応。 */
+  function sfcBuild(vals) {
+    const names = Object.keys(vals).filter((n) => /\.vue$/.test(n));
+    const needTs = names.some((n) => /<script[^>]*lang\s*=\s*["']ts["']/.test(vals[n])) || Object.keys(vals).some((n) => /\.ts$/.test(n));
+    if (needTs && !window.ts) return { needTs: true };
+    const strip = (src) => (window.ts ? window.ts.transpileModule(src, { compilerOptions: { target: window.ts.ScriptTarget.ES2020, module: window.ts.ModuleKind.ESNext } }).outputText : src);
+    const keys = (t) => [...String(t).matchAll(/(?:^|[;,{\s])['"]?([A-Za-z_$][\w$:-]*)['"]?\s*\??\s*:/g)].map((m) => m[1]);
+    const lit = (arr) => '[' + [...new Set(arr)].map((k) => JSON.stringify(k)).join(',') + ']';
+    let css = '';
+    const comp = (file) => {
+      const src = vals[file], cname = file.replace(/\.vue$/, '').replace(/[^\w]/g, '_');
+      const sm = src.match(/<script[^>]*>([\s\S]*?)<\/script>/), tm = src.match(/<template>([\s\S]*)<\/template>/);
+      (src.match(/<style[^>]*>[\s\S]*?<\/style>/g) || []).forEach((x) => { css += x.replace(/<\/?style[^>]*>/g, '') + '\n'; });
+      let sc = sm ? sm[1] : '';
+      sc = sc.replace(/^\s*import\s[^;\n]*(?:;|$)/gm, '');
+      const props = [], emits = []; let model = false;
+      sc = sc.replace(/defineProps\s*(<\s*\{([\s\S]*?)\}\s*>)?\s*\(([\s\S]*?)\)/g, (m, g, ty, arg) => { if (ty) keys(ty).forEach((k) => props.push(k)); else { const a = arg.trim(); if (a.startsWith('[')) [...a.matchAll(/['"]([\w-]+)['"]/g)].forEach((x) => props.push(x[1])); else if (a.startsWith('{')) [...a.matchAll(/(?:^|[{,]\s*)([A-Za-z_$][\w$]*)\s*:/g)].forEach((x) => props.push(x[1])); } return '__props'; });
+      sc = sc.replace(/withDefaults\s*\(\s*__props\s*,\s*\{[\s\S]*?\}\s*\)/g, '__props');
+      sc = sc.replace(/defineEmits\s*(<\s*\{([\s\S]*?)\}\s*>)?\s*\(([\s\S]*?)\)/g, (m, g, ty, arg) => { if (ty) { [...ty.matchAll(/\(\s*e\s*:\s*['"]([\w:-]+)['"]/g)].forEach((x) => emits.push(x[1])); [...ty.matchAll(/(?:^|[;,{\s])['"]?([A-Za-z_$][\w$:-]*)['"]?\s*:\s*\[/g)].forEach((x) => emits.push(x[1])); } else { [...arg.matchAll(/['"]([\w:-]+)['"]/g)].forEach((x) => emits.push(x[1])); } return '__emit'; });
+      sc = sc.replace(/defineModel\s*(<[^>]*>)?\s*\(\s*\)/g, () => { model = true; return 'computed({ get: () => __props.modelValue, set: (v) => __emit("update:modelValue", v) })'; });
+      if (model) { props.push('modelValue'); emits.push('update:modelValue'); }
+      const declared = [...sc.matchAll(/^(?:export\s+)?(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*[:=]/gm)].map((m) => m[1]);
+      [...sc.matchAll(/^(?:const|let|var)\s*\{([^}]*)\}\s*=/gm)].forEach((m) => m[1].split(',').forEach((x) => { const n = x.split(':').pop().split('=')[0].trim(); if (n) declared.push(n); }));
+      [...sc.matchAll(/^(?:async\s+)?function\s+([A-Za-z_$][\w$]*)/gm)].forEach((m) => declared.push(m[1]));
+      let jsText = strip(sc).replace(/^export\s+/gm, '');
+      return { name: cname, code: `const ${cname} = (function () {\n  const setup = (__props, __ctx) => { const __emit = __ctx.emit;\n${jsText}\n    return { ${[...new Set(declared)].join(', ')} };\n  };\n  return { name: ${JSON.stringify(cname)}, props: ${lit(props)}, emits: ${lit(emits)}, setup, template: ${JSON.stringify(tm ? tm[1] : '')} };\n})();\n` };
+    };
+    const tsExtra = Object.keys(vals).filter((n) => /\.ts$/.test(n) && !/^router\.ts$/.test(n)).map((n) => ({ code: '/* ' + n + ' */\n' + strip(vals[n].replace(/^\s*import\s[^;\n]*(?:;|$)/gm, '')).replace(/^export\s+(default\s+)?/gm, '') + '\n' }));
+    const vueFiles = names.filter((n) => n !== 'App.vue');
+    const parts = vueFiles.map(comp), app = names.includes('App.vue') ? comp('App.vue') : null;
+    const all = tsExtra.concat(parts).concat(app ? [app] : []);
+    const reg = parts.map((x) => x.name);
+    let routerCode = '', useRouter = false;
+    const rf = Object.keys(vals).find((n) => /^router\.(ts|js)$/.test(n));
+    if (rf) { useRouter = true; routerCode = strip(vals[rf].replace(/^\s*import\s[^;\n]*(?:;|$)/gm, '')).replace(/^export\s+default\s+router\s*;?/gm, ''); }
+    const js = `const { createApp, ref, reactive, computed, watch, watchEffect, onMounted, onUnmounted, onBeforeMount, onUpdated, nextTick, toRef, toRefs, defineComponent } = Vue;\n${useRouter ? 'const { createRouter, createWebHashHistory, createWebHistory, createMemoryHistory, useRoute, useRouter, RouterLink, RouterView } = VueRouter;\n' : ''}` +
+      all.map((x) => x.code).join('\n') + '\n' + routerCode + '\n' +
+      reg.map((n) => `${n}.components = Object.assign({}, ${reg.map((m) => m).length ? '{ ' + reg.join(', ') + ' }' : '{}'});`).join('\n') +
+      (app ? `\nApp.components = Object.assign({}, { ${reg.join(', ')} });\nconst __app = createApp(App);\n${useRouter ? '__app.use(router);\n' : ''}__app.mount('#app');` : '') + '\ndocument.currentScript && document.currentScript.remove();';
+    return { html: '<div id="app"></div>', css, js, needTs: false };
+  }
   function playground(o) {
     const mode = o.mode || 'web';
     const vals = {};
@@ -260,17 +304,10 @@ declare function Boolean(v:any):boolean;
 
     function buildDoc() {
       let html = get(byLang('html') || 'index.html'), css = get(byLang('css') || 'style.css'), js = get(byLang('js') || 'main.js');
-      if (o.sfc && byLang('vue')) {   /* .vue（<template> / <script setup> / <style>）をそのまま書ける簡易ランナー */
-        const src = get(byLang('vue')), pick = (re) => (src.match(re) || [])[1] || '';
-        let scr = pick(/<script[^>]*>([\s\S]*?)<\/script>/); const vn = [];
-        if (/<script[^>]*lang\s*=\s*["']ts["']/.test(src)) {   /* lang="ts" は、TypeScript の型を取り除いてから動かす */
-          if (window.ts) { try { scr = window.ts.transpileModule(scr, { compilerOptions: { target: window.ts.ScriptTarget.ES2020, module: window.ts.ModuleKind.ESNext } }).outputText; } catch (e) { /* 失敗したらそのまま */ } }
-          else { loadTS().then(() => schedule()).catch(() => {}); return '<!doctype html><meta charset="utf-8"><body style="font:14px sans-serif;color:#889;padding:14px">TypeScript を読み込み中…</body>'; }
-        }
-        scr = scr.replace(/import\s*\{([^}]*)\}\s*from\s*['"]vue['"]\s*;?/g, (m, n) => { vn.push(n.trim()); return ''; }).replace(/^\s*import .*$/gm, '');
-        const names = [...scr.matchAll(/^(?:const|let|var|function|async function)\s+([A-Za-z_$][\w$]*)/gm)].map((m) => m[1]);
-        html = '<div id="app">' + pick(/<template>([\s\S]*)<\/template>/) + '</div>'; css = pick(/<style[^>]*>([\s\S]*?)<\/style>/);
-        js = 'const { createApp' + (vn.length ? ', ' + vn.join(', ') : '') + ' } = Vue\ncreateApp({ setup() {\n' + scr + '\nreturn { ' + names.join(', ') + ' }\n} }).mount("#app")';
+      if (o.sfc) {
+        const bd = sfcBuild(vals);
+        if (bd.needTs) { loadTS().then(() => schedule()).catch(() => {}); return '<!doctype html><meta charset="utf-8"><body style="font:14px sans-serif;color:#889;padding:14px">TypeScript を読み込み中…</body>'; }
+        html = bd.html; css = bd.css; js = bd.js;
       }
       const libs = (o.libs || []).map((u) => `<script src="${u}"><\/script>`).join('');
       const bridge = `<script>(function(){var s=function(k,a){parent.postMessage({kenshu:1,k:k,t:[].slice.call(a).map(function(x){try{return typeof x==='string'?x:JSON.stringify(x)}catch(e){return String(x)}}).join(' ')},'*')};console.log=function(){s('l',arguments)};console.error=function(){s('e',arguments)};window.onerror=function(m){s('e',[m])}})()<\/script>`;
@@ -307,7 +344,7 @@ declare function Boolean(v:any):boolean;
       const req = res.filter((t) => !t.optional), opt = res.filter((t) => t.optional);
       const nOk = req.filter((t) => t.ok).length;
       tasksBox.append(h('div', { class: 'mission-head' }, icon('list-checks'), h('b', 'ミッション'), h('span', { class: 'mission-n' }, nOk + ' / ' + req.length), h('i', { class: 'mission-bar' }, h('u', { style: { width: (req.length ? (nOk / req.length) * 100 : 0) + '%' } }))));
-      const hopt = { fallback: o.solution ? () => showSolution() : null, use: (tt) => { const f = o.files.find((x) => x.lang === (tt.answer.lang || x.lang)) || o.files[0]; if (tt.answer.mode === 'append') eds[f.name].set(eds[f.name].get() + '\n' + tt.answer.code); else eds[f.name].set(tt.answer.code); } };
+      const hopt = { fallback: o.solution ? () => showSolution() : null, use: (tt) => { const f = o.files.find((x) => x.name === tt.answer.file) || o.files.find((x) => x.lang === (tt.answer.lang || x.lang)) || o.files[0]; if (tt.answer.mode === 'append') eds[f.name].set(eds[f.name].get() + '\n' + tt.answer.code); else eds[f.name].set(tt.answer.code); } };
       const LV = ['初級', '中級', '上級'];
       const lvChip = (t) => { const n = Math.min(3, Math.max(1, t.level || 1)); return h('span', { class: 'lv lv' + n, title: 'チャレンジ ' + LV[n - 1] }, Array.from({ length: n }, () => icon('star')), LV[n - 1]); };
       const row = (t) => h('div', { class: 'task' + (t.ok ? ' ok' : '') + (t.optional ? ' opt' : '') }, h('i', t.ok ? '✓' : ''), h('span', { class: 'task-l' }, t.level && (!t.optional || opt.length > 1) ? lvChip(t) : null, t.label), hintButton(t, hopt));
@@ -355,9 +392,17 @@ declare function Boolean(v:any):boolean;
       wrap.append(h('p', { style: { color: 'var(--mute)', fontSize: '.875rem', marginBottom: '.8em' } }, '答えは1つとは限りません。まず自分のコードと見比べてみよう。'), names.length > 1 ? tabsEl : null, blocks, h('div', { class: 'row', style: { marginTop: '12px' } }, use));
       const m = modal({ title: '答え', icon: 'key-round', content: wrap });
     }
+    /* フォルダ構成（複数ファイルのときだけ）：押すと、そのファイルのタブへ */
+    let treeEl = null;
+    if (o.sfc && o.files.length > 1) {
+      const pathOf = (n) => (o.paths && o.paths[n]) || ('src/' + n);
+      const dirs = {}; o.files.forEach((f) => { const parts = pathOf(f.name).split('/'); const file = parts.pop(); const d = parts.join('/'); (dirs[d] = dirs[d] || []).push([f.name, file]); });
+      treeEl = h('div', { class: 'pg-tree' }, h('span', { class: 'pg-tree-h' }, '📁 フォルダ構成'), h('div', { class: 'pg-tree-b' }, h('div', { class: 'pg-tr' }, '📁 my-vue-project/'),
+        ...Object.keys(dirs).flatMap((d) => [h('div', { class: 'pg-tr', style: { paddingLeft: '14px' } }, '📁 ' + d + '/'), ...dirs[d].map(([name, file]) => h('button', { class: 'pg-tf', 'data-n': name, style: { paddingLeft: '30px' }, onclick: () => { tabs.querySelector('.tab[data-n="' + name + '"]') && tabs.querySelector('.tab[data-n="' + name + '"]').click(); } }, '📄 ' + file))])));
+    }
     const root = h('div', { class: 'pg' },
       h('div', { class: 'pg-head' }, h('div', { class: 'dots3' }, h('i'), h('i'), h('i')), tabs, h('div', { style: { flex: 1 } }), o.title && h('span', { class: 'chip' }, o.title), solBtn, resetBtn, runBtn),
-      body, o.tasks ? tasksBox : null);
+      treeEl, body, o.tasks ? tasksBox : null);
     if (o.height) edBox.firstChild.style.minHeight = o.height + 'px';
     root.cleanup = () => window.removeEventListener('message', onMsg);
     if (K.ctx) K.ctx.cleanups.push(root.cleanup);
@@ -512,6 +557,15 @@ declare function Boolean(v:any):boolean;
 
   /* ---------- per-mission hint (ヒント → もう少し → 答え) ---------- */
   // task: {label, hint:'text'|['hint1','hint2'], answer:{code,lang,file}|'<html>'|()=>Node}; opts.fallback(): called when the task has no own answer
+  /* ヒントの中身：コードだけのヒント（<code>…</code> 1つ、または {code, lang}）は、色付きのコードブロックで見せる */
+  function hintBody(x) {
+    let src = null, lg = null;
+    if (x && typeof x === 'object' && x.code) { src = x.code; lg = x.lang; }
+    else if (typeof x === 'string') { const m = x.trim().match(/^<code>([\s\S]*)<\/code>$/); if (m && !/<code>/.test(m[1])) src = m[1].replace(/<br\s*\/?>/g, '\n').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&amp;/g, '&'); }
+    if (src == null) return h('p', { html: typeof x === 'string' ? x : '' });
+    lg = lg || (/<\/?[A-Za-z]|@click|v-[a-z]|:[a-z]+=/.test(src) ? 'vue' : 'ts');
+    return code(src, lg, { color: 'var(--c, var(--ts))' });
+  }
   function openHint(t, o = {}) {
     const hints = [].concat(t.hint || []);
     let shown = hints.length ? 1 : 0, answered = false;
@@ -520,7 +574,7 @@ declare function Boolean(v:any):boolean;
       body.replaceChildren();
       body.append(h('div', { class: 'hint-mission' }, icon('target'), t.label));
       if (!hints.length && !answered) body.append(h('p', { class: 'hint-none' }, 'この課題には、ヒントがまだありません。答えを見てみよう。'));
-      hints.slice(0, shown).forEach((x, i) => body.append(h('div', { class: 'hint-card' }, h('span', { class: 'hint-n' }, 'ヒント' + (hints.length > 1 ? ' ' + (i + 1) : '')), h('p', { html: x }))));
+      hints.slice(0, shown).forEach((x, i) => body.append(h('div', { class: 'hint-card' }, h('span', { class: 'hint-n' }, 'ヒント' + (hints.length > 1 ? ' ' + (i + 1) : '')), hintBody(x))));
       if (answered) {
         const a = t.answer;
         const ans = h('div', { class: 'hint-ans' }, h('div', { class: 'label' }, '答え'));
@@ -562,5 +616,5 @@ declare function Boolean(v:any):boolean;
     document.head.append(h('style', { 'data-l': id }, css));
   }
 
-  K.W = { pinOutput, revealOutput, openHint, hintButton, mini, modal, icon, iconifyNode, watchIcons, style, h, esc, sleep, clamp, hl, code, stepper, codeEditor, playground, quiz, celebrate, lbl, store, loadTS, tsCheck };
+  K.W = { sfcBuild, pinOutput, revealOutput, openHint, hintButton, mini, modal, icon, iconifyNode, watchIcons, style, h, esc, sleep, clamp, hl, code, stepper, codeEditor, playground, quiz, celebrate, lbl, store, loadTS, tsCheck };
 })();

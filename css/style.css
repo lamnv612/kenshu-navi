@@ -1113,3 +1113,8 @@ pre.code.editable{cursor:text;outline:none}pre.code.editable:focus{box-shadow:0 
 
 .cell.short{padding:.3em .6em .2em .75em;gap:0;min-width:0}.cell.short b{font-size:.9rem;line-height:1.25;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;padding-right:2.6em}.cell.short b br{display:none}.cell.short small{font-size:.66rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:2.4em}
 .cell.short .em{font-size:1.5rem}
+
+.pg-tree{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;padding:8px 14px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--card2) 70%,transparent);font:700 .78rem var(--mono)}
+.pg-tree-h{color:var(--mute);font:800 .72rem var(--font);padding-top:2px}
+.pg-tree-b{display:grid;gap:1px}.pg-tr{color:var(--mute)}
+.pg-tf{all:unset;cursor:pointer;color:var(--text);padding:1px 6px;border-radius:5px}.pg-tf:hover{background:color-mix(in srgb,var(--vue) 22%,transparent)}
