@@ -9,10 +9,12 @@
     .main.wide,.main:has(>.scene.hasside){max-width:none;position:relative}
     .scene.hasside{padding-right:408px}
     .scene.hasside.closed{padding-right:0}
-    .scene.hasside>aside.side{display:grid}
+    .scene.hasside>aside.side{display:block}
   }
-  aside.side{display:none;position:absolute;top:0;right:clamp(18px,3vw,40px);width:312px;gap:12px;align-content:start;z-index:2}
-  .scene.hasside.closed>aside.side{width:auto}.scene.hasside.closed>aside.side>.sd-card{display:none}
+  aside.side{display:none;position:absolute;top:0;bottom:0;right:clamp(18px,3vw,40px);width:312px;z-index:2}
+  .sd-in{position:sticky;top:68px;max-height:calc(100vh - 84px);overflow:auto;display:grid;gap:12px;align-content:start;padding-right:4px;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+  .sd-in::-webkit-scrollbar{width:6px}.sd-in::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
+  .scene.hasside.closed>aside.side{width:auto}.scene.hasside.closed>aside.side .sd-card{display:none}
   .sd-tg{all:unset;cursor:pointer;display:flex;align-items:center;gap:.4em;justify-self:end;padding:.35em .8em;border-radius:999px;border:1px solid var(--line);background:var(--card);font:800 .78rem var(--font);color:var(--mute);transition:.2s}
   .sd-tg:hover{color:var(--text);border-color:var(--ts)}.sd-tg .ic{width:15px;height:15px}
   .sd-card{border-radius:12px;background:var(--card);border:1px solid var(--line);overflow:hidden}
@@ -50,15 +52,15 @@
       ((K.sceneTerms && K.sceneTerms[el.__title]) || []).forEach((t) => terms.push({ k: t.k, m: t.m, r: t.r, yomi: t.y, kind: 'word' }));
       if (sp) Object.values(sp.parts).forEach(([nm, , desc]) => {
         const kw = (nm.match(/[（(]([^）)]+)[）)]/) || [])[1] || nm;
-        terms.push({ k: kw.replace(/[()（）]/g, ''), m: desc, shown: nm });
+        const kk = kw.replace(/[()（）]/g, ''); if (!terms.some((t) => t.k === kk || t.k === nm)) terms.push({ k: kk, m: desc, shown: nm });
       });
       seen.forEach((e) => { if (!terms.some((t) => t.k === e.k)) terms.push(e); });
       /* 用語が少ないシーンは、画面の文字に出てくる用語集の言葉を拾って補う */
-      if (terms.length < 6 && K.glossWords) {
+      if (terms.length < 8 && K.glossWords) {
         const txt = body.textContent || '';
-        K.glossWords().filter((e) => e.k.length >= 2 && txt.includes(e.k) && !terms.some((t) => t.k === e.k)).sort((a, b) => txt.indexOf(a.k) - txt.indexOf(b.k)).slice(0, 8 - terms.length).forEach((e) => terms.push(e));
+        K.glossWords().filter((e) => e.k.length >= 2 && txt.includes(e.k) && !terms.some((t) => t.k === e.k)).sort((a, b) => txt.indexOf(a.k) - txt.indexOf(b.k)).slice(0, 10 - terms.length).forEach((e) => terms.push(e));
       }
-      terms.splice(8);
+      terms.splice(12);
       if (terms.length < 2) { el.classList.remove('hasside'); return; }
       const reading = (e) => { const y = K.yomiOf ? K.yomiOf(e.k) : ''; return y ? y.split('｜')[0] : ''; };
       const yom = (e) => { const y = K.yomiOf ? K.yomiOf(e.k) : ''; return y ? y.split('｜')[0] : ''; };
@@ -89,7 +91,7 @@
       const tg = h('button', { class: 'sd-tg', type: 'button' });
       const paint = () => { el.classList.toggle('closed', !open); tg.replaceChildren(K.W.icon(open ? 'chevron-right' : 'chevron-left'), open ? '閉じる' : '用語パネルを開く'); tg.title = open ? 'パネルを閉じる' : 'パネルを開く'; };
       tg.addEventListener('click', () => { open = !open; try { localStorage.setItem('kenshu.side', open ? '1' : '0'); } catch (e) {} paint(); });
-      el.append(h('aside', { class: 'side' }, tg, ...cards));
+      el.append(h('aside', { class: 'side' }, h('div', { class: 'sd-in' }, tg, ...cards)));
       el.classList.add('hasside'); if (mainEl) mainEl.classList.add('wide'); paint();
     };
     [350, 1400].forEach((t) => setTimeout(() => { if (el.isConnected) build(); }, t));

@@ -23,7 +23,7 @@
   const lines = (s) => s.split('\n').map((x) => x.trim()).filter((x) => x && !x.startsWith('#'));
   /* ヒントに <button> のようなタグが入っていても、そのまま見えるように（<code> などの装飾が無い文字は escape して code 表示） */
   const fixHint = (t) => (typeof t !== 'string' || /<(code|b|br|small|i|kbd)\b/.test(t) ? t : (/^[\x20-\x7E\n]+$/.test(t) && /[<>@=(){}.;]/.test(t) ? { code: t, lang: /<|@|v-/.test(t) ? 'vue' : 'ts' } : t));
-  const T = (label, level, ok, hint) => ({ level, label, ok: !!ok, hint: [].concat(hint || []).map(fixHint) });
+  const T = (label, level, ok, hint, at) => ({ level, label, ok: !!ok, hint: [].concat(hint || []).map(fixHint), at: at || null });
   const lastIdx = (ls, re) => { for (let i = ls.length - 1; i >= 0; i--) if (re.test(ls[i])) return i; return -1; };
 
   const HEAD = "const { createApp, ref } = Vue;\n";
@@ -362,15 +362,15 @@
     ]; });
 
   D['vue-comp'] = D['vue-comp'] || {};
-  D['vue-comp']['コンポーネントって？'] = text('tree.md', 'md',
-    '# 相談一覧ページを、部品の入れ子で書き出そう\n# ① ページ全体 → ヘッダー・検索欄・相談一覧 → 相談カード（インデントで入れ子を表す）\n# ② 相談カードが親から受け取る値（props）を書く\n# ③ 相談カードが親に知らせるイベント（emit）を書く\nApp\n',
-    '入れ子はインデント（スペース2つ）で表す。',
-    { 'tree.md': 'App\n  AppHeader\n  SearchBox\n  CaseList\n    CaseCard   props: item / emit: toggle\n  AppFooter\n' },
-    (v) => { const L = v['tree.md'].split('\n').filter((x) => x.trim() && !x.trim().startsWith('#')); const has = (re) => L.some((x) => re.test(x)); const ind = (re) => { const x = L.find((l) => re.test(l)); return x ? x.match(/^\s*/)[0].length : -1; }; return [
-      T('App の下に、ヘッダー・検索欄・相談一覧・相談カードを書く', 1, has(/Header/i) && has(/Search/i) && has(/CaseList|List/i) && has(/CaseCard|Card/i), ['App の下に、4つの部品名を並べる。']),
-      T('相談カードを、相談一覧より深くインデントする（入れ子）', 2, ind(/Card/i) > ind(/List/i) && ind(/List/i) > ind(/^App/i), ['CaseCard は CaseList の中にいる。']),
-      T('相談カードの props（item）と emit（toggle）を書く', 3, /props\s*[:：]?\s*item/i.test(v['tree.md']) && /emit\s*[:：]?\s*toggle/i.test(v['tree.md']), ['CaseCard   props: item / emit: toggle のように書く。']),
-    ]; });
+  D['vue-comp']['コンポーネントって？'] = multi({
+      'App.vue': "<script setup lang=\"ts\">\n// 同じカードを3回コピペしている。デザインを変えるたびに3か所を直すことになる…\n</script>\n\n<template>\n  <div class=\"card\">\n    <h3>離婚の相談</h3>\n    <button>相談する</button>\n  </div>\n  <div class=\"card\">\n    <h3>相続の相談</h3>\n    <button>相談する</button>\n  </div>\n  <div class=\"card\">\n    <h3>労働の相談</h3>\n    <button>相談する</button>\n  </div>\n</template>\n",
+      'CaseCard.vue': "<script setup lang=\"ts\">\n// ① 親から title を受け取る（props）。型も書く: defineProps<{ title: string }>()\n</script>\n\n<template>\n  <!-- ② 1枚ぶんのカードを書く（title を表示。ボタンも） -->\n</template>\n" },
+      { 'App.vue': "<script setup lang=\"ts\">\nimport { ref } from 'vue'\nimport CaseCard from './CaseCard.vue'\n\nconst titles = ref<string[]>(['離婚の相談', '相続の相談', '労働の相談'])\n</script>\n\n<template>\n  <CaseCard v-for=\"t in titles\" :key=\"t\" :title=\"t\" />\n</template>\n", 'CaseCard.vue': "<script setup lang=\"ts\">\ndefineProps<{ title: string }>()\n</script>\n\n<template>\n  <div class=\"card\">\n    <h3>{{ title }}</h3>\n    <button>相談する</button>\n  </div>\n</template>\n" },
+      (v, c) => { const A = v['App.vue'], Cd = v['CaseCard.vue']; return [
+        T('① CaseCard.vue に、1枚ぶんのカード（{{ title }} とボタン）を書き、defineProps<{ title: string }>() で title を受け取る', 1, /defineProps\s*<\s*\{[^}]*title\s*:\s*string/.test(Cd) && /\{\{\s*title\s*\}\}/.test(Cd) && /<button/.test(Cd), ['defineProps<{ title: string }>()', '<h3>{{ title }}</h3> と <button> を入れる。']),
+        T('② App.vue のコピペ3枚を <CaseCard title="…" /> に置き換える（画面は同じ）', 2, /import\s+CaseCard\s+from\s+['"]\.\/CaseCard\.vue['"]/.test(A) && ((A.match(/<CaseCard\b/g) || []).length >= 3 || /<CaseCard[^>]*v-for/.test(A)) && !/class=["']card["']/.test(A) && /離婚の相談/.test(appText(c)) && /労働の相談/.test(appText(c)), ['import CaseCard from \'./CaseCard.vue\'', '<CaseCard title="離婚の相談" />']),
+        T('③ さらに v-for で1行にまとめる（titles: ref<string[]>）', 3, /ref\s*<\s*string\[\]\s*>\s*\(/.test(A) && /<CaseCard[^>]*v-for/.test(A) && /:key\s*=/.test(A) && (A.match(/<CaseCard\b/g) || []).length === 1 && /相続の相談/.test(appText(c)), ['<CaseCard v-for="t in titles" :key="t" :title="t" />']),
+      ]; });
 
   D['vue-basics']['JS の基本：変数と関数'] = text('Basics.vue', 'vue',
     "<script setup lang=\"ts\">\n// ① 変えない値 title を const で宣言（値は '相談ナビ'）\n\n// ② 2倍にする関数 double(n) を作る（アロー関数でも function でもOK）\n\n// ③ cases から、未完了(done が false)だけを取り出して open に入れる\nconst cases = [\n  { title: '離婚の相談', done: false },\n  { title: '労働の相談', done: true },\n]\n</script>\n\n<template>\n  <h1>{{ title }}</h1>\n  <p>21 の2倍は {{ double(21) }}</p>\n  <p>未完了は {{ open.length }} 件</p>\n</template>\n",
@@ -391,8 +391,12 @@
       T('完了にする関数 finish を作り、item.value.done を true にする（script では .value）', 3, /(function\s+finish|const\s+finish\s*=)[\s\S]*item\.value\.done\s*=\s*true/.test(f), ['function finish(): void {\n  item.value.done = true\n}']),
     ]; }, { height: 300 });
 
+  const AL = {"データを変えるだけ": "SlotCounter.vue", "リアクティブの仕組み": "UnreadBadge.vue", "ref：状態と画面": "PeopleCounter.vue", "v-if と v-show": "AdminMenu.vue", "v-model：双方向": "ConsultForm.vue", "イベント処理 @click": "ReserveButtons.vue", ":class と v-for": "CaseList.vue", "ライフサイクル": "CaseLoader.vue", "computed：賢い計算": "CartTotal.vue", "watch / watchEffect": "KeywordSearch.vue"};
+  Object.keys(D).forEach((l) => Object.keys(D[l]).forEach((t) => { const c = D[l][t]; if (AL[t] && c && c.files && c.files.length === 1 && c.files[0].name === 'App.vue') c.alias = { 'App.vue': AL[t] }; }));
   /* 紹介 → 基礎の冒頭へ移したシーンの練習 */
   ['データを変えるだけ', 'リアクティブの仕組み', '.vue ファイルの解剖'].forEach((t) => { if (D['vue-intro'] && D['vue-intro'][t]) { (D['vue-basics'] = D['vue-basics'] || {})[t] = D['vue-intro'][t]; delete D['vue-intro'][t]; } });
   /* HMR の題名を変えたぶん */
   if (D['vue-env'] && D['vue-env']['開発サーバーとHMR']) D['vue-env']['開発サーバーと自動更新（HMR）'] = D['vue-env']['開発サーバーとHMR'];
+  /* 追加ファイル（drills/vue-x-*.js）が使う道具 */
+  K.vueDrillTools = { web, multi, text, plain, T, appText, $q, $all, lines, VUE, VROUTER, HEAD, MOUNT };
 })();

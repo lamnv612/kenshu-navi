@@ -1118,3 +1118,39 @@ pre.code.editable{cursor:text;outline:none}pre.code.editable:focus{box-shadow:0 
 .pg-tree-h{color:var(--mute);font:800 .72rem var(--font);padding-top:2px}
 .pg-tree-b{display:grid;gap:1px}.pg-tr{color:var(--mute)}
 .pg-tf{all:unset;cursor:pointer;color:var(--text);padding:1px 6px;border-radius:5px}.pg-tf:hover{background:color-mix(in srgb,var(--vue) 22%,transparent)}
+
+.pg-tn{color:var(--mute);font-weight:700;font-size:.72rem}
+
+/* ===== 練習モーダル：コードを大きく／右に preview＋ミッション／今のミッションを動くハイライトで示す ===== */
+.pg-tree{align-items:center;gap:8px;padding:6px 14px}
+.pg-tree-h{padding:0}
+.pg-tf.on{background:color-mix(in srgb,var(--vue) 24%,transparent);outline:1px solid var(--vue)}
+.ed pre .ln.todo{background:color-mix(in srgb,var(--team) 16%,transparent);box-shadow:inset 4px 0 0 var(--team);animation:lnpulse 1.5s ease-in-out infinite}
+.ed pre .ln.todo.first::after{content:'　◀ ここを書く';color:var(--team);font:800 .72rem var(--font)}
+.ed pre .ln.okf{background:color-mix(in srgb,var(--ok) 18%,transparent);box-shadow:inset 4px 0 0 var(--ok)}
+.ed pre .ln.okf.first::after{content:'　✓ できた！';color:var(--ok);font:800 .72rem var(--font)}
+@keyframes lnpulse{50%{background:color-mix(in srgb,var(--team) 30%,transparent)}}
+.pg-side{display:flex;flex-direction:column;min-width:0;border-left:1px solid var(--line)}
+.pg-side .out{flex:none}
+.pg-big .tasks{border-top:1px solid var(--line);padding:12px 14px;flex:1}
+.pg-big .task{padding:6px 8px;border-radius:10px;cursor:pointer;font-size:.9rem;line-height:1.55}
+.pg-big .task:hover{background:color-mix(in srgb,var(--text) 6%,transparent)}
+.pg-big .task.cur{background:color-mix(in srgb,var(--team) 13%,transparent);box-shadow:0 0 0 1px var(--team)}
+.pg-big .task.cur i{border-color:var(--team);animation:lnpulse 1.5s infinite}
+@media(min-width:981px){
+  .pg-big .pg-body{grid-template-columns:minmax(0,1.35fr) minmax(0,1fr)}
+  .pg-big .ed{max-height:none}
+  .pg-big .ed pre,.pg-big .ed textarea{font-size:1.0625rem;line-height:1.8;padding:16px 18px}
+  .pg-big .out iframe{min-height:230px}
+}
+
+.modal.wide:has(.pg-big){width:min(1480px,100%)}
+
+.pg-sty{border-top:1px solid var(--line);background:var(--card2)}
+.pg-sty summary{cursor:pointer;padding:8px 16px;font:800 .82rem var(--font);color:var(--mute);list-style:none}
+.pg-sty summary:hover{color:var(--text)}
+.pg-sty[open] summary{color:var(--vue)}
+.pg-sty-b pre.code{margin:0;border-radius:0;font-size:.92rem}
+
+.pg-big .tasks{align-content:start;grid-auto-rows:min-content}
+.pg-big .ed{border-bottom:0}

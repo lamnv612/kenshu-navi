@@ -25,7 +25,7 @@
     const probe = K.vueTools.makeProbe(cfg.probe, libs);
     const start = conv(cfg.starter);
     return {
-      mode: 'web', sfc: true, libs, height: cfg.height || 250,
+      mode: 'web', sfc: true, libs, height: cfg.height || 250, alias: cfg.alias, fileNotes: cfg.fileNotes, paths: cfg.paths,
       files: Object.keys(start).map((n) => ({ name: n, lang: lang(n), code: start[n] })),
       solution: conv(apply(cfg.steps.length - 1)),
       tasks: (v, c) => {
@@ -115,6 +115,7 @@ T['vue-basics'] = web({
 
   /* ---------- vue-comp：props / emit / v-model（案件カード。親 App.vue と、子 2 つ） ---------- */
   T['vue-comp'] = web({
+    alias: { 'App.vue': 'CaseListPage.vue' },
     height: 330,
     starter: {
       'App.vue': "<script setup lang=\"ts\">\nimport { ref } from 'vue'\nimport CaseCard from './CaseCard.vue'\nimport NameInput from './NameInput.vue'\n\nconst count = ref(2)\nconst name = ref('たろう')\n</script>\n\n<template>\n  <p>案件数：{{ count }}</p>\n  <!-- ① title を渡す（労働問題 と 契約トラブル） -->\n  <CaseCard />\n  <CaseCard />\n  <!-- ② 削除が押されたら count を減らす（@remove） -->\n  <hr />\n  <!-- ③ v-model で name とつなぐ -->\n  <NameInput />\n  <p>お名前：{{ name }}</p>\n</template>\n",
@@ -122,7 +123,7 @@ T['vue-basics'] = web({
       'NameInput.vue': "<script setup lang=\"ts\">\n// ③ modelValue を受け取る（props）\nconst emit = defineEmits<{ 'update:modelValue': [value: string] }>()\n</script>\n\n<template>\n  <input :value=\"modelValue\" @input=\"emit('update:modelValue', $event.target.value)\" />\n</template>\n",
     },
     steps: [
-      { key: 'm1', level: 1, file: 'App.vue', label: '子の部品に title を渡して、カードに「労働問題」「契約トラブル」と出る（props）', hint: ['子（CaseCard.vue）は <code>defineProps&lt;{ title: string }&gt;()</code> で受け取る。', '親（App.vue）は <code>&lt;CaseCard title="労働問題" /&gt;</code> のように渡す。'], edits: [['  <CaseCard />\n  <CaseCard />', '  <CaseCard title="労働問題" />\n  <CaseCard title="契約トラブル" />']], also: [['CaseCard.vue', '// ① title を受け取る（props）\n', 'defineProps<{ title: string }>()\n']] },
+      { key: 'm1', level: 1, file: 'App.vue', label: '子の部品に title を渡して、カードに「労働問題」「契約トラブル」と出る（props）', hint: ['子（CaseCard.vue）は <code>defineProps&lt;{ title: string }&gt;()</code> で受け取る。', '親（CaseListPage.vue）は <code>&lt;CaseCard title="労働問題" /&gt;</code> のように渡す。'], edits: [['  <CaseCard />\n  <CaseCard />', '  <CaseCard title="労働問題" />\n  <CaseCard title="契約トラブル" />']], also: [['CaseCard.vue', '// ① title を受け取る（props）\n', 'defineProps<{ title: string }>()\n']] },
       { key: 'm2', level: 2, file: 'App.vue', label: '「削除」を押すたびに案件数が 2 → 1 → 0 と減る（@remove）', hint: ['子は <code>emit(\'remove\')</code> で知らせている。親は <code>@remove</code> で受け取る。', '<code>&lt;CaseCard title="労働問題" @remove="count--" /&gt;</code>'], edits: [['<CaseCard title="労働問題" />\n  <CaseCard title="契約トラブル" />', '<CaseCard title="労働問題" @remove="count--" />\n  <CaseCard title="契約トラブル" @remove="count--" />']] },
       { key: 'm3', level: 3, file: 'App.vue', label: '部品に v-model を使い、入力欄に「たろう」が入り、書き換えると名前も変わる', hint: ['子（NameInput.vue）は <code>defineProps&lt;{ modelValue: string }&gt;()</code> を受け取る（update:modelValue はもう emit している）。', '親は <code>&lt;NameInput v-model="name" /&gt;</code>。'], edits: [['<NameInput />', '<NameInput v-model="name" />']], also: [['NameInput.vue', '// ③ modelValue を受け取る（props）\n', 'defineProps<{ modelValue: string }>()\n']] },
     ],
@@ -178,6 +179,7 @@ T['vue-basics'] = web({
 
   /* ---------- vue-router：ルート定義 / 動的ルート / ガード（router.ts ＋ 各画面 .vue） ---------- */
   T['vue-router'] = web({
+    alias: { 'App.vue': 'CaseLayout.vue' },
     libs: [VUE, VROUTER], height: 320,
     starter: {
       'router.ts': "import { createRouter, createMemoryHistory } from 'vue-router'\nimport HomeView from './HomeView.vue'\nimport AdminView from './AdminView.vue'\nimport CaseDetail from './CaseDetail.vue'\n\nconst loggedIn = false\n\nconst routes = [\n  { path: '/', component: HomeView },\n  { path: '/admin', component: AdminView },\n  // ① /cases/:id のルートを足す\n]\n\n// このページの中で動かすので createMemoryHistory を使う（本番は createWebHistory）\nconst router = createRouter({\n  history: createMemoryHistory(),\n  routes,\n})\n\n// ③ ログインしていないとき、/admin に入れず / に戻す（beforeEach）\n\nexport default router\n",
@@ -257,4 +259,8 @@ T['vue-basics'] = web({
       ];
     },
   };
+  /* ファイル名を中身に合わせる（全部 App.vue だと混乱するため）。見た目だけの別名 */
+  [['vue-intro', 'SlotBooking.vue'], ['vue-basics', 'CaseForm.vue'], ['vue-life', 'PriceBoard.vue']].forEach(([l, n]) => { const c = T[l]; if (c && c.files && c.files.some((f) => f.name === 'App.vue')) c.alias = { 'App.vue': n }; });
+  /* 別ファイル（tests/vue-x-*.js）が、同じ書き方で問題を増やせるように道具を公開 */
+  K.vueTestTools = { web, nt, type, VUE, VROUTER };
 })();

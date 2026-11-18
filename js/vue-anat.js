@@ -422,7 +422,7 @@ interface Item { title: string; note?: string; done: boolean }
 const props = defineProps<{ item: Item }>()
 const emit = defineEmits<{ (e: 'toggle', title: string): void }>()
 
-const label = computed(() => (props.item.done ? '✓ 完了' : '完了にする'))
+const label = computed<string>(() => (props.item.done ? '✓ 完了' : '完了にする'))
 const toggle = () => emit('toggle', props.item.title)
 </script>⟧
 
@@ -479,7 +479,7 @@ const toggle = () => emit('toggle', props.item.title)
 ⟦pr|const props = defineProps<{ item: Item }>()⟧
 ⟦em|const emit = defineEmits<{ (e: 'toggle', title: string): void }>()⟧
 
-⟦cp|const label = computed(() => (props.item.done ? '✓ 完了' : '完了にする'))⟧
+⟦cp|const label = computed<string>(() => (props.item.done ? '✓ 完了' : '完了にする'))⟧
 ⟦fn|const toggle = () => emit('toggle', props.item.title)⟧
 </script>
 

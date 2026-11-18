@@ -132,10 +132,10 @@
     const ta = h('textarea', { spellcheck: 'false', autocapitalize: 'off', autocomplete: 'off' });
     ta.value = initial;
     const root = h('div', { class: 'ed' }, pre, ta);
-    let errLines = [];
+    let errLines = [], fLines = [], fCls = 'todo';
     function paint() {
       const lines = ta.value.split('\n');
-      pre.innerHTML = lines.map((l, i) => '<span class="ln' + (errLines.includes(i + 1) ? ' err' : '') + '">' + (hl(l, lang) || '&nbsp;') + '</span>').join('');
+      pre.innerHTML = lines.map((l, i) => '<span class="ln' + (errLines.includes(i + 1) ? ' err' : '') + (fLines.includes(i + 1) ? ' ' + fCls + (i + 1 === fLines[0] ? ' first' : '') : '') + '">' + (hl(l, lang) || '&nbsp;') + '</span>').join('');
       pre.querySelectorAll('.ln').forEach((x) => (x.style.display = 'block'));
     }
     ta.addEventListener('input', () => { paint(); onchange && onchange(ta.value); });
@@ -151,6 +151,8 @@
     root.get = () => ta.value;
     root.set = (v) => { ta.value = v; paint(); onchange && onchange(v); };
     root.mark = (arr) => { errLines = arr || []; paint(); };
+    /* ミッションの対象行を、動くハイライトで示す（cls: 'todo' = これから書く / 'okf' = できた） */
+    root.focusLines = (arr, cls) => { fLines = arr || []; fCls = cls || 'todo'; paint(); if (fLines.length) { const lh = parseFloat(getComputedStyle(ta).lineHeight) || 24; const y = Math.max(0, (fLines[0] - 3) * lh); if (y > ta.scrollTop + ta.clientHeight - lh * 3 || y < ta.scrollTop) { ta.scrollTop = y; pre.scrollTop = y; } } };
     paint();
     return root;
   }
@@ -274,7 +276,33 @@ declare function Boolean(v:any):boolean;
       (app ? `\nApp.components = Object.assign({}, { ${reg.join(', ')} });\nconst __app = createApp(App);\n${useRouter ? '__app.use(router);\n' : ''}__app.mount('#app');` : '') + '\ndocument.currentScript && document.currentScript.remove();';
     return { html: '<div id="app"></div>', css, js, needTs: false };
   }
+  /* <style> ブロックを本文から切り離し、整形して見せる（書き換え不要のものは、たたんでおく） */
+  function splitStyle(src) { const m = /\n*(<style[^>]*>[\s\S]*?<\/style>)\s*$/.exec(src || ''); return m ? { main: src.slice(0, m.index).replace(/\s+$/, '') + '\n', style: m[1] } : { main: src, style: '' }; }
+  function fmtStyle(blk) {
+    const m = /^(<style[^>]*>)([\s\S]*?)(<\/style>)$/.exec(blk || ''); if (!m) return blk || '';
+    const body = m[2].replace(/\/\*[\s\S]*?\*\//g, '').replace(/\s+/g, ' ').trim();
+    const out = []; let buf = '';
+    for (const ch of body) {
+      if (ch === '{') { out.push(buf.trim().replace(/\s*,\s*/g, ',\n') + ' {'); buf = ''; }
+      else if (ch === '}') { if (buf.trim()) out.push('  ' + buf.trim().replace(/;?$/, ';')); out.push('}', ''); buf = ''; }
+      else if (ch === ';') { out.push('  ' + buf.trim() + ';'); buf = ''; }
+      else buf += ch;
+    }
+    while (out.length && out[out.length - 1] === '') out.pop();
+    return m[1] + '\n' + out.join('\n') + '\n' + m[3];
+  }
+  /* 実際のプロジェクトでは、親を App.vue に全部書くことはない。別名が無い App.vue には、中身から現実的な名前を付けて見せる */
+  function guessPageName(src) {
+    const m = /import\s+(\w+)\s+from\s+['"]\.\/\w+\.vue['"]/.exec(src || '');
+    if (!m) return /<form|v-model|<input/.test(src || '') ? 'ConsultForm.vue' : 'CasePage.vue';
+    const n = m[1], base = n.replace(/(Card|Row|Item|Box|Input|Field|Button|Badge|Stepper|Switch|Stars|Tab|Tag|Bell|Summary)$/, '') || n;
+    return base + (/(Card|Row|Item)$/.test(n) ? 'ListPage' : 'Page') + '.vue';
+  }
   function playground(o) {
+    if (o.sfc && o.files.some((f) => f.name === 'App.vue') && !(o.alias && o.alias['App.vue'])) {
+      o = Object.assign({}, o, { alias: Object.assign({}, o.alias, { 'App.vue': guessPageName(o.files.find((f) => f.name === 'App.vue').code) }) });
+    }
+    const unApp = (t) => (typeof t === 'string' && o.alias && o.alias['App.vue'] ? t.replace(/App\.vue/g, o.alias['App.vue']) : t);
     const mode = o.mode || 'web';
     const vals = {};
     o.files.forEach((f) => (vals[f.name] = f.code));
@@ -288,15 +316,29 @@ declare function Boolean(v:any):boolean;
     let iframe = null, outEl;
     let doneFired = false, timer = null;
 
+    const tails = {}, dets = {};
+    const paintDet = (n) => { const d = dets[n]; if (d) d.body.replaceChildren(code(tails[n], 'vue', { file: n, dim: true, edit: false })); };
     o.files.forEach((f) => {
-      const ed = codeEditor(f.code, f.lang, (v) => { vals[f.name] = v; schedule(); });
+      const sp = f.lang === 'vue' ? splitStyle(f.code) : { main: f.code, style: '' };
+      tails[f.name] = sp.style ? fmtStyle(sp.style) : '';
+      vals[f.name] = sp.main + (tails[f.name] ? '\n' + tails[f.name] + '\n' : '');
+      const ed = codeEditor(sp.main, f.lang, (v) => { vals[f.name] = v + (tails[f.name] ? '\n' + tails[f.name] + '\n' : ''); schedule(); });
+      const rawSet = ed.set;
+      ed.set = (v) => { const q = f.lang === 'vue' ? splitStyle(v) : { main: v, style: '' }; if (q.style) { tails[f.name] = fmtStyle(q.style); paintDet(f.name); } rawSet(q.main); };
       ed.style.display = f.name === activeName ? '' : 'none';
       eds[f.name] = ed; edBox.append(ed);
+      if (tails[f.name]) {
+        const body = h('div', { class: 'pg-sty-b' });
+        const det = h('details', { class: 'pg-sty', style: { display: f.name === activeName ? '' : 'none' } }, h('summary', '🎨 <style>（見た目のCSS・書き換え不要）　クリックで開く'), body);
+        dets[f.name] = { det, body }; edBox.append(det); paintDet(f.name);
+      }
       tabs.append(h('button', { class: 'tab' + (f.name === activeName ? ' on' : ''), 'data-n': f.name, onclick: () => {
         activeName = f.name;
         tabs.querySelectorAll('.tab').forEach((t) => t.classList.toggle('on', t.dataset.n === f.name));
         Object.entries(eds).forEach(([n, e]) => (e.style.display = n === f.name ? '' : 'none'));
-      } }, f.name));
+        Object.entries(dets).forEach(([n, d]) => (d.det.style.display = n === f.name ? '' : 'none'));
+        if (typeof treeEl !== 'undefined' && treeEl) treeEl.querySelectorAll('.pg-tf').forEach((b) => b.classList.toggle('on', b.dataset.n === f.name));
+      } }, (o.alias && o.alias[f.name]) || f.name));
     });
 
     const get = (n) => vals[n] ?? '';
@@ -311,7 +353,7 @@ declare function Boolean(v:any):boolean;
       }
       const libs = (o.libs || []).map((u) => `<script src="${u}"><\/script>`).join('');
       const bridge = `<script>(function(){var s=function(k,a){parent.postMessage({kenshu:1,k:k,t:[].slice.call(a).map(function(x){try{return typeof x==='string'?x:JSON.stringify(x)}catch(e){return String(x)}}).join(' ')},'*')};console.log=function(){s('l',arguments)};console.error=function(){s('e',arguments)};window.onerror=function(m){s('e',[m])}})()<\/script>`;
-      const base = `<meta charset="utf-8"><style>body{font-family:system-ui,'Hiragino Sans',sans-serif;margin:14px;line-height:1.6}</style>`;
+      const base = `<meta charset="utf-8"><style>body{font-family:system-ui,'Hiragino Sans',sans-serif;margin:16px;line-height:1.6;color:#223;font-size:15px}h1{font-size:1.3rem;margin:.2em 0 .6em}h2{font-size:1.1rem;margin:.2em 0 .5em}h3{font-size:1rem;margin:.2em 0}ul{padding-left:1.2em;margin:.4em 0}li{margin:.3em 0}button{font:inherit;padding:.3em .9em;border:1px solid #c5ccdd;border-radius:8px;background:#f5f7fc;cursor:pointer}button:hover{background:#e8edfa}input,select,textarea{font:inherit;padding:.35em .6em;border:1px solid #c5ccdd;border-radius:8px}p{margin:.4em 0}</style>`;
       return `<!doctype html><html><head>${base}${bridge}${libs}<style>${css}</style></head><body>${html}<script>${js}<\/script></body></html>`;
     }
     function runWeb() {
@@ -347,13 +389,39 @@ declare function Boolean(v:any):boolean;
       const hopt = { fallback: o.solution ? () => showSolution() : null, use: (tt) => { const f = o.files.find((x) => x.name === tt.answer.file) || o.files.find((x) => x.lang === (tt.answer.lang || x.lang)) || o.files[0]; if (tt.answer.mode === 'append') eds[f.name].set(eds[f.name].get() + '\n' + tt.answer.code); else eds[f.name].set(tt.answer.code); } };
       const LV = ['初級', '中級', '上級'];
       const lvChip = (t) => { const n = Math.min(3, Math.max(1, t.level || 1)); return h('span', { class: 'lv lv' + n, title: 'チャレンジ ' + LV[n - 1] }, Array.from({ length: n }, () => icon('star')), LV[n - 1]); };
-      const row = (t) => h('div', { class: 'task' + (t.ok ? ' ok' : '') + (t.optional ? ' opt' : '') }, h('i', t.ok ? '✓' : ''), h('span', { class: 'task-l' }, t.level && (!t.optional || opt.length > 1) ? lvChip(t) : null, t.label), hintButton(t, hopt));
+      const row = (t) => h('div', { class: 'task' + (t.ok ? ' ok' : '') + (t.optional ? ' opt' : '') + (req.indexOf(t) >= 0 && req.indexOf(t) === curIdx(req) ? ' cur' : ''), onclick: (e) => { if (e.target.closest && e.target.closest('.task-hint')) return; const i = req.indexOf(t); if (i < 0) return; pinIdx = i; lastKey = null; applyFocus(); } }, h('i', t.ok ? '✓' : ''), h('span', { class: 'task-l' }, t.level && (!t.optional || opt.length > 1) ? lvChip(t) : null, unApp(t.label)), hintButton(t, hopt));
       req.forEach((t) => tasksBox.append(row(t)));
       if (opt.length) {
         tasksBox.append(h('div', { class: 'mission-opt-head' }, h('span', { class: 'opt-badge' }, '任意'), h('b', 'チャレンジ'), h('small', 'もっと挑戦したい人だけ。やらなくても OK')));
         opt.slice().sort((x, y) => (x.level || 1) - (y.level || 1)).forEach((t) => tasksBox.append(row(t)));
       }
+      lastReq = req;
+      /* できたミッションの行を一瞬だけ緑に光らせてから、次のミッションへ */
+      const nowOk = new Set(req.map((t, i) => (t.ok ? i : -1)).filter((i) => i >= 0));
+      const fresh = [...nowOk].find((i) => !prevOk.has(i));
+      prevOk = nowOk;
+      if (fresh !== undefined && prevOkReady) { applyFocus(fresh, true); setTimeout(() => { pinIdx = -1; lastKey = null; applyFocus(); tasksBox.querySelectorAll('.task').forEach((r, k) => r.classList.toggle('cur', req[k] && k === curIdx(req))); }, 1100); }
+      else applyFocus();
+      prevOkReady = true;
       if (req.length && req.every((t) => t.ok) && !doneFired) { doneFired = true; celebrate(); o.onDone && o.onDone(); }
+    }
+    /* 今のミッション：クリックで選んだもの、なければ最初の未完了 */
+    let pinIdx = -1, lastKey = null, lastReq = [], prevOk = new Set(), prevOkReady = false;
+    const curIdx = (req) => (pinIdx >= 0 && pinIdx < req.length ? pinIdx : req.findIndex((t) => !t.ok));
+    function applyFocus(forceIdx, done) {
+      const req = lastReq; const i = forceIdx !== undefined ? forceIdx : curIdx(req);
+      Object.values(eds).forEach((e) => e.focusLines && e.focusLines([]));
+      if (i < 0 || !req[i]) return;
+      const t = req[i]; const CIRC = '①②③④⑤⑥⑦'[i];
+      let at = t.at; if (!at) { const f = o.files.find((x) => String(x.code).includes(CIRC)); at = f ? { file: f.name, find: [CIRC] } : null; }
+      if (!at) return;
+      const ed = eds[at.file]; if (!ed) return;
+      const key = i + ':' + at.file;
+      if (key !== lastKey && at.file !== activeName) { const tb = tabs.querySelector('.tab[data-n="' + at.file + '"]'); tb && tb.click(); }
+      lastKey = key;
+      const ls = []; ed.get().split('\n').forEach((l, k) => { if ((at.find || []).some((tok) => l.includes(tok))) ls.push(k + 1); });
+      if (ls.length) ed.focusLines(ls, done || t.ok ? 'okf' : 'todo');
+      tasksBox.querySelectorAll('.task').forEach((r, k) => r.classList.toggle('cur', req[k] && k === i && !done));
     }
     function schedule() {
       clearTimeout(timer);
@@ -375,7 +443,8 @@ declare function Boolean(v:any):boolean;
         h('div', { style: { padding: '14px 16px', color: '#8e97c4', fontSize: '.875rem', flex: 1 } }, '💡 コードを書くと、型チェックが自動で走ります。', h('br'), '▶ 実行 で結果（console.log）を確認できます。'),
         con);
     }
-    body.append(edBox, outEl);
+    const side = o.tasks ? h('div', { class: 'pg-side' }, outEl, tasksBox) : null;
+    body.append(edBox, side || outEl);
     const runBtn = mode === 'text' ? null : h('button', { class: 'btn primary', onclick: () => (mode === 'ts' ? runTS(true) : runWeb()) }, '▶ 実行');
     const resetBtn = h('button', { class: 'btn ghost', onclick: () => { o.files.forEach((f) => eds[f.name].set(f.code)); doneFired = false; } }, '⟲ リセット');
     const solBtn = o.solution ? h('button', { class: 'btn ghost', title: 'まず自分で試してから見よう', onclick: () => showSolution() }, icon('key-round'), '答えを見る') : null;
@@ -397,13 +466,14 @@ declare function Boolean(v:any):boolean;
     if (o.sfc && o.files.length > 1) {
       const pathOf = (n) => (o.paths && o.paths[n]) || ('src/' + n);
       const dirs = {}; o.files.forEach((f) => { const parts = pathOf(f.name).split('/'); const file = parts.pop(); const d = parts.join('/'); (dirs[d] = dirs[d] || []).push([f.name, file]); });
-      treeEl = h('div', { class: 'pg-tree' }, h('span', { class: 'pg-tree-h' }, '📁 フォルダ構成'), h('div', { class: 'pg-tree-b' }, h('div', { class: 'pg-tr' }, '📁 my-vue-project/'),
-        ...Object.keys(dirs).flatMap((d) => [h('div', { class: 'pg-tr', style: { paddingLeft: '14px' } }, '📁 ' + d + '/'), ...dirs[d].map(([name, file]) => h('button', { class: 'pg-tf', 'data-n': name, style: { paddingLeft: '30px' }, onclick: () => { tabs.querySelector('.tab[data-n="' + name + '"]') && tabs.querySelector('.tab[data-n="' + name + '"]').click(); } }, '📄 ' + file))])));
+      treeEl = h('div', { class: 'pg-tree' }, h('span', { class: 'pg-tree-h' }, '📁'), h('span', { class: 'pg-tr' }, 'my-vue-project /'),
+        ...Object.keys(dirs).flatMap((d) => [h('span', { class: 'pg-tr' }, d + '/'), ...dirs[d].map(([name, file]) => h('button', { class: 'pg-tf' + (name === activeName ? ' on' : ''), 'data-n': name, title: (o.fileNotes && o.fileNotes[name]) || '', onclick: () => { const tb = tabs.querySelector('.tab[data-n="' + name + '"]'); tb && tb.click(); } }, '📄 ' + ((o.alias && o.alias[name]) || file), o.fileNotes && o.fileNotes[name] ? h('small', { class: 'pg-tn' }, '　' + o.fileNotes[name]) : null))]));
     }
-    const root = h('div', { class: 'pg' },
+    const root = h('div', { class: 'pg' + (o.tasks ? ' pg-big' : '') },
       h('div', { class: 'pg-head' }, h('div', { class: 'dots3' }, h('i'), h('i'), h('i')), tabs, h('div', { style: { flex: 1 } }), o.title && h('span', { class: 'chip' }, o.title), solBtn, resetBtn, runBtn),
-      treeEl, body, o.tasks ? tasksBox : null);
-    if (o.height) edBox.firstChild.style.minHeight = o.height + 'px';
+      treeEl, body);
+    /* コードが長いときは、エディタを行数に合わせて高くする（スクロールを減らす。上限 700px） */
+    { const maxLines = Math.max(...o.files.map((f) => ((f.lang === 'vue' ? splitStyle(f.code).main : String(f.code || '')).split('\n').length))); const fit = Math.min(Math.max(o.height || 0, (o.mode === 'web' || o.tasks) ? maxLines * (o.tasks ? 30 : 24) + 44 : 0), o.tasks ? 600 : 700); if (fit) [...edBox.children].forEach((e) => (e.style.minHeight = fit + 'px')); }
     root.cleanup = () => window.removeEventListener('message', onMsg);
     if (K.ctx) K.ctx.cleanups.push(root.cleanup);
     setTimeout(() => (mode === 'ts' ? runTS(false) : mode === 'text' ? evalTasks() : runWeb()), 30);
