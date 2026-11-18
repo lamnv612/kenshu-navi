@@ -121,7 +121,7 @@ export const router = createRouter({
         else { b.view.replaceChildren(pageView(page)); b.view.dataset.k = ''; }
         b.view.setAttribute('data-k', 'view');
         Object.entries(menu).forEach(([p, e]) => e.classList.toggle('on', !outside && p === page));
-        if (ok) { b.urlEl.textContent = outside ? 'search.example/?q=相談' : stack[idx]; hist.textContent = '履歴 ' + stack.map((s, i) => (i === idx ? '[' + s + ']' : s)).join(' › '); }
+        if (ok) { b.urlEl.textContent = outside ? 'search.example/?q=相談' : stack[idx]; { const from = Math.max(0, stack.length - 4); hist.textContent = '履歴 ' + (from > 0 ? '… › ' : '') + stack.map((s, i) => (i === idx ? '[' + s + ']' : s)).slice(from).join(' › '); } }
         else { b.urlEl.textContent = outside ? 'search.example/?q=相談' : '/'; hist.textContent = "page = '" + page + "'"; }
         b.back.disabled = ok ? (idx === 0 || outside) : outside;
       };

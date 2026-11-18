@@ -50,6 +50,7 @@
     .vrB-tag.doing{background:#e8890c}.vrB-tag.done{background:#2a9d6a}
     `);
 
+    let lastHi = [], rl = null;   /* lastHi：今光っている行（hover を外したら戻す）／ rl：UI ⇄ コードをつなぎ直す */
     const lns = (src, keys) => { const o = []; src.split('\n').forEach((l, i) => { if (keys.some((k) => l.includes(k))) o.push(i + 1); }); return o; };
     const flash = (el) => { if (!el) return; el.classList.remove('vrB-fl'); void el.offsetWidth; el.classList.add('vrB-fl'); };
     const tab = (list, cur, on) => h('div', { class: 'vi-row' }, ...list.map((t, i) => h('span', { class: 'vi-chip' + (i === cur ? '' : ' off'), style: { '--cc': C }, onclick: () => on(i) }, t)));
@@ -63,9 +64,9 @@
 
     function widgetCounter(pre) {
       const S = SRC.counter, MAX = 40;
-      let hiT; const hi = (keys) => { pre.setHi(lns(S, keys)); clearTimeout(hiT); hiT = setTimeout(() => pre.setHi([]), 6000); };
-      const ta = h('textarea', { placeholder: 'ご相談内容を入力…', maxlength: 200 });
-      const cnt = h('div', { class: 'vrB-cnt' }), send = h('button', { class: 'vrB-send' }, '送信');
+      let hiT; const hi = (keys) => { lastHi = lns(S, keys); pre.setHi(lastHi); clearTimeout(hiT); hiT = setTimeout(() => { lastHi = []; pre.setHi([]); }, 6000); };
+      const ta = h('textarea', { placeholder: 'ご相談内容を入力…', maxlength: 200, 'data-k': 'model' });
+      const cnt = h('div', { class: 'vrB-cnt', 'data-k': 'remain' }), send = h('button', { class: 'vrB-send', 'data-k': 'send' }, '送信');
       let wasOver = null;
       const upd = () => {
         const remain = MAX - ta.value.length, over = remain < 0;
@@ -77,44 +78,45 @@
         wasOver = over;
       };
       ta.addEventListener('input', upd);
-      ta.value = '相続の件で相談したいのですが'; upd(); pre.setHi([]);
+      ta.value = '相続の件で相談したいのですが'; upd(); pre.setHi([]); lastHi = [];
       const el = h('div', { class: 'vrB-box' }, ta, cnt, send);
       return h('div', { class: 'vrB-live' }, h('div', { class: 'vrB-tip' }, '✍️ 40文字を超えて打ってみよう'), el);
     }
 
     function widgetBell(pre) {
       const S = SRC.bell;
-      let hiT; const hi = (keys) => { pre.setHi(lns(S, keys)); clearTimeout(hiT); hiT = setTimeout(() => pre.setHi([]), 6000); };
+      let hiT; const hi = (keys) => { lastHi = lns(S, keys); pre.setHi(lastHi); clearTimeout(hiT); hiT = setTimeout(() => { lastHi = []; pre.setHi([]); }, 6000); };
       let items = [{ id: 1, text: '山田様から新着メッセージ', read: false }, { id: 2, text: '面談の日程が確定しました', read: false }];
       let seq = 10;
-      const bell = h('div', { class: 'vrB-bell' }, '🔔'), list = h('div', { style: { display: 'grid', gap: '6px' } });
+      const bell = h('div', { class: 'vrB-bell', 'data-k': 'badge' }, '🔔'), list = h('div', { style: { display: 'grid', gap: '6px' } });
       let badge = null;
       const NEW = ['鈴木様から書類が届きました', '相談の回答期限が近づいています', '新しい相談が1件あります'];
       const paint = (what) => {
         const u = items.filter((n) => !n.read).length;
-        if (u > 0) { if (!badge) { badge = h('span', { class: 'vrB-badge' }); bell.append(badge); flash(badge); } badge.textContent = u; if (what !== 'open' || true) flash(badge); }
+        if (u > 0) { if (!badge) { badge = h('span', { class: 'vrB-badge', 'data-k': 'badge' }); bell.append(badge); flash(badge); } badge.textContent = u; if (what !== 'open' || true) flash(badge); }
         else if (badge) { badge.remove(); badge = null; flash(bell); }
-        list.replaceChildren(...items.map((n) => { const li = h('div', { class: 'vrB-n' + (n.read ? '' : ' unread'), onclick: () => { if (n.read) return; n.read = true; paint('open'); const t = list.children[items.indexOf(n)]; flash(t); hi(['function open', 'n.read = true', 'const unread', ':class="{ unread', '@click="open', '<b v-if', '{{ unread }}']); } }, h('i'), n.text); if (what === 'receive' && n === items[0]) flash(li); return li; }));
+        list.replaceChildren(...items.map((n) => { const li = h('div', { class: 'vrB-n' + (n.read ? '' : ' unread'), 'data-k': 'item', onclick: () => { if (n.read) return; n.read = true; paint('open'); const t = list.children[items.indexOf(n)]; flash(t); hi(['function open', 'n.read = true', 'const unread', ':class="{ unread', '@click="open', '<b v-if', '{{ unread }}']); } }, h('i'), n.text); if (what === 'receive' && n === items[0]) flash(li); return li; }));
+        rl && rl();
       };
       paint();
-      const add = h('button', { class: 'btn primary', style: { '--c': C }, onclick: () => { items.unshift({ id: ++seq, text: NEW[seq % NEW.length], read: false }); paint('receive'); hi(['function receive', 'notices.value.unshift', 'const unread', 'v-for="n in notices"', '<b v-if', '{{ unread }}']); } }, '📩 新着を受信');
+      const add = h('button', { class: 'btn primary', 'data-k': 'recv', style: { '--c': C }, onclick: () => { items.unshift({ id: ++seq, text: NEW[seq % NEW.length], read: false }); paint('receive'); hi(['function receive', 'notices.value.unshift', 'const unread', 'v-for="n in notices"', '<b v-if', '{{ unread }}']); } }, '📩 新着を受信');
       const all = h('button', { class: 'btn', onclick: () => { items.forEach((n) => { n.read = true; }); paint('open'); flash(list); hi(['n.read = true', 'const unread', '<b v-if', ':class="{ unread']); } }, '✓ すべて既読');
       return h('div', { class: 'vrB-live' }, h('div', { class: 'vrB-tip' }, '🔔 通知をクリック / 新着を受信'), h('div', { class: 'vrB-bar' }, h('b', { style: { fontSize: '.9rem' } }, '相談ナビ'), bell), list, h('div', { class: 'vrB-act' }, add, all));
     }
 
     function widgetFav(pre) {
       const S = SRC.fav;
-      let hiT; const hi = (keys) => { pre.setHi(lns(S, keys)); clearTimeout(hiT); hiT = setTimeout(() => pre.setHi([]), 6000); };
+      let hiT; const hi = (keys) => { lastHi = lns(S, keys); pre.setHi(lastHi); clearTimeout(hiT); hiT = setTimeout(() => { lastHi = []; pre.setHi([]); }, 6000); };
       const LW = [{ id: 1, name: '佐藤 弁護士', field: '離婚' }, { id: 2, name: '鈴木 弁護士', field: '相続' }, { id: 3, name: '高橋 弁護士', field: '労働' }];
       let favs = [2];
-      const foot = h('div', { class: 'vrB-foot' });
+      const foot = h('div', { class: 'vrB-foot', 'data-k': 'count' });
       const stars = {};
-      const rows = LW.map((l) => { const b = h('button', { class: 'vrB-star', title: 'お気に入り', onclick: () => {
+      const rows = LW.map((l) => { const b = h('button', { class: 'vrB-star', 'data-k': 'star', title: 'お気に入り', onclick: () => {
         const had = favs.includes(l.id);
         favs = had ? favs.filter((x) => x !== l.id) : [...favs, l.id];
         paint(); flash(b); flash(foot);
         hi(['favs.value = favs', had ? 'favs.value.filter' : '[...favs.value', 'favs.value.includes(id)', ':class="{ on', '@click="toggle', '{{ favs.length }}']);
-      } }, '★'); stars[l.id] = b; return h('div', { class: 'vrB-lw' }, h('span', l.name), h('small', l.field), b); });
+      } }, '★'); stars[l.id] = b; return h('div', { class: 'vrB-lw', 'data-k': 'row' }, h('span', l.name), h('small', l.field), b); });
       const paint = () => { LW.forEach((l) => stars[l.id].classList.toggle('on', favs.includes(l.id))); foot.textContent = 'お気に入り ' + favs.length + ' 件'; };
       paint();
       return h('div', { class: 'vrB-live' }, h('div', { class: 'vrB-tip' }, '★ をクリックして切り替え'), h('div', { class: 'vrB-box', style: { gap: '6px' } }, ...rows, foot));
@@ -123,9 +125,9 @@
     /* ============ シーン1：3つのウィジェット ============ */
     function scene1(el) {
       const defs = [
-        ['✍️ 文字数カウンタ', 'ConsultForm.vue', SRC.counter, widgetCounter],
-        ['🔔 通知ベル', 'NoticeBell.vue', SRC.bell, widgetBell],
-        ['★ お気に入り', 'LawyerList.vue', SRC.fav, widgetFav]
+        ['✍️ 文字数カウンタ', 'ConsultForm.vue', SRC.counter, widgetCounter, { model: ['<textarea', 'v-model="body"', 'const body'], remain: ['<p :class', 'const remain', 'const over', 'const MAX'], send: ['<button :disabled', 'const over'] }],
+        ['🔔 通知ベル', 'NoticeBell.vue', SRC.bell, widgetBell, { badge: ['<span class="bell"', '<b v-if', '{{ unread }}', 'const unread'], item: ['v-for="n in notices"', ':key="n.id"', ':class="{ unread', '@click="open', 'function open', 'n.read = true', '{{ n.text }}'], recv: ['function receive', 'notices.value.unshift'] }],
+        ['★ お気に入り', 'LawyerList.vue', SRC.fav, widgetFav, { row: ['v-for="l in lawyers"', ':key="l.id"', '{{ l.name }}'], star: [':class="{ on', '@click="toggle', 'function toggle', 'favs.value = favs', 'favs.value.includes', 'favs.value.filter', '[...favs.value'], count: ['{{ favs.length }}', 'const favs'] }]
       ];
       let cur = 0;
       const host = h('div', { class: 'vi-eq' });
@@ -134,7 +136,10 @@
         tabs.querySelectorAll('.vi-chip').forEach((c, i) => c.classList.toggle('off', i !== cur));
         const d = defs[cur];
         const pre = code(d[2], 'vue', { color: C, file: d[1], dim: true });
-        host.replaceChildren(d[3](pre), h('div', { class: 'vrB-code' }, pre));
+        lastHi = []; rl = null;
+        const live = d[3](pre);
+        host.replaceChildren(live, h('div', { class: 'vrB-code' }, pre));
+        if (K.vs && K.vs.link) { rl = () => K.vs.link(live, pre, d[4], { rest: () => lastHi }); rl(); }
       };
       draw();
       el.append(h('div', { class: 'vrB-wrap' }, tabs, host));
@@ -158,19 +163,20 @@
       const paint = () => { nm.textContent = st.name; bd.replaceChildren(...(st.unread > 0 ? [h('span', { class: 'vrB-badge', style: { position: 'static', display: 'inline-block' } }, st.unread)] : [h('small', { style: { color: '#99a' } }, '（バッジなし）')])); tg.textContent = LABEL[st.status]; tg.className = 'vrB-tag ' + st.status; };
       paint();
       const regs = { name: mkReg('name', '名前', nm), unread: mkReg('unread', 'バッジ', bd), status: mkReg('status', '状態', tg) };
-      const none = h('div', { class: 'vrB-reg', style: { justifyContent: 'center' }, onclick: () => pick('none') }, '🙅 画面は変わらない');
+      Object.keys(regs).forEach((k) => regs[k].setAttribute('data-k', k));
+      const none = h('div', { class: 'vrB-reg', 'data-k': 'none', style: { justifyContent: 'center' }, onclick: () => pick('none') }, '🙅 画面は変わらない');
       const q = h('div', { class: 'vrB-q' }), res = h('div', { class: 'vrB-sc' }), next = h('button', { class: 'btn primary', style: { '--c': C, display: 'none' }, onclick: () => { n++; round(); } }, '次へ ▶');
       const ev = null;
       function round() {
-        if (n >= R.length) { q.textContent = '🎉 ' + score + ' / ' + R.length + ' 正解'; res.textContent = '画面に使っている ref だけが再描画される'; next.style.display = 'none'; pre.setHi([]); Object.values(regs).forEach((r) => r.classList.remove('ok', 'no')); none.classList.remove('ok', 'no'); return; }
+        if (n >= R.length) { q.textContent = '🎉 ' + score + ' / ' + R.length + ' 正解'; res.textContent = '画面に使っている ref だけが再描画される'; next.style.display = 'none'; pre.setHi([]); lastHi = []; Object.values(regs).forEach((r) => r.classList.remove('ok', 'no')); none.classList.remove('ok', 'no'); return; }
         locked = false; q.textContent = R[n].q; res.textContent = '第 ' + (n + 1) + ' 問：画面のどこが変わる？ クリックで予想'; next.style.display = 'none';
         Object.values(regs).forEach((r) => r.classList.remove('ok', 'no')); none.classList.remove('ok', 'no');
-        pre.setHi([]);
+        pre.setHi([]); lastHi = [];
       }
       function pick(k) {
         if (locked || n >= R.length) return; locked = true;
         const r = R[n], right = k === r.key; if (right) score++;
-        r.set(); paint(); pre.setHi(lns(S, r.hi));
+        r.set(); paint(); lastHi = lns(S, r.hi); pre.setHi(lastHi);
         const node = regs[r.key]; if (node) flash(node);
         (k === 'none' ? none : regs[k]).classList.add(right ? 'ok' : 'no');
         if (!right) (r.key === 'none' ? none : regs[r.key]).classList.add('ok');
@@ -180,6 +186,7 @@
       round();
       const live = h('div', { class: 'vrB-live' }, q, h('div', { style: { display: 'grid', gap: '8px', background: '#f4f6fb', padding: '10px', borderRadius: '10px' } }, regs.name, regs.unread, regs.status, none), res, h('div', { class: 'vrB-act' }, next, h('button', { class: 'btn', onclick: () => { Object.assign(st, { name: '山田 太郎', unread: 3, status: 'new', memo: '折り返し希望' }); n = 0; score = 0; paint(); round(); } }, '↺ 最初から')));
       el.append(h('div', { class: 'vi-eq' }, live, h('div', { class: 'vrB-code' }, pre)));
+      if (K.vs && K.vs.link) K.vs.link(live, pre, { name: ['const name', '{{ name }}'], unread: ['const unread', 'v-if="unread'], status: ['const status', ':class="status"', 'LABEL'], none: ['const memo'] }, { rest: () => lastHi });
     }
 
     const idx = L.scenes.findIndex((s) => s.t === '実践：ミニTodo');

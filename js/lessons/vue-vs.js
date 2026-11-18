@@ -22,6 +22,10 @@
   .vs-banner.ok{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 12%,var(--card));color:var(--ok)}
   .vs-banner.warn{border-color:var(--team);background:color-mix(in srgb,var(--team) 12%,var(--card));color:var(--team)}
   .vs-cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:stretch}
+  @supports (grid-template-rows:subgrid){@media(min-width:981px){
+    .vs-cols{grid-template-rows:auto auto 1fr;row-gap:0}
+    .vs-side{grid-row:1/4;grid-template-rows:subgrid;row-gap:10px}
+  }}
   @media(max-width:980px){.vs-cols{grid-template-columns:1fr}}
   .vs-side{position:relative;display:grid;grid-template-rows:auto auto 1fr;gap:10px;padding:12px;border-radius:14px;border:2px solid var(--line);background:var(--card);min-width:0}
   .vs-side.no{border-color:color-mix(in srgb,var(--bad) 55%,var(--line))}.vs-side.yes{border-color:color-mix(in srgb,var(--ok) 55%,var(--line))}
@@ -29,8 +33,12 @@
   .vs-side.no .vs-tt{color:var(--bad)}.vs-side.yes .vs-tt{color:var(--ok)}
   .vs-ui{position:relative;border-radius:12px;background:#f4f6fb;color:#1f2a44;padding:14px;min-height:190px;display:grid;gap:8px;align-content:start;min-width:0}
   .vs-ui [data-k]{border-radius:8px;outline:2px solid transparent;outline-offset:2px;transition:outline-color .15s,background .15s;cursor:default}
-  .vs-ui [data-k].vs-hot{outline-color:var(--c,#2f7bff);background:color-mix(in srgb,var(--c,#2f7bff) 14%,transparent)}
-  .vs-code{min-width:0;max-height:360px;overflow:auto;border-radius:10px}
+  .vs-ui [data-k].vs-hot{outline-color:var(--c,#2f7bff)}
+  .vs-ui [data-k].vs-hot:not(button):not(input):not(select):not(textarea){background:color-mix(in srgb,var(--c,#2f7bff) 14%,transparent)}
+  .vs-code{min-width:0;max-height:360px;overflow:auto;border-radius:10px;display:flex;flex-direction:column}
+  .vs-code>pre.code{flex:1 1 auto}
+  .vs-fold{display:block;cursor:pointer;color:var(--mute);font-style:italic;padding:3px 0;opacity:.85;user-select:none}.vs-fold:hover{color:var(--text);opacity:1}
+  .vs-tg{all:unset;cursor:pointer;margin-left:auto;padding:.25em .8em;border-radius:99px;border:1px solid var(--line);background:var(--card2);color:var(--mute);font:800 .78rem var(--font)}.vs-tg:hover{color:var(--text);border-color:var(--ts)}
   .vs-code pre.code{margin:0;font-size:.92rem}
   .vs-pkt{position:absolute;left:0;top:0;z-index:9;padding:.2em .85em;border-radius:99px;color:#06101f;font:900 .82rem var(--mono);box-shadow:0 6px 18px rgba(0,0,0,.35);pointer-events:none;white-space:nowrap}
   .vs-bump{animation:vsb .7s}@keyframes vsb{30%{transform:scale(1.08);box-shadow:0 0 0 5px color-mix(in srgb,var(--ok) 45%,transparent)}}
@@ -38,7 +46,9 @@
   const lns = (src, toks) => { const o = []; src.split('\n').forEach((l, i) => { if ((toks || []).some((t) => l.includes(t))) o.push(i + 1); }); return o; };
   const COLORS = ['#ff6b9d', '#5b9dff', '#ffb454', '#2fd4a4', '#a98bff', '#ff8a5b'];
   style('vsHotLink', `
-  [data-k].vs-hot{outline:2px solid var(--c,#2f7bff)!important;outline-offset:2px;background-color:color-mix(in srgb,var(--c,#2f7bff) 14%,transparent)}
+  [data-k].vs-hot{outline:2px solid var(--c,#2f7bff)!important;outline-offset:2px;box-shadow:0 0 0 5px color-mix(in srgb,var(--c,#2f7bff) 22%,transparent)}
+  [data-k].vs-hot:not(button):not(input):not(select):not(textarea):not(.btn){background-color:color-mix(in srgb,var(--c,#2f7bff) 14%,transparent)}
+  button[data-k].vs-hot,[data-k].vs-hot button{filter:none!important;opacity:1!important}
   `);
   K.vs = {
     /* 既存のシーンにも「UI にカーソル → 対応するコードの行が光る（逆も）」を付ける。
@@ -69,7 +79,24 @@
         const keys = Object.keys(ctx.keys[name]);
         keys.forEach((k, i) => { const col = COLORS[i % COLORS.length]; uiBox.querySelectorAll('[data-k="' + k + '"]').forEach((n) => { n.style.setProperty('--c', col); n.addEventListener('mouseenter', () => ctx.hi(name, k)); n.addEventListener('mouseleave', () => ctx.hi(name, null)); }); });
         if (pre.lines) pre.lines.forEach((ln, idx) => { ln.addEventListener('mouseenter', () => { const k = keys.find((kk) => (ctx.keys[name][kk] || []).some((t) => ln.textContent.includes(t))); if (k) ctx.hi(name, k); }); ln.addEventListener('mouseleave', () => ctx.hi(name, null)); });
-        return h('div', { class: 'vs-side ' + cls }, h('div', { class: 'vs-tt' }, (cls === 'no' ? '✖ ' : '✓ ') + cfg.title), uiBox, h('div', { class: 'vs-code' }, pre));
+        /* コードは「要点だけ」を初期表示にする（import や宣言など、いまの説明に関係ない行はたたむ。押すと全部見える） */
+        const srcLines = cfg.src.split('\n'), keep = new Set(), anchors = cfg.show || [].concat(...Object.values(cfg.keys || {}));
+        srcLines.forEach((l, i) => { if (anchors.some((t) => l.includes(t))) { keep.add(i - 1); keep.add(i); keep.add(i + 1); } });
+        const hiddenN = srcLines.filter((_, i) => !keep.has(i)).length;
+        const canFold = cfg.fold !== false && pre.lines && hiddenN >= 3 && keep.size > 0;
+        let folded = canFold;
+        const tg = h('button', { class: 'vs-tg', type: 'button', title: 'コードの表示を切り替える' });
+        const applyFold = () => {
+          pre.querySelectorAll('.vs-fold').forEach((n) => n.remove());
+          pre.lines.forEach((ln, i) => { ln.style.display = folded && !keep.has(i) ? 'none' : ''; });
+          if (folded) {
+            let i = 0; while (i < srcLines.length) { if (!keep.has(i)) { let j = i; while (j < srcLines.length && !keep.has(j)) j++; const m = h('span', { class: 'ln vs-fold', onclick: () => { folded = false; applyFold(); } }, '⋯ ' + (j - i) + ' 行 省略（クリックで全部見る）'); pre.lines[i].before(m); i = j; } else i++; }
+          }
+          tg.textContent = folded ? '全部のコードを見る' : '要点だけにする';
+        };
+        tg.onclick = () => { folded = !folded; applyFold(); };
+        if (canFold) applyFold();
+        return h('div', { class: 'vs-side ' + cls }, h('div', { class: 'vs-tt' }, (cls === 'no' ? '✖ ' : '✓ ') + cfg.title, canFold ? tg : null), uiBox, h('div', { class: 'vs-code' }, pre));
       };
       ctx.hi = (name, key) => {
         const pre = ctx.pre[name], box = pre && pre.closest('.vs-side'); if (!pre) return;
