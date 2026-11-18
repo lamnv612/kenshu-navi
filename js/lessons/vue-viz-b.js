@@ -59,11 +59,11 @@
     const regs = {}, pins = [];
     const reg = (key, i, cls, ...kids) => {
       const p = h('span', { class: 'vzB-pin', onclick: () => go(i) }, NUM[i]); pins[i] = p;
-      const r = h('div', { class: 'vzB-r ' + cls }, ...kids, p); regs[key] = r; return r;
+      const r = h('div', { class: 'vzB-r ' + cls, 'data-k': key }, ...kids, p); regs[key] = r; return r;
     };
     const el = {};
     const mk = (k, tag, cls, txt) => { const e = h(tag, { class: cls }, txt); el[k] = e; return e; };
-    const stepper = (label, key, min, max) => h('div', { class: 'vzB-num' }, h('small', label),
+    const stepper = (label, key, min, max) => h('div', { class: 'vzB-num', 'data-k': key }, h('small', label),
       h('div', null, h('button', { onclick: () => poke(key, -1, min, max) }, '−'), mk(key, 'b', '', ''), h('button', { onclick: () => poke(key, 1, min, max) }, '＋')));
     const poke = (key, d, min, max) => {
       if (busy) return;
@@ -74,9 +74,10 @@
     const hdUrl = mk('url', 'span', 'vzB-url', 'kenshu.example/estimate');
     const total = reg('total', 0, 'tt', h('small', '合計金額'), mk('shown', 'b', 'vzB-big', ''), mk('stale', 'em', 'vzB-stale', ''));
     const save = reg('save', 1, 'sv', h('button', { class: 'vzB-btn', onclick: () => { if (!busy) { bump(save); } } }, '保存'), mk('saved', 'span', 'vzB-sd', ''));
-    const search = h('div', { class: 'vzB-in' }, h('span', '🔎 '), mk('kw', 'b', '', ''), mk('kwph', 'span', 'ph', '弁護士を検索'));
+    const search = h('div', { class: 'vzB-in', 'data-k': 'kw' }, h('span', '🔎 '), mk('kw', 'b', '', ''), mk('kwph', 'span', 'ph', '弁護士を検索'));
     const list = reg('list', 2, 'ls', h('div', { class: 'vzB-lh' }, search, mk('calls', 'small', 'vzB-calls', '')), mk('items', 'div', 'vzB-items', ''));
     const timer = reg('timer', 4, 'tm', h('span', '🔄 新着チェック（1秒ごと）'), mk('tick', 'b', 'vzB-tk', ''));
+    el.items.setAttribute('data-k', 'items'); regs.list.removeAttribute('data-k');
     list.dataset.n = '③④'; /* 一覧は ③④ 共用 */
     const pin4 = h('span', { class: 'vzB-pin p2', onclick: () => go(3) }, NUM[3]); pins[3] = pin4; list.append(pin4);
     const body = h('div', { class: 'vzB-body' },
@@ -155,6 +156,8 @@
       return ['<script setup lang="ts">', "import { ref, computed, watch, onMounted, onUnmounted } from 'vue'", "import type { Lawyer } from '@/types/lawyer'", '', 'const people = ref(2)', 'const hours = ref(1)', 'const RATE = 5500', "const keyword = ref('')", 'const lawyers = ref<Lawyer[]>([])', 'let timerId = 0', '', f(0), f(1), f(2), f(3), 'onMounted(() => { timerId = window.setInterval(poll, 1000) })', f(4), '</scr' + 'ipt>'].join('\n');
     };
     const LN = [12, 13, 14, 15, 17];
+    const cp = { cur: null, get lines() { return this.cur.lines; }, setHi(a, c) { this.cur.setHi(a, c); } };
+    const MAP = { people: ['const people'], hours: ['const hours'], total: ['const total', '// ①'], save: ['const save', '// ②'], kw: ['const keyword', 'watch(keyword', '// ③'], items: ['const lawyers', 'onMounted(async', '// ④'], timer: ['let timerId', 'setInterval', 'onUnmounted(', '// ⑤'] };
     const draw = () => {
       const q = Q[cur], ok = solved[cur];
       const btn = (k) => {
@@ -169,7 +172,8 @@
         ...(sub ? [sub] : []),
         h('div', { class: 'vzB-fb' + (ok ? ' ok' : '') }, ok ? '✓ ' + (q.sub ? q.sub + '：' : '') + q.why : '左の ' + NUM[cur] + ' を見て、道具を選ぼう'));
       const np = code(SRC(), 'ts', { color: 'var(--ts)', file: 'EstimatePage.vue', dim: true, edit: false });
-      np.setHi([LN[cur]], 'on'); codeHost.replaceChildren(np);
+      np.setHi([LN[cur]], 'on'); codeHost.replaceChildren(np); cp.cur = np;
+      K.vs.link(pg, cp, MAP, { rest: () => [LN[cur]] });
     };
     const paint = () => {
       pins.forEach((p, i) => { p.className = 'vzB-pin' + (i === 3 ? ' p2' : '') + (solved[i] ? ' ok' : '') + (i === cur ? ' cur' : ''); });
@@ -212,6 +216,7 @@
       paint();
     };
 
+    style('vslHot', '[data-k].vs-hot{outline:2px solid var(--c,#2f7bff)!important;outline-offset:2px;background-color:color-mix(in srgb,var(--c,#2f7bff) 14%,transparent)}');
     style('vzB', `
     .vzB-wrap{display:grid;gap:12px;min-width:0}.vzB-wrap>*{min-width:0}
     .vzB-left{align-self:start}

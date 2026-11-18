@@ -74,7 +74,7 @@
     const solved = SC.map(() => false);
     let cur = 0, busy = false, st = { s: [], i: 0 }, timer = 0;
 
-    const R = (key, el) => { el.setAttribute('data-r', key); el.classList.add('vzC-r'); return el; };
+    const R = (key, el) => { el.setAttribute('data-r', key); el.setAttribute('data-k', 'reg'); el.classList.add('vzC-r'); return el; };
     const mkPage = (u) => {
       const f = (l, v) => h('div', { class: 'vzC-fld' }, h('small', l), h('span', v));
       const P = {
@@ -92,10 +92,10 @@
     };
 
     /* ---- 左：ミニブラウザ ---- */
-    const btnBack = h('button', { class: 'vzC-nb', title: '戻る' }, '◀');
-    const btnFwd = h('button', { class: 'vzC-nb', title: '進む' }, '▶');
+    const btnBack = h('button', { class: 'vzC-nb', 'data-k': 'hist', title: '戻る' }, '◀');
+    const btnFwd = h('button', { class: 'vzC-nb', 'data-k': 'hist', title: '進む' }, '▶');
     const urlPath = h('b');
-    const urlEl = h('div', { class: 'vzC-url' }, h('span', { class: 'lock' }, '🔒'), h('span', { class: 'host' }, HOST), urlPath);
+    const urlEl = h('div', { class: 'vzC-url', 'data-k': 'url' }, h('span', { class: 'lock' }, '🔒'), h('span', { class: 'host' }, HOST), urlPath);
     const nav = h('nav', { class: 'vzC-nav' }, h('b', { class: 'logo' }, '⚖ 法律相談ナビ'), h('span', null, 'トップ'), R('menu', h('span', { class: 'mi' }, '相談一覧')), h('span', null, '料金'));
     const view = h('div', { class: 'vzC-view' });
     const br = h('div', { class: 'vzC-br' },
@@ -114,13 +114,14 @@
         if (i) kids.push(h('span', { class: 'arr' }, '→'));
         kids.push(h('span', { class: 'chip' + (i === st.i ? ' cur' : '') + (i > st.i ? ' fwd' : '') + (i === fresh ? ' new' : '') + (i === rep ? ' rep' : '') }, h('b', u), h('small', PAGE[u] || ''), i === st.i ? h('em', 'いま') : null));
       });
-      hist.replaceChildren(h('div', { class: 'vi-lb' }, '🕘 履歴スタック（◀ で1つずつ戻る）'), h('div', { class: 'vzC-hs' }, ...kids));
+      hist.replaceChildren(h('div', { class: 'vi-lb' }, '🕘 履歴スタック（◀ で1つずつ戻る）'), h('div', { class: 'vzC-hs', 'data-k': 'hist' }, ...kids));
+      relink();
       btnBack.classList.toggle('off', st.i <= 0); btnFwd.classList.toggle('off', st.i >= st.s.length - 1);
     };
     const showPage = (dir) => {
       const u = st.s[st.i];
       urlPath.textContent = u; bump(urlEl);
-      const pg = mkPage(u); view.replaceChildren(pg);
+      const pg = mkPage(u); view.replaceChildren(pg); relink();
       const from = dir === 'push' ? 'translateX(36px)' : dir === 'back' ? 'translateX(-36px)' : 'scale(.94)';
       try { pg.animate([{ opacity: 0, transform: from }, { opacity: 1, transform: 'none' }], { duration: 380, easing: 'ease-out' }); } catch (e) { /* 無くてもよい */ }
     };
@@ -167,6 +168,10 @@
     const codeHost = h('div');
     const dots = h('div', { class: 'vzC-dots' });
     let fbCls = '', fbTxt = '', tryKey = null;
+    const cp = { cur: null, get lines() { return this.cur.lines; }, setHi(a, c) { this.cur.setHi(a, c); } };
+    const MAPC = { reg: [], url: [], hist: ['const router = useRouter()'] };
+    const leftCol = h('div', { class: 'vzC-wrap' });
+    const relink = () => { if (cp.cur) K.vs.link(leftCol, cp, MAPC, { rest: () => [lineNo(SC[cur])], get cls() { return tryKey && tryKey !== SC[cur].ans ? 'err' : 'on'; } }); };
     const lineNo = (sc) => sc.pre.split('\n').length + 1;
     const drawCode = () => {
       const sc = SC[cur];
@@ -175,7 +180,8 @@
       const text = sc.pre + '\n' + line + '\n' + sc.post;
       const c = code(text, 'vue', { color: 'var(--vue)', file: sc.file, dim: true, edit: false });
       c.setHi([lineNo(sc)], key && key !== sc.ans ? 'err' : 'on');
-      codeHost.replaceChildren(c);
+      codeHost.replaceChildren(c); cp.cur = c; MAPC.reg = [line.trim()]; MAPC.url = [key ? sc.T : line.trim()];
+      relink();
     };
     const draw = () => {
       const sc = SC[cur];
@@ -238,6 +244,7 @@
     const next = h('button', { class: 'btn ghost', onclick: () => go((cur + 1) % SC.length) }, '次の場面 ▶');
     setStart('replace'); paint();
 
+    style('vslHot', '[data-k].vs-hot{outline:2px solid var(--c,#2f7bff)!important;outline-offset:2px;background-color:color-mix(in srgb,var(--c,#2f7bff) 14%,transparent)}');
     style('vzC', `
     .vzC-wrap{display:grid;gap:10px;min-width:0}
     .vzC-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
@@ -318,8 +325,9 @@
       el.append(h('div', { class: 'vzC-wrap' },
         h('div', { class: 'vzC-bar' }, dots, h('span', { style: { flex: 1 } }), next, reset),
         h('div', { class: 'vi-eq' },
-          h('div', { class: 'vzC-wrap' }, h('div', { class: 'vi-lb' }, '👀 ミニブラウザ（' + NUM + ' が問題の場所。◀ ▶ も押せる）'), br, hist),
+          (leftCol.replaceChildren(h('div', { class: 'vi-lb' }, '👀 ミニブラウザ（' + NUM + ' が問題の場所。◀ ▶ も押せる）'), br, hist), leftCol),
           h('div', { class: 'vzC-wrap' }, qBox, codeHost))));
+      relink();
     };
   }
 })();

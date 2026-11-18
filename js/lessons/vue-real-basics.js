@@ -20,7 +20,7 @@
     .vrB-code{min-width:0}.vrB-code pre.code{margin:0;max-width:100%;overflow-x:auto}
     .vrB-fl{animation:vrBfl .9s ease-out}
     @keyframes vrBfl{0%{box-shadow:0 0 0 0 var(--vue);background-color:color-mix(in srgb,var(--vue) 35%,transparent)}60%{box-shadow:0 0 0 6px transparent}100%{box-shadow:0 0 0 0 transparent}}
-    .vrB-tip{font:800 .72rem var(--font);color:var(--vue);display:flex;gap:6px;align-items:center}
+    .vrB-tip{font:800 .82rem var(--font);color:var(--vue);display:flex;gap:6px;align-items:center}
     .vrB-box{background:#fff;color:#223;border-radius:10px;padding:12px;display:grid;gap:8px;border:2px solid #d6dbe8}
     .vrB-box textarea{width:100%;box-sizing:border-box;min-height:84px;padding:8px;border:2px solid #b9c0d4;border-radius:8px;font:500 .9rem var(--font);resize:vertical;color:#223;background:#fff}
     .vrB-cnt{justify-self:end;font:900 .95rem var(--mono);padding:.1em .6em;border-radius:6px;color:#2a7;transition:color .2s}

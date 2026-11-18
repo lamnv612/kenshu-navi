@@ -71,7 +71,12 @@
       const badge = h('span', { class: 'vrE-badge' }, '⚡ 入力した件数はそのまま');
       const br = h('div', { class: 'vrE-br' }, h('div', { class: 'vrE-url' }, '←  →  ⟳', urlEl), pageEl);
       const stepsEl = h('div', { class: 'vrE-steps' });
-      let pre = null;
+      let pre = null, rootEl = null;
+      /* UI ⇄ コード：画面・フォルダ・URL の部品 ⇄ エディタの行（再描画のたびにつなぎ直す） */
+      const KMAP = { name: ['"name"'], deps: ['"dependencies"', '"vue":', '"vue-router"', '"pinia"'], dev: ['"dev"'], title: ['<h1>'], count: ['const count', '<button', '{{ count }}'] };
+      const px = { get lines() { return pre ? pre.lines : []; }, setHi: (a, c) => { if (pre) pre.setHi(a, c); } };
+      const relink = () => { if (rootEl && K.vs && K.vs.link) K.vs.link(rootEl, px, KMAP, { rest: () => (cur >= 0 && STEPS[cur] ? STEPS[cur].hi : []) }); };
+      urlEl.setAttribute('data-k', 'dev');
 
       const ps = (cwd) => '<span class="ps">' + cwd + ' $</span> ';
       const cwdAt = (i) => i >= 1 ? '~/work/soudan-navi' : '~/work';
@@ -80,8 +85,11 @@
         const f = STEPS[n] && STEPS[n].focus;
         tree.replaceChildren(...TREE.filter((t) => t[2] <= n).map((t) => {
           const nw = animateNew && t[2] === n;
-          return h('div', { class: 'r' + (nw ? ' new' : '') + (f && t[1].includes(f) ? ' cur' : '') + (t[3] ? ' nm' : ''), style: { paddingLeft: t[0] * 18 + 'px' } }, t[1]);
+          const row = h('div', { class: 'r' + (nw ? ' new' : '') + (f && t[1].includes(f) ? ' cur' : '') + (t[3] ? ' nm' : ''), style: { paddingLeft: t[0] * 18 + 'px' } }, t[1]);
+          if (t[1].includes('📄 package.json')) row.setAttribute('data-k', 'name'); else if (t[1].includes('node_modules')) row.setAttribute('data-k', 'deps');
+          return row;
         }));
+        relink();
       };
       const drawFile = (n) => {
         const s = STEPS[n < 0 ? 0 : n];
@@ -91,6 +99,7 @@
         
         fileHost.replaceChildren(pre);
         if (n < 0) pre.setHi([]);
+        relink();
       };
       const drawPage = (n, flash) => {
         const up = n >= 2;
@@ -98,9 +107,11 @@
         if (!up) { pageEl.replaceChildren(h('div', { class: 'err' }, '🔌 このサイトにアクセスできません')); badge.classList.remove('on'); return; }
         const t = n >= 4 ? '相談一覧（今月）' : '相談一覧';
         const btn = h('button', { onclick: () => { count++; btn.textContent = '受付件数 ' + count; } }, '受付件数 ' + count);
-        pageEl.replaceChildren(h('div', { class: 'hd' }, 'ソウダンナビ'), h('h1', t), btn, h('div', { class: 'it' }, h('span', '離婚の相談'), h('span', '対応中')), h('div', { class: 'it' }, h('span', '相続の相談'), h('span', '完了')), badge);
+        btn.setAttribute('data-k', 'count');
+        pageEl.replaceChildren(h('div', { class: 'hd' }, 'ソウダンナビ'), h('h1', { 'data-k': 'title' }, t), btn, h('div', { class: 'it' }, h('span', '離婚の相談'), h('span', '対応中')), h('div', { class: 'it' }, h('span', '相続の相談'), h('span', '完了')), badge);
         if (flash) { pageEl.classList.remove('flash'); void pageEl.offsetWidth; pageEl.classList.add('flash'); }
         badge.classList.toggle('on', !!flash && count > 0);
+        relink();
       };
       const drawSteps = () => stepsEl.replaceChildren(...STEPS.map((s, i) => h('span', { class: 'vrE-st' + (i === cur ? ' on' : i < cur ? ' done' : ''), onclick: () => go(i) }, s.b)),
         h('button', { class: 'btn primary', style: { '--c': 'var(--vue)', marginLeft: 'auto' }, onclick: () => auto() }, '▶ 自動再生'),
@@ -144,9 +155,11 @@
       /* ボタンの操作で自動再生を止める */
       stepsEl.addEventListener('click', () => { autoTok++; }, true);
 
-      return h('div', { style: { display: 'grid', gap: '12px' } }, stepsEl,
+      rootEl = h('div', { style: { display: 'grid', gap: '12px' } }, stepsEl,
         h('div', { class: 'vi-eq' }, term, h('div', null, h('div', { class: 'vrE-cap' }, '📁 フォルダ（コマンドごとに増える）'), tree)),
         h('div', { class: 'vi-eq' }, h('div', null, h('div', { class: 'vrE-cap' }, '✏️ エディタ'), fileHost), h('div', null, h('div', { class: 'vrE-cap' }, '🌐 ブラウザ'), br)));
+      relink();
+      return rootEl;
     }
 
     const sc = { t: '実例：初日にやる 4 コマンド', tag: '実例', lead: '<b>コマンドを順に実行</b>すると、フォルダが育ち、保存した瞬間に画面が変わる。', render(el) { el.append(scene()); } };

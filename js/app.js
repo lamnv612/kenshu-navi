@@ -357,7 +357,7 @@
     const tools = h('div', { class: 'scene-tools' });
     const toolBtn = (ic, tip, fn) => h('button', { class: 'tool-ico', 'data-tip': tip, onclick: fn }, I(ic));
     el.append(h('div', { class: 'scene-head' }, h('h2', null, S.t, S.tag ? h('span', { class: 'chip' }, S.tag) : null), tools));
-    if (S.lead) el.append(h('p', { class: 'lead', html: S.lead }));
+    if (S.lead) el.append(h('p', { class: 'lead' + ((L.track === 'vue' || /^x-vue/.test(L.id || id || '')) ? ' say-one' : ''), html: S.lead }));
 
     // story cards (reusable for the replay modal)
     const buildCards = () => {

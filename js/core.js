@@ -298,12 +298,40 @@ declare function Boolean(v:any):boolean;
     const n = m[1], base = n.replace(/(Card|Row|Item|Box|Input|Field|Button|Badge|Stepper|Switch|Stars|Tab|Tag|Bell|Summary)$/, '') || n;
     return base + (/(Card|Row|Item)$/.test(n) ? 'ListPage' : 'Page') + '.vue';
   }
+  const PREVIEW_CSS = `
+*{box-sizing:border-box}
+body{font-family:system-ui,'Hiragino Sans','Noto Sans JP',sans-serif;margin:0;padding:20px;line-height:1.7;color:#1f2a44;font-size:16px;background:#f4f6fb}
+#app{background:#fff;border:1px solid #dfe4f0;border-radius:14px;padding:18px 20px;box-shadow:0 6px 20px -12px rgba(30,50,100,.35);display:grid;gap:10px}
+h1{font-size:1.35rem;margin:0}h2{font-size:1.15rem;margin:0}h3{font-size:1.02rem;margin:0}
+p{margin:0}ul{padding-left:1.3em;margin:.2em 0}li{margin:.35em 0}
+button{font:inherit;font-weight:700;padding:.45em 1.1em;border:1px solid #b9c4e4;border-radius:9px;background:#eef2ff;color:#27407f;cursor:pointer;transition:.15s}
+button:hover{background:#dbe5ff;border-color:#8fa6e6}button:disabled{opacity:.45;cursor:not-allowed}
+input,select,textarea{font:inherit;padding:.5em .8em;border:1px solid #b9c4e4;border-radius:9px;background:#fff;color:#1f2a44;min-width:8em}
+input:focus,select:focus,textarea:focus{outline:2px solid #7aa2ff;outline-offset:1px}
+label{display:inline-flex;gap:.4em;align-items:center}
+#app>select,#app>input,#app>button,#app>label{justify-self:start}
+a{color:#2f6df0}hr{border:0;border-top:1px solid #e3e8f5;width:100%}
+`;
+  /* ミッション文の中の「ファイル名・部品名・コード・キーワード」を、色付きの札にして目立たせる */
+  const RICH = /([\w-]+\.(?:vue|ts|js|md|sh)\b)|(\{\{[^}]*\}\})|(<\/?[A-Za-z][\w-]*[^>]*>)|((?:v-[a-z-]+|[:@][a-zA-Z][\w.-]*)(?:="[^"]*")?)|([A-Za-z_$][\w$.]*(?:<[^>()]*>)?\((?:[^()]|\([^()]*\))*\))|(\b[A-Z][a-z0-9]+(?:[A-Z][a-z0-9]+)+\b)|\b(ref|reactive|computed|watch|watchEffect|props|emit|slot|true|false|null|undefined|interface|defineProps|defineEmits|defineModel|onMounted|onUnmounted|async|await|import|export|const|router|route)\b/g;
+  function richLabel(text) {
+    const out = document.createDocumentFragment(); let last = 0, m; RICH.lastIndex = 0; text = String(text == null ? '' : text);
+    while ((m = RICH.exec(text))) {
+      if (m.index > last) out.append(text.slice(last, m.index));
+      const cls = m[1] ? 'tk-file' : m[6] ? 'tk-comp' : m[7] ? 'tk-kw' : 'tk-code';
+      out.append(h('span', { class: 'tk ' + cls }, m[0])); last = m.index + m[0].length;
+    }
+    if (last < text.length) out.append(text.slice(last));
+    return out;
+  }
   function playground(o) {
     if (o.sfc && o.files.some((f) => f.name === 'App.vue') && !(o.alias && o.alias['App.vue'])) {
       o = Object.assign({}, o, { alias: Object.assign({}, o.alias, { 'App.vue': guessPageName(o.files.find((f) => f.name === 'App.vue').code) }) });
     }
     const unApp = (t) => (typeof t === 'string' && o.alias && o.alias['App.vue'] ? t.replace(/App\.vue/g, o.alias['App.vue']) : t);
     const mode = o.mode || 'web';
+    /* 練習モーダルは、開いているファイルの行数に合わせて、エディタの高さを決める（空白を作らない） */
+    function fitEd(n) { if (!o.tasks) return; const e = eds[n]; if (!e) return; const L = e.get().split('\n').length; e.style.minHeight = Math.min(Math.max(L * 31 + 40, 200), 640) + 'px'; }
     const vals = {};
     o.files.forEach((f) => (vals[f.name] = f.code));
     const eds = {};
@@ -317,26 +345,21 @@ declare function Boolean(v:any):boolean;
     let doneFired = false, timer = null;
 
     const tails = {}, dets = {};
-    const paintDet = (n) => { const d = dets[n]; if (d) d.body.replaceChildren(code(tails[n], 'vue', { file: n, dim: true, edit: false })); };
+    const paintDet = () => { refreshSty(); };
     o.files.forEach((f) => {
       const sp = f.lang === 'vue' ? splitStyle(f.code) : { main: f.code, style: '' };
       tails[f.name] = sp.style ? fmtStyle(sp.style) : '';
       vals[f.name] = sp.main + (tails[f.name] ? '\n' + tails[f.name] + '\n' : '');
-      const ed = codeEditor(sp.main, f.lang, (v) => { vals[f.name] = v + (tails[f.name] ? '\n' + tails[f.name] + '\n' : ''); schedule(); });
+      const ed = codeEditor(sp.main, f.lang, (v) => { vals[f.name] = v + (tails[f.name] ? '\n' + tails[f.name] + '\n' : ''); fitEd(f.name); schedule(); });
       const rawSet = ed.set;
-      ed.set = (v) => { const q = f.lang === 'vue' ? splitStyle(v) : { main: v, style: '' }; if (q.style) { tails[f.name] = fmtStyle(q.style); paintDet(f.name); } rawSet(q.main); };
+      ed.set = (v) => { const q = f.lang === 'vue' ? splitStyle(v) : { main: v, style: '' }; if (q.style) { tails[f.name] = fmtStyle(q.style); paintDet(f.name); } rawSet(q.main); fitEd(f.name); };
       ed.style.display = f.name === activeName ? '' : 'none';
       eds[f.name] = ed; edBox.append(ed);
-      if (tails[f.name]) {
-        const body = h('div', { class: 'pg-sty-b' });
-        const det = h('details', { class: 'pg-sty', style: { display: f.name === activeName ? '' : 'none' } }, h('summary', '🎨 <style>（見た目のCSS・書き換え不要）　クリックで開く'), body);
-        dets[f.name] = { det, body }; edBox.append(det); paintDet(f.name);
-      }
       tabs.append(h('button', { class: 'tab' + (f.name === activeName ? ' on' : ''), 'data-n': f.name, onclick: () => {
         activeName = f.name;
         tabs.querySelectorAll('.tab').forEach((t) => t.classList.toggle('on', t.dataset.n === f.name));
         Object.entries(eds).forEach(([n, e]) => (e.style.display = n === f.name ? '' : 'none'));
-        Object.entries(dets).forEach(([n, d]) => (d.det.style.display = n === f.name ? '' : 'none'));
+        fitEd(f.name); refreshSty();
         if (typeof treeEl !== 'undefined' && treeEl) treeEl.querySelectorAll('.pg-tf').forEach((b) => b.classList.toggle('on', b.dataset.n === f.name));
       } }, (o.alias && o.alias[f.name]) || f.name));
     });
@@ -353,7 +376,7 @@ declare function Boolean(v:any):boolean;
       }
       const libs = (o.libs || []).map((u) => `<script src="${u}"><\/script>`).join('');
       const bridge = `<script>(function(){var s=function(k,a){parent.postMessage({kenshu:1,k:k,t:[].slice.call(a).map(function(x){try{return typeof x==='string'?x:JSON.stringify(x)}catch(e){return String(x)}}).join(' ')},'*')};console.log=function(){s('l',arguments)};console.error=function(){s('e',arguments)};window.onerror=function(m){s('e',[m])}})()<\/script>`;
-      const base = `<meta charset="utf-8"><style>body{font-family:system-ui,'Hiragino Sans',sans-serif;margin:16px;line-height:1.6;color:#223;font-size:15px}h1{font-size:1.3rem;margin:.2em 0 .6em}h2{font-size:1.1rem;margin:.2em 0 .5em}h3{font-size:1rem;margin:.2em 0}ul{padding-left:1.2em;margin:.4em 0}li{margin:.3em 0}button{font:inherit;padding:.3em .9em;border:1px solid #c5ccdd;border-radius:8px;background:#f5f7fc;cursor:pointer}button:hover{background:#e8edfa}input,select,textarea{font:inherit;padding:.35em .6em;border:1px solid #c5ccdd;border-radius:8px}p{margin:.4em 0}</style>`;
+      const base = `<meta charset="utf-8"><style>${PREVIEW_CSS}</style>`;
       return `<!doctype html><html><head>${base}${bridge}${libs}<style>${css}</style></head><body>${html}<script>${js}<\/script></body></html>`;
     }
     function runWeb() {
@@ -386,10 +409,10 @@ declare function Boolean(v:any):boolean;
       const req = res.filter((t) => !t.optional), opt = res.filter((t) => t.optional);
       const nOk = req.filter((t) => t.ok).length;
       tasksBox.append(h('div', { class: 'mission-head' }, icon('list-checks'), h('b', 'ミッション'), h('span', { class: 'mission-n' }, nOk + ' / ' + req.length), h('i', { class: 'mission-bar' }, h('u', { style: { width: (req.length ? (nOk / req.length) * 100 : 0) + '%' } }))));
-      const hopt = { fallback: o.solution ? () => showSolution() : null, use: (tt) => { const f = o.files.find((x) => x.name === tt.answer.file) || o.files.find((x) => x.lang === (tt.answer.lang || x.lang)) || o.files[0]; if (tt.answer.mode === 'append') eds[f.name].set(eds[f.name].get() + '\n' + tt.answer.code); else eds[f.name].set(tt.answer.code); } };
+      const hopt = { alias: o.alias, fallback: o.solution ? () => showSolution() : null, use: (tt) => { const f = o.files.find((x) => x.name === tt.answer.file) || o.files.find((x) => x.lang === (tt.answer.lang || x.lang)) || o.files[0]; if (tt.answer.mode === 'append') eds[f.name].set(eds[f.name].get() + '\n' + tt.answer.code); else eds[f.name].set(tt.answer.code); } };
       const LV = ['初級', '中級', '上級'];
       const lvChip = (t) => { const n = Math.min(3, Math.max(1, t.level || 1)); return h('span', { class: 'lv lv' + n, title: 'チャレンジ ' + LV[n - 1] }, Array.from({ length: n }, () => icon('star')), LV[n - 1]); };
-      const row = (t) => h('div', { class: 'task' + (t.ok ? ' ok' : '') + (t.optional ? ' opt' : '') + (req.indexOf(t) >= 0 && req.indexOf(t) === curIdx(req) ? ' cur' : ''), onclick: (e) => { if (e.target.closest && e.target.closest('.task-hint')) return; const i = req.indexOf(t); if (i < 0) return; pinIdx = i; lastKey = null; applyFocus(); } }, h('i', t.ok ? '✓' : ''), h('span', { class: 'task-l' }, t.level && (!t.optional || opt.length > 1) ? lvChip(t) : null, unApp(t.label)), hintButton(t, hopt));
+      const row = (t) => h('div', { class: 'task' + (t.ok ? ' ok' : '') + (t.optional ? ' opt' : '') + (req.indexOf(t) >= 0 && req.indexOf(t) === curIdx(req) ? ' cur' : ''), onclick: (e) => { if (e.target.closest && e.target.closest('.task-hint')) return; const i = req.indexOf(t); if (i < 0) return; pinIdx = i; lastKey = null; applyFocus(); } }, h('i', t.ok ? '✓' : ''), h('span', { class: 'task-l' }, t.level && (!t.optional || opt.length > 1) ? lvChip(t) : null, richLabel(unApp(t.label))), hintButton(t, hopt));
       req.forEach((t) => tasksBox.append(row(t)));
       if (opt.length) {
         tasksBox.append(h('div', { class: 'mission-opt-head' }, h('span', { class: 'opt-badge' }, '任意'), h('b', 'チャレンジ'), h('small', 'もっと挑戦したい人だけ。やらなくても OK')));
@@ -447,6 +470,13 @@ declare function Boolean(v:any):boolean;
     body.append(edBox, side || outEl);
     const runBtn = mode === 'text' ? null : h('button', { class: 'btn primary', onclick: () => (mode === 'ts' ? runTS(true) : runWeb()) }, '▶ 実行');
     const resetBtn = h('button', { class: 'btn ghost', onclick: () => { o.files.forEach((f) => eds[f.name].set(f.code)); doneFired = false; } }, '⟲ リセット');
+    /* <style> は書き換え不要。アイコンを押すと、整形したCSSを別のモーダルで見られる（画面が伸び縮みしない） */
+    const styBtn = h('button', { class: 'btn ghost', title: '見た目の CSS を見る（書き換え不要）', onclick: () => {
+      const n = activeName, nm = (o.alias && o.alias[n]) || n;
+      if (tails[n]) modal({ title: nm + ' の <style>（書き換え不要）', icon: 'palette', content: code(tails[n], 'vue', { file: nm, dim: true, edit: false }) });
+      else modal({ title: 'プレビューの標準スタイル（書き換え不要）', icon: 'palette', content: h('div', { style: { display: 'grid', gap: '10px' } }, h('p', { style: { color: 'var(--mute)', fontSize: '.875rem' } }, nm + ' に専用の <style> はありません。右の画面は、この標準スタイルで見た目を整えています。'), code(fmtStyle('<style>' + PREVIEW_CSS + '</style>'), 'vue', { file: '標準スタイル', dim: true, edit: false })) });
+    } }, icon('palette'), 'CSS');
+    function refreshSty() { styBtn.classList.toggle('dim', !tails[activeName]); styBtn.title = tails[activeName] ? '見た目の CSS を見る（書き換え不要）' : 'このファイルに <style> はありません（標準スタイルを見る）'; }
     const solBtn = o.solution ? h('button', { class: 'btn ghost', title: 'まず自分で試してから見よう', onclick: () => showSolution() }, icon('key-round'), '答えを見る') : null;
     function showSolution() {
       const sol = typeof o.solution === 'string' ? { [o.files[0].name]: o.solution } : o.solution;
@@ -454,11 +484,12 @@ declare function Boolean(v:any):boolean;
       const wrap = h('div');
       let cur = names[0];
       const blocks = h('div');
-      const tabsEl = h('div', { class: 'tabs', style: { marginLeft: 0, marginBottom: '8px' } }, names.map((n) => h('button', { class: 'tab' + (n === cur ? ' on' : ''), onclick: (e) => { cur = n; draw(); tabsEl.querySelectorAll('.tab').forEach((t) => t.classList.toggle('on', t.textContent === n)); } }, n)));
-      const draw = () => { const f = o.files.find((x) => x.name === cur) || o.files[0]; blocks.replaceChildren(code(sol[cur], f.lang, { file: cur })); };
+      const nm = (n) => (o.alias && o.alias[n]) || n;
+      const tabsEl = h('div', { class: 'tabs', style: { marginLeft: 0, marginBottom: '8px' } }, names.map((n) => h('button', { class: 'tab' + (n === cur ? ' on' : ''), 'data-n': n, onclick: (e) => { cur = n; draw(); tabsEl.querySelectorAll('.tab').forEach((t) => t.classList.toggle('on', t.dataset.n === n)); } }, nm(n))));
+      const draw = () => { const f = o.files.find((x) => x.name === cur) || o.files[0]; blocks.replaceChildren(code(sol[cur], f.lang, { file: nm(cur) })); };
       draw();
       const use = h('button', { class: 'btn primary', onclick: () => { names.forEach((n) => eds[n] && eds[n].set(sol[n])); m.close(); } }, icon('corner-down-left'), '自分のエディタに入れて動かす');
-      wrap.append(h('p', { style: { color: 'var(--mute)', fontSize: '.875rem', marginBottom: '.8em' } }, '答えは1つとは限りません。まず自分のコードと見比べてみよう。'), names.length > 1 ? tabsEl : null, blocks, h('div', { class: 'row', style: { marginTop: '12px' } }, use));
+      wrap.append(h('p', { style: { color: 'var(--mute)', fontSize: '.875rem', marginBottom: '.8em' } }, '答えは1つとは限りません。まず自分のコードと見比べてみよう。'), ...(names.length > 1 ? [tabsEl] : []), blocks, h('div', { class: 'row', style: { marginTop: '12px' } }, use));
       const m = modal({ title: '答え', icon: 'key-round', content: wrap });
     }
     /* フォルダ構成（複数ファイルのときだけ）：押すと、そのファイルのタブへ */
@@ -470,12 +501,13 @@ declare function Boolean(v:any):boolean;
         ...Object.keys(dirs).flatMap((d) => [h('span', { class: 'pg-tr' }, d + '/'), ...dirs[d].map(([name, file]) => h('button', { class: 'pg-tf' + (name === activeName ? ' on' : ''), 'data-n': name, title: (o.fileNotes && o.fileNotes[name]) || '', onclick: () => { const tb = tabs.querySelector('.tab[data-n="' + name + '"]'); tb && tb.click(); } }, '📄 ' + ((o.alias && o.alias[name]) || file), o.fileNotes && o.fileNotes[name] ? h('small', { class: 'pg-tn' }, '　' + o.fileNotes[name]) : null))]));
     }
     const root = h('div', { class: 'pg' + (o.tasks ? ' pg-big' : '') },
-      h('div', { class: 'pg-head' }, h('div', { class: 'dots3' }, h('i'), h('i'), h('i')), tabs, h('div', { style: { flex: 1 } }), o.title && h('span', { class: 'chip' }, o.title), solBtn, resetBtn, runBtn),
+      h('div', { class: 'pg-head' }, h('div', { class: 'dots3' }, h('i'), h('i'), h('i')), tabs, h('div', { style: { flex: 1 } }), o.title && h('span', { class: 'chip' }, o.title), styBtn, solBtn, resetBtn, runBtn),
       treeEl, body);
     /* コードが長いときは、エディタを行数に合わせて高くする（スクロールを減らす。上限 700px） */
-    { const maxLines = Math.max(...o.files.map((f) => ((f.lang === 'vue' ? splitStyle(f.code).main : String(f.code || '')).split('\n').length))); const fit = Math.min(Math.max(o.height || 0, (o.mode === 'web' || o.tasks) ? maxLines * (o.tasks ? 30 : 24) + 44 : 0), o.tasks ? 600 : 700); if (fit) [...edBox.children].forEach((e) => (e.style.minHeight = fit + 'px')); }
+    if (o.tasks) o.files.forEach((f) => fitEd(f.name)); else { const maxLines = Math.max(...o.files.map((f) => String(f.code || '').split('\n').length)); const fit = Math.min(Math.max(o.height || 0, o.mode === 'web' ? maxLines * 24 + 44 : 0), 700); if (fit) [...edBox.children].forEach((e) => { if (e.classList.contains('ed')) e.style.minHeight = fit + 'px'; }); }
     root.cleanup = () => window.removeEventListener('message', onMsg);
     if (K.ctx) K.ctx.cleanups.push(root.cleanup);
+    refreshSty();
     setTimeout(() => (mode === 'ts' ? runTS(false) : mode === 'text' ? evalTasks() : runWeb()), 30);
     evalTasks();
     return root;
@@ -637,18 +669,21 @@ declare function Boolean(v:any):boolean;
     return code(src, lg, { color: 'var(--c, var(--ts))' });
   }
   function openHint(t, o = {}) {
-    const hints = [].concat(t.hint || []);
+    const al = (o.alias && o.alias['App.vue']) || '';
+    const un = (x) => (al && typeof x === 'string' ? x.replace(/App\.vue/g, al) : x);
+    const fnm = (f) => (o.alias && o.alias[f]) || f;
+    const hints = [].concat(t.hint || []).map(un);
     let shown = hints.length ? 1 : 0, answered = false;
     const body = h('div', { class: 'hint-wrap' });
     const draw = () => {
       body.replaceChildren();
-      body.append(h('div', { class: 'hint-mission' }, icon('target'), t.label));
+      body.append(h('div', { class: 'hint-mission' }, icon('target'), h('span', { class: 'hint-mission-t' }, richLabel(un(t.label)))));
       if (!hints.length && !answered) body.append(h('p', { class: 'hint-none' }, 'この課題には、ヒントがまだありません。答えを見てみよう。'));
       hints.slice(0, shown).forEach((x, i) => body.append(h('div', { class: 'hint-card' }, h('span', { class: 'hint-n' }, 'ヒント' + (hints.length > 1 ? ' ' + (i + 1) : '')), hintBody(x))));
       if (answered) {
         const a = t.answer;
         const ans = h('div', { class: 'hint-ans' }, h('div', { class: 'label' }, '答え'));
-        if (a && typeof a === 'object' && a.code) ans.append(code(a.code, a.lang || 'ts', { file: a.file }));
+        if (a && typeof a === 'object' && a.code) ans.append(code(a.code, a.lang || 'ts', { file: fnm(a.file) }));
         else if (typeof a === 'string') ans.append(h('div', { html: a }));
         else if (typeof a === 'function') ans.append(a());
         else ans.append(h('p', { class: 'hint-none' }, 'この課題だけの答えはありません。全体の答えを開きます。'));

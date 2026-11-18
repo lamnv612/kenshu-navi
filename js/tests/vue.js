@@ -233,9 +233,9 @@ T['vue-basics'] = web({
       const has = (s) => L.includes(s);
       const usesExpect = /expect\(\s*\w+\.text\(\)\s*\)\s*\.toBe\(/.test(src);
       return [
-        { level: 1, label: 'mount して、最初の text が "いいね: 0" だと expect で確かめる（PASS が出る）', ok: clean && usesExpect && /mount\(\)/.test(src.split('// ①')[1] || src) && has('PASS いいね: 0'), hint: ['まず <code>const w = mount()</code>。', "<code>expect(w.text()).toBe('いいね: 0')</code>"], answer: { code: HEAD + S1, lang: 'ts', mode: 'replace' } },
-        { level: 2, label: 'button を click して、"いいね: 1" だと確かめる', ok: clean && usesExpect && /\.find\(\s*['"]button['"]\s*\)\s*\.trigger\(\s*['"]click['"]\s*\)/.test(src) && has('PASS いいね: 1'), hint: ["押す操作は <code>w.find('button').trigger('click')</code>。", "そのあと <code>expect(w.text()).toBe('いいね: 1')</code>。"], answer: { code: HEAD + S1 + '\n' + S2, lang: 'ts', mode: 'replace' } },
-        { level: 3, label: '新しく mount して 3回 click し、"いいね: 3" だと確かめる', ok: clean && usesExpect && (src.match(/\.trigger\(/g) || []).length >= 2 && has('PASS いいね: 3'), hint: ['mount し直すと、count は 0 に戻る。for で3回回してもよい。', "<code>for (let i = 0; i &lt; 3; i++) w2.find('button').trigger('click')</code>"], answer: { code: HEAD + S1 + '\n' + S2 + '\n' + S3, lang: 'ts', mode: 'replace' } },
+        { level: 1, label: 'mount して、最初の text が「いいね: 0」だと expect で確かめる', ok: clean && usesExpect && /mount\(\)/.test(src.split('// ①')[1] || src) && has('PASS いいね: 0'), hint: ['まず <code>const w = mount()</code>。', "<code>expect(w.text()).toBe('いいね: 0')</code>"], answer: { code: HEAD + S1, lang: 'ts', mode: 'replace' } },
+        { level: 2, label: 'button を click して、「いいね: 1」だと expect で確かめる', ok: clean && usesExpect && /\.find\(\s*['"]button['"]\s*\)\s*\.trigger\(\s*['"]click['"]\s*\)/.test(src) && has('PASS いいね: 1'), hint: ["押す操作は <code>w.find('button').trigger('click')</code>。", "そのあと <code>expect(w.text()).toBe('いいね: 1')</code>。"], answer: { code: HEAD + S1 + '\n' + S2, lang: 'ts', mode: 'replace' } },
+        { level: 3, label: '新しく mount して 3 回 click し、「いいね: 3」だと確かめる', ok: clean && usesExpect && (src.match(/\.trigger\(/g) || []).length >= 2 && has('PASS いいね: 3'), hint: ['mount し直すと、count は 0 に戻る。for で3回回してもよい。', "<code>for (let i = 0; i &lt; 3; i++) w2.find('button').trigger('click')</code>"], answer: { code: HEAD + S1 + '\n' + S2 + '\n' + S3, lang: 'ts', mode: 'replace' } },
       ];
     },
   };

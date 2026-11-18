@@ -82,6 +82,7 @@
         const needle = solved[cur] ? q.fill : q.ph;
         np.setHi([src.split('\n').findIndex((l) => l.includes(needle)) + 1], 'on');
         codeHost.replaceChildren(np); api.pre = np;
+        api.relink && api.relink();
       };
       const paint = () => {
         dots.replaceChildren(...Q.map((_, i) => h('i', { class: (solved[i] ? 'ok ' : '') + (i === cur ? 'cur' : ''), onclick: () => { cur = i; paint(); } })), h('span', solved.every(Boolean) ? '🎉 ぜんぶ OK' : solved.filter(Boolean).length + ' / ' + Q.length));
@@ -101,6 +102,14 @@
           qBox.classList.remove('shake'); void qBox.offsetWidth; qBox.classList.add('shake');
           cfg.onWrong && cfg.onWrong(cur, k);
         }
+      };
+      /* 今の問題の行（カーソルを外したとき、この強調に戻す） */
+      api.rest = () => { const src = SRC().split('\n'); const i = src.findIndex((l) => l.includes(solved[cur] ? Q[cur].fill : Q[cur].ph)); return i < 0 ? [] : [i + 1]; };
+      /* UI ⇄ コードの hover 連動。コードは問題ごとに作り直されるので、行は毎回つなぎ直す（UI 側は1回だけ） */
+      api.link = (root, map) => {
+        const proxy = { get lines() { return api.pre ? api.pre.lines : []; }, setHi: (a, c) => api.pre && api.pre.setHi(a, c) };
+        const run = () => K.vs && K.vs.link && K.vs.link(root, proxy, map, { rest: api.rest });
+        api.relink = run; run();
       };
       api.paint = paint;
       api.setCur = (i) => { cur = i; paint(); };
@@ -215,7 +224,10 @@
           });
           pm.ref.q = q; draw(false);
           const left = h('div', { class: 'vzD-col', style: { position: 'relative' } }, page, dom);
-          el.append(frame(left, q, () => { show = true; draw(false); q.reset(); }, '👀 見た目（上）と、その裏の DOM（下）'));
+          [[st, 'state'], [tg, 'toggle'], [ia, 'if'], [dA, 'if'], [ib, 'show'], [dB, 'show']].forEach(([n, k]) => n.setAttribute('data-k', k));
+          const fr = frame(left, q, () => { show = true; draw(false); q.reset(); }, '👀 見た目（上）と、その裏の DOM（下）');
+          el.append(fr);
+          q.link(fr, { state: ['const show = ref'], toggle: ['@click="show = !show"'], if: ['【①】', 'v-if="show"'], show: ['【②】', 'v-show="show"'] });
         },
       });
     })();
@@ -277,7 +289,10 @@
           });
           pm.ref.q = q;
           const left = h('div', { class: 'vzD-col' }, pg, h('div', { class: 'vzD-lb' }, '起きたイベント（新しい順）'), log);
-          el.append(frame(left, q, () => { log.replaceChildren(h('span', { class: 'vzD-ph' }, '操作すると、ここにイベントが並ぶ')); q.reset(); }, '👀 本物のフォーム（打つ・選ぶ・押す）'));
+          [[name, 'input'], [sel, 'change'], [form, 'submit'], [srch, 'enter']].forEach(([n, k]) => n.setAttribute('data-k', k));
+          const fr = frame(left, q, () => { log.replaceChildren(h('span', { class: 'vzD-ph' }, '操作すると、ここにイベントが並ぶ')); q.reset(); }, '👀 本物のフォーム（打つ・選ぶ・押す）');
+          el.append(fr);
+          q.link(fr, { input: ['【①】', '@input="filterNames"'], change: ['【②】', '@change="updateFee"'], submit: ['【③】', '@submit.prevent="book"'], enter: ['【④】', '@keyup.enter="search"'] });
         },
       });
     })();
@@ -297,7 +312,7 @@
           const root = h('div', { class: 'vzD-col', style: { position: 'relative' } });
           const arr = h('div', { class: 'vzD-dom' }), ul = h('div', { class: 'vzD-ul' });
           const cntB = h('b', '3');
-          let q;
+          let q, relinkRows = () => {};
           const drawRows = (flashId, newId) => {
             arr.replaceChildren(h('div', { class: 'vzD-dh' }, 'cases（データ） ', h('b', { style: { color: 'var(--ok)' } }, String(data.length) + ' 件')),
               ...data.map((c) => h('div', { class: 'vzD-dr i dt', 'data-id': c.id }, '{ id: ' + c.id + ', done: ', h('b', { class: c.done ? 'on' : '' }, String(c.done)), ' }')));
@@ -305,9 +320,11 @@
               const li = h('div', { class: 'vzD-li' + (c.done ? ' done' : '') + (c.id === newId ? ' new' : ''), 'data-id': c.id, onclick: () => toggle(c.id) },
                 h('span', { class: 'ck' }, c.done ? '✓' : ''), h('span', { class: 'tt' }, c.title),
                 h('code', { class: 'cl' }, c.done ? 'class="done"' : 'class=""'),
-                showKey ? h('code', { class: 'ky' }, 'key=' + c.id) : null);
+                showKey ? h('code', { class: 'ky', 'data-k': 'key' }, 'key=' + c.id) : null);
+              li.setAttribute('data-k', 'class'); li.querySelector('.ck').setAttribute('data-k', 'click');
               return li;
             }));
+            relinkRows();
           };
           const toggle = async (id) => {
             const c = data.find((x) => x.id === id); c.done = !c.done; drawRows();
@@ -340,8 +357,12 @@
               if (i === 2) { showKey = true; drawRows(); [...ul.children].forEach((e) => bump(e)); }
             },
           });
+          arr.setAttribute('data-k', 'data'); ul.setAttribute('data-k', 'for'); add.setAttribute('data-k', 'data');
           drawRows();
-          el.append(frame(root, q, () => { data = data.slice(0, 3); data.forEach((c, i) => { c.done = i === 2; }); nextId = 4; showKey = false; drawRows(); q.reset(); }, '👀 データ（上）→ 画面（下）'));
+          const fr = frame(root, q, () => { data = data.slice(0, 3); data.forEach((c, i) => { c.done = i === 2; }); nextId = 4; showKey = false; drawRows(); q.reset(); }, '👀 データ（上）→ 画面（下）');
+          el.append(fr);
+          q.link(fr, { data: ['const cases = ref'], for: ['【①】', 'v-for="c in cases"'], class: ['【②】', ':class="{ done: c.done }"'], key: ['【③】', ':key="c.id"'], click: ['@click="c.done = !c.done"'] });
+          relinkRows = () => q.relink && q.relink();
         },
       });
     })();
@@ -356,12 +377,13 @@
           let n = 3, live = [false, false, false];
           const chip = h('b', '3');
           const stH = h('span', { class: 'who' }, 'SeminarForm.vue');
-          const st = pm.reg(0, 'vzD-st0', h('div', { class: 'vzD-st' }, stH, 'people = ', chip));
+          const cap = (n, t) => h('span', { class: 'vzD-cap' }, CIRC[n] + ' ' + t);
+          const st = pm.reg(0, 'vzD-st0', h('div', { class: 'vzD-st' }, cap(0, '状態'), stH, 'people = ', chip));
           const num = h('b', { class: 'vzD-big' }, '3');
           const yen = h('b', '9,000');
-          const disp = pm.reg(2, 'vzD-disp', h('span', { class: 'vzD-lbl' }, '参加人数'), num, h('span', { class: 'vzD-lbl' }, '名'));
+          const disp = pm.reg(2, 'vzD-disp', cap(2, '表示'), h('span', { class: 'vzD-lbl' }, '参加人数'), num, h('span', { class: 'vzD-lbl' }, '名'));
           const btn = h('button', { class: 'vzD-btn' }, '＋1名');
-          const bt = pm.reg(1, 'vzD-bt', btn);
+          const bt = pm.reg(1, 'vzD-bt', cap(1, 'ボタン'), btn);
           const pg = h('div', { class: 'vzD-pg' }, h('div', { class: 'vzD-hd' }, '⚖ セミナー申込', h('small', '相続セミナー')), st, h('div', { class: 'vzD-two' }, disp, bt), h('div', { class: 'vzD-yen' }, '参加費 ', yen, ' 円'));
           const bx = h('b', '3');
           const boxEl = h('div', { class: 'vzD-dom' }, h('div', { class: 'vzD-dh' }, 'ref の中身（箱）'), h('div', { class: 'vzD-dr i' }, 'people ＝ { value: ', bx, ' }'), h('div', { class: 'vzD-dr i' }, 'script → people.value　／　template → people'));
@@ -379,13 +401,13 @@
             Q: [
               { who: '人数の宣言', t: '人数を「画面とつながった変数」にしたい', ans: 'b', ph: '【①】', fill: 'const people = ref<number>(3)', why: 'ref の箱に入れると、画面が変化を見張る。',
                 opts: [{ k: 'a', label: 'let people = 3', mono: 1, color: 'var(--bad)' }, { k: 'b', label: 'const people = ref<number>(3)', mono: 1, color: 'var(--ok)' }, { k: 'c', label: 'const people = reactive(3)', mono: 1, color: 'var(--ts)' }],
-                ng: { a: 'ただの変数。変わっても画面は気づかない。', c: 'reactive は数値には使えない（オブジェクト用）。' } },
+                ng: { a: 'ただの変数は、画面が気づかない。', c: 'reactive は数値に使えない。' } },
               { who: '＋1名ボタン', t: 'script で 人数を 1 増やしたい', ans: 'b', ph: '【②】', fill: 'people.value++', why: 'script では .value で箱の中身を変える。',
                 opts: [{ k: 'a', label: 'people++', mono: 1, color: 'var(--bad)' }, { k: 'b', label: 'people.value++', mono: 1, color: 'var(--ok)' }, { k: 'c', label: 'people = people + 1', mono: 1, color: 'var(--ts)' }],
-                ng: { a: '箱ごと ++ はできない（型エラー）。.value を付ける。', c: 'const の箱は付け替えられない。.value を変える。' } },
-              { who: '画面の表示', t: 'template に 人数を表示したい', ans: 'b', ph: '【③】', fill: '{{ people }}', why: 'template では .value は不要。自動で開いてくれる。',
+                ng: { a: '箱ごと ++ は不可。.value を付ける。', c: 'const の箱は付け替え不可。.value を変える。' } },
+              { who: '画面の表示', t: 'template に 人数を表示したい', ans: 'b', ph: '【③】', fill: '{{ people }}', why: 'template では .value は不要（自動で開く）。',
                 opts: [{ k: 'a', label: '{{ people.value }}', mono: 1, color: 'var(--bad)' }, { k: 'b', label: '{{ people }}', mono: 1, color: 'var(--ok)' }, { k: 'c', label: '{{ ref(people) }}', mono: 1, color: 'var(--ts)' }],
-                ng: { a: 'template で .value を付けると、中身が見つからない。', c: '表示に ref() は使わない。' } },
+                ng: { a: 'template では .value を付けない。', c: '表示に ref() は使わない。' } },
             ],
             onCur: (i, s) => pm.paint(i, s),
             onWrong: async (i, k) => {
@@ -401,7 +423,10 @@
             },
           });
           pm.ref.q = q; draw();
-          el.append(frame(h('div', { class: 'vzD-col' }, pg, boxEl), q, () => { n = 3; live = [false, false, false]; draw(); q.reset(); }, '👀 画面（②のボタンは、正解すると本当に動く）'));
+          [[st, 'state'], [boxEl, 'state'], [bt, 'click'], [disp, 'show']].forEach(([n, k]) => n.setAttribute('data-k', k));
+          const fr = frame(h('div', { class: 'vzD-col' }, pg, boxEl), q, () => { n = 3; live = [false, false, false]; draw(); q.reset(); }, '👀 画面（②のボタンは、正解すると本当に動く）');
+          el.append(fr);
+          q.link(fr, { state: ['【①】', 'const people = ref'], click: ['【②】', 'people.value++', '@click="addPerson"'], show: ['【③】', '{{ people }}'] });
         },
       });
     })();
@@ -445,7 +470,9 @@
     .vzD-disp{display:flex;align-items:baseline;gap:8px;padding:12px 16px;background:#fff;border:1px solid #d7dbe8;border-radius:12px}
     .vzD-big{font:900 2.4rem var(--font);color:#2f6df0;min-width:1.2em;text-align:center}
     .vzD-lbl{font:800 1rem var(--font);color:#445}
-    .vzD-bt{padding:6px}
+    .vzD-bt{padding:6px;display:grid;gap:4px;justify-items:start}
+    .vzD-cap{font:900 .78rem var(--font);color:#2f6df0;background:#e7efff;border-radius:99px;padding:.1em .7em;white-space:nowrap}
+    .vzD-disp .vzD-cap{align-self:center;margin-right:4px}
     .vzD-yen{font:800 1.05rem var(--font);color:#445;padding:0 4px}.vzD-yen b{font-size:1.3rem;color:#223}
     `);
   }

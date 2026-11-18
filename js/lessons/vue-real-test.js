@@ -10,6 +10,7 @@
     const L = K.lessons['vue-test'];
     if (L.scenes.some((s) => s.t === '実例：リファクタでテストが赤くなる')) return;
 
+    style('vslHot', '[data-k].vs-hot{outline:2px solid var(--c,#2f7bff)!important;outline-offset:2px;background-color:color-mix(in srgb,var(--c,#2f7bff) 14%,transparent)}');
     style('vrT', `
     .vrT-eq{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start;position:relative}
     @media(max-width:980px){.vrT-eq{grid-template-columns:1fr}.vrT-arrow{display:none}}
@@ -28,7 +29,7 @@
     .vrT-btn:disabled{background:var(--line);color:var(--mute)!important;cursor:not-allowed}
     .vrT-pulse{outline:3px solid var(--vue);outline-offset:2px;animation:vrT-p .7s ease-out}
     @keyframes vrT-p{0%{outline-offset:8px;outline-color:transparent}100%{outline-offset:2px}}
-    .vrT-leak{font:800 .75rem var(--font);color:var(--bad);min-height:1.2em}
+    .vrT-leak{font:800 .8rem var(--font);color:var(--bad);min-height:1.2em}
     .vrT-test{display:flex;align-items:center;gap:8px;font:700 .85rem var(--mono);padding:.35em .5em;border-radius:8px}
     .vrT-test i{font-style:normal;width:1.2em;text-align:center;font-weight:900}
     .vrT-test.ok i{color:var(--ok)}.vrT-test.ng{background:color-mix(in srgb,var(--bad) 14%,transparent)}.vrT-test.ng i{color:var(--bad)}
@@ -44,14 +45,14 @@
     pre.code.dim .ln.err{opacity:1}
     .vrT-card pre.code{max-width:100%;box-sizing:border-box;overflow-x:auto;margin:0}
     .vrT-ctl{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-    .vrT-ctl .btn{padding:.5em 1.1em}
+    .vrT-ctl .btn{min-height:44px;padding:0 1.2em}
     .vrT-dots{display:flex;gap:6px;margin-left:auto;flex-wrap:wrap}
-    .vrT-dot{font:900 .74rem var(--font);padding:.25em .75em;border-radius:99px;border:2px solid var(--line);color:var(--mute);background:var(--card);cursor:pointer}
+    .vrT-dot{font:900 .8rem var(--font);min-height:36px;display:inline-flex;align-items:center;padding:0 .9em;border-radius:99px;border:2px solid var(--line);color:var(--mute);background:var(--card);cursor:pointer}
     .vrT-dot.on{border-color:var(--vue);color:var(--vue)}.vrT-dot.red.on{border-color:var(--bad);color:var(--bad)}
     .vrT-arrow{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible;z-index:5}
     .vrT-arrow path{fill:none;stroke:var(--bad);stroke-width:3;stroke-dasharray:600;stroke-dashoffset:600;animation:vrT-d .8s ease forwards;filter:drop-shadow(0 0 5px var(--bad))}
     @keyframes vrT-d{to{stroke-dashoffset:0}}
-    .vrT-lbl{font:900 .72rem var(--font);padding:.1em .7em;border-radius:99px;width:max-content}
+    .vrT-lbl{font:900 .8rem var(--font);padding:.15em .8em;border-radius:99px;width:max-content}
     .vrT-lbl.d{background:var(--bad);color:#fff}.vrT-lbl.a{background:var(--ok);color:#052e16}
     /* scene 2 */
     .vrT-g{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px 16px;align-items:stretch}
@@ -61,7 +62,7 @@
     .vrT-cell.bad.red{border-color:var(--bad)}
     .vrT-st{font:900 .82rem var(--mono);display:flex;gap:6px;align-items:center;min-height:1.4em}
     .vrT-st.ok{color:var(--ok)}.vrT-st.ng{color:var(--bad)}
-    .vrT-why{font:800 .72rem var(--font);color:var(--mute)}
+    .vrT-why{font:800 .8rem var(--font);color:var(--mute)}
     .vrT-cell pre.code{margin:0;font-size:.74rem;overflow-x:auto}
     `);
 
@@ -107,10 +108,10 @@ const isValid = computed(() => EMAIL_RE.test(email.value))
       let buggy = false, token = 0, step = 0, srcState = 'orig', verdict = null;
 
       /* 左：ミニUI + ソース */
-      const inp = h('input', { type: 'email', placeholder: 'tanaka@example.com', 'aria-label': 'メールアドレス' });
-      const err = h('div', { class: 'vrT-err' });
-      const btn = h('button', { class: 'vrT-btn' }, '相談を申し込む');
-      const leak = h('div', { class: 'vrT-leak' });
+      const inp = h('input', { 'data-k': 'email', type: 'email', placeholder: 'tanaka@example.com', 'aria-label': 'メールアドレス' });
+      const err = h('div', { class: 'vrT-err', 'data-k': 'err' });
+      const btn = h('button', { class: 'vrT-btn', 'data-k': 'btn' }, '相談を申し込む');
+      const leak = h('div', { class: 'vrT-leak', 'data-k': 'btn' });
       const ui = h('div', { class: 'vrT-ui' }, inp, err, btn, leak);
       function paintUI() {
         const v = inp.value, valid = RE.test(v);
@@ -124,7 +125,11 @@ const isValid = computed(() => EMAIL_RE.test(email.value))
       const uiCard = h('div', { class: 'vrT-card' }, uiHd, ui);
       const srcBox = h('div');
       const srcCard = h('div', { class: 'vrT-card' }, h('div', { class: 'vrT-hd' }, '📄 SubmitButton.vue'), srcBox);
-      let srcPre;
+      let srcPre, testPre, curLine = 0, curCls = '';
+      const sp = { get lines() { return srcPre.lines; }, setHi(a, c) { srcPre.setHi(a, c); } };
+      const tp = { get lines() { return testPre.lines; }, setHi(a, c) { testPre.setHi(a, c); } };
+      const MAPS = { email: ['const email', 'v-model="email"'], err: ['v-if="email', 'const isValid'], btn: [':disabled'] };
+      const MAPT = { case: ["it('メールが不正なら"], res: ['expect(button.element'] };
       function paintSrc() {
         const [t, hi, cls] = SRC[srcState];
         srcPre = code(t, 'vue', { edit: false, dim: srcState === 'diff', color: 'var(--ok)', file: null });
@@ -133,20 +138,22 @@ const isValid = computed(() => EMAIL_RE.test(email.value))
           srcPre.dim = true;
         } else if (cls) srcPre.setHi(hi, cls);
         srcBox.replaceChildren(srcPre);
+        K.vs.link(uiCard, sp, MAPS);
       }
 
       /* 右：テストファイル + CI */
       const testBox = h('div');
-      let testPre;
       function paintTest(line, cls) {
+        curLine = line; curCls = cls;
         testPre = code(TEST, 'ts', { edit: false, dim: true, color: C, file: 'SubmitButton.test.ts' });
         if (line) { testPre.setHi([line], cls === 'err' ? 'err' : 'on'); if (cls !== 'err') testPre.setHi([line], 'cur'); }
         testBox.replaceChildren(testPre);
+        K.vs.link(stage, tp, MAPT, { rest: () => (curLine && curCls !== 'err' ? [curLine] : []) });
       }
       const names = ['メールが正しければ送信ボタンを押せる', 'メールが不正なら送信ボタンは押せない', '送信すると submit が emit される'];
-      const rows = names.map((n) => h('div', { class: 'vrT-test' }, h('i'), n));
+      const rows = names.map((n, i) => h('div', Object.assign({ class: 'vrT-test' }, i === 1 ? { 'data-k': 'case' } : {}), h('i'), n));
       const outBox = h('div');
-      const badge = h('span', { class: 'vrT-badge' }, '待機中');
+      const badge = h('span', { class: 'vrT-badge', 'data-k': 'res' }, '待機中');
       const ciCard = h('div', { class: 'vrT-card' }, h('div', { class: 'vrT-hd' }, '🧪 vitest', h('span', { class: 'sp' }), badge), ...rows, outBox);
       function paintCI(states) { // 'ok' | 'ng' | 'run' | ''
         rows.forEach((r, i) => { const s = states[i] || ''; r.className = 'vrT-test ' + s; r.firstChild.textContent = s === 'ok' ? '✓' : s === 'ng' ? '✖' : s === 'run' ? '◌' : '○'; });
@@ -156,7 +163,7 @@ const isValid = computed(() => EMAIL_RE.test(email.value))
         ciCard.className = 'vrT-card ' + (bad ? 'red' : good ? 'green' : '');
       }
       function showOut(on) {
-        outBox.replaceChildren(...(on ? [h('div', { class: 'vrT-out', html: `<span class="hd">FAIL</span>  SubmitButton.test.ts:11\nAssertionError: expected false to be true\n<span class="ex">- Expected:  true</span>\n<span class="rc">+ Received: false</span>\n ❯ expect(button.element.disabled).toBe(true)` })] : []));
+        outBox.replaceChildren(...(on ? [h('div', { class: 'vrT-out', 'data-k': 'res', html: `<span class="hd">FAIL</span>  SubmitButton.test.ts:11\nAssertionError: expected false to be true\n<span class="ex">- Expected:  true</span>\n<span class="rc">+ Received: false</span>\n ❯ expect(button.element.disabled).toBe(true)` })] : []));
       }
 
       const arrow = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -231,12 +238,16 @@ const isValid = computed(() => EMAIL_RE.test(email.value))
       const cells = [];
       const grid = h('div', { class: 'vrT-g' },
         h('div', { class: 'vrT-lbl d' }, '✖ 壊れやすいテスト'), h('div', { class: 'vrT-lbl a' }, '✓ 良いテスト'));
-      pairs.forEach((p) => {
+      pairs.forEach((p, pi) => {
         const mkc = (kind, src, why) => {
           const pre = code(src, 'ts', { edit: false, dim: true, color: kind === 'bad' ? 'var(--team)' : 'var(--ok)' });
           const st = h('div', { class: 'vrT-st ok' }, '✓ passed');
           const c = h('div', { class: 'vrT-cell ' + kind }, pre, h('div', { class: 'vrT-why' }, why), st);
-          cells.push({ kind, c, pre, st, line: src.split('\n').length - 1 });
+          const lines = src.split('\n'), ln = lines.length - 1;
+          const whyTok = [['.btn.btn-primary', 'data-test="submit"'], ['wrapper.vm.isValid', 'button.element.disabled'], ["toBe('形式", 'email-error']][pi][kind === 'bad' ? 0 : 1];
+          st.setAttribute('data-k', 'st'); c.querySelector('.vrT-why').setAttribute('data-k', 'why');
+          cells.push({ kind, c, pre, st, line: ln });
+          K.vs.link(c, pre, { why: [whyTok], st: ["it('", 'expect('] }, { rest: () => (changed && kind === 'bad' ? [] : [ln]) });
           return c;
         };
         grid.append(mkc('bad', p.bad, p.why[0]), mkc('good', p.good, p.why[1]));

@@ -1,4 +1,5 @@
-/* vue-basics のテスト（初級×3・中級×1・上級×1）。CaseForm.vue ＋ types.ts ＋ data.ts の3ファイル構成 */
+/* vue-basics のテスト（初級×3・中級×1・上級×1）。CaseForm.vue ＋ types.ts ＋ data.ts の3ファイル構成。
+   子コンポーネント・props・emit・computed は後のレッスンで学ぶので使わない（1つの .vue の中で関数を使う） */
 (function () {
   const K = window.KENSHU;
   if (!K || !K.vueTestTools) return;
@@ -17,7 +18,7 @@
     'const cases = ref<Case[]>(initialCases)',
     '',
     '// ③ 「予約する」で slots を 1 減らす関数 reserve を作る',
-    '// ⑤ onlyUrgent が true のときは、urgent の案件だけの shown を computed で作る',
+    '// ⑤ onlyUrgent が true のときは、urgent の案件だけを返す関数 shown(): Case[] を作る',
     '</script>',
     '',
     '<template>',
@@ -75,11 +76,11 @@
     fileNotes: { 'App.vue': '画面（ここを直す）', 'types.ts': '型 Case', 'data.ts': '案件データ' },
     starter: { 'App.vue': APP, 'types.ts': TYPES, 'data.ts': DATA },
     steps: [
-      { key: 'm1', level: 1, file: 'App.vue', label: '入力した件名が「件名：◯◯」に出る（v-model）', hint: ['入力欄とデータをつなぐのは <code>v-model</code>。', '<code>&lt;input v-model="title" placeholder="相談の件名"&gt;</code>'], edits: [['<input placeholder="相談の件名">', '<input v-model="title" placeholder="相談の件名">']] },
-      { key: 'm2', level: 1, file: 'App.vue', label: '入力のコツは最初は見えず、「入力のコツ」ボタンで出る（v-if）', hint: ['出したり消したりは <code>v-if</code>（または v-show）。条件は showTips。', '<code>&lt;p v-if="showTips"&gt;具体的な日付や金額を…&lt;/p&gt;</code>'], edits: [['<p>具体的な日付や金額を書くと、回答が早くなります</p>', '<p v-if="showTips">具体的な日付や金額を書くと、回答が早くなります</p>']] },
-      { key: 'm3', level: 1, file: 'App.vue', label: '「予約する」を押すたびに、残り枠が 3 → 2 → 1 と減る（@click ＋ 型付きの関数）', hint: ['script に <code>function reserve(): void { slots.value-- }</code> を書く。', 'ボタンは <code>&lt;button @click="reserve"&gt;予約する&lt;/button&gt;</code>。script の中では <code>.value</code> が要る。'], edits: [['// ③ 「予約する」で slots を 1 減らす関数 reserve を作る', 'function reserve(): void {\n  slots.value--\n}'], ['<button>予約する</button>', '<button @click="reserve">予約する</button>']] },
-      { key: 'm4', level: 2, file: 'App.vue', label: '相談を3件並べ、急ぎの2件だけ赤くする（v-for ＋ :class。型は types.ts の Case）', hint: ['並べるのは <code>v-for="c in cases" :key="c.id"</code>。cases の型は types.ts の <code>Case</code>。', '赤くするのは <code>:class="{ urgent: c.urgent }"</code>。'], edits: [['<li>（ここを書き換える）</li>', '<li v-for="c in cases" :key="c.id" :class="{ urgent: c.urgent }">{{ c.title }}</li>']] },
-      { key: 'm5', level: 3, file: 'App.vue', label: '「急ぎだけ表示」にチェックすると、急ぎの2件だけに絞られる（computed<Case[]> ＋ v-model）', hint: ['<code>const shown = computed&lt;Case[]&gt;(() =&gt; onlyUrgent.value ? cases.value.filter((c) =&gt; c.urgent) : cases.value)</code>。computed は import が必要。', 'チェックは <code>v-model="onlyUrgent"</code>、一覧は <code>v-for="c in shown"</code>。'], edits: [["import { ref } from 'vue'", "import { ref, computed } from 'vue'"], ['// ⑤ onlyUrgent が true のときは、urgent の案件だけの shown を computed で作る', 'const shown = computed<Case[]>(() =>\n  onlyUrgent.value ? cases.value.filter((c) => c.urgent) : cases.value,\n)'], ['<label><input type="checkbox"> 急ぎだけ表示</label>', '<label><input type="checkbox" v-model="onlyUrgent"> 急ぎだけ表示</label>'], ['v-for="c in cases"', 'v-for="c in shown"']] },
+      { key: 'm1', level: 1, file: 'App.vue', label: 'CaseForm.vue で、件名の入力欄を v-model でつなぎ、「件名：◯◯」と表示する', hint: ['入力欄とデータをつなぐのは <code>v-model</code>。', '<code>&lt;input v-model="title" placeholder="相談の件名"&gt;</code>'], edits: [['<input placeholder="相談の件名">', '<input v-model="title" placeholder="相談の件名">']] },
+      { key: 'm2', level: 1, file: 'App.vue', label: 'CaseForm.vue で、入力のコツを、ボタンを押したときだけ v-if で表示する', hint: ['出したり消したりは <code>v-if</code>（または v-show）。条件は showTips。', '<code>&lt;p v-if="showTips"&gt;具体的な日付や金額を…&lt;/p&gt;</code>'], edits: [['<p>具体的な日付や金額を書くと、回答が早くなります</p>', '<p v-if="showTips">具体的な日付や金額を書くと、回答が早くなります</p>']] },
+      { key: 'm3', level: 1, file: 'App.vue', label: 'CaseForm.vue で、予約するボタンの @click から型付きの関数 reserve を呼び、残り枠を減らす（3 → 2 → 1）', hint: ['script に <code>function reserve(): void { slots.value-- }</code> を書く。', 'ボタンは <code>&lt;button @click="reserve"&gt;予約する&lt;/button&gt;</code>。script の中では <code>.value</code> が要る。'], edits: [['// ③ 「予約する」で slots を 1 減らす関数 reserve を作る', 'function reserve(): void {\n  slots.value--\n}'], ['<button>予約する</button>', '<button @click="reserve">予約する</button>']] },
+      { key: 'm4', level: 2, file: 'App.vue', label: 'CaseForm.vue で、相談 3 件を v-for で並べ、急ぎの 2 件だけ :class で赤くする', hint: ['並べるのは <code>v-for="c in cases" :key="c.id"</code>。cases の型は types.ts の <code>Case</code>。', '赤くするのは <code>:class="{ urgent: c.urgent }"</code>。'], edits: [['<li>（ここを書き換える）</li>', '<li v-for="c in cases" :key="c.id" :class="{ urgent: c.urgent }">{{ c.title }}</li>']] },
+      { key: 'm5', level: 3, file: 'App.vue', label: 'CaseForm.vue で、チェックを v-model でつなぎ、関数 shown(): Case[] で急ぎの 2 件に絞る', hint: ['script に、急ぎだけを返す関数を作る。<code>function shown(): Case[] {\n  return onlyUrgent.value ? cases.value.filter((c) => c.urgent) : cases.value\n}</code>', 'チェックは <code>v-model="onlyUrgent"</code>、一覧は <code>v-for="c in shown()"</code>。'], edits: [['// ⑤ onlyUrgent が true のときは、urgent の案件だけを返す関数 shown(): Case[] を作る', 'function shown(): Case[] {\n  return onlyUrgent.value ? cases.value.filter((c) => c.urgent) : cases.value\n}'], ['<label><input type="checkbox"> 急ぎだけ表示</label>', '<label><input type="checkbox" v-model="onlyUrgent"> 急ぎだけ表示</label>'], ['v-for="c in cases"', 'v-for="c in shown()"']] },
     ],
     probe: async (win, doc) => {
       const out = {};

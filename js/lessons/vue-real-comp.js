@@ -15,12 +15,12 @@
     style('vrC', `
     .vrC-wrap{display:grid;gap:10px}
     .vrC-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-    .vrC-sw{display:inline-flex;gap:.5em;align-items:center;padding:.4em 1em;border-radius:999px;border:2px solid var(--line);background:var(--card2);font:800 .84rem var(--font);cursor:pointer;color:inherit}
+    .vrC-sw{display:inline-flex;gap:.5em;align-items:center;min-height:40px;padding:0 1.2em;border-radius:999px;border:2px solid var(--line);background:var(--card2);font:800 .84rem var(--font);cursor:pointer;color:inherit}
     .vrC-sw.on{border-color:var(--vue);background:color-mix(in srgb,var(--vue) 20%,var(--card2))}
     .vrC-sw i{width:2.2em;height:1.2em;border-radius:99px;background:var(--line);position:relative;transition:.25s}
     .vrC-sw i:after{content:'';position:absolute;top:2px;left:2px;width:calc(1.2em - 4px);height:calc(1.2em - 4px);border-radius:50%;background:#fff;transition:.25s}
     .vrC-sw.on i{background:var(--vue)}.vrC-sw.on i:after{left:calc(100% - 1.2em + 2px)}
-    .vrC-hint{font-size:.78rem;color:var(--mute);font-weight:700}
+    .vrC-hint{font-size:.85rem;color:var(--mute);font-weight:700}
     .vrC-page{background:#f4f6fb;color:#223;border-radius:12px;padding:12px;display:grid;gap:12px;min-width:0;position:relative}
     .vrC-r{position:relative;border-radius:8px;outline:2px solid transparent;outline-offset:1px;transition:outline-color .15s,background .15s}
     .vrC-r.hot{outline-color:var(--vue);background:color-mix(in srgb,var(--vue) 12%,transparent)}
@@ -189,6 +189,11 @@
       treeEl.addEventListener('mouseover', (e) => { const d = e.target.closest('[data-k]'); if (d && COMP[d.dataset.k]) { draw(d.dataset.k); const t = page.querySelector('[data-c="' + d.dataset.k + '"]'); if (t) t.classList.add('hot'); } });
       treeEl.addEventListener('mouseleave', () => draw(null));
       draw(null);
+      /* 親コードの行にカーソル → 画面の部品が光る（逆向き） */
+      parentPre.lines.forEach((ln, i) => {
+        ln.addEventListener('mouseenter', () => { const nm = Object.keys(PLN).find((k) => PLN[k][0].includes(i + 1)); if (!nm) return; draw(nm); page.querySelectorAll('[data-c="' + nm + '"]').forEach((t) => t.classList.add('hot')); hint.style.visibility = 'hidden'; });
+        ln.addEventListener('mouseleave', () => { draw(null); hint.style.visibility = ''; });
+      });
 
       const sw = h('button', { class: 'vrC-sw', onclick: () => { split = !split; sw.classList.toggle('on', split); page.classList.toggle('vrC-split', split); } }, h('i'), '部品に分ける');
       side.append(nameEl, parentPre, treeEl);
@@ -218,11 +223,11 @@
       let cur = 0;
       /* ---- 左：本物っぽい画面。①〜⑥ のピンが、問題の場所 ---- */
       const pins = [];
-      const pin = (i) => { const p = h('span', { class: 'vrC2-pin', onclick: () => { cur = i; paint(); } }, '①②③④⑤⑥'[i]); pins[i] = p; return p; };
-      const reg = (i, cls, ...kids) => { const r = h('div', { class: 'vrC2-r ' + (cls || '') }, ...kids, pin(i)); regs[i] = r; return r; };
+      const pin = (i) => { const p = h('span', { class: 'vrC2-pin', 'data-k': 'q' + i, onclick: () => { cur = i; paint(); } }, '①②③④⑤⑥'[i]); pins[i] = p; return p; };
+      const reg = (i, cls, ...kids) => { const r = h('div', { class: 'vrC2-r ' + (cls || ''), 'data-k': 'q' + i }, ...kids, pin(i)); regs[i] = r; return r; };
       const regs = [];
       const stEl = {};
-      const stChip = (k, v) => { const c = h('b', v); stEl[k] = c; return h('span', { class: 'vrC2-st' }, k + ' = ', c); };
+      const stChip = (k, v) => { const c = h('b', v); stEl[k] = c; return h('span', { class: 'vrC2-st', 'data-k': { keyword: 'q0', page: 'q3', target: 'q2' }[k] }, k + ' = ', c); };
       const par = h('div', { class: 'vrC2-par' }, h('span', { class: 'who' }, '👨 親  LawyerSearchPage.vue'), stChip('keyword', '"相続"'), stChip('page', '2'), stChip('target', '—'));
       const pg = h('div', { class: 'vrC2-pg' },
         h('div', { class: 'vrC2-hd' }, '⚖ 弁護士ナビ', h('small', '相続の弁護士を探す')),
@@ -244,8 +249,8 @@
       const draw = () => {
         const q = Q[cur];
         qBox.replaceChildren(
-          h('div', { class: 'vrC2-qh' }, h('span', { class: 'n' }, '①②③④⑤⑥'[cur]), h('b', q.who)),
-          h('div', { class: 'vrC2-qt' }, q.t),
+          h('div', { class: 'vrC2-qh', 'data-k': 'cur' }, h('span', { class: 'n' }, '①②③④⑤⑥'[cur]), h('b', q.who)),
+          h('div', { class: 'vrC2-qt', 'data-k': 'cur' }, q.t),
           h('div', { class: 'vrC2-ans' }, ...Object.keys(OPT).map((k) => {
             const b = h('button', { class: 'vrC2-a' + (solved[cur] && k === q.ans ? ' on' : ''), style: { '--c': OPT[k][1] } }, h('b', OPT[k][0]), h('small', OPT[k][2]));
             b.onclick = () => answer(k, b); return b;
@@ -254,6 +259,14 @@
           ...(solved[cur] ? [h('div', { class: 'vrC2-data' }, h('small', '実際に流れるデータ'), h('code', q.data))] : []));
         const np = code(SRC(solved), 'vue', { color: 'var(--ts)', file: 'LawyerSearchPage.vue（親のテンプレート）', dim: true, edit: false });
         np.setHi([LN[cur]], 'on'); codeHost.replaceChildren(np);
+        curPre = np; relink();
+      };
+      let root = null, curPre = null;
+      const relink = () => {
+        if (!root || !curPre) return;
+        root.querySelectorAll('[data-k]').forEach((n) => { n.__vsl = 0; });
+        const m = { cur: [Q[cur].ph, Q[cur].fill] }; Q.forEach((q, i) => { m['q' + i] = [q.ph, q.fill]; });
+        const c = cur; K.vs.link(root, curPre, m, { rest: () => [LN[c]] });
       };
       const paint = () => {
         pins.forEach((p, i) => { p.className = 'vrC2-pin' + (solved[i] ? ' ok' : '') + (i === cur ? ' cur' : ''); regs[i].classList.toggle('cur', i === cur); regs[i].classList.toggle('ok', solved[i]); });
@@ -292,9 +305,10 @@
       };
       const reset = h('button', { class: 'btn ghost', onclick: () => { solved.fill(false); cur = 0; stEl.target.textContent = '—'; paint(); } }, '⟲ やり直す');
       paint();
-      return h('div', { class: 'vrC-wrap' }, h('div', { class: 'vrC-bar' }, dots, h('span', { style: { flex: 1 } }), reset),
+      root = h('div', { class: 'vrC-wrap' }, h('div', { class: 'vrC-bar' }, dots, h('span', { style: { flex: 1 } }), reset),
         h('div', { class: 'vi-eq' }, h('div', { class: 'vrC-wrap' }, h('div', { class: 'vi-lb' }, '👀 弁護士検索の画面（ピン ①〜⑥ が問題の場所）'), pg),
           h('div', { class: 'vrC-wrap' }, qBox, codeHost)));
+      relink(); return root;
     }
     style('vrC2', `
     .vrC2-pg{background:#f4f6fb;color:#223;border-radius:14px;padding:14px;display:grid;gap:12px;min-width:0}

@@ -1,95 +1,57 @@
-/* vue-intro のテスト（初級×3・中級×1・上級×1）。K.vueTestTools.web で作る
-   ファイル構成：ReservePage.vue（画面）／ components/SoldOut.vue（満席の表示）／ types.ts（型） */
+/* vue-intro のテスト（初級×3・中級×1・上級×1）。K.vueTestTools.web で作る。
+   紹介レッスンの範囲だけ：1つの .vue（ReservePage.vue）に、<template> の文字・{{ }}・ref だけを使う。
+   部品・props・型ファイル・@click・v-if は、まだ習っていないので出さない */
 (function () {
   const K = window.KENSHU;
   if (!K || !K.vueTestTools) return;
-  const { web, nt } = K.vueTestTools;
+  const { web } = K.vueTestTools;
 
   const APP = [
-    '<script setup lang="ts">',
+    '<script setup>',
     "import { ref } from 'vue'",
-    "import type { Course } from './types'",
-    "import SoldOut from './components/SoldOut.vue'",
     '',
-    "const course = ref<Course>({ title: '相談予約', slots: 3 })",
-    '',
-    '// ⑤ 残り枠が 0 のときは減らない関数 reserve(): void を作る（ボタンはそれを呼び、0 のときは押せなくする）',
+    '// ③ 残り枠 slots を ref(3) で作る',
     '</script>',
     '',
     '<template>',
-    '  <!-- ① course.title を見出しに出す -->',
-    '  <h2></h2>',
-    '  <p>残り枠：<!-- ② course.slots を出す --></p>',
-    '  <!-- ③ 押すと course.slots が 1 つ減るようにする -->',
-    '  <button>予約する</button>',
-    '  <!-- ④ 残り枠が 0 のときだけ出す -->',
-    '  <SoldOut message="満席です" />',
+    '  <!-- ① h2 に「初回相談の予約」と書く -->',
+    '  <h2>（見出し）</h2>',
+    '  <!-- ② p に「弁護士が30分、無料でうかがいます」と書く -->',
+    '  <p>（説明）</p>',
+    '  <!-- ③ p に「残り枠：{{ slots }}」と書く -->',
+    '  <p>残り枠：（未設定）</p>',
+    '  <!-- ④ 枠が 5 に増えた。上の script の slots を書き換える -->',
+    '  <!-- ⑤ 全 10 枠のうち予約済みの数を、{{ 10 - slots }} の式で計算して出す -->',
+    '  <p>予約済み：（未設定）</p>',
     '</template>',
     '',
-  ].join('\n');
-
-  const SOLD = [
-    '<script setup lang="ts">',
-    'defineProps<{ message: string }>()',
-    '</script>',
-    '',
-    '<template>',
-    '  <p class="soldout">{{ message }}</p>',
-    '</template>',
-    '',
-  ].join('\n');
-
-  const TYPES = [
-    '// 予約できる講座の形',
-    'export interface Course {',
-    '  title: string',
-    '  slots: number   // 残り枠',
-    '}',
-    '',
-  ].join('\n');
-
-  const RESERVE = [
-    'function reserve(): void {',
-    '  if (course.value.slots > 0) {',
-    '    course.value.slots--',
-    '  }',
-    '}',
   ].join('\n');
 
   K.tests['vue-intro'] = web({
-    height: 330,
+    height: 300,
     alias: { 'App.vue': 'ReservePage.vue' },
-    paths: { 'App.vue': 'src/App.vue', 'types.ts': 'src/types.ts', 'SoldOut.vue': 'src/components/SoldOut.vue' },
-    fileNotes: {
-      'App.vue': '画面。データ（course）を持ち、部品を並べる',
-      'types.ts': '型。Course の形（title・slots）を決める',
-      'SoldOut.vue': '部品。満席のお知らせ（message を受け取る）',
-    },
-    starter: { 'App.vue': APP, 'SoldOut.vue': SOLD, 'types.ts': TYPES },
+    paths: { 'App.vue': 'src/App.vue' },
+    fileNotes: { 'App.vue': '画面。データ（slots）を script に置き、template の {{ }} で出す' },
+    starter: { 'App.vue': APP },
     steps: [
-      { key: 'm1', level: 1, file: 'App.vue', label: 'h2 に course.title の中身（相談予約）が出る', hint: ['画面に値を出すには、二重の波かっこ <code>{{ }}</code> を使う。', '<code>&lt;h2&gt;{{ course.title }}&lt;/h2&gt;</code>（script では <code>.value</code> が要るが、template では要らない）'], edits: [['  <!-- ① course.title を見出しに出す -->\n  <h2></h2>', '  <h2>{{ course.title }}</h2>']] },
-      { key: 'm2', level: 1, file: 'App.vue', label: '「残り枠：3」と、course.slots の数が出る', hint: ['<code>{{ course.slots }}</code> を p の中に書く。', '<code>&lt;p&gt;残り枠：{{ course.slots }}&lt;/p&gt;</code>'], edits: [['<p>残り枠：<!-- ② course.slots を出す --></p>', '<p>残り枠：{{ course.slots }}</p>']] },
-      { key: 'm3', level: 1, file: 'App.vue', label: '「予約する」を押すと、残り枠が 3 → 2 と減る', hint: ['クリックは <code>@click</code>。式をそのまま書ける。', '<code>&lt;button @click="course.slots--"&gt;予約する&lt;/button&gt;</code>'], edits: [['  <!-- ③ 押すと course.slots が 1 つ減るようにする -->\n  <button>予約する</button>', '  <button @click="course.slots--">予約する</button>']] },
-      { key: 'm4', level: 2, file: 'App.vue', label: '3回予約して残り 0 になったときだけ「満席です」が出る（それまでは出ない）', hint: ['条件で出し分けるのは <code>v-if</code>。部品にも付けられる。', '<code>&lt;SoldOut v-if="course.slots === 0" message="満席です" /&gt;</code>'], edits: [['  <!-- ④ 残り枠が 0 のときだけ出す -->\n  <SoldOut message="満席です" />', '  <SoldOut v-if="course.slots === 0" message="満席です" />']] },
-      { key: 'm5', level: 3, file: 'App.vue', label: '残り 0 のあとは押せず、枠が 0 未満にならない（reserve(): void を作る）', hint: ['script に、0 より大きいときだけ減らす関数を作る。戻り値の型は <code>void</code>。', '<code>function reserve(): void {\n  if (course.value.slots > 0) course.value.slots--\n}</code>', 'ボタンは <code>&lt;button :disabled="course.slots === 0" @click="reserve"&gt;</code>'], edits: [['// ⑤ 残り枠が 0 のときは減らない関数 reserve(): void を作る（ボタンはそれを呼び、0 のときは押せなくする）', RESERVE], ['<button @click="course.slots--">予約する</button>', '<button :disabled="course.slots === 0" @click="reserve">予約する</button>']] },
+      { key: 'm1', level: 1, file: 'App.vue', label: 'ReservePage.vue で、h2 に「初回相談の予約」と書く（画面：初回相談の予約）', hint: ['画面の形は、template に HTML の文字を書いて作る。', '<code>&lt;h2&gt;初回相談の予約&lt;/h2&gt;</code>'], edits: [['<h2>（見出し）</h2>', '<h2>初回相談の予約</h2>']] },
+      { key: 'm2', level: 1, file: 'App.vue', label: 'ReservePage.vue で、p に「弁護士が30分、無料でうかがいます」と書く（画面：その文）', hint: ['文字はそのまま p の中に書けばよい。', '<code>&lt;p&gt;弁護士が30分、無料でうかがいます&lt;/p&gt;</code>'], edits: [['<p>（説明）</p>', '<p>弁護士が30分、無料でうかがいます</p>']] },
+      { key: 'm3', level: 1, file: 'App.vue', label: 'ReservePage.vue で、slots を ref(3) で作り、p に「残り枠：{{ slots }}」と書く（画面：残り枠：3）', hint: ['データは script に <code>const slots = ref(3)</code>。', 'template では <code>{{ slots }}</code> と書く（.value は付けない）。'], edits: [['// ③ 残り枠 slots を ref(3) で作る', 'const slots = ref(3)'], ['<p>残り枠：（未設定）</p>', '<p>残り枠：{{ slots }}</p>']] },
+      { key: 'm4', level: 2, file: 'App.vue', label: 'ReservePage.vue で、slots の数字を 5 に書き換える（画面：残り枠：5）', hint: ['template は触らずに、データだけ書き換える。', '<code>const slots = ref(5)</code>'], edits: [['const slots = ref(3)', 'const slots = ref(5)']] },
+      { key: 'm5', level: 3, file: 'App.vue', label: 'ReservePage.vue で、{{ 10 - slots }} の式で、「予約済み：◯ 枠（全 10 枠）」と表示する（画面：予約済み：5 枠）', hint: ['{{ }} の中には、引き算などの式も書ける。', '<code>&lt;p&gt;予約済み：{{ 10 - slots }} 枠（全 10 枠）&lt;/p&gt;</code>'], edits: [['<p>予約済み：（未設定）</p>', '<p>予約済み：{{ 10 - slots }} 枠（全 10 枠）</p>']] },
     ],
     probe: async (win, doc) => {
       const out = {};
       const h2 = doc.querySelector('h2');
-      out.m1 = !!h2 && h2.textContent.trim() === '相談予約';
-      const btn = doc.querySelector('button');
-      const num = () => { const q = [...doc.querySelectorAll('p')].find((x) => x.textContent.includes('残り枠')); const m = q && q.textContent.match(/\d+/); return m ? +m[0] : -1; };
-      const n0 = num();
-      out.m2 = n0 === 3;
-      if (btn && !btn.disabled) { btn.click(); await nt(win); }
-      const n1 = num();
-      out.m3 = n0 === 3 && n1 === 2;
-      const has = () => doc.body.textContent.includes('満席です');
-      const pre = !has() && n0 === 3;
-      for (let i = 0; i < 2 && btn; i++) { btn.click(); await nt(win); }
-      out.m4 = pre && n1 === 2 && has() && num() === 0;
-      for (let i = 0; i < 3 && btn; i++) { btn.click(); await nt(win); }
-      out.m5 = out.m4 && num() === 0 && has() && !!btn && btn.disabled === true;
+      out.m1 = !!h2 && h2.textContent.trim() === '初回相談の予約';
+      const body = (doc.querySelector('#app') || doc.body).textContent;
+      out.m2 = body.includes('弁護士が30分、無料でうかがいます');
+      const m = body.match(/残り枠：\s*(\d+)/);
+      const n = m ? +m[1] : -1;
+      out.m3 = n >= 0;
+      out.m4 = n === 5;
+      const r = body.match(/予約済み：\s*(\d+)\s*枠（全 10 枠）/);
+      out.m5 = !!r && n >= 0 && +r[1] === 10 - n;
       return out;
     },
   });

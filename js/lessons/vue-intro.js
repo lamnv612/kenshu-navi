@@ -9,29 +9,33 @@
   const C = 'var(--vue)';
 
   style('vi', `
-  .vi-eq{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}
+  .vi-eq{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:stretch}
+  .vi-eq .vc-do small,.vi-eq .vc-dont small{font-size:.84rem;line-height:1.7}
+  .vi-eq .vc-do,.vi-eq .vc-dont{padding:14px}
+  .vi-log:empty::before{content:'ボタンを押すと、ここに流れが順番に並ぶ';color:var(--mute);font-weight:700;font-size:.86rem;padding:.4em .2em}
   @media(max-width:980px){.vi-eq{grid-template-columns:1fr}}
   .vi-panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:grid;gap:10px;align-content:start;min-width:0}
   .vi-panel>*{min-width:0;max-width:100%}.vi-panel pre.code{max-width:100%;overflow-x:auto}
   .vi-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .vi-row>.btn{min-height:40px;display:inline-flex;align-items:center;justify-content:center}
   .vi-chip{display:inline-flex;align-items:center;gap:.4em;padding:.35em .9em;border-radius:8px;font:800 .84rem var(--font);border:2px solid var(--cc,var(--line));background:color-mix(in srgb,var(--cc,var(--line)) 14%,var(--card2));cursor:pointer;transition:.2s;user-select:none}
   .vi-chip.off{opacity:.45;border-style:dashed}
   .vi-map{display:flex;flex-wrap:wrap;gap:8px;align-items:stretch}
-  .vi-nd{all:unset;cursor:pointer;box-sizing:border-box;padding:12px 14px;border-radius:12px;border:2px solid var(--line);background:var(--card);display:grid;gap:3px;justify-items:center;text-align:center;font-weight:800;font-size:.85rem;min-width:130px;transition:.3s}
-  .vi-nd b{font-size:1.9rem}.vi-nd small{color:var(--mute);font-weight:700;font-size:.7rem}
+  .vi-nd{all:unset;cursor:pointer;box-sizing:border-box;padding:12px 14px;border-radius:12px;border:2px solid var(--line);background:var(--card);display:grid;gap:3px;justify-items:center;text-align:center;font-weight:800;font-size:.85rem;flex:1 1 0;min-width:130px;transition:.3s}
+  .vi-nd b{font-size:1.9rem}.vi-nd small{color:var(--mute);font-weight:700;font-size:.78rem}
   .vi-nd.on{border-color:var(--vue);background:color-mix(in srgb,var(--vue) 18%,var(--card));transform:translateY(-4px);box-shadow:0 12px 24px -12px var(--vue)}
   .vi-nd.me{outline:3px dashed var(--team);outline-offset:3px}
   .vi-ar{align-self:center;color:var(--mute);font-weight:900;font-size:1.2rem}
   .vi-box{padding:10px 12px;border-radius:8px;border:1px solid var(--line);background:var(--card2);display:grid;gap:3px;font-size:.88rem;line-height:1.7}
-  .vi-box small{color:var(--mute);font-weight:800;font-size:.72rem}
+  .vi-box small{color:var(--mute);font-weight:800;font-size:.8rem}
   .vi-msg{padding:.55em .9em;border-radius:8px;font-weight:800;font-size:.86rem;background:var(--card2);border:1px solid var(--line)}
   .vi-msg.ok{color:var(--ok)}.vi-msg.ng{color:var(--bad)}.vi-msg.w{color:var(--team)}
   .vi-log{display:grid;gap:4px;min-height:140px;align-content:start}
   .vi-log div{padding:.4em .8em;border-radius:6px;background:var(--card2);border:1px solid var(--line);font-size:.84rem;font-weight:700;animation:capin .35s both}
   .vi-lb{font:800 .78rem var(--font);color:var(--mute)}
   .vi-scr{background:#fff;color:#222;border-radius:10px;padding:18px;display:grid;gap:10px;justify-items:start;min-height:150px;border:1px solid var(--line);align-content:start}
-  .vi-st{padding:.5em 1em;border-radius:8px;border:2px solid var(--line);background:var(--card2);text-align:center;min-width:120px;transition:.3s}
-  .vi-st small{display:block;font:700 .68rem var(--mono);color:var(--mute)}.vi-st b{font:900 1.6rem var(--mono)}
+  .vi-st{flex:1 1 0;padding:1em;border-radius:8px;border:2px solid var(--line);background:var(--card2);text-align:center;min-width:120px;transition:.3s}
+  .vi-st small{display:block;font:700 .78rem var(--mono);color:var(--mute)}.vi-st b{font:900 1.6rem var(--mono)}
   .vi-st.lit{border-color:var(--vue);box-shadow:0 0 22px -6px var(--vue);transform:scale(1.06)}
   .vi-st.stale{border-color:var(--bad)}
   .vi-pg{border:2px solid var(--line);border-radius:12px;padding:10px;display:grid;gap:8px;background:var(--bg2)}
@@ -43,6 +47,13 @@
 
   const chip = (t, c, on, f) => h('span', { class: 'vi-chip' + (on ? '' : ' off'), style: { '--cc': c }, onclick: f }, t);
   const note = (t, c) => h('div', { class: 'vi-msg ' + (c || 'w') }, t);
+  /* UI ⇄ コードの hover 連動（K.vs.link）。コードを作り直すシーン用：pre は毎回 getPre() から引き、再描画のたびに返り値 run() を呼ぶ */
+  const linkLive = (root, getPre, map, rest) => {
+    const px = { get lines() { const p = getPre(); return p ? p.lines : []; }, setHi: (a, c) => { const p = getPre(); if (p) p.setHi(a, c); } };
+    return () => { if (K.vs && K.vs.link && root) K.vs.link(root, px, map, { rest }); };
+  };
+  const multiPre = (pres) => ({ get lines() { return pres().flatMap((p) => p.lines); }, setHi(arr, cls) { let o = 0; pres().forEach((p) => { const n = p.lines.length; p.setHi((arr || []).filter((i) => i > o && i <= o + n).map((i) => i - o), cls); o += n; }); } });
+  const tag = (el, k) => { if (el && el.setAttribute) el.setAttribute('data-k', k); return el; };
 
   /* ① フロントエンドって何？ */
   function feMap() {
@@ -82,17 +93,21 @@
     ];
     const SAY = ['<b>HTML ＝ 骨組み</b>。何が書いてあるか（見出し・文章・ボタン）を決める。見た目は素っ気ない。', '<b>CSS ＝ 内装</b>。色・形・余白で見た目を整える。ボタンが「ボタンらしく」なった。', '<b>JavaScript ＝ 電気</b>。押したときの動き。ボタンを押してみよう。'];
     const host = h('div'), scr = h('div', { class: 'vi-scr' }), say = h('div', { class: 'vi-msg w' });
+    let curPre = null, run = null;
     const draw = () => {
-      host.replaceChildren(code(SRC[lv], 'html', { color: C, file: ['HTML だけ', 'HTML ＋ CSS', 'HTML ＋ CSS ＋ JavaScript'][lv] }));
+      host.replaceChildren(curPre = code(SRC[lv], 'html', { color: C, file: ['HTML だけ', 'HTML ＋ CSS', 'HTML ＋ CSS ＋ JavaScript'][lv] }));
       const b = h('button', lv === 0 ? {} : { style: { background: '#2fd4a4', borderRadius: '8px', padding: '10px 20px', border: 'none', fontWeight: 800, cursor: lv === 2 ? 'pointer' : 'default' } }, '予約する');
       if (lv === 2) b.onclick = () => { b.textContent = '予約しました ✓'; b.animate([{ transform: 'scale(1.15)' }, { transform: 'scale(1)' }], { duration: 250 }); };
-      scr.replaceChildren(h('h3', { style: lv ? { color: '#0a7' } : {} }, '弁護士に相談'), h('p', '初回は30分無料です。'), b);
+      scr.replaceChildren(tag(h('h3', { style: lv ? { color: '#0a7' } : {} }, '弁護士に相談'), 'h3'), tag(h('p', '初回は30分無料です。'), 'p'), tag(b, 'btn'));
       say.innerHTML = SAY[lv];
+      run && run();
     };
     draw();
-    return h('div', { class: 'vi-eq' },
+    const root = h('div', { class: 'vi-eq' },
       h('div', { class: 'vi-panel' }, lbl('① 1つずつ足していく'), h('div', { class: 'vi-row' }, ...['HTML だけ', '＋ CSS', '＋ JavaScript'].map((t, i) => chip(t, ['var(--basic)', 'var(--pink)', 'var(--team)'][i], true, () => { lv = i; draw(); }))), host, say),
       h('div', { class: 'vi-panel' }, lbl('② 画面（ブラウザで見ると）'), scr, note('3つは「役割分担」。1つでも欠けると、見た目だけ／動かない／骨組みだけ、になる。')));
+    run = linkLive(root, () => curPre, { h3: ['<h3>'], p: ['<p>'], btn: ['<button', 'button {', 'background', 'border-radius', 'padding', 'btn.onclick', 'btn.textContent'] }, () => []); run();
+    return root;
   }
 
   /* ⓪ JS の基本：変数・関数・よく使う道具（<script setup lang="ts"> の中で） */
@@ -107,24 +122,32 @@
       const pre = code(VAR, 'vue', { color: C, file: 'Basics.vue', dim: true });
       const el = {}; const pv = h('div', { class: 'vi-scr' }, el.h = h('h1', { style: { margin: 0, fontSize: '1.3rem' } }, '相談ナビ'), el.s = h('p', { style: { margin: 0 } }, '残り 3 枠'), el.t = h('p', { style: { margin: 0 } }, '離婚 ／ Lam'), el.c = h('p', { style: { margin: 0 } }, 'count：0'));
       const hi = (g) => { pre.setHi(g ? g[1] : []); Object.values(el).forEach((e) => { e.style.outline = 'none'; }); if (g) { el[g[2]].style.outline = '3px solid ' + g[3]; el[g[2]].style.outlineOffset = '2px'; } };
-      return h('div', { class: 'vi-eq' }, h('div', { class: 'vi-panel' }, pre, h('div', { class: 'vi-row' }, ...G.map((g) => h('span', { class: 'vi-chip', style: { '--cc': g[3] }, onmouseenter: () => hi(g), onmouseleave: () => hi(null), onclick: () => hi(g) }, g[0])))),
+      [['h', 'title'], ['s', 'slots'], ['t', 'tags'], ['c', 'count']].forEach(([e, k]) => tag(el[e], k));
+      const out = h('div', { class: 'vi-eq' }, h('div', { class: 'vi-panel' }, pre, h('div', { class: 'vi-row' }, ...G.map((g) => h('span', { class: 'vi-chip', style: { '--cc': g[3] }, onmouseenter: () => hi(g), onmouseleave: () => hi(null), onclick: () => hi(g) }, g[0])))),
         h('div', { class: 'vi-panel' }, lbl('画面に出る結果（種類を押すと光る）'), pv, h('div', { class: 'vi-eq' }, h('div', { class: 'vc-do' }, h('b', '✓ const が基本'), h('small', '変えない値は const。迷ったら const')), h('div', { class: 'vc-dont' }, h('b', '✖ let は必要なときだけ'), h('small', '書き換える値だけ。var は使わない'))), h('div', { class: 'vi-msg w' }, '⚠ let の count を変えても、画面は変わらない → 次の「ref」で解決')));
+      linkLive(out, () => pre, { title: ['const title', '{{ title }}'], slots: ['const slots', '{{ slots }}'], tags: ['const tags', 'const user', '{{ tags[0] }}'], count: ['let count', '{{ count }}'] }, () => [])();
+      return out;
     };
     const fnTab = () => {
       const src = () => `<script setup lang="ts">\nfunction double(n: number): number {\n  return n * 2\n}\n\nconst triple = (n: number) => n * 3\n</script>\n\n<template>\n  <p>double(${n}) ＝ {{ double(${n}) }}</p>\n  <p>triple(${n}) ＝ {{ triple(${n}) }}</p>\n</template>`;
       const host = h('div'), out = h('div', { class: 'vi-scr', style: { minHeight: 0 } }), flow = h('div', { class: 'vi-row', style: { justifyContent: 'center', fontWeight: 900, fontSize: '1.1rem' } });
+      let fPre = null, fRun = null;
       const inp = h('input', { type: 'number', value: n, style: { width: '90px', padding: '.4em .6em', borderRadius: '8px', border: '1px solid var(--line)', background: 'var(--bg2)', color: 'var(--text)', font: '800 1rem var(--mono)' }, oninput: (e) => { n = +e.target.value || 0; paint(true); } });
+      tag(inp, 'arg');
       const paint = (pop) => {
-        const pre = code(src(), 'vue', { color: C, file: 'Func.vue', dim: true, hi: [2, 3, 4, 6] }); host.replaceChildren(pre);
-        out.replaceChildren(h('p', { style: { margin: 0, fontWeight: 800 } }, `double(${n}) ＝ ${n * 2}`), h('p', { style: { margin: 0, fontWeight: 800 } }, `triple(${n}) ＝ ${n * 3}`));
-        flow.replaceChildren(h('span', { class: 'vi-chip', style: { '--cc': 'var(--ts)' } }, '入力 ' + n), '➜', h('span', { class: 'vi-chip', style: { '--cc': C } }, '⚙ double'), '➜', h('span', { class: 'vi-chip', style: { '--cc': 'var(--ok)' } }, '出力 ' + n * 2));
+        const pre = fPre = code(src(), 'vue', { color: C, file: 'Func.vue', dim: true, hi: [2, 3, 4, 6] }); host.replaceChildren(pre);
+        out.replaceChildren(tag(h('p', { style: { margin: 0, fontWeight: 800 } }, `double(${n}) ＝ ${n * 2}`), 'double'), tag(h('p', { style: { margin: 0, fontWeight: 800 } }, `triple(${n}) ＝ ${n * 3}`), 'triple'));
+        flow.replaceChildren(tag(h('span', { class: 'vi-chip', style: { '--cc': 'var(--ts)' } }, '入力 ' + n), 'arg'), '➜', tag(h('span', { class: 'vi-chip', style: { '--cc': C } }, '⚙ double'), 'double'), '➜', h('span', { class: 'vi-chip', style: { '--cc': 'var(--ok)' } }, '出力 ' + n * 2));
         if (pop) flow.animate([{ transform: 'scale(1.06)' }, { transform: 'none' }], { duration: 250 });
+        fRun && fRun();
       };
       paint();
-      return h('div', { class: 'vi-eq' }, h('div', { class: 'vi-panel' }, host, h('div', { class: 'vi-row' }, h('span', { class: 'vi-lb' }, 'n ＝'), inp, h('span', { class: 'vi-lb' }, '← 数を変えてみる'))),
+      const fRoot = h('div', { class: 'vi-eq' }, h('div', { class: 'vi-panel' }, host, h('div', { class: 'vi-row' }, h('span', { class: 'vi-lb' }, 'n ＝'), inp, h('span', { class: 'vi-lb' }, '← 数を変えてみる'))),
         h('div', { class: 'vi-panel' }, lbl('入力 ➜ 関数 ➜ 出力'), flow, lbl('画面に出る結果'), out,
           h('div', { class: 'vi-eq' }, h('div', { class: 'vc-do' }, h('b', '✓ 関数'), h('small', '同じ処理を名前で呼べる。template でも使える')), h('div', { class: 'vc-dont' }, h('b', '✖ 長い関数'), h('small', '20行をこえたら分ける。名前は動詞で'))),
           h('div', { class: 'vi-box' }, h('small', '2つの書き方'), h('b', 'function 名前() {}　＝　const 名前 = () => {}　どちらも同じ働き'))));
+      fRun = linkLive(fRoot, () => fPre, { double: ['function double', 'return n * 2', '<p>double('], triple: ['const triple', '<p>triple('], arg: ['(n: number)'] }, () => [2, 3, 4, 6]); fRun();
+      return fRoot;
     };
     const TOOL = [
       ['数える（length）', 'cases.length', '3', '配列の件数'],
@@ -136,9 +159,12 @@
     const toolTab = () => {
       const t = TOOL[ti];
       const src = `<script setup lang="ts">\nconst cases = [\n  { title: '離婚の相談', done: false },\n  { title: '相続の相談', done: false },\n  { title: '労働の相談', done: true },\n]\nconst slots = 3\n\nconst result = ${t[1]}\n</script>\n\n<template>\n  <p>{{ result }}</p>\n</template>`;
-      return h('div', { class: 'vi-eq' }, h('div', { class: 'vi-panel' }, code(src, 'vue', { color: C, file: 'Tools.vue', dim: true, hi: [9, 13] }), h('div', { class: 'vi-row' }, ...TOOL.map((x, i) => h('span', { class: 'vi-chip' + (i === ti ? '' : ' off'), style: { '--cc': C }, onclick: () => { ti = i; draw(); } }, x[0])))),
-        h('div', { class: 'vi-panel' }, lbl('画面に出る結果'), h('div', { class: 'vi-scr', style: { minHeight: 0 } }, h('p', { style: { margin: 0, fontWeight: 900, fontSize: '1.1rem' } }, t[2])), h('div', { class: 'vi-box' }, h('small', 'この道具は'), h('b', t[3])),
+      const tp = code(src, 'vue', { color: C, file: 'Tools.vue', dim: true, hi: [9, 13] });
+      const tRoot = h('div', { class: 'vi-eq' }, h('div', { class: 'vi-panel' }, tp, h('div', { class: 'vi-row' }, ...TOOL.map((x, i) => h('span', { class: 'vi-chip' + (i === ti ? '' : ' off'), style: { '--cc': C }, onclick: () => { ti = i; draw(); } }, x[0])))),
+        h('div', { class: 'vi-panel' }, lbl('画面に出る結果'), h('div', { class: 'vi-scr', style: { minHeight: 0 } }, tag(h('p', { style: { margin: 0, fontWeight: 900, fontSize: '1.1rem' } }, t[2]), 'result')), tag(h('div', { class: 'vi-box' }, h('small', 'この道具は'), h('b', t[3])), 'tool'),
           h('div', { class: 'vi-eq' }, h('div', { class: 'vc-do' }, h('b', '✓ 配列を使うとき'), h('small', 'データを1つの配列に。filter / map で加工')), h('div', { class: 'vc-dont' }, h('b', '✖ 元の配列を直接書き換え'), h('small', '画面が変わらないことがある。新しい配列を作る')))));
+      linkLive(tRoot, () => tp, { result: ['{{ result }}'], tool: ['const result'], data: ['const cases', 'const slots'] }, () => [9, 13])();
+      return tRoot;
     };
     function draw() { root.replaceChildren(tabs(), [varTab, fnTab, toolTab][tab]()); }
     draw();
@@ -147,8 +173,10 @@
 
   /* ③ データを変えるだけ：データが3か所の画面へ届く様子（手で直す vs Vue） */
   style('vi3', `
-  .v3-data{justify-self:center;padding:10px 28px;border-radius:14px;border:3px solid var(--vue);background:color-mix(in srgb,var(--vue) 16%,var(--card));text-align:center;font-weight:900;transition:.3s}
-  .v3-data small{display:block;font:800 .72rem var(--mono);color:var(--mute)}.v3-data b{font:900 2.4rem var(--mono)}
+  .v3-data{justify-self:center;display:inline-flex;align-items:center;gap:12px;height:56px;padding:0 22px;border-radius:14px;border:3px solid var(--vue);background:color-mix(in srgb,var(--vue) 16%,var(--card));text-align:center;font-weight:900;transition:.3s}
+  .v3-data small{display:block;font:800 .82rem var(--mono);color:var(--mute)}.v3-data b{font:900 1.9rem/1 var(--mono);min-width:1.2ch}
+  .v3-bar{display:flex;gap:12px;align-items:stretch;justify-content:center;flex-wrap:wrap}
+  .v3-bar>.btn{height:56px;padding:0 1.5em;font-size:1rem;display:inline-flex;align-items:center;gap:.5em}
   .v3-data.pop{animation:v3p .6s}@keyframes v3p{40%{transform:scale(1.18);box-shadow:0 0 30px var(--vue)}}
   .v3-pt{position:relative;padding:10px 12px;border-radius:10px;border:2px solid #cfd4e2;background:#fff;color:#223;display:flex;gap:10px;align-items:center;font-weight:800;transition:.3s}
   .v3-pt>i{font-style:normal;width:26px;height:26px;border-radius:50%;background:var(--n);color:#06101f;display:grid;place-items:center;font-weight:900;font-size:.8rem;flex:none}
@@ -188,7 +216,7 @@
     };
     const mkCard = () => {
       const remain = h('span'), badge = h('span', { style: { padding: '.1em .8em', borderRadius: '999px', fontSize: '.8rem' } }), btn = h('button', { style: { padding: '.4em 1.2em', borderRadius: '8px', border: 'none', fontWeight: 800, background: '#2fd4a4', color: '#06101f' } });
-      const row = (i, el) => { const r = h('div', { class: 'v3-pt', style: { '--n': COL[i] }, onmouseenter: () => setAll(i), onmouseleave: () => setAll(null) }, h('i', String(i + 1)), el); return r; };
+      const row = (i, el) => { const r = h('div', { class: 'v3-pt', 'data-k': 'p' + i, style: { '--n': COL[i], '--c': COL[i] }, onmouseenter: () => setAll(i), onmouseleave: () => setAll(null) }, h('i', String(i + 1)), el); return r; };
       const P = [row(0, remain), row(1, badge), row(2, btn)];
       const paint = (i, v) => { if (i === 0) remain.textContent = '残り ' + v + ' 枠'; if (i === 1) { badge.textContent = v === 0 ? '満席' : '受付中'; badge.style.background = v === 0 ? '#ffd0d6' : '#cdf5e6'; } if (i === 2) { btn.textContent = v === 0 ? '予約できません' : '予約する'; btn.disabled = v === 0; btn.style.opacity = v === 0 ? .35 : 1; } };
       [0, 1, 2].forEach((i) => paint(i, MAX));
@@ -196,12 +224,17 @@
     };
     const M = mkCard(), V = mkCard();
     const jsHost = h('div'), togs = h('div', { class: 'vi-row' });
-    const drawJs = () => { jsPre = code(jsSrc(), 'js', { color: C, file: 'main.js（Vue なし）', dim: true }); jsHost.replaceChildren(jsPre); setAll(null); };
+    /* コードの行にカーソル → 対応する ①②③ の画面部品も光る（UI → コードは既存の setAll） */
+    const fromCode = (pre, which) => { if (!pre || pre.__v3) return; pre.__v3 = 1; pre.lines.forEach((ln) => {
+      ln.addEventListener('mouseenter', () => { const t = ln.textContent; const i = [0, 1, 2].find((k) => KEYS[which][k].some((x) => t.includes(x))); if (i === undefined) return; setAll(i); [M, V].forEach((c) => c.P[i].classList.add('vs-hot')); });
+      ln.addEventListener('mouseleave', () => { setAll(null); [M, V].forEach((c) => c.P.forEach((p) => p.classList.remove('vs-hot'))); });
+    }); };
+    const drawJs = () => { jsPre = code(jsSrc(), 'js', { color: C, file: 'main.js（Vue なし）', dim: true }); jsHost.replaceChildren(jsPre); setAll(null); fromCode(jsPre, 'm_js'); };
     const drawTogs = () => togs.replaceChildren(h('span', { class: 'vi-lb' }, '書く行：'), ...[0, 1, 2].map((i) => h('span', { class: 'v3-tg' + (wrote[i] ? '' : ' off'), style: { '--n': COL[i] }, title: '押すと、その行を書く／書き忘れる', onclick: () => { wrote[i] = !wrote[i]; drawTogs(); drawJs(); } }, ['①', '②', '③'][i] + (wrote[i] ? ' 書いた' : ' 書き忘れ'))));
     htmlPre = code(HTML, 'html', { color: C, file: 'index.html（Vue なし）', dim: true });
     vuePre = code(VUE, 'vue', { color: C, file: 'Reserve.vue（Vue あり）', dim: true });
-    drawJs(); drawTogs();
-    const dataBox = h('div', { class: 'v3-data', style: { '--n': '#2fd4a4' }, onmouseenter: () => setAll('d'), onmouseleave: () => setAll(null) }, h('small', 'データ（slots）'), h('b', String(MAX)));
+    drawJs(); drawTogs(); fromCode(htmlPre, 'm_html'); fromCode(vuePre, 'v');
+    const dataBox = h('div', { class: 'v3-data', style: { '--n': '#2fd4a4' }, onmouseenter: () => setAll('d'), onmouseleave: () => setAll(null) }, h('small', 'データ（slots）＝'), h('b', String(MAX)));
     const stat = h('div', { class: 'vi-msg w', style: { textAlign: 'center' } }, '👇 ボタンを押して、2つを比べよう（色が同じ所は つながっている）');
     const pk = (a, b, t, c) => { if (!a || !b) return Promise.resolve(); const H = host.getBoundingClientRect(), A = a.getBoundingClientRect(), B = b.getBoundingClientRect(); const ax = A.left - H.left + A.width / 2, ay = A.top - H.top + A.height / 2; const p = h('div', { style: { position: 'absolute', zIndex: 9, padding: '.1em .7em', borderRadius: '8px', font: '800 .72rem var(--mono)', background: c, color: '#06101f', pointerEvents: 'none', left: ax + 'px', top: ay + 'px', whiteSpace: 'nowrap' } }, t); host.append(p); const dx = B.left - H.left + B.width / 2 - ax, dy = B.top - H.top + B.height / 2 - ay; return p.animate([{ transform: 'translate(-50%,-50%) scale(.6)', opacity: 0 }, { transform: 'translate(-50%,-50%)', opacity: 1, offset: .15 }, { transform: `translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px))`, opacity: 1, offset: .85 }, { transform: `translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px)) scale(.6)`, opacity: 0 }], { duration: 750, easing: 'ease-in-out' }).finished.catch(() => {}).then(() => p.remove()); };
     const reset = () => { n = MAX; dataBox.lastChild.textContent = n; [0, 1, 2].forEach((i) => { M.paint(i, n); V.paint(i, n); M.stale(i, false); }); stat.textContent = '👇 ボタンを押して、2つを比べよう（色が同じ所は つながっている）'; stat.className = 'vi-msg w'; setAll(null); };
@@ -216,7 +249,7 @@
       setAll(null); busy = false;
     };
     host.append(
-      h('div', { class: 'vi-row', style: { justifyContent: 'center', gap: '16px' } }, dataBox, h('button', { class: 'btn primary', style: { '--c': C, fontSize: '1rem' }, onclick: go }, '👤 予約が入る（−1）'), h('button', { class: 'btn', onclick: reset }, '↺ 最初から')),
+      h('div', { class: 'v3-bar' }, dataBox, h('button', { class: 'btn primary', style: { '--c': C, fontSize: '1rem' }, onclick: go }, '👤 予約が入る（−1）'), h('button', { class: 'btn', onclick: reset }, '↺ 最初から')),
       stat,
       h('div', { class: 'vi-eq' },
         h('div', { class: 'vi-panel' }, lbl('✖ Vue なし：HTML と JavaScript'), M.el, htmlPre, jsHost, togs),
@@ -348,16 +381,19 @@
     const EX = [
       { k: '👋 あいさつ', note: '1ファイルで完結する、いちばん小さな例',
         files: [{ n: 'Hello.vue', src: "<script setup lang=\"ts\">\nimport { ref } from 'vue'\n\nconst name = ref('Lam')\n</script>\n\n<template>\n  <input v-model=\"name\" />\n  <p>こんにちは、{{ name }} さん</p>\n</template>", hi: [['const name'], ['{{ name }}'], ['v-model']] }],
-        links: [], pv(st, S) { return st === 0 ? [h('div', { style: { color: '#889' } }, '（画面にはまだ何も出ていない）'), h('div', { style: { font: '800 1rem var(--mono)', color: '#0a7' } }, 'name ＝ "Lam"')] : [st === 2 ? S.inp : null, S.p].filter(Boolean); } },
+        keys: { data: ['const name'], model: ['v-model'], show: ['{{ name }}'] },
+        links: [], pv(st, S) { return st === 0 ? [h('div', { style: { color: '#889' } }, '（画面にはまだ何も出ていない）'), tag(h('div', { style: { font: '800 1rem var(--mono)', color: '#0a7' } }, 'name ＝ "Lam"'), 'data')] : [st === 2 ? S.inp : null, S.p].filter(Boolean); } },
       { k: '🎫 予約カード（2ファイル）', note: '親がデータを持ち、子が表示する。ボタンの知らせは子 → 親へ戻る',
         files: [{ n: 'ReservePage.vue（親）', src: "<script setup lang=\"ts\">\nimport { ref } from 'vue'\nimport ReserveCard from './ReserveCard.vue'\n\nconst slots = ref(3)\n</script>\n\n<template>\n  <ReserveCard :slots=\"slots\" @reserve=\"slots--\" />\n</template>", hi: [['const slots'], [':slots='], ['@reserve']] },
           { n: 'ReserveCard.vue（子）', src: "<script setup lang=\"ts\">\ndefineProps<{ slots: number }>()\ndefineEmits<{ reserve: [] }>()\n</script>\n\n<template>\n  <div class=\"card\">\n    <p>残り {{ slots }} 枠</p>\n    <button :disabled=\"slots === 0\" @click=\"$emit('reserve')\">予約する</button>\n  </div>\n</template>", hi: [[], ['defineProps', '{{ slots }}'], ['@click', 'defineEmits']] }],
-        links: ['親 → 子　:slots（props）', '子 → 親　@reserve（emit）'], pv(st, S) { return st === 0 ? [h('div', { style: { color: '#889' } }, '（親が slots ＝ 3 を持っただけ。画面にはまだ出ない）')] : [S.card]; } },
+        keys: { data: ['const slots'], child: ['<ReserveCard', ':slots='], show: ['{{ slots }}', 'defineProps'], click: ['@click=', 'defineEmits', '@reserve'] },
+        links: ['親 → 子　:slots（props）', '子 → 親　@reserve（emit）'], pv(st, S) { return st === 0 ? [tag(h('div', { style: { color: '#889' } }, '（親が slots ＝ 3 を持っただけ。画面にはまだ出ない）'), 'data')] : [S.card]; } },
       { k: '🔍 相談検索（3ファイル）', note: '入力 → 親のデータ → 一覧。3つのファイルが1つのデータでつながる',
         files: [{ n: 'SearchPage.vue（親）', src: "<script setup lang=\"ts\">\nimport { ref, computed } from 'vue'\nimport SearchBox from './SearchBox.vue'\nimport CaseList from './CaseList.vue'\n\nconst keyword = ref('')\nconst cases = ['離婚の相談', '相続の相談', '労働の相談', '交通事故の相談']\nconst hits = computed<string[]>(() => cases.filter((c) => c.includes(keyword.value)))\n</script>\n\n<template>\n  <SearchBox v-model=\"keyword\" />\n  <CaseList :items=\"hits\" />\n</template>", hi: [['const keyword', 'const cases'], [':items='], ['v-model', 'computed']] },
           { n: 'SearchBox.vue', src: "<script setup lang=\"ts\">\nconst keyword = defineModel<string>()\n</script>\n\n<template>\n  <input v-model=\"keyword\" placeholder=\"分野で検索\" />\n</template>", hi: [[], [], ['v-model', 'defineModel']] },
           { n: 'CaseList.vue', src: "<script setup lang=\"ts\">\ndefineProps<{ items: string[] }>()\n</script>\n\n<template>\n  <ul>\n    <li v-for=\"c in items\" :key=\"c\">{{ c }}</li>\n  </ul>\n</template>", hi: [[], ['defineProps', '{{ c }}', 'v-for'], []] }],
-        links: ['親 → 子　:items（props）', '子 ⇄ 親　v-model（入力とデータ）'], pv(st, S) { return st === 0 ? [h('div', { style: { color: '#889' } }, '（keyword と cases を親が持っただけ。画面にはまだ出ない）')] : [st === 2 ? S.search : null, S.list].filter(Boolean); } },
+        keys: { data: ['const keyword', 'const cases'], model: ['v-model', 'defineModel'], list: ['<CaseList', 'v-for', 'defineProps', 'const hits', ':items='] },
+        links: ['親 → 子　:items（props）', '子 ⇄ 親　v-model（入力とデータ）'], pv(st, S) { return st === 0 ? [tag(h('div', { style: { color: '#889' } }, '（keyword と cases を親が持っただけ。画面にはまだ出ない）'), 'data')] : [st === 2 ? S.search : null, S.list].filter(Boolean); } },
     ];
     let cur = 0;
     const root = h('div', { style: { display: 'grid', gap: '12px' } });
@@ -368,13 +404,17 @@
       const scr = h('div', { class: 'vi-scr' }), cap = h('div', { class: 'vi-msg w' });
       const MSG = ['① まず「データ」を用意する（箱に値を入れる）', '② データを画面に埋める（{{ }} や props で届ける）', '③ データが変わると、画面も自動で変わる。操作してみよう'];
       /* 部品づくり */
-      if (cur === 0) { let val = 'Lam'; S.p = h('p', { style: { fontWeight: 800, margin: 0 } }, 'こんにちは、Lam さん'); S.inp = h('input', { value: 'Lam', style: { padding: '.4em .6em', borderRadius: '6px', border: '1px solid #99a' }, oninput: (e) => { val = e.target.value; S.p.textContent = 'こんにちは、' + val + ' さん'; } }); }
-      if (cur === 1) { let n = 3; const rem = h('p', { style: { margin: 0 } }), btn = h('button', { style: { padding: '.5em 1.2em', borderRadius: '8px', border: 'none', fontWeight: 800, background: '#2fd4a4', cursor: 'pointer' }, onclick: () => { if (n > 0) { n--; draw2(); codes[1].el.setHi(lns(ex.files[1].src, ["$emit('reserve')", 'defineEmits'])); codes[0].el.setHi(lns(ex.files[0].src, ['@reserve', 'const slots'])); } } }, '予約する'); const draw2 = () => { rem.textContent = '残り ' + n + ' 枠'; btn.disabled = n === 0; btn.style.opacity = n === 0 ? .35 : 1; }; draw2(); S.card = h('div', { style: { display: 'grid', gap: '8px', justifyItems: 'start', padding: '12px', border: '1px solid #ccd', borderRadius: '8px' } }, rem, btn); }
-      if (cur === 2) { const F = ['離婚の相談', '相続の相談', '労働の相談', '交通事故の相談']; const ul = h('ul', { style: { margin: 0, paddingLeft: '1.2em' } }); const drawL = (kw) => ul.replaceChildren(...F.filter((c) => c.includes(kw)).map((c) => h('li', c))); S.list = ul; S.search = h('input', { placeholder: '分野で検索', style: { padding: '.4em .7em', borderRadius: '6px', border: '1px solid #99a' }, oninput: (e) => { drawL(e.target.value); codes[1].el.setHi(lns(ex.files[1].src, ['v-model', 'defineModel'])); codes[0].el.setHi(lns(ex.files[0].src, ['v-model', 'computed', ':items='])); } }); drawL(''); }
-      const upd = (st) => { stage.v = st; codes.forEach(({ f, el }, i) => el.setHi(lns(f.src, f.hi[st][i === undefined ? 0 : 0] === undefined ? [] : f.hi[st]))); scr.replaceChildren(...ex.pv(st, S)); cap.textContent = MSG[st]; };
+      if (cur === 0) { let val = 'Lam'; S.p = tag(h('p', { style: { fontWeight: 800, margin: 0 } }, 'こんにちは、Lam さん'), 'show'); S.inp = tag(h('input', { value: 'Lam', style: { padding: '.4em .6em', borderRadius: '6px', border: '1px solid #99a' }, oninput: (e) => { val = e.target.value; S.p.textContent = 'こんにちは、' + val + ' さん'; } }), 'model'); }
+      if (cur === 1) { let n = 3; const rem = tag(h('p', { style: { margin: 0 } }), 'show'), btn = tag(h('button', { style: { padding: '.5em 1.2em', borderRadius: '8px', border: 'none', fontWeight: 800, background: '#2fd4a4', cursor: 'pointer' }, onclick: () => { if (n > 0) { n--; draw2(); codes[1].el.setHi(lns(ex.files[1].src, ["$emit('reserve')", 'defineEmits'])); codes[0].el.setHi(lns(ex.files[0].src, ['@reserve', 'const slots'])); } } }, '予約する'), 'click'); const draw2 = () => { rem.textContent = '残り ' + n + ' 枠'; btn.disabled = n === 0; btn.style.opacity = n === 0 ? .35 : 1; }; draw2(); S.card = tag(h('div', { style: { display: 'grid', gap: '8px', justifyItems: 'start', padding: '12px', border: '1px solid #ccd', borderRadius: '8px' } }, rem, btn), 'child'); }
+      if (cur === 2) { const F = ['離婚の相談', '相続の相談', '労働の相談', '交通事故の相談']; const ul = h('ul', { style: { margin: 0, paddingLeft: '1.2em' } }); const drawL = (kw) => ul.replaceChildren(...F.filter((c) => c.includes(kw)).map((c) => h('li', c))); S.list = tag(ul, 'list'); S.search = tag(h('input', { placeholder: '分野で検索', style: { padding: '.4em .7em', borderRadius: '6px', border: '1px solid #99a' }, oninput: (e) => { drawL(e.target.value); codes[1].el.setHi(lns(ex.files[1].src, ['v-model', 'defineModel'])); codes[0].el.setHi(lns(ex.files[0].src, ['v-model', 'computed', ':items='])); } }), 'model'); drawL(''); }
+      let rel = null;
+      const restLines = () => { let o = 0; const r = []; codes.forEach(({ f }) => { const hs = f.hi[stage.v] || []; lns(f.src, hs).forEach((i) => r.push(o + i)); o += f.src.split('\n').length; }); return r; };
+      const upd = (st) => { stage.v = st; codes.forEach(({ f, el }, i) => el.setHi(lns(f.src, f.hi[st][i === undefined ? 0 : 0] === undefined ? [] : f.hi[st]))); scr.replaceChildren(...ex.pv(st, S)); cap.textContent = MSG[st]; rel && rel(); };
       const stp = stepper({ color: C, steps: [{ say: '<b>① データを用意</b>。値を入れておく「箱」。' }, { say: '<b>② 画面に埋める</b>。箱の名前を書くだけ。' }, { say: '<b>③ 変わると追いかける</b>。画面を操作してみよう。' }], init(vis) { vis.append(h('div', { style: { display: 'grid', gap: '8px' } }, ...codes.map((c) => c.el), ex.links.length ? h('div', { class: 'vi-row' }, ...ex.links.map((t) => h('span', { class: 'vi-chip', style: { '--cc': 'var(--team)' } }, '↔ ' + t))) : null)); }, update(n) { upd(n); } });
       root.replaceChildren(h('div', { class: 'vi-row' }, h('span', { class: 'vi-lb' }, '例：'), ...EX.map((e, i) => h('span', { class: 'vi-chip' + (i === cur ? '' : ' off'), style: { '--cc': C }, onclick: () => { cur = i; mount(); } }, e.k))),
         h('div', { class: 'vi-eq' }, h('div', { class: 'vi-panel' }, stp), h('div', { class: 'vi-panel' }, lbl('できあがる画面'), scr, cap, h('div', { style: { color: 'var(--mute)', fontSize: '.8rem', fontWeight: 700 } }, ex.note))));
+      rel = linkLive(root, () => multiPre(() => codes.map((c) => c.el)), ex.keys, restLines);
+      rel();
     };
     mount();
     return root;
@@ -469,10 +509,11 @@
   function whyTs() {
     let ts = true, tried = false;
     const BODY = (lang) => `<script setup${lang}>\nimport { ref } from 'vue'\n\nconst count = ref(0)\n\nfunction reset() {\n  count.value = 'ゼロ'\n}\n</script>\n\n<template>\n  <p>{{ count }}</p>\n  <button @click="reset">リセット</button>\n</template>`;
-    const host = h('div'), res = h('div', { class: 'vi-scr', style: { minHeight: 0, gap: '8px' } }), msg = h('div', { class: 'vi-msg w' });
+    const host = h('div'), res = tag(h('div', { class: 'vi-scr', style: { minHeight: 0, gap: '8px' } }), 'bad'), msg = h('div', { class: 'vi-msg w' });
+    let wPre = null, wRun = null;
     const draw = () => {
-      const pre = code(BODY(ts ? ' lang="ts"' : ''), 'vue', { color: C, file: 'Counter.vue', dim: true, hi: ts ? [1, 7] : [7] });
-      host.replaceChildren(pre);
+      const pre = wPre = code(BODY(ts ? ' lang="ts"' : ''), 'vue', { color: C, file: 'Counter.vue', dim: true, hi: ts ? [1, 7] : [7] });
+      host.replaceChildren(pre); wRun && wRun();
       if (ts && tried) pre.lines[6].style.textDecoration = 'wavy underline #ff6b6b';
       res.replaceChildren();
       if (!tried) { res.append(h('div', { style: { color: '#889' } }, '👆「保存して動かす」を押そう')); msg.className = 'vi-msg w'; msg.textContent = 'count は数（ref(0)）。7行目で文字 \'ゼロ\' を入れてしまった'; return; }
@@ -482,13 +523,16 @@
     draw();
     const seg = h('div', { class: 'vi-row' }, ...[['✓ lang="ts" あり', true], ['✖ lang="ts" なし', false]].map(([t, v]) => h('span', { class: 'vi-chip', style: { '--cc': v ? 'var(--ok)' : 'var(--bad)' }, onclick: () => { ts = v; draw(); seg.querySelectorAll('.vi-chip').forEach((x, i) => x.classList.toggle('off', (i === 0) !== v)); } }, t)));
     seg.lastChild.classList.add('off');
+    [...seg.children].forEach((c) => tag(c, 'lang'));
     const GO = h('button', { class: 'btn primary', style: { '--c': C }, onclick: () => { tried = true; draw(); } }, '▶ 保存して動かす');
-    return h('div', { style: { display: 'grid', gap: '12px' } },
+    const wRoot = h('div', { style: { display: 'grid', gap: '12px' } },
       h('div', { class: 'vi-eq' },
         h('div', { class: 'vi-panel' }, lbl('同じコード。違うのは、1行目の lang="ts" だけ'), seg, host, h('div', { class: 'vi-row' }, GO, h('button', { class: 'btn', onclick: () => { tried = false; draw(); } }, '↺'))),
         h('div', { class: 'vi-panel' }, lbl('結果'), res, msg,
           h('div', { class: 'vi-box' }, h('small', '覚え方'), h('b', 'lang="ts" ＝ 型チェックをオンにするスイッチ（TypeScript）')))),
       h('div', { class: 'vi-eq' }, h('div', { class: 'vc-do' }, h('b', '✓ このプロジェクトのルール'), h('small', 'script は必ず <script setup lang="ts"> で書く。全員そろえる'), h('small', 'npm create vue で「TypeScript」を選ぶと、最初から入る')), h('div', { class: 'vc-dont' }, h('b', '✖ 混ぜない'), h('small', 'ファイルごとに lang="ts" があったり無かったりしない'), h('small', '型の恩恵（赤線・補完）が部分的になってしまう'))));
+    wRun = linkLive(wRoot, () => wPre, { lang: ['<script setup'], bad: ["count.value = 'ゼロ'"] }, () => (ts ? [1, 7] : [7])); wRun();
+    return wRoot;
   }
 
   /* ⑨ .vue ファイルの解剖（実例を3つ・ブロックごとに光らせる） */
@@ -502,26 +546,36 @@
     const lineRanges = (src) => { const L = src.split('\n'), r = { template: [], script: [], style: [] }; let b = null; L.forEach((l, i) => { if (/^<template>/.test(l)) b = 'template'; if (/^<script/.test(l)) b = 'script'; if (/^<style/.test(l)) b = 'style'; if (b) r[b].push(i + 1); if (/^<\/(template|script|style)>/.test(l)) b = null; }); return r; };
     const COL = { template: ['var(--basic)', '🧱 <b>template</b>：画面の形を HTML で書く。{{ }}・v-if・@click など、データと結びつく印を書き足せる'], script: ['var(--ts)', '⚙️ <b>script</b>：データ（ref）・受け取る値（props）・動き（関数）。ここで書いた名前を template で使う'], style: ['var(--pink)', '🎨 <b>style scoped</b>：この部品の中だけに効く CSS。他の部品の見た目を壊さない'] };
     const picks = h('div', { class: 'vi-row' }), codeHost = h('div'), prev = h('div', { class: 'vi-scr' }), blocks = h('div', { class: 'vi-row' }), say = note('ブロックにマウスを乗せると、コードが光る', 'w'), useB = h('div', { class: 'vi-box' });
-    let pre = null, R = null;
-    const lit = (k) => { if (!pre) return; pre.setHi(k ? R[k] : []); say.innerHTML = k ? COL[k][1] : 'ブロックにマウスを乗せると、コードが光る'; };
+    let pre = null, R = null, curHi = [], vRun = null;
+    const VK = {
+      fav: { btn: ['<button class="fav"', '@click="count++"', '{{ count }}'], count: ['const count'] },
+      card: { card: ['<article'], title: ['<h3>'], note: ['v-if="item.note"', '{{ item.note }}', 'interface Item'], btn: ['<button', 'const toggle', '{{ item.done'], emit: ['defineEmits', 'emit('] },
+      search: { model: ['v-model="keyword"', 'const keyword'], list: ['v-for="f in hits"', 'const hits', 'fields.filter'], none: ['v-if="!hits.length"'] },
+    };
+    const lit = (k) => { if (!pre) return; curHi = k ? R[k] : []; pre.setHi(curHi); say.innerHTML = k ? COL[k][1] : 'ブロックにマウスを乗せると、コードが光る'; };
     const demos = {
-      fav() { let n = 0; const b = h('button', { style: { font: '800 1.05rem var(--font)', padding: '.5em 1.2em', borderRadius: '8px', border: '2px solid hotpink', background: '#fff', color: 'hotpink', cursor: 'pointer' }, onclick: () => { n++; b.textContent = '♥ お気に入り ' + n; lit('script'); b.animate([{ transform: 'scale(1.2)' }, { transform: 'scale(1)' }], { duration: 250 }); } }, '♥ お気に入り 0'); return [b, h('small', { style: { color: '#778' } }, '押すと script の count が増えて、template に出る')]; },
-      card() { const it = { title: '離婚の相談', note: '来週までに返事が必要', done: false }; const log = h('small', { style: { color: '#778', fontFamily: 'var(--mono)' } }, '（親への知らせ：まだなし）'); const t = h('h3', { style: { margin: 0 } }), p = h('p', { style: { margin: 0 } }, it.note), b = h('button', { style: { padding: '.4em 1em', borderRadius: '6px', border: '1px solid #99a', cursor: 'pointer' } }), box = h('div', { style: { padding: '12px', border: '1px solid #ccd', borderRadius: '8px', display: 'grid', gap: '6px', transition: '.3s' } }, t, p, b); const dr = () => { t.textContent = it.title; b.textContent = it.done ? '✓ 完了' : '完了にする'; box.style.opacity = it.done ? .5 : 1; }; b.onclick = () => { it.done = !it.done; dr(); log.textContent = `emit('toggle', "${it.title}")  → 親が受け取る`; lit('script'); }; dr(); return [box, log]; },
-      search() { const F = ['離婚', '相続', '労働', '交通事故']; const ul = h('ul', { style: { margin: 0, paddingLeft: '1.2em' } }), none = h('p', { style: { margin: 0, color: '#c33' } }, '見つかりません'); const i = h('input', { placeholder: '分野で検索', style: { padding: '.4em .7em', borderRadius: '6px', border: '1px solid #99a' }, oninput: () => dr() }); const dr = () => { const hit = F.filter((f) => f.includes(i.value)); ul.replaceChildren(...hit.map((x) => h('li', x))); none.style.display = hit.length ? 'none' : ''; lit('script'); }; dr(); return [i, ul, none, h('small', { style: { color: '#778' } }, '「相」「事」などを打ってみよう')]; },
+      fav() { let n = 0; const b = tag(h('button', { style: { font: '800 1.05rem var(--font)', padding: '.5em 1.2em', borderRadius: '8px', border: '2px solid hotpink', background: '#fff', color: 'hotpink', cursor: 'pointer' }, onclick: () => { n++; b.textContent = '♥ お気に入り ' + n; lit('script'); b.animate([{ transform: 'scale(1.2)' }, { transform: 'scale(1)' }], { duration: 250 }); } }, '♥ お気に入り 0'), 'btn'); return [b, h('small', { style: { color: '#778' } }, '押すと script の count が増えて、template に出る')]; },
+      card() { const it = { title: '離婚の相談', note: '来週までに返事が必要', done: false }; const log = tag(h('small', { style: { color: '#778', fontFamily: 'var(--mono)' } }, '（親への知らせ：まだなし）'), 'emit'); const t = tag(h('h3', { style: { margin: 0 } }), 'title'), p = tag(h('p', { style: { margin: 0 } }, it.note), 'note'), b = tag(h('button', { style: { padding: '.4em 1em', borderRadius: '6px', border: '1px solid #99a', cursor: 'pointer' } }), 'btn'), box = tag(h('div', { style: { padding: '12px', border: '1px solid #ccd', borderRadius: '8px', display: 'grid', gap: '6px', transition: '.3s' } }, t, p, b), 'card'); const dr = () => { t.textContent = it.title; b.textContent = it.done ? '✓ 完了' : '完了にする'; box.style.opacity = it.done ? .5 : 1; }; b.onclick = () => { it.done = !it.done; dr(); log.textContent = `emit('toggle', "${it.title}")  → 親が受け取る`; lit('script'); }; dr(); return [box, log]; },
+      search() { const F = ['離婚', '相続', '労働', '交通事故']; const ul = tag(h('ul', { style: { margin: 0, paddingLeft: '1.2em' } }), 'list'), none = tag(h('p', { style: { margin: 0, color: '#c33' } }, '見つかりません'), 'none'); const i = tag(h('input', { placeholder: '分野で検索', style: { padding: '.4em .7em', borderRadius: '6px', border: '1px solid #99a' }, oninput: () => dr() }), 'model'); const dr = () => { const hit = F.filter((f) => f.includes(i.value)); ul.replaceChildren(...hit.map((x) => h('li', x))); none.style.display = hit.length ? 'none' : ''; lit('script'); }; dr(); return [i, ul, none, h('small', { style: { color: '#778' } }, '「相」「事」などを打ってみよう')]; },
     };
     const draw = () => {
       picks.replaceChildren(lbl2('例：'), ...EX.map((e, i) => chip(e.k, C, i === cur, () => { cur = i; draw(); })));
       const e = EX[cur]; R = lineRanges(e.src);
       pre = code(e.src, 'vue', { color: C, file: e.k + '.vue', dim: true }); codeHost.replaceChildren(pre);
       blocks.replaceChildren(...Object.keys(COL).map((k) => h('button', { class: 'btn', style: { '--c': COL[k][0] }, onmouseenter: () => lit(k), onfocus: () => lit(k), onmouseleave: () => lit(null), onclick: () => lit(k) }, k)));
-      prev.replaceChildren(...demos[e.demo]());
+      curHi = []; prev.replaceChildren(...demos[e.demo]());
       useB.replaceChildren(h('small', '現場ではこんな所に使う'), e.use);
+      vRun && vRun(VK[e.demo]);
     };
     const lbl2 = (t) => h('span', { style: { fontWeight: 800, fontSize: '.84rem', color: 'var(--mute)' } }, t);
     draw();
-    return h('div', { style: { display: 'grid', gap: '12px' } }, picks,
+    const vRoot = h('div', { style: { display: 'grid', gap: '12px' } }, picks,
       h('div', { class: 'vi-eq' }, h('div', { class: 'vi-panel' }, codeHost, blocks, say), h('div', { class: 'vi-panel' }, lbl('動かしてみる'), prev, useB,
         note('1ファイル ＝ 1部品。template（形）・script（動き）・style（見た目）が1つにまとまる。'))));
+    const vpx = { get lines() { return pre ? pre.lines : []; }, setHi: (a, c) => { if (pre) pre.setHi(a, c); } };
+    vRun = (map) => { if (K.vs && K.vs.link) K.vs.link(vRoot, vpx, map, { rest: () => curHi }); };
+    vRun(VK[EX[cur].demo]);
+    return vRoot;
   }
 
   const L = K.lessons['vue-intro'], old = {};

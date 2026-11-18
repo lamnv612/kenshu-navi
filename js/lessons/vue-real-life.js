@@ -14,16 +14,17 @@
     if (L.__vrL) return; L.__vrL = 1;
     const { h, code, style } = K.W;
 
+    style('vslHot', '[data-k].vs-hot{outline:2px solid var(--c,#2f7bff)!important;outline-offset:2px;background-color:color-mix(in srgb,var(--c,#2f7bff) 14%,transparent)}');
     style('vrL', `
     .vrL-col{display:grid;gap:12px;min-width:0}.vrL-col>*{min-width:0}
     .vrL-steps{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-    .vrL-st{display:flex;align-items:center;gap:8px;padding:.5em 1em;border-radius:999px;border:2px solid var(--c);color:var(--c);font:800 .88rem var(--font);cursor:pointer;opacity:.55;transition:.2s;background:transparent}
+    .vrL-st{display:flex;align-items:center;gap:8px;min-height:44px;padding:0 1em;border-radius:999px;border:2px solid var(--c);color:var(--c);font:800 .9rem var(--font);cursor:pointer;opacity:.55;transition:.2s;background:transparent}
     .vrL-st em{font-style:normal;width:1.6em;height:1.6em;border-radius:50%;display:grid;place-items:center;background:var(--c);color:#06101f;font:900 .75rem var(--font)}
     .vrL-st.on{opacity:1;background:color-mix(in srgb,var(--c) 18%,transparent);box-shadow:0 0 0 3px color-mix(in srgb,var(--c) 25%,transparent)}
     .vrL-bro{border:2px solid #cfd4e2;border-radius:12px;background:#fff;color:#223;overflow:hidden}
     .vrL-url{display:flex;align-items:center;gap:6px;padding:6px 10px;background:#e9edf6;font:700 .75rem var(--mono);color:#556}
     .vrL-url i{width:9px;height:9px;border-radius:50%;background:#f66;box-shadow:14px 0 #fc4,28px 0 #5c8;margin-right:34px}
-    .vrL-pg{padding:14px;display:grid;gap:8px;min-height:260px;align-content:start}
+    .vrL-pg{padding:14px;display:grid;gap:8px;min-height:320px;align-content:start}
     .vrL-pg h3{margin:0;font-size:1.05rem}
     .vrL-empty{display:grid;place-items:center;min-height:170px;color:#aab;font-weight:800;border:2px dashed #dde;border-radius:10px}
     .vrL-sp{display:flex;align-items:center;gap:10px;font-weight:800;color:#667;padding:2.4em 0;justify-content:center}
@@ -34,13 +35,13 @@
     .vrL-cnt{font-weight:900;font-size:.9rem;padding:.2em .7em;border-radius:8px;background:#eef1f8;width:max-content}
     .vrL-note{border-left:5px solid var(--vue);background:var(--card);border-radius:10px;padding:12px 16px;display:grid;gap:4px}
     .vrL-note b{font:900 1.1rem/1.6 var(--font)}.vrL-note span{color:var(--vue);font:800 .95rem/1.6 var(--font)}
-    .vrL-ctl{display:flex;gap:8px;align-items:center}
-    .vrL-in{width:100%;box-sizing:border-box;padding:.65em .9em;border-radius:10px;border:2px solid var(--line);background:#fff;color:#223;font:700 1rem var(--font)}
+    .vrL-ctl{display:flex;gap:8px;align-items:center}.vrL-ctl .btn{min-height:44px;padding-top:0;padding-bottom:0}
+    .vrL-in{width:100%;box-sizing:border-box;min-height:48px;padding:.65em .9em;border-radius:10px;border:2px solid var(--line);background:#fff;color:#223;font:700 1rem var(--font)}
     .vrL-in:focus{outline:none;border-color:var(--vue)}
     .vrL-api{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    .vrL-bx{padding:12px;border-radius:12px;border:2px solid var(--line);background:var(--card);display:grid;gap:6px;justify-items:center}
+    .vrL-bx{padding:16px 12px;border-radius:12px;border:2px solid var(--line);background:var(--card);display:grid;gap:6px;justify-items:center}
     .vrL-bx.r{border-color:var(--bad)}.vrL-bx.g{border-color:var(--ok)}
-    .vrL-bx small{font-weight:800;font-size:.8rem;color:var(--mute);text-align:center}
+    .vrL-bx small{font-weight:800;font-size:.85rem;color:var(--mute);text-align:center}
     .vrL-bx b{font:900 2.4rem/1 var(--mono)}.vrL-bx.r b{color:var(--bad)}.vrL-bx.g b{color:var(--ok)}
     .vrL-bx .bar{height:8px;border-radius:4px;background:var(--bad);transition:width .3s}.vrL-bx.g .bar{background:var(--ok)}
     .vrL-bx.flash b{animation:vrLp .5s}@keyframes vrLp{40%{transform:scale(1.4)}}
@@ -75,6 +76,7 @@
       { t: 'データが届く', c: 'var(--pink)', hi: ['cases.value ='], what: '届いた4件を cases に入れる。', why: 'ref に入れるだけ。画面の書き換えは書かない。', ph: 'spin', n: 4 },
       { t: '一覧が出る', c: 'var(--ok)', hi: ['loading.value = false', 'v-if="loading"', 'v-else'], what: 'loading を false にすると、一覧に切り替わる。', why: 'ref を変えるだけで、画面が自動で変わる。', ph: 'list', n: 4 },
     ];
+    const MAP_A = { loading: ['const loading', '<Spinner', 'loading.value'], list: ['<CaseList'], cases: ['const cases', 'cases.value ='] };
     function sceneA(el) {
       let cur = 0, tm = null;
       const stepsEl = h('div', { class: 'vrL-steps' });
@@ -89,11 +91,12 @@
         cur = i; const s = STEPS[i];
         chips.forEach((c, j) => c.classList.toggle('on', j === i));
         pre.setHi(lnOf(SRC_A, s.hi));
-        const kids = [h('h3', '相談一覧'), h('div', { class: 'vrL-cnt' }, '全 ' + (s.n || 0) + ' 件')];
-        if (s.ph === 'empty') kids.push(h('div', { class: 'vrL-empty' }, '（まだ何も表示されていない）'));
-        else if (s.ph === 'spin') kids.push(h('div', { class: 'vrL-sp' }, h('i'), '読み込み中…'));
-        else TITLES.forEach((t, k) => kids.push(h('div', { class: 'vrL-it', style: { animationDelay: k * 90 + 'ms' } }, t)));
+        const kids = [h('h3', '相談一覧'), h('div', { class: 'vrL-cnt', 'data-k': 'cases' }, '全 ' + (s.n || 0) + ' 件')];
+        if (s.ph === 'empty') kids.push(h('div', { class: 'vrL-empty', 'data-k': 'cases' }, '（まだ何も表示されていない）'));
+        else if (s.ph === 'spin') kids.push(h('div', { class: 'vrL-sp', 'data-k': 'loading' }, h('i'), '読み込み中…'));
+        else TITLES.forEach((t, k) => kids.push(h('div', { class: 'vrL-it', 'data-k': 'list', style: { animationDelay: k * 90 + 'ms' } }, t)));
         page.replaceChildren(...kids);
+        K.vs.link(page, pre, MAP_A, { rest: () => lnOf(SRC_A, STEPS[cur].hi) });
         noteEl.style.borderColor = s.c;
         noteEl.replaceChildren(h('b', s.what), h('span', '→ ' + s.why));
       }
@@ -118,28 +121,32 @@
     ].join('\n');
     function sceneB(el) {
       let no = 0, de = 0, timer = null, auto = null;
-      const inp = h('input', { class: 'vrL-in', placeholder: '分野で検索（例：相続放棄の期限）' });
-      const state = h('div', { class: 'vrL-state' }, '入力してみよう。または右のボタンで自動入力。');
+      const inp = h('input', { class: 'vrL-in', 'data-k': 'kw', placeholder: '分野で検索（例：相続放棄の期限）' });
+      const state = h('div', { class: 'vrL-state', 'data-k': 'wait' }, '入力してみよう。または右のボタンで自動入力。');
       const pre = code(SRC_B, 'ts', { color: 'var(--vue)', file: 'CaseListPage.vue（watch の部分）', dim: true, edit: false });
-      const bx = (cls, lab) => { const b = h('b', '0'), bar = h('div', { class: 'bar', style: { width: '0%' } }), el2 = h('div', { class: 'vrL-bx ' + cls }, h('small', lab), b, bar); el2.set = (n) => { b.textContent = n; bar.style.width = Math.min(100, n / 12 * 100) + '%'; el2.classList.remove('flash'); void el2.offsetWidth; el2.classList.add('flash'); }; return el2; };
+      const bx = (cls, lab) => { const b = h('b', '0'), bar = h('div', { class: 'bar', style: { width: '0%' } }), el2 = h('div', { class: 'vrL-bx ' + cls, 'data-k': cls === 'r' ? 'raw' : 'api' }, h('small', lab), b, bar); el2.set = (n) => { b.textContent = n; bar.style.width = Math.min(100, n / 12 * 100) + '%'; el2.classList.remove('flash'); void el2.offsetWidth; el2.classList.add('flash'); }; return el2; };
       const boxNo = bx('r', '✖ そのまま呼ぶ\nAPIを呼んだ回数'), boxDe = bx('g', '✓ watch ＋ 300ms待つ\nAPIを呼んだ回数');
       [boxNo, boxDe].forEach((b) => (b.firstChild.style.whiteSpace = 'pre-line'));
+      let curHi = [];
+      const hi = (k) => { curHi = lnOf(SRC_B, k); pre.setHi(curHi); };
       const onType = () => {
         no++; boxNo.set(no);
-        pre.setHi(lnOf(SRC_B, ['watch(keyword', 'clearTimeout']));
+        hi(['watch(keyword', 'clearTimeout']);
         state.className = 'vrL-state wait'; state.textContent = '⏳ まだ打っている？ 前の予約を取り消して、300ms 待つ…';
         clearTimeout(timer);
-        timer = setTimeout(() => { de++; boxDe.set(de); pre.setHi(lnOf(SRC_B, ['setTimeout', 'await fetchCases', '}, 300)'])); state.className = 'vrL-state fire'; state.textContent = '🚀 300ms 静止 → ここで初めて API を呼ぶ！'; }, 300);
+        timer = setTimeout(() => { de++; boxDe.set(de); hi(['setTimeout', 'await fetchCases', '}, 300)']); state.className = 'vrL-state fire'; state.textContent = '🚀 300ms 静止 → ここで初めて API を呼ぶ！'; }, 300);
       };
       inp.addEventListener('input', onType);
-      const reset = () => { clearInterval(auto); clearTimeout(timer); inp.value = ''; no = de = 0; boxNo.set(0); boxDe.set(0); [boxNo, boxDe].forEach((b) => b.classList.remove('flash')); pre.setHi([]); state.className = 'vrL-state'; state.textContent = '入力してみよう。または右のボタンで自動入力。'; };
+      const reset = () => { clearInterval(auto); clearTimeout(timer); inp.value = ''; no = de = 0; boxNo.set(0); boxDe.set(0); [boxNo, boxDe].forEach((b) => b.classList.remove('flash')); hi([]); state.className = 'vrL-state'; state.textContent = '入力してみよう。または右のボタンで自動入力。'; };
       const typeBtn = h('button', { class: 'btn primary', style: { '--c': 'var(--vue)' }, onclick: () => {
         reset(); const txt = '相続放棄の期限'; let i = 0; inp.focus();
         auto = setInterval(() => { if (!el.isConnected || i >= txt.length) return clearInterval(auto); inp.value = txt.slice(0, ++i); onType(); }, 160);
       } }, '▶ 「相続放棄の期限」を自動入力');
-      el.append(h('div', { class: 'vi-eq' },
+      const eq = h('div', { class: 'vi-eq' },
         h('div', { class: 'vrL-col' }, inp, h('div', { class: 'vrL-ctl' }, typeBtn, h('button', { class: 'btn ghost', onclick: reset }, '⟲ リセット')), h('div', { class: 'vrL-api' }, boxNo, boxDe), state),
-        h('div', { class: 'vrL-code' }, pre)));
+        h('div', { class: 'vrL-code' }, pre));
+      el.append(eq);
+      K.vs.link(eq, pre, { kw: ['const keyword', 'watch(keyword'], raw: ['watch(keyword, (kw)'], wait: ['clearTimeout', 'window.setTimeout', '}, 300)'], api: ['await fetchCases'] }, { rest: () => curHi });
     }
 
     const A = { t: '実例：相談一覧が開く瞬間', tag: '実例', lead: '<b>setup → onMounted → 一覧</b>。4ステップで、順番を見る。', render(el) { sceneA(el); } };

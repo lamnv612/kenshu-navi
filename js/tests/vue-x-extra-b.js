@@ -142,32 +142,32 @@ async function load(fail: boolean): Promise<void> {
       steps: [
         {
           key: 'm1', level: 1, file: 'App.vue',
-          label: '「取得」を押すと、相談案件が 3 件並ぶ（await）',
+          label: '取得ボタンで、await して相談案件 3 件を表示する',
           hint: ['通信は時間がかかるので、結果は <code>await</code> で待ってから受け取る。待つ関数は <code>async</code> が必要（もう付いている）。', '<code>cases.value = await fakeFetchCases(fail)</code> を load の中に書く。'],
           edits: [['  // ① fakeFetchCases(fail) を await して、結果を cases に入れる\n', '  cases.value = await fakeFetchCases(fail)\n']],
         },
         {
           key: 'm2', level: 1, file: 'App.vue',
-          label: '取得中は「読み込み中…」が出て、終わると消える（loading）',
+          label: 'loading を使い、取得中だけ「読み込み中…」を表示する',
           hint: ['通信の前に <code>loading.value = true</code>、終わったら <code>false</code>。template の <code>v-if="loading"</code> が表示を切り替える。', '<code>loading.value = true</code> → <code>cases.value = await …</code> → <code>loading.value = false</code> の順。'],
           edits: [['  cases.value = await fakeFetchCases(fail)\n  // ② 取得の前に loading を true、あとで false にする\n', '  loading.value = true\n  cases.value = await fakeFetchCases(fail)\n  loading.value = false\n']],
         },
         {
           key: 'm3', level: 1, file: 'App.vue',
-          label: '「わざと失敗」を押しても、読み込み中のまま止まらない（try / catch / finally）',
+          label: 'try / catch / finally で、失敗しても読み込み中を終わらせる',
           hint: ['失敗すると await の行で止まり、その下の <code>loading.value = false</code> が動かない。<code>try / catch / finally</code> で包む。', '<code>catch (e)</code> で <code>error.value = …</code>、<code>finally { loading.value = false }</code> は成功しても失敗しても必ず動く。', '全体：<pre>' + LOAD_BODY.replace(/</g, '&lt;') + '</pre>'],
           edits: [['  loading.value = true\n  cases.value = await fakeFetchCases(fail)\n  loading.value = false\n  // ③ try / catch / finally で包む（失敗したら error にメッセージを入れる。loading は finally で false）\n', '  loading.value = true\n  error.value = null\n  try {\n    cases.value = await fakeFetchCases(fail)\n  } catch (e) {\n    error.value = e instanceof Error ? e.message : \'通信に失敗しました\'\n  } finally {\n    loading.value = false\n  }\n']],
         },
         {
           key: 'm4', level: 2, file: 'App.vue',
-          label: '失敗したら、ErrorBox に「エラー：HTTP 500」と出る（props）',
+          label: 'ErrorBox に message を props で渡す（画面：エラー：HTTP 500）',
           hint: ['親：error があるときは <code>v-else-if="error"</code> で ErrorBox を出し、<code>:message="error"</code> で渡す。', '子（ErrorBox.vue）：<code>defineProps&lt;{ message: string }&gt;()</code>。', '親：<code>&lt;ErrorBox v-else-if="error" :message="error" /&gt;</code>（v-if → v-else-if → v-else の順に並べる）。'],
           edits: [['    <!-- ④ error があるときは ErrorBox を出す（v-else-if）。message に error を渡す -->\n', '    <ErrorBox v-else-if="error" :message="error" />\n']],
           also: [['ErrorBox.vue', '// ④ message を受け取る（props）。型は string\n', 'defineProps<{ message: string }>()\n']],
         },
         {
           key: 'm5', level: 2, file: 'App.vue',
-          label: '「もう一度」を押すと取得し直せて、成功したらエラー表示が消える（emit）',
+          label: 'ErrorBox で retry を emit し、親で取得し直してエラーを消す',
           hint: ['子は <code>defineEmits&lt;{ retry: [] }&gt;()</code> で、ボタンを押したときに <code>emit(\'retry\')</code>。', '親は <code>@retry="load(false)"</code> で受け取って、もう一度取得する。', '子：<code>const emit = defineEmits&lt;{ retry: [] }&gt;()</code> と <code>&lt;button @click="emit(\'retry\')"&gt;</code>。親：<code>&lt;ErrorBox … @retry="load(false)" /&gt;</code>。'],
           edits: [
             ['    <ErrorBox v-else-if="error" :message="error" />\n    <!-- ⑤ ErrorBox の retry を受け取って、もう一度 load(false) する -->\n', '    <ErrorBox v-else-if="error" :message="error" @retry="load(false)" />\n'],
@@ -179,7 +179,7 @@ async function load(fail: boolean): Promise<void> {
         },
         {
           key: 'm6', level: 3, file: 'App.vue',
-          label: '開いた直後に自動で一覧が出て、取得中はボタンが押せない（onMounted / :disabled）',
+          label: 'onMounted で自動取得し、取得中は :disabled でボタンを押せなくする',
           hint: ['開いた直後に 1 回だけ動かすのは <code>onMounted</code>（vue から import する）。', '押せなくするのは <code>:disabled="loading"</code>。2 つのボタンどちらにも付ける。', '<code>onMounted(() =&gt; load(false))</code> と <code>&lt;button :disabled="loading" @click="load(false)"&gt;取得&lt;/button&gt;</code>。'],
           edits: [
             ["import { ref } from 'vue'", "import { onMounted, ref } from 'vue'"],
@@ -319,39 +319,39 @@ defineProps<{ lawyers: Lawyer[] }>()
       steps: [
         {
           key: 'm1', level: 1, file: 'App.vue',
-          label: 'カードの本文に「未払い残業代について…」と出る（既定の slot）',
+          label: '親で、既定の slot に本文を渡す（画面：未払い残業代について…）',
           hint: ['子には <code>&lt;slot /&gt;</code> という「穴」がある。親がタグの間に書いたものが、そこに入る。', '<code>&lt;ConsultCard&gt;</code> の間に <code>&lt;p&gt;未払い残業代について、弁護士に相談できます。&lt;/p&gt;</code> を書く。'],
           edits: [['    <!-- ① 本文の穴には、そのまま書く：<p>未払い残業代について、弁護士に相談できます。</p> -->\n', '    <p>未払い残業代について、弁護士に相談できます。</p>\n']],
         },
         {
           key: 'm2', level: 1, file: 'App.vue',
-          label: 'カードの見出しに「労働問題の相談」と出る（名前付き slot）',
+          label: '親で、名前付き slot に見出しを渡す（画面：労働問題の相談）',
           hint: ['子の <code>&lt;slot name="header" /&gt;</code> に入れるには、親で <code>&lt;template #header&gt;</code> を使う。', '<code>&lt;template #header&gt;&lt;h3&gt;労働問題の相談&lt;/h3&gt;&lt;/template&gt;</code>'],
           edits: [['    <!-- ② 見出しの穴に入れる：<template #header> の中に <h3>労働問題の相談</h3> -->\n', '    <template #header>\n      <h3>労働問題の相談</h3>\n    </template>\n']],
         },
         {
           key: 'm3', level: 1, file: 'App.vue',
-          label: 'フッターに「予約する」ボタンが出て、押すと「予約数：1」になる',
+          label: '親で、footer の slot に予約するボタンを渡す（クリックで予約数 +1）',
           hint: ['フッターの穴は <code>&lt;template #footer&gt;</code>。中には普通の HTML が書ける。', 'ボタンは親の <code>reserved</code> を使う：<code>&lt;button @click="reserved++"&gt;予約する&lt;/button&gt;</code> と <code>&lt;span&gt;予約数：{{ reserved }}&lt;/span&gt;</code>。', 'slot の中身は「親のデータ」を使える。子は何も知らなくてよい。'],
           edits: [['    <!-- ③ フッターの穴に入れる：<template #footer> の中に「予約する」ボタンと「予約数：0」 -->\n', '    <template #footer>\n      <button @click="reserved++">予約する</button>\n      <span>予約数：{{ reserved }}</span>\n    </template>\n']],
         },
         {
           key: 'm4', level: 2, file: 'App.vue',
-          label: '見出しを渡さない 2 枚目のカードに、初期表示「無題の相談」が出る（slot の初期表示）',
+          label: '子の slot に、初期表示「無題の相談」を書く（見出し無しのカード用）',
           hint: ['<code>&lt;slot&gt;</code> の中に書いたものは、親が何も渡さなかったときだけ出る。', '子（ConsultCard.vue）の <code>&lt;slot name="header" /&gt;</code> を、閉じタグ付きに変える。', '<code>&lt;slot name="header"&gt;無題の相談&lt;/slot&gt;</code>'],
           edits: [],
           also: [['ConsultCard.vue', '      <!-- ④ 見出しが渡されなかったときの初期表示「無題の相談」を、slot の中に書く -->\n      <slot name="header" />', '      <slot name="header">無題の相談</slot>']],
         },
         {
           key: 'm5', level: 2, file: 'App.vue',
-          label: 'フッターを渡さない 2 枚目のカードには、footer 自体が出ない（$slots）',
+          label: '子で $slots を調べ、footer を渡さないカードでは footer を非表示にする',
           hint: ['渡された slot は、template では <code>$slots</code> で調べられる。', '<code>&lt;footer v-if="$slots.footer"&gt;</code> と書くと、footer が渡されたときだけ出る。'],
           edits: [],
           also: [['ConsultCard.vue', '    <!-- ⑤ footer が渡されなかったら、footer ごと出さない（v-if と $slots.footer） -->\n    <footer>', '    <footer v-if="$slots.footer">']],
         },
         {
           key: 'm6', level: 3, file: 'App.vue',
-          label: '弁護士一覧の見た目を親が決め、「田中 一郎（労働問題）」の形で 3 人並ぶ（スコープ付き slot）',
+          label: 'スコープ付き slot で、親が弁護士 3 人の見た目を決める（田中 一郎（労働問題））',
           hint: ['子は <code>&lt;slot :lawyer="l" /&gt;</code> のように、slot にデータを渡せる（スコープ付き slot）。', '親は <code>&lt;template #default="{ lawyer }"&gt;</code> で受け取って、好きな見た目にする。', '親：<code>&lt;LawyerList :lawyers="lawyers"&gt;&lt;template #default="{ lawyer }"&gt;{{ lawyer.name }}（{{ lawyer.field }}）&lt;/template&gt;&lt;/LawyerList&gt;</code>。子：<code>&lt;slot :lawyer="l" /&gt;</code>。'],
           edits: [['  <!-- ⑥ 親が lawyer を受け取って、「名前（分野）」の形で並べる（#default="{ lawyer }"） -->\n  <LawyerList :lawyers="lawyers" />', '  <LawyerList :lawyers="lawyers">\n    <template #default="{ lawyer }">{{ lawyer.name }}（{{ lawyer.field }}）</template>\n  </LawyerList>']],
           also: [['LawyerList.vue', '      <!-- ⑥ slot に lawyer を渡す（:lawyer="l"）。見た目は親が決める -->\n', '      <slot :lawyer="l" />\n']],
@@ -539,25 +539,25 @@ const labels: Record<Status, string> = {
       steps: [
         {
           key: 'm1', level: 1, file: 'App.vue',
-          label: 'タブのボタンを押すと、その画面（プロフィール・予約・口コミ）に切り替わる（:is）',
+          label: ':is で、押したタブの画面に切り替える（プロフィール・予約・口コミ）',
           hint: ['部品を切り替えて出すには <code>&lt;component&gt;</code> に <code>:is</code> で部品を渡す。', '部品は <code>tabs[current]</code>。ボタンを押すと current が変わる。', '<code>&lt;component :is="tabs[current]" /&gt;</code>'],
           edits: [['    <!-- ① <component :is> で、今のタブの部品を出す（部品は tabs[current]） -->\n', '    <component :is="tabs[current]" />\n']],
         },
         {
           key: 'm2', level: 1, file: 'App.vue',
-          label: '今のタブのボタンだけに class「active」が付く（:class）',
+          label: ':class で、今のタブのボタンだけに active を付ける',
           hint: ['class を条件で付けるのは <code>:class="{ クラス名: 条件 }"</code>。', '<code>:class="{ active: current === key }"</code> をボタンに足す。'],
           edits: [['    <!-- ② 今のタブのボタンだけ class="active" にする（:class のオブジェクト構文） -->\n    <button v-for="key in keys" :key="key" @click="current = key">', '    <button v-for="key in keys" :key="key" :class="{ active: current === key }" @click="current = key">']],
         },
         {
           key: 'm3', level: 1, file: 'App.vue',
-          label: '進み具合のバーが 40% の幅で出て、「進める」を押すと 60% になる（:style）',
+          label: ':style で、バーの幅を 40% にする（進めるを押すと 60%）',
           hint: ['数に応じて CSS を変えるのは <code>:style</code>。オブジェクトで書く。', '<code>:style="{ width: progress + \'%\' }"</code> を、bar の div に付ける。'],
           edits: [['    <!-- ③ バーの幅を progress % にする（:style） -->\n    <div class="bar"></div>', '    <div class="bar" :style="{ width: progress + \'%\' }"></div>']],
         },
         {
           key: 'm4', level: 2, file: 'App.vue',
-          label: '案件のバッジに「受付中」「対応中」「完了」と出て、ステータスごとに class が変わる',
+          label: '案件のバッジに、ステータスごとの文字と class を付ける（受付中・対応中・完了）',
           hint: ['子（StatusBadge.vue）は <code>defineProps&lt;{ status: Status }&gt;()</code> で status を受け取る。', '<code>:class</code> に文字列をつなげると、class 名を作れる：<code>:class="\'badge-\' + status"</code>。', 'span は <code>&lt;span class="badge" :class="\'badge-\' + status"&gt;</code>（普通の class と :class は一緒に書ける）。'],
           edits: [],
           also: [
@@ -567,13 +567,13 @@ const labels: Record<Status, string> = {
         },
         {
           key: 'm5', level: 2, file: 'App.vue',
-          label: '予約タブに書いた文字が、他のタブに行って戻っても消えない（KeepAlive）',
+          label: 'KeepAlive で、タブを切り替えても予約タブの入力を残す',
           hint: ['切り替えると部品は作り直されるので、入力が消える。<code>&lt;KeepAlive&gt;</code> で包むと、状態を残したまま隠せる。', '<code>&lt;KeepAlive&gt;&lt;component :is="tabs[current]" /&gt;&lt;/KeepAlive&gt;</code>'],
           edits: [['    <component :is="tabs[current]" />\n    <!-- ⑤（中級）<KeepAlive> で包んで、タブを切り替えても入力を残す -->\n', '    <KeepAlive>\n      <component :is="tabs[current]" />\n    </KeepAlive>\n']],
         },
         {
           key: 'm6', level: 3, file: 'App.vue',
-          label: 'プロフィールのタブに「田中 一郎（労働問題）」と出る（v-bind でオブジェクトをまとめて渡す）',
+          label: 'v-bind で、オブジェクトをまとめて渡す（画面：田中 一郎（労働問題））',
           hint: ['<code>v-bind="オブジェクト"</code> と書くと、キーが 1 つずつ props になって渡る。', '親：<code>&lt;component :is="tabs[current]" v-bind="lawyer" /&gt;</code>。', '子（ProfileTab.vue）：<code>defineProps&lt;{ name: string; field: string }&gt;()</code>。'],
           edits: [
             ['      <component :is="tabs[current]" />\n    </KeepAlive>\n    <!-- ⑥（上級）v-bind="lawyer" で、name と field をまとめて渡す（ProfileTab 側は props で受け取る） -->\n', '      <component :is="tabs[current]" v-bind="lawyer" />\n    </KeepAlive>\n'],
@@ -745,7 +745,7 @@ const { data: cases, loading, load } = useFetch<Case[]>(fetchCases)
       steps: [
         {
           key: 'm1', level: 1, file: 'useCounter.ts',
-          label: '画面に「大人：1 名」と、最初の人数が出る（ref を作って return する）',
+          label: 'useCounter.ts で、ref を作って return する（画面：大人：1 名）',
           hint: ['composable の中で <code>ref</code> を作り、<code>return</code> で使う側に返す。', '<code>const count = ref&lt;number&gt;(initial)</code> と <code>return { count }</code>。'],
           edits: [
             ['  // ① count を ref<number> で作る（最初の値は initial）\n\n', '  const count = ref<number>(initial)\n\n'],
@@ -754,7 +754,7 @@ const { data: cases, loading, load } = useFetch<Case[]>(fetchCases)
         },
         {
           key: 'm2', level: 1, file: 'useCounter.ts',
-          label: '「大人 ＋」を押すと、人数が 1 ずつ増える（increment）',
+          label: 'useCounter.ts で、人数を 1 増やす increment を作る（クリックで +1）',
           hint: ['count を 1 増やす関数を作って、return に足す。ref は <code>.value</code> で書き換える。', '<code>function increment(): void { count.value++ }</code> と <code>return { count, increment }</code>。'],
           edits: [
             ['  // ② increment(): void を作る（count を 1 増やす）\n\n', '  function increment(): void {\n    count.value++\n  }\n\n'],
@@ -763,13 +763,13 @@ const { data: cases, loading, load } = useFetch<Case[]>(fetchCases)
         },
         {
           key: 'm3', level: 1, file: 'App.vue',
-          label: '「詳細」を押すと説明が出て、もう一度押すと消える（useToggle を使う）',
+          label: 'useToggle を呼び、詳細ボタンで説明を開閉する',
           hint: ['useToggle はできあがっている。呼んで、返ってきたものを取り出せばよい。', '<code>const { isOpen, toggle } = useToggle()</code>'],
           edits: [['// ③ useToggle() から isOpen と toggle を取り出す\n', 'const { isOpen, toggle } = useToggle()\n']],
         },
         {
           key: 'm4', level: 2, file: 'useCounter.ts',
-          label: '「大人 −」で人数が減るが、0 より小さくはならない（decrement）',
+          label: 'useCounter.ts で、0 未満にならない decrement を作る（クリックで -1）',
           hint: ['count が 0 より大きいときだけ減らす。', '<code>function decrement(): void { if (count.value &gt; 0) count.value-- }</code> を作り、return に足す。'],
           edits: [
             ['  // ④ decrement(): void を作る（1 減らす。ただし 0 より小さくしない）\n\n', '  function decrement(): void {\n    if (count.value > 0) {\n      count.value--\n    }\n  }\n\n'],
@@ -778,7 +778,7 @@ const { data: cases, loading, load } = useFetch<Case[]>(fetchCases)
         },
         {
           key: 'm5', level: 2, file: 'App.vue',
-          label: '「子ども：0 名」の行を足し、大人の人数とは別々に増える（同じ composable を 2 回呼ぶ）',
+          label: '同じ useCounter を 2 回呼び、子どもの人数を別に数える（画面：子ども：0 名）',
           hint: ['composable は、呼ぶたびに新しい状態ができる。もう 1 回 <code>useCounter(0)</code> を呼べば、別の数え方になる。', '名前がぶつからないよう、取り出すときに <code>count: kids</code> のように別名を付ける。', '<code>const { count: kids, increment: addKid, decrement: removeKid } = useCounter(0)</code> と、template の <code>&lt;p class="kids"&gt;子ども：{{ kids }} 名&lt;/p&gt;</code> ＋ボタン 2 つ。'],
           edits: [
             ['// ⑤ 子どもの人数も useCounter で数える（大人とは別々に増減する）。count: kids / increment: addKid / decrement: removeKid\n', 'const { count: kids, increment: addKid, decrement: removeKid } = useCounter(0)\n'],
@@ -787,7 +787,7 @@ const { data: cases, loading, load } = useFetch<Case[]>(fetchCases)
         },
         {
           key: 'm6', level: 3, file: 'useFetch.ts',
-          label: '「案件を読み込む」で読み込み中が出たあと 3 件並び、失敗しても止まらない型付き useFetch<T> を完成させる',
+          label: 'useFetch.ts で、読み込み中・成功・失敗を扱う型付き useFetch<T> を完成させる',
           hint: ['load の中を <code>try / catch / finally</code> にする。取得結果は <code>data.value = await fetcher()</code>。', 'loading は先頭で true、<code>finally</code> で false。失敗は <code>error.value</code> に入れる。', '<code>loading.value = true</code> → <code>try { data.value = await fetcher() } catch (e) { error.value = … } finally { loading.value = false }</code>'],
           edits: [['    // ⑥ loading を true にして、await fetcher() の結果を data に入れる\n    //    失敗したら error にメッセージを入れ、最後は必ず loading を false にする（try / catch / finally）\n', '    loading.value = true\n    error.value = null\n    try {\n      data.value = await fetcher()\n    } catch (e) {\n      error.value = e instanceof Error ? e.message : \'通信に失敗しました\'\n    } finally {\n      loading.value = false\n    }\n']],
         },
@@ -1011,25 +1011,25 @@ const message = ref<string>('')
       steps: [
         {
           key: 'm1', level: 1, file: 'NoticeList.vue',
-          label: '一覧にお知らせが 3 件並ぶ（store から notices を取り出す）',
+          label: 'NoticeList.vue で、store の notices を取り出して 3 件並べる',
           hint: ['データは親から props で受け取らず、store（<code>useNoticeStore()</code>）から直接取り出す。', '<code>const { notices } = useNoticeStore()</code>'],
           edits: [['// ① useNoticeStore() から notices を取り出す\n', 'const { notices } = useNoticeStore()\n']],
         },
         {
           key: 'm2', level: 1, file: 'NoticeItem.vue',
-          label: '「既読にする」を押すと、そのお知らせが「既読」の表示になる（store の markRead）',
+          label: 'NoticeItem.vue で、store の markRead を呼ぶ（画面：既読）',
           hint: ['store が持つ <code>markRead</code> を取り出して、ボタンから呼ぶ（ボタンは書いてある）。', '<code>const { markRead } = useNoticeStore()</code>。書き換えるのは store の中身なので、一覧も自動で変わる。'],
           edits: [['// ② useNoticeStore() から markRead を取り出す\n', 'const { markRead } = useNoticeStore()\n']],
         },
         {
           key: 'm3', level: 1, file: 'NoticeHeader.vue',
-          label: 'ヘッダーに「未読 3 件」と出て、既読にすると「未読 2 件」に減る（props なしで共有）',
+          label: 'NoticeHeader.vue で、store から未読数を表示する（画面：未読 3 件）',
           hint: ['ヘッダーと一覧は親子ではないが、同じ store を見ているので数が合う。', '<code>const { unread } = useNoticeStore()</code>'],
           edits: [['// ③ useNoticeStore() から unread を取り出す\n', 'const { unread } = useNoticeStore()\n']],
         },
         {
           key: 'm4', level: 2, file: 'NoticeHeader.vue',
-          label: '「すべて既読」を押すと、全部が既読になり「未読 0 件」になる',
+          label: 'NoticeHeader.vue で、すべて既読にするボタンを作る（画面：未読 0 件）',
           hint: ['store の <code>markAllRead</code> の中身を書く（全件の read を true に）。', 'ヘッダーでは <code>markAllRead</code> を取り出して、ボタンに <code>@click="markAllRead"</code>。', 'store：<code>notices.value.forEach((n) =&gt; { n.read = true })</code>。ヘッダー：<code>const { unread, markAllRead } = useNoticeStore()</code>。'],
           edits: [
             ['const { unread } = useNoticeStore()\n// ④ markAllRead も取り出して、「すべて既読」ボタンにつなぐ\n', 'const { unread, markAllRead } = useNoticeStore()\n'],
@@ -1039,7 +1039,7 @@ const message = ref<string>('')
         },
         {
           key: 'm5', level: 2, file: 'NoticeList.vue',
-          label: '「未読だけ表示」にチェックすると、未読のお知らせだけが並ぶ（computed で絞る）',
+          label: 'NoticeList.vue で、computed で未読だけに絞って表示する',
           hint: ['チェックの状態を <code>ref&lt;boolean&gt;</code> で持ち、<code>computed</code> で絞った一覧を作る。', 'ref は script では <code>.value</code>：<code>onlyUnread.value ? notices.value.filter((n) =&gt; !n.read) : notices.value</code>。', 'template：<code>&lt;input v-model="onlyUnread" type="checkbox" /&gt;</code> と、<code>v-for="n in visible"</code>。'],
           edits: [
             ['// ⑤ onlyUnread（ref<boolean>）と、それで絞った visible（computed）を作る\n', 'const onlyUnread = ref<boolean>(false)\nconst visible = computed<Notice[]>(() =>\n  onlyUnread.value ? notices.value.filter((n) => !n.read) : notices.value\n)\n'],
@@ -1048,7 +1048,7 @@ const message = ref<string>('')
         },
         {
           key: 'm6', level: 3, file: 'ToastArea.vue',
-          label: '既読にすると「◯◯を既読にしました」と出て、トーストを消したら登録も外れる（Event Bus ＋ onUnmounted）',
+          label: 'ToastArea.vue で、Event Bus を受け取って表示し、onUnmounted で解除する',
           hint: ['表示されたとき（<code>onMounted</code>）に <code>onNoticeRead(関数)</code> で登録し、消えるとき（<code>onUnmounted</code>）に <code>offNoticeRead(同じ関数)</code> で外す。', '登録と解除には、同じ関数（名前を付けたもの）を渡す。外し忘れると、消えた部品にも通知が届き続ける。', '<code>function show(title: string): void { message.value = title + \'を既読にしました\' }</code> を作り、<code>onMounted(() =&gt; { onNoticeRead(show) })</code> と <code>onUnmounted(() =&gt; { offNoticeRead(show) })</code>。'],
           edits: [['// ⑥ 既読になったら message を「◯◯を既読にしました」にする\n//    表示されたときに onNoticeRead で登録し、消えるときに offNoticeRead で外す（onMounted / onUnmounted）\n', 'function show(title: string): void {\n  message.value = title + \'を既読にしました\'\n}\n\nonMounted(() => {\n  onNoticeRead(show)\n})\n\nonUnmounted(() => {\n  offNoticeRead(show)\n})\n']],
         },

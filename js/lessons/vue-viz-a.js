@@ -21,7 +21,7 @@
       l: ['親に持ち上げ', 'var(--violet)', '兄弟どうし'],
       i: ['provide / inject', 'var(--pink)', '遠い子孫'],
     };
-    const chip = (r, k, v) => { const b = h('b', v); r[k] = b; return h('span', { class: 'vzA-st' }, k + ' = ', b); };
+    const chip = (r, k, v) => { const b = h('b', v); r[k] = b; return h('span', { class: 'vzA-st', 'data-k': 'state' }, k + ' = ', b); };
 
     /* ---------- 5つの場面 ---------- */
     const SC = [
@@ -29,7 +29,7 @@
         short: '親 → 子', who: 'CaseListPage → CaseCard', t: '案件名を、案件カードに表示したい', ans: 'p', hgt: 330,
         nodes: [
           { id: 'page', name: 'CaseListPage', root: 1, x: 50, y: 6, w: 70, body: (r) => h('div', { class: 'vzA-sts' }, chip(r, 'title', '"相続の相談"')) },
-          { id: 'card', name: 'CaseCard', x: 50, y: 190, w: 70, body: (r) => h('div', { class: 'vzA-card' }, h('span', { class: 'av' }, '📁'), r.slot = h('b', { class: 'slot' }), h('span', { class: 'bd' }, '相談中')) },
+          { id: 'card', name: 'CaseCard', x: 50, y: 190, w: 70, body: (r) => h('div', { class: 'vzA-card' }, h('span', { class: 'av' }, '📁'), r.slot = h('b', { class: 'slot', 'data-k': 'slot' }), h('span', { class: 'bd' }, '相談中')) },
         ],
         edges: [['page', 'card']], focus: ['page', 'card'],
         init: (r) => { r.slot.textContent = '（まだ表示されない）'; r.slot.classList.add('empty'); },
@@ -45,7 +45,7 @@
         short: '子 → 親', who: 'CaseCard → CaseListPage', t: '削除ボタンが押されたと、一覧に知らせたい', ans: 'e', hgt: 330,
         nodes: [
           { id: 'page', name: 'CaseListPage', root: 1, x: 50, y: 6, w: 70, body: (r) => h('div', { class: 'vzA-sts' }, chip(r, 'cases', '3件')) },
-          { id: 'card', name: 'CaseCard', x: 50, y: 190, w: 70, body: (r) => h('div', { class: 'vzA-card' }, r.row = h('b', { class: 'slot' }, '契約書'), r.btn = h('button', { class: 'vzA-btn' }, '削除')) },
+          { id: 'card', name: 'CaseCard', x: 50, y: 190, w: 70, body: (r) => h('div', { class: 'vzA-card' }, r.row = h('b', { class: 'slot', 'data-k': 'slot' }, '契約書'), r.btn = h('button', { class: 'vzA-btn', 'data-k': 'btn' }, '削除')) },
         ],
         edges: [['page', 'card']], focus: ['page', 'card'],
         init: (r) => { r.cases.textContent = '3件'; r.row.classList.remove('gone'); },
@@ -61,7 +61,7 @@
         short: '入力欄を共有', who: 'CaseListPage ⇅ NameInput', t: '入力欄の値を、親とも共有したい', ans: 'm', hgt: 330,
         nodes: [
           { id: 'page', name: 'CaseListPage', root: 1, x: 50, y: 6, w: 70, body: (r) => h('div', { class: 'vzA-sts' }, chip(r, 'name', '""')) },
-          { id: 'inp', name: 'NameInput', x: 50, y: 190, w: 70, body: (r) => h('div', { class: 'vzA-card' }, h('small', null, '氏名'), r.inp = h('span', { class: 'vzA-inp' })) },
+          { id: 'inp', name: 'NameInput', x: 50, y: 190, w: 70, body: (r) => h('div', { class: 'vzA-card' }, h('small', null, '氏名'), r.inp = h('span', { class: 'vzA-inp', 'data-k': 'field' })) },
         ],
         edges: [['page', 'inp']], focus: ['page', 'inp'],
         init: (r) => { r.name.textContent = '""'; r.inp.textContent = '氏名を入力'; r.inp.classList.remove('on'); },
@@ -82,8 +82,8 @@
         short: '兄弟どうし', who: 'FilterPanel ⇢ ResultList', t: '絞り込みの結果を、隣の一覧に反映したい', ans: 'l', hgt: 470,
         nodes: [
           { id: 'page', name: 'CaseListPage', root: 1, x: 50, y: 6, w: 62, body: (r) => h('div', { class: 'vzA-sts' }, chip(r, 'field', '"すべて"')) },
-          { id: 'flt', name: 'FilterPanel', x: 25, y: 235, w: 46, body: (r) => h('div', { class: 'vzA-card col' }, ...['すべて', '相続', '離婚'].map((t) => { const b = h('span', { class: 'vzA-tab' }, t); (r.tabs = r.tabs || {})[t] = b; return b; })) },
-          { id: 'lst', name: 'ResultList', x: 75, y: 235, w: 46, body: (r) => h('div', { class: 'vzA-card col' }, ...[['山田 太郎', '相続'], ['佐藤 花子', '離婚'], ['鈴木 一郎', '相続']].map(([n, f]) => { const d = h('span', { class: 'vzA-row' }, '👨‍⚖️ ' + n, h('small', null, f)); (r.rows = r.rows || []).push([d, f]); return d; })) },
+          { id: 'flt', name: 'FilterPanel', x: 25, y: 235, w: 46, body: (r) => h('div', { class: 'vzA-card col' }, ...['すべて', '相続', '離婚'].map((t) => { const b = h('span', { class: 'vzA-tab', 'data-k': 'tab' }, t); (r.tabs = r.tabs || {})[t] = b; return b; })) },
+          { id: 'lst', name: 'ResultList', x: 75, y: 235, w: 46, body: (r) => h('div', { class: 'vzA-card col' }, ...[['山田 太郎', '相続'], ['佐藤 花子', '離婚'], ['鈴木 一郎', '相続']].map(([n, f]) => { const d = h('span', { class: 'vzA-row', 'data-k': 'row' }, '👨‍⚖️ ' + n, h('small', null, f)); (r.rows = r.rows || []).push([d, f]); return d; })) },
         ],
         edges: [['page', 'flt'], ['page', 'lst']], focus: ['flt', 'lst'], hot: ['page-flt', 'page-lst'],
         init: (r) => { r.field.textContent = '"すべて"'; Object.entries(r.tabs).forEach(([k, b]) => b.classList.toggle('on', k === 'すべて')); r.rows.forEach(([d]) => d.classList.remove('dim')); },
@@ -107,7 +107,7 @@
           { id: 'root', name: 'AppShell', root: 1, x: 33, y: 6, w: 52, body: (r) => h('div', { class: 'vzA-sts' }, chip(r, 'user', '"山田 太郎"')) },
           { id: 'lay', name: 'PageLayout', x: 33, y: 140, w: 52, body: () => h('div', { class: 'vzA-card sm' }, '使わない') },
           { id: 'pg', name: 'CaseListPage', x: 33, y: 270, w: 52, body: () => h('div', { class: 'vzA-card sm' }, '使わない') },
-          { id: 'bdg', name: 'UserBadge', x: 33, y: 400, w: 52, body: (r) => h('div', { class: 'vzA-card sm' }, '👤 ', r.slot = h('b', { class: 'slot' })) },
+          { id: 'bdg', name: 'UserBadge', x: 33, y: 400, w: 52, body: (r) => h('div', { class: 'vzA-card sm' }, '👤 ', r.slot = h('b', { class: 'slot', 'data-k': 'slot' })) },
         ],
         edges: [['root', 'lay'], ['lay', 'pg'], ['pg', 'bdg'], ['root', 'bdg', 'dash']], focus: ['root', 'bdg'], hot: ['root-bdg'],
         init: (r) => { r.slot.textContent = '（未表示）'; r.slot.classList.add('empty'); },
@@ -125,10 +125,19 @@
       },
     ];
 
+    /* UI の部品(data-k) ⇄ コードの行：親コード(par)・子コード(chd) */
+    const LK = [
+      { par: { page: ['const title'], state: ['const title'], card: ['<CaseCard'], slot: ['<CaseCard'] }, chd: { card: ['defineProps'], slot: ['{{ props.title }}'] } },
+      { par: { page: ['const cases'], state: ['const cases'], card: ['<CaseCard'], slot: ['<CaseCard'], btn: ['const remove', 'cases.value =', '@remove'] }, chd: { card: ['defineProps'], slot: ['defineProps'], btn: ["emit('remove'", 'defineEmits'] } },
+      { par: { page: ['const name'], state: ['const name'], inp: ['<NameInput'], field: ['<NameInput'] }, chd: { inp: ['defineModel'], field: ['<input'] } },
+      { par: { page: ['const field'], state: ['const field'], flt: ['<FilterPanel'], tab: ['<FilterPanel'], lst: ['<ResultList'], row: ['<ResultList'] }, chd: { lst: ['defineProps'], row: ['{{ props.field }}'] } },
+      { par: { root: ['const user'], state: ['const user'], bdg: ['provide<', '【？】'], slot: ['provide<', '【？】'] }, chd: { bdg: ['inject<'], slot: ['{{ user }}'] } },
+    ];
+
     /* ---------- 画面 ---------- */
     function scene() {
       const solved = SC.map(() => false);
-      let cur = 0, tok = 0, busy = false, live = null;
+      let cur = 0, tok = 0, busy = false, live = null, root = null, pP = null, cP = null, pRest = [], cRest = [];
       const stageHost = h('div'), qBox = h('div', { class: 'vzA-q' }), codeHost = h('div', { class: 'vzA-codes' }), mapEl = h('div', { class: 'vzA-map' });
 
       const loadStage = () => {
@@ -136,7 +145,7 @@
         const stage = h('div', { class: 'vzA-stage', style: { height: S.hgt + 'px' } });
         const svg = document.createElementNS(NS, 'svg'); svg.setAttribute('class', 'vzA-svg'); stage.append(svg);
         S.nodes.forEach((n) => {
-          const el = h('div', { class: 'vzA-n' + (n.root ? ' root' : ''), style: { left: n.x + '%', top: n.y + 'px', width: n.w + '%' } },
+          const el = h('div', { class: 'vzA-n' + (n.root ? ' root' : ''), 'data-k': n.id, style: { left: n.x + '%', top: n.y + 'px', width: n.w + '%' } },
             h('div', { class: 'vzA-nm' }, '🧩 ' + n.name + (n.root ? '　親' : '')), n.body(r));
           nodeEl[n.id] = el; stage.append(el);
         });
@@ -220,7 +229,10 @@
         const c = code(S.child, 'vue', { color: TEAM, file: S.cfile + '（子）', dim: sv, edit: false });
         c.setHi(sv ? [S.cHi].concat(S.cHi2 || []) : [], 'on');
         codeHost.replaceChildren(p, c);
+        pP = p; cP = c; pRest = sv ? [S.pHi].concat(S.pHi2 || []) : [S.pHi]; cRest = sv ? [S.cHi].concat(S.cHi2 || []) : [];
+        relink();
       };
+      const relink = () => { if (!root || !K.vs || !K.vs.link) return; root.querySelectorAll('[data-k]').forEach((n) => { n.__vsl = 0; }); K.vs.link(root, pP, LK[cur].par, { rest: () => pRest }); root.querySelectorAll('[data-k]').forEach((n) => { n.__vsl = 0; }); K.vs.link(root, cP, LK[cur].chd, { rest: () => cRest }); };
       const drawMap = () => {
         mapEl.replaceChildren(h('div', { class: 'vzA-mt' }, '場面ごとの選び方'), ...SC.map((s, i) => h('div', { class: 'vzA-mr' + (i === cur ? ' cur' : '') + (solved[i] ? ' ok' : ''), onclick: () => go(i) },
           h('span', { class: 'n' }, solved[i] ? '✓' : String(i + 1)), h('b', s.short), h('span', { class: 'ar', style: solved[i] ? { color: OPT[s.ans][1] } : null }, solved[i] ? OPT[s.ans][0] : '？'))),
@@ -248,11 +260,12 @@
       };
       const reset = h('button', { class: 'btn ghost', onclick: () => { solved.fill(false); cur = 0; paint(); } }, '⟲ やり直す');
       paint();
-      return h('div', { class: 'vzA-wrap' },
+      root = h('div', { class: 'vzA-wrap' },
         h('div', { class: 'vzA-bar' }, h('span', { class: 'vzA-hint' }, '部品ツリー：箱＝部品、線＝つながり。選ぶとデータが走る'), reset),
         h('div', { class: 'vi-eq' },
           h('div', { class: 'vzA-wrap' }, stageHost, mapEl),
           h('div', { class: 'vzA-wrap' }, qBox, codeHost)));
+      relink(); return root;
     }
 
     style('vzA', `

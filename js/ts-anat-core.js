@@ -21,7 +21,8 @@
     .an-box{padding:26px 16px;border-radius:14px;background:var(--code);overflow:auto;text-align:center;white-space:pre;font:700 1.45rem/1.9 var(--mono);color:#d8dcff;transition:.3s}
     @media(max-width:700px){.an-box{font-size:1.05rem;text-align:left}}
     .an-box .tk{border-radius:8px;padding:.05em .08em;transition:.25s;cursor:default;border-bottom:2px dotted transparent}
-    .an-box.dim .tk{opacity:.28}.an-box .tk.lit{opacity:1;background:color-mix(in srgb,var(--pc) 30%,transparent);border-bottom:3px solid var(--pc);border-radius:0;padding:.05em 0;color:#fff;box-shadow:none}.an-box .tk.lit.gs{border-radius:8px 0 0 8px;padding-left:.2em}.an-box .tk.lit.ge{border-radius:0 8px 8px 0;padding-right:.2em}.an-box .tk.lit.gs.ge{border-radius:8px}
+    .an-box.dim .tk{opacity:.72}.an-box .tk.lit{opacity:1;background:color-mix(in srgb,var(--pc) 42%,transparent);border-bottom:3px solid var(--pc);border-radius:4px;padding:.05em .1em;color:#fff;box-shadow:0 0 0 2px color-mix(in srgb,var(--pc) 55%,transparent),0 0 14px color-mix(in srgb,var(--pc) 45%,transparent)}
+    .an-box .rel{opacity:1!important;border-radius:4px;background:color-mix(in srgb,var(--pc) 20%,transparent);box-shadow:inset 0 -2px 0 color-mix(in srgb,var(--pc) 75%,transparent);color:#fff}.an-box .tk.lit.gs{border-radius:8px 0 0 8px;padding-left:.2em}.an-box .tk.lit.ge{border-radius:0 8px 8px 0;padding-right:.2em}.an-box .tk.lit.gs.ge{border-radius:8px}
     .an-parts{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:14px 0 10px}
     .an-parts button{all:unset;cursor:pointer;padding:.4em 1em;border-radius:10px;border:2px solid var(--pc);background:transparent;font-weight:800;font-size:.9rem;color:var(--pc);transition:.2s}
     .an-parts button:hover,.an-parts button.lit{background:color-mix(in srgb,var(--pc) 22%,transparent);transform:translateY(-2px)}
@@ -71,10 +72,29 @@
       });
       if (spec.flow.order) flowEl.append(h('div', { class: 'an-fo' }, spec.flow.order));
     }
+    /* 光らせた語と同じ名前（title など）が、ほかの行にも出てくるときは、やわらかく光らせる（関係する処理が見える） */
+    const clearRel = () => { inner.querySelectorAll('span.rel').forEach((r) => { r.replaceWith(document.createTextNode(r.textContent)); }); inner.normalize(); };
+    const markRel = (texts, pc) => {
+      clearRel();
+      texts.forEach((txt) => {
+        const re = new RegExp('(?<![\\w$.])' + txt.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?![\\w$])', 'g');
+        const w = document.createTreeWalker(inner, NodeFilter.SHOW_TEXT), hits = [];
+        while (w.nextNode()) { const n = w.currentNode; if (n.parentElement && n.parentElement.closest('.tk.lit')) continue; re.lastIndex = 0; if (re.test(n.nodeValue)) hits.push(n); }
+        hits.forEach((n) => {
+          const frag = document.createDocumentFragment(); let last = 0, m; re.lastIndex = 0; const v = n.nodeValue;
+          while ((m = re.exec(v))) { if (m.index > last) frag.append(v.slice(last, m.index)); const sp = document.createElement('span'); sp.className = 'rel'; sp.style.setProperty('--pc', pc); sp.textContent = m[0]; frag.append(sp); last = m.index + m[0].length; if (m[0].length === 0) re.lastIndex++; }
+          if (last < v.length) frag.append(v.slice(last)); n.replaceWith(frag);
+        });
+      });
+    };
     const lit = (key) => {
       const p = key ? spec.parts[key] : null;
       box.classList.toggle('dim', !!key);
       toks.forEach((tk, i) => { const on = !!key && spec.tokens[i][1].includes(key); tk.forEach((el) => { el.classList.toggle('lit', on); el.style.setProperty('--pc', p ? p[1] : 'var(--ts)'); }); });
+      if (key) {
+        const txts = [...new Set(toks.map((tk, i) => (spec.tokens[i][1].includes(key) ? tk.map((e) => e.textContent).join('').trim() : '')).filter((t) => t.length >= 2 && /^[\w$.:@-]+$/.test(t) && !/^[(){}<>/=]+$/.test(t)))];
+        markRel(txts, p ? p[1] : 'var(--ts)');
+      } else clearRel();
       bar.querySelectorAll('button').forEach((b) => b.classList.toggle('lit', b.dataset.k === key));
       info.style.setProperty('--pc', p ? p[1] : 'var(--ts)');
       const esc2 = (t) => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');

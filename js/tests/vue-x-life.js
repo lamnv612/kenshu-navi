@@ -96,31 +96,31 @@
     steps: [
       {
         key: 'm1', level: 1, file: 'App.vue',
-        label: '「合計」が、並んでいる案件の price の合計になる（computed）',
+        label: 'computed で、案件の price の合計を作る（画面：合計）',
         hint: ['材料から計算で作る値は <code>computed</code>。結果の型も付ける。', '<code>const total = computed&lt;number&gt;(() =&gt; cases.value.reduce((sum, c) =&gt; sum + c.price, 0))</code>'],
         edits: [rep(L1, ['const total = computed<number>(() =>', '  cases.value.reduce((sum, c) => sum + c.price, 0)', ')']).map((x, i) => (i === 0 ? x : x))],
       },
       {
         key: 'm2', level: 1, file: 'App.vue',
-        label: '画面が出た直後に案件が4件に増え、「取得完了」と表示される（onMounted）',
+        label: 'onMounted で案件を 4 件にして、「取得完了」を表示する',
         hint: ['表示された直後に1回だけ動かすのは <code>onMounted</code>。api.ts の <code>fetchCases()</code> は Promise なので <code>await</code> する。', '<code>onMounted(async () =&gt; { cases.value = await fetchCases(); status.value = \'取得完了\' })</code>'],
         edits: [rep(L2, ['onMounted(async () => {', '  cases.value = await fetchCases()', "  status.value = '取得完了'", '})'])],
       },
       {
         key: 'm3', level: 1, file: 'App.vue',
-        label: '「税込み」が 合計 × 1.1 になり、税率を変えると追いかける（computed）',
+        label: 'computed で、合計 × 税率の「税込み」を作る（税率を変えると追従）',
         hint: ['<code>total</code> と <code>taxRate</code> から作る値なので、これも <code>computed</code>。', '<code>const totalWithTax = computed&lt;number&gt;(() =&gt; Math.round(total.value * (1 + taxRate.value / 100)))</code>'],
         edits: [rep(L3, ['const totalWithTax = computed<number>(() =>', '  Math.round(total.value * (1 + taxRate.value / 100))', ')'])],
       },
       {
         key: 'm4', level: 2, file: 'App.vue',
-        label: '税率を変えるたびに「税率の変更」の回数が 1 ずつ増える（watch）',
+        label: 'watch で、税率を変えるたびに「税率の変更」の回数を 1 増やす',
         hint: ['ある値の変化を見張るのは <code>watch(見張る値, 動き)</code>。', '<code>watch(taxRate, () =&gt; { changes.value++ })</code>'],
         edits: [rep(L4, ['watch(taxRate, () => {', '  changes.value++', '})'])],
       },
       {
         key: 'm5', level: 3, file: 'App.vue',
-        label: '検索ワードで一覧が絞り込まれ、「◯ 件表示中」も自動で変わる（computed ＋ watchEffect）',
+        label: 'computed で一覧を絞り込み、watchEffect で「◯ 件表示中」を更新する',
         hint: ['絞り込んだ配列は <code>computed&lt;Case[]&gt;</code> で作り、template の <code>v-for</code> を <code>hits</code> に変える。', '「件数」は <code>watchEffect(() =&gt; { shownText.value = hits.value.length + \' 件表示中\' })</code>。中で読んだ値が変わると自動で動き直す。'],
         edits: [
           rep(L5, [

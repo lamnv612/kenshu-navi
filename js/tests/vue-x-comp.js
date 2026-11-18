@@ -94,20 +94,20 @@
     steps: [
       {
         key: 'm1', level: 1, file: 'App.vue',
-        label: '① 子に title を渡して、カードに「労働問題」「契約トラブル」と出る（props）',
+        label: '① 親から子へ title を props で渡す（画面：労働問題、契約トラブル）',
         hint: ['子（CaseCard.vue）は <code>defineProps&lt;{ title: string }&gt;()</code> で受け取る（型も書く）。', '親（CaseListPage.vue）は <code>&lt;CaseCard title="労働問題" /&gt;</code> のように渡す。'],
         edits: [['  <CaseCard />\n  <CaseCard />', '  <CaseCard title="労働問題" />\n  <CaseCard title="契約トラブル" />']],
         also: [['CaseCard.vue', '// ① title を受け取る（props）。型も書く\n', 'defineProps<{ title: string }>()\n']],
       },
       {
         key: 'm2', level: 1, file: 'App.vue',
-        label: '② 「削除」を押すたびに、案件数が 1 つずつ減る（emit → @remove）',
+        label: '② 子で削除を emit し、親の @remove で案件数を 1 減らす',
         hint: ['子は <code>emit(\'remove\')</code> で知らせている。親は <code>@remove</code> で受け取る。', '<code>&lt;CaseCard title="労働問題" @remove="count--" /&gt;</code>（script の中では <code>count.value--</code>、template では <code>count--</code>）'],
         edits: [['<CaseCard title="労働問題" />\n  <CaseCard title="契約トラブル" />', '<CaseCard title="労働問題" @remove="count--" />\n  <CaseCard title="契約トラブル" @remove="count--" />']],
       },
       {
         key: 'm3', level: 1, file: 'App.vue',
-        label: '③ 入力欄に「たろう」が入り、書き換えると「お名前」の表示も変わる（defineModel / v-model）',
+        label: '③ 親の v-model と子の defineModel をつなぐ（画面：たろう）',
         hint: ['子（NameInput.vue）は <code>const model = defineModel&lt;string&gt;()</code>、input は <code>v-model="model"</code>。', '親（CaseListPage.vue）は <code>&lt;NameInput v-model="name" /&gt;</code>。'],
         edits: [['<NameInput />', '<NameInput v-model="name" />']],
         also: [
@@ -117,7 +117,7 @@
       },
       {
         key: 'm4', level: 2, file: 'App.vue',
-        label: '④ 案件を 3 件の配列（Case 型）にして v-for で並べる。削除すると、そのカードが本当に消える',
+        label: '④ 案件を Case 型の配列にして v-for で並べ、削除したカードを消す',
         hint: ['<code>import type { Case } from \'./types\'</code> で型を読み込み、<code>ref&lt;Case[]&gt;([…3 件…])</code>。', '並べるのは <code>&lt;CaseCard v-for="c in cases" :key="c.id" :title="c.title" @remove="remove(c.id)" /&gt;</code>。', '消すのは <code>cases.value = cases.value.filter((c) =&gt; c.id !== id)</code>。案件数は <code>{{ cases.length }}</code>。'],
         edits: [
           ["import CaseCard from './CaseCard.vue'", "import type { Case } from './types'\nimport CaseCard from './CaseCard.vue'"],
@@ -130,7 +130,7 @@
       },
       {
         key: 'm5', level: 3, file: 'App.vue',
-        label: '⑤ 任意の props urgent（既定値 false）を足し、急ぎの 2 件だけ「急ぎ」バッジを出す（withDefaults）',
+        label: '⑤ 任意の props urgent を withDefaults で false にし、急ぎ 2 件にバッジを付ける',
         hint: ['子：<code>withDefaults(defineProps&lt;{ title: string; urgent?: boolean }&gt;(), { urgent: false })</code>。<code>?</code> が付くと「渡さなくてもよい」props になる。', '子の template：<code>&lt;b v-if="urgent" class="badge"&gt;急ぎ&lt;/b&gt;</code>。親は <code>:urgent="c.urgent"</code> を足す。'],
         edits: [[':title="c.title" @remove="remove(c.id)"', ':title="c.title" :urgent="c.urgent" @remove="remove(c.id)"']],
         also: [

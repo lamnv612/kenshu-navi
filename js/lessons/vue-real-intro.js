@@ -63,6 +63,12 @@
   .vrI-hint{font:700 .76rem var(--font);color:var(--mute)}
   `);
 
+  /* hover 連動の「色付き背景」でボタンの文字が読めなくならないように */
+  style('vrI2', `
+  .vrI-cd button[data-k].vs-hot{background-color:#1a5fd0}.vrI-cd button[data-k].vs-hot:disabled{background-color:#9aa5bd}
+  .vrI-pg .vrI-hd [data-k].vs-hot{background-color:rgba(255,255,255,.18)}
+  `);
+
   const LAWYERS = [
     { id: 1, name: '田村 結衣', office: '麹町ひかり法律事務所', area: '東京都千代田区', fields: ['離婚', '相続'], free: true, color: '#d9534f' },
     { id: 2, name: '中島 健太', office: '中島・青木法律事務所', area: '大阪府大阪市', fields: ['債務整理', '交通事故'], free: true, color: '#2f7fd1' },
@@ -105,10 +111,10 @@
     const toast = h('div', { class: 'vrI-toast' });
     const list = h('div', { class: 'vrI-ls', 'data-comp': 'LawyerList' });
     const cnt = h('div', { class: 'vrI-cnt' });
-    const input = h('input', { placeholder: '地域・事務所名で検索', value: '' });
-    const flBox = h('div', { class: 'vrI-fl' });
+    const input = h('input', { placeholder: '地域・事務所名で検索', value: '', 'data-k': 'input' });
+    const flBox = h('div', { class: 'vrI-fl', 'data-k': 'fields' });
     const pg = h('div', { class: 'vrI-pg hot' },
-      h('header', { 'data-part': 'header', 'data-comp': 'AppHeader', class: 'vrI-hd' }, h('h1', '弁護士ナビ'), h('nav', h('a', { href: '#' }, '弁護士を探す'), h('a', { href: '#' }, '法律コラム')), h('span', { class: 'u' }, '佐藤 さん')),
+      h('header', { 'data-part': 'header', 'data-comp': 'AppHeader', class: 'vrI-hd' }, h('h1', { 'data-k': 'h1' }, '弁護士ナビ'), h('nav', { 'data-k': 'nav' }, h('a', { href: '#' }, '弁護士を探す'), h('a', { href: '#' }, '法律コラム')), h('span', { class: 'u', 'data-k': 'user' }, '佐藤 さん')),
       h('div', { class: 'vrI-nojs' }, 'JavaScript なし：入力もボタンも反応しない'),
       h('section', { 'data-part': 'search', 'data-comp': 'SearchBar', class: 'vrI-sb' }, input, flBox),
       cnt, list, toast);
@@ -124,10 +130,11 @@
         const done = st.reserved.has(l.id);
         const b = h('button', { disabled: done, onclick: () => { if (blocked()) return; st.reserved.add(l.id); paint(); say(l.name + ' 弁護士に相談予約を送信しました'); } }, done ? '予約済み ✓' : '相談を予約');
         return h('article', { 'data-part': 'card', 'data-comp': 'LawyerCard', class: 'vrI-cd' },
-          h('div', { class: 'av', style: { background: l.color } }, l.name[0]), h('h3', l.name), h('p', l.office + '・' + l.area),
-          h('div', { class: 'tg' }, ...l.fields.map((f) => h('span', f)), l.free ? h('span', { class: 'fr' }, '初回相談無料') : null), b);
+          h('div', { class: 'av', style: { background: l.color } }, l.name[0]), h('h3', { 'data-k': 'name' }, l.name), h('p', { 'data-k': 'info' }, l.office + '・' + l.area),
+          h('div', { class: 'tg' }, ...l.fields.map((f) => h('span', f)), l.free ? h('span', { class: 'fr', 'data-k': 'free' }, '初回相談無料') : null), (b.setAttribute('data-k', 'btn'), b));
       }) : [h('div', { class: 'vrI-empty' }, '条件に合う弁護士がいません')]));
       list.querySelectorAll('.vrI-cd').forEach((c, i) => { if (i === 0) c.dataset.first = '1'; });
+      lk();
     };
     input.addEventListener('input', () => { if (!jsOn()) { input.value = ''; blocked(); return; } st.kw = input.value; paint(); });
 
@@ -136,6 +143,12 @@
     const kinds = h('div', { class: 'vrI-kinds' });
     const side = h('div', { class: 'vrI-side' }, ttl, kinds);
     let pre = null;
+    /* UI ⇄ コード：部品の中の1つ1つ（見出し・ボタン…）にカーソル → その行だけ光る */
+    const MAP = { h1: ['<h1>'], nav: ['<nav>', '<a href'], user: ['{{ userName }}', 'defineProps'],
+      input: ['v-model="keyword"', 'defineModel<string>'], fields: ['v-for="f in fields"', ':key="f"', ':class="{ on', '@click="toggle', '{{ f }}', 'const fields', 'function toggle'],
+      name: ['<h3>'], info: ['{{ lawyer.office }}'], free: ['v-if="lawyer.free"'], btn: ['<button', ':disabled="reserved"', '{{ reserved ?', 'defineEmits'] };
+    const px = { get lines() { return pre ? pre.lines : []; }, setHi: (a, c) => { if (pre) pre.setHi(a, c); } };
+    const lk = () => { if (K.vs && K.vs.link) K.vs.link(pg, px, MAP, { rest: () => kindLines(PARTS[part].src)[kind] || [] }); };
     const showCode = () => {
       const P = PARTS[part];
       const ln = kindLines(P.src);
@@ -144,11 +157,13 @@
       const np = code(P.src, 'vue', { color: 'var(--vue)', file: P.file, dim: true });
       if (pre) pre.replaceWith(np); else side.append(np);
       pre = np; pre.style.setProperty('--c', (KINDS.find((x) => x[0] === kind) || KINDS[0])[2]); pre.setHi(ln[kind]);
+      lk();
     };
     const setHot = (p) => pg.querySelectorAll('[data-part]').forEach((n) => n.classList.toggle('hot', !!p && n === p));
     const pick = (node, pin) => {
       if (!node) return;
-      part = node.dataset.part; showCode(); setHot(node);
+      if (node.dataset.part !== part) { part = node.dataset.part; showCode(); }
+      setHot(node);
     };
     pg.addEventListener('mouseover', (e) => { if (pinned) return; const n = e.target.closest('[data-part]'); if (n) pick(n); });
     pg.addEventListener('mouseleave', () => { if (!pinned) setHot(null); });

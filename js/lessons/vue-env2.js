@@ -14,12 +14,12 @@
   .ve-it{all:unset;cursor:pointer;box-sizing:border-box;display:flex;gap:6px;align-items:center;padding:5px 8px;border-radius:7px;border:1px solid transparent;transition:.2s}
   .ve-it:hover{background:var(--card2)}.ve-it.on{background:color-mix(in srgb,var(--vue) 22%,var(--card));border-color:var(--vue)}.ve-it.glow{animation:vef .9s}
   @keyframes vef{40%{box-shadow:0 0 0 3px var(--vue)}}
-  .ve-it small{margin-left:auto;font:800 .62rem var(--font);color:var(--mute);white-space:nowrap}
+  .ve-it small{margin-left:auto;font:800 .72rem var(--font);color:var(--mute);white-space:nowrap}
   .ve-bd{font-size:.8rem}
   .ve-map{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
-  .ve-mn{all:unset;cursor:pointer;padding:6px 10px;border-radius:8px;border:2px solid var(--line);background:var(--card);font:800 .74rem var(--mono);transition:.2s;text-align:center}
+  .ve-mn{all:unset;cursor:pointer;padding:6px 10px;border-radius:8px;border:2px solid var(--line);background:var(--card);font:800 .78rem var(--mono);transition:.2s;text-align:center}
   .ve-mn.on{border-color:var(--vue);background:color-mix(in srgb,var(--vue) 24%,var(--card));transform:translateY(-2px)}
-  .ve-mn small{display:block;font:700 .6rem var(--font);color:var(--mute)}
+  .ve-mn small{display:block;font:700 .7rem var(--font);color:var(--mute)}
   .ve-lk{display:inline-flex;gap:.4em;align-items:center;padding:.3em .8em;border-radius:8px;border:2px solid var(--n);font:800 .76rem var(--font);cursor:pointer;background:color-mix(in srgb,var(--n) 16%,var(--card2));transition:.2s}
   .ve-lk:hover{transform:translateY(-2px)}
   .ve-bw{border:2px solid var(--line);border-radius:12px;background:#fff;color:#223;overflow:hidden;min-width:0}
@@ -27,8 +27,8 @@
   .ve-bw>.bar i{width:8px;height:8px;border-radius:50%;background:#bbb;display:inline-block}
   .ve-bw>.pg{padding:12px;display:grid;gap:8px;min-height:130px;transition:.2s}
   .ve-bw.rl>.pg.blank{background:#fff;filter:brightness(.9)}
-  .ve-st{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
-  .ve-sp{padding:6px 12px;border-radius:999px;border:2px solid var(--line);font:800 .76rem var(--font);transition:.25s;background:var(--card)}
+  .ve-st{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .ve-sp{padding:7px 12px;text-align:center;border-radius:999px;border:2px solid var(--line);font:800 .76rem var(--font);transition:.25s;background:var(--card)}
   .ve-sp.on{border-color:var(--vue);background:color-mix(in srgb,var(--vue) 26%,var(--card));transform:scale(1.06)}
   `);
 
@@ -56,6 +56,7 @@
 
   function folderScene() {
     let cur = 'main', play = 0;
+    let panelEl = null;
     const btns = {}, tree = h('div', { class: 've-tree' }), codeBox = h('div'), links = h('div', { class: 'vi-row' }), info = h('div', { class: 'vi-box' }), map = h('div', { class: 've-map' });
     const rowOf = (t) => { const f = F[t[0]]; const [k, d, ic, n, b, r] = t; return { k, d, ic: f ? f.ic : ic, n: f ? f.n.split('/').pop() : n, b: f ? f.b : b, r: f ? f.role : r }; };
     const draw = () => {
@@ -68,21 +69,24 @@
       const MAP = {}; Object.keys(IMP).forEach((k) => { MAP[k] = [F[IMP[k]].n, F[IMP[k]].src]; });
       if (K.linkFiles) K.linkFiles(pre, MAP, (k) => { cur = IMP[k]; draw(); });
       codeBox.replaceChildren(pre); const lc = K.linkChips && K.linkChips(pre, MAP, (k) => { cur = IMP[k]; draw(); }); if (lc) codeBox.append(lc);
-      links.replaceChildren(h('span', { class: 'vi-lb' }, 'つながり：'), ...f.links.map(([to, lab, ci]) => h('span', { class: 've-lk', style: { '--n': COL[ci] }, onmouseenter: () => btns[to] && btns[to].classList.add('glow'), onmouseleave: () => btns[to] && btns[to].classList.remove('glow'), onclick: () => { cur = to; draw(); } }, '➜ ' + F[to].n.split('/').pop() + '　', h('small', { style: { color: 'var(--mute)', fontWeight: 700 } }, lab))));
+      links.replaceChildren(h('span', { class: 'vi-lb' }, 'つながり：'), ...f.links.map(([to, lab, ci]) => h('span', { class: 've-lk', 'data-k': 'l' + ci, style: { '--n': COL[ci] }, onmouseenter: () => btns[to] && btns[to].classList.add('glow'), onmouseleave: () => btns[to] && btns[to].classList.remove('glow'), onclick: () => { cur = to; draw(); } }, '➜ ' + F[to].n.split('/').pop() + '　', h('small', { style: { color: 'var(--mute)', fontWeight: 700 } }, lab))));
       if (!f.links.length) links.append(h('span', { class: 'vi-lb' }, '（他のファイルから使われる側）'));
+      /* UI ⇄ コード：「つながり」のチップ ⇄ 色付きの行 */
+      if (K.vs && K.vs.link && panelEl) { const lm = {}; f.links.forEach(([, , ci]) => { lm['l' + ci] = f.marks[ci] || []; }); K.vs.link(panelEl, pre, lm, { rest: () => [] }); }
       info.replaceChildren(h('small', f.n), h('b', f.b + ' ' + BADGE[f.b] + '　／　' + f.role));
       [...map.querySelectorAll('.ve-mn')].forEach((m) => m.classList.toggle('on', m.dataset.k === cur));
     };
     const src = (text, keys) => { const o = []; text.split('\n').forEach((l, i) => { if (keys.some((k) => l.includes(k))) o.push(i + 1); }); return o; };
     TREE.forEach((t) => { const r = rowOf(t); const b = h('button', { class: 've-it', style: { paddingLeft: (r.d * 16 + 8) + 'px' }, onclick: () => { cur = t[0]; draw(); } }, r.ic + ' ' + r.n, r.b ? h('small', r.b + ' ' + (BADGE[r.b] || '')) : null); btns[t[0]] = b; tree.append(b); });
-    FLOW.forEach(([k, lab], i) => { map.append(h('button', { class: 've-mn', 'data-k': k, onclick: () => { cur = k; draw(); } }, lab, h('small', F[k].n.split('/').pop())), i < FLOW.length - 1 ? h('span', { style: { color: 'var(--mute)', fontWeight: 900 } }, '➜') : null); });
+    FLOW.forEach(([k, lab], i) => { map.append(h('button', { class: 've-mn', 'data-k': k, onclick: () => { cur = k; draw(); } }, lab, h('small', F[k].n.split('/').pop())), ...(i < FLOW.length - 1 ? [h('span', { style: { color: 'var(--mute)', fontWeight: 900 } }, '➜')] : [])); });
     const run = async () => { const my = ++play; for (const [k] of FLOW) { if (my !== play) return; cur = k; draw(); btns[k].classList.add('glow'); await sleep(1300); btns[k].classList.remove('glow'); } };
-    draw();
-    return h('div', { style: { display: 'grid', gap: '12px' } },
+    const rootEl = h('div', { style: { display: 'grid', gap: '12px' } },
       h('div', { class: 'vi-panel' }, h('div', { class: 'vi-row', style: { justifyContent: 'space-between' } }, lbl('起動の地図：ファイルは、この順につながって動く（押すとそのファイルへ）'), h('button', { class: 'btn primary', style: { '--c': C }, onclick: run }, '▶ 起動の流れを見る')), map),
       h('div', { class: 've-grid' },
         h('div', { class: 'vi-panel' }, lbl('フォルダ（押して選ぶ）'), tree, h('div', { class: 'vi-row' }, ...['✏️ よく編集', '👀 たまに', '🚫 触らない'].map((t) => h('span', { class: 'vi-lb' }, t)))),
-        h('div', { class: 'vi-panel' }, lbl('ファイルの中身（色の付いた行が、他のファイルとつながる所）'), info, codeBox, links)));
+        panelEl = h('div', { class: 'vi-panel' }, lbl('ファイルの中身（色の付いた行が、他のファイルとつながる所）'), info, codeBox, links)));
+    draw();
+    return rootEl;
   }
 
   /* ===================== 開発サーバーと HMR ===================== */

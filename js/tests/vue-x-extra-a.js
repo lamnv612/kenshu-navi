@@ -405,22 +405,22 @@
   function makeRender() {
     const sol = applyEdits(XR_FILES, XR_EDITS);
     const defs = [
-      { lv: 1, at: ['nuxt.config.ts', '// ① '], label: '① 管理画面 /admin/** を SPA にする（ssr: false）',
+      { lv: 1, at: ['nuxt.config.ts', '// ① '], label: '① nuxt.config.ts で、/admin/** を SPA にする（ssr: false）',
         hint: mkHint('SPA は、ブラウザで画面を作る方式。routeRules に、パスごとの設定を書く。', "'/admin/**': { ssr: false }", "routeRules: {\n  '/admin/**': { ssr: false },\n}", 'ts'),
         ok: (v) => /ssr\s*:\s*false/.test(rule(v['nuxt.config.ts'], '/admin/**')) },
-      { lv: 1, at: ['nuxt.config.ts', '// ② '], label: '② トップ / を SSG にする（ビルドのときに作る：prerender: true）',
+      { lv: 1, at: ['nuxt.config.ts', '// ② '], label: '② nuxt.config.ts で、/ を SSG にする（prerender: true）',
         hint: mkHint('SSG は、ビルドのときに HTML を作っておく方式。ほぼ変わらないページ向き。', "'/': { prerender: true }", "routeRules: {\n  '/': { prerender: true },\n}", 'ts'),
         ok: (v) => /prerender\s*:\s*true/.test(rule(v['nuxt.config.ts'], '/')) },
-      { lv: 1, at: ['nuxt.config.ts', '// ③ '], label: '③ コラム /blog/** を ISR にして、60 秒ごとに作り直す（isr: 60）',
+      { lv: 1, at: ['nuxt.config.ts', '// ③ '], label: '③ nuxt.config.ts で、/blog/** を 60 秒ごとに作り直す（isr: 60）',
         hint: mkHint('ISR は、一定時間ごとに作り直す方式。秒数を数字で書く。', "'/blog/**': { isr: 60 }", "routeRules: {\n  '/blog/**': { isr: 60 },\n}", 'ts'),
         ok: (v) => /isr\s*:\s*60\b/.test(rule(v['nuxt.config.ts'], '/blog/**')) },
-      { lv: 2, at: ['BlogPost.vue', '// ④ '], label: '④ 記事を useFetch<Post>() で取って、サーバーで HTML にする',
+      { lv: 2, at: ['BlogPost.vue', '// ④ '], label: '④ BlogPost.vue で、記事を useFetch<Post>() で取得する',
         hint: mkHint('SSR のページでは、データ取得に useFetch（または useAsyncData）を使う。型は <Post>。URL は /api/posts/ にスラッグを付ける。', 'useFetch<Post>(`/api/posts/${route.params.slug}`)', 'const { data: post } = await useFetch<Post>(`/api/posts/${route.params.slug}`)', 'ts'),
         ok: (v) => /await\s+(useFetch|useAsyncData)\s*<\s*Post\s*>\s*\(/.test(strip(v['BlogPost.vue'])) && /\/api\/posts\//.test(strip(v['BlogPost.vue'])) && !/ref<Post/.test(strip(v['BlogPost.vue'])) },
-      { lv: 2, at: ['TopPage.vue', '// ⑤ '], label: '⑤ ブラウザにしか無い localStorage を、onMounted の中だけで使う',
+      { lv: 2, at: ['TopPage.vue', '// ⑤ '], label: '⑤ TopPage.vue で、localStorage を onMounted の中だけで使う',
         hint: mkHint('サーバーには localStorage が無い。ブラウザで画面が出たあとに動く onMounted の中へ移す。', "onMounted(() => {\n  visits.value = Number(localStorage.getItem('visits') ?? 0) + 1\n})", "const visits = ref<number>(0)\n\nonMounted(() => {\n  visits.value = Number(localStorage.getItem('visits') ?? 0) + 1\n  localStorage.setItem('visits', String(visits.value))\n})", 'ts'),
         ok: (v) => { const s = strip(v['TopPage.vue']); const i = s.indexOf('onMounted('); const j = s.indexOf('localStorage'); return i >= 0 && j > i && /ref\s*(<[^>]*>)?\s*\(/.test(s) && /\{\{\s*visits\s*\}\}/.test(s); } },
-      { lv: 3, at: ['BlogPost.vue', '// ⑥ '], label: '⑥ 検索結果に出るタイトルと説明を、記事の中身から決める（useSeoMeta）',
+      { lv: 3, at: ['BlogPost.vue', '// ⑥ '], label: '⑥ BlogPost.vue で、記事の中身から useSeoMeta のタイトルと説明を決める',
         hint: mkHint('SSR の良さは、検索エンジンが中身を読めること。useSeoMeta に、記事の title と summary を渡す。', 'useSeoMeta({\n  title: () => post.value?.title,\n})', "useSeoMeta({\n  title: () => post.value?.title,\n  description: () => post.value?.summary,\n})", 'ts'),
         ok: (v) => /useSeoMeta\s*\(\s*\{[\s\S]*?title\s*:[\s\S]*?post[\s\S]*?description\s*:[\s\S]*?post[\s\S]*?\}\s*\)/.test(strip(v['BlogPost.vue'])) },
     ];
