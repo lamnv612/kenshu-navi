@@ -1,7 +1,7 @@
 /* 練習：補足 x-vue-store「store と eventBus」（シーン 2・3・4・5）。
-   ・本物の Pinia / mitt はプレビューに入っていない。そこで、同じ使い方の「手書き版」を .ts で用意して、本当に動かす。
+   ・本物の Pinia はプレビューに入っていない（mitt も使わない）。そこで、同じ使い方の「手書き版」を .ts で用意して、本当に動かす。
      store/noticeStore.ts … 関数の外に置いた ref / reactive を返す useNoticeStore()（Pinia の使い方と同じ）
-     lib/eventBus.ts      … Map と Set で作った on / off / emit（mitt の使い方と同じ）
+     lib/eventBus.ts      … Map と Set で作った on / off / emit（共有の連絡係。mitt も同じ使い方）
    ・ランナー（core.js の sfcBuild）の制約：.ts は import / export を消して 1 つにつなげる（単純な宣言だけ）／
      defineProps は型リテラル直書き／import は 1 行。
    ・シーン 2〜4 は、画面の文字（appText）と、コードの形で判定する。シーン 5（解除し忘れ・型・store・ローカル）は、コードの形で判定する。
@@ -27,7 +27,7 @@
 .badge { background: #ffe0e0; color: #b3261e; border-radius: 10px; padding: 0 10px; font-size: 13px; }
 .card { border: 1px solid #d5d9e0; border-radius: 8px; padding: 6px 12px; margin: 6px 0; }
 .read { opacity: 0.5; }
-.toast { background: #1f2a44; color: #fff; border-radius: 8px; padding: 4px 12px; min-height: 1.6em; }
+.reloads { background: #eef2ff; color: #1f2a44; border-radius: 8px; padding: 4px 12px; min-height: 1.6em; }
 button { margin-left: 6px; }
 ul { margin: 6px 0; }
 </style>
@@ -42,7 +42,7 @@ export interface Notice {
 }
 `);
 
-  /* ---------- 手書きの eventBus（mitt の使い方と同じ：on / off / emit） ---------- */
+  /* ---------- 手書きの eventBus（on / off / emit の 3 つだけ） ---------- */
   const BUS = (events) => F(`
 type Events = {
 ${events}
@@ -298,103 +298,105 @@ const { unread } = storeToRefs(useNoticeStore())
 
   /* ============ 4. eventBus：離れた部品に、合図だけ送る ============ */
   {
-    const EVT1 = '  toast: { message: string }';
-    const EVT2 = '  toast: { message: string }\n  saved: { id: number }';
-    const busStart = BUS(EVT1).replace('type Events = {', '// ④ saved: { id: number } を Events に足す\ntype Events = {');
+    const EVT1 = "  'case:saved': { id: number }";
+    const EVT2 = "  'case:saved': { id: number }\n  'modal:closed': { name: string }";
+    const busStart = BUS(EVT1).replace('type Events = {', "// ④ 'modal:closed': { name: string } を Events に足す\ntype Events = {");
     const busSol = BUS(EVT2);
     const page = V(F(`
-import CaseCard from '@/components/CaseCard.vue'
-import BookingForm from '@/components/BookingForm.vue'
-import NoticeBadge from '@/components/NoticeBadge.vue'
-import ToastArea from '@/components/ToastArea.vue'
+import CaseForm from '@/components/CaseForm.vue'
+import CaseEdit from '@/components/CaseEdit.vue'
+import SavedBadge from '@/components/SavedBadge.vue'
+import CaseList from '@/components/CaseList.vue'
 `), F(`
   <h3>案件ボード</h3>
-  <NoticeBadge />
-  <CaseCard />
-  <BookingForm />
-  <ToastArea />
-`));
-    const cardStart = V(F(`
-import { bus } from '@/lib/eventBus'
-
-// ① 「承諾する」を押したら、bus.emit('toast', { message: '承諾しました' }) で合図を送る
-`), F(`
-  <div class="card">
-    <b>離婚の相談</b>
-    <button>承諾する</button>
-  </div>
-`));
-    const cardSol = V(F(`
-import { bus } from '@/lib/eventBus'
-
-function accept(): void {
-  bus.emit('toast', { message: '承諾しました' })
-}
-`), F(`
-  <div class="card">
-    <b>離婚の相談</b>
-    <button @click="accept">承諾する</button>
-  </div>
+  <SavedBadge />
+  <CaseForm />
+  <CaseEdit />
+  <CaseList />
 `));
     const formStart = V(F(`
 import { bus } from '@/lib/eventBus'
 
-function save(): void {
-  bus.emit('saved', { id: 7 })
-}
-
-// ③ 「予約する」を押したら、bus.emit('toast', { message: '予約を受け付けました' }) を送る
+// ① 「保存する」を押したら、bus.emit('case:saved', { id: 7 }) で合図を送る
 `), F(`
   <div class="card">
-    <b>予約フォーム</b>
-    <button>予約する</button>
-    <button @click="save">保存する</button>
+    <b>案件の新規登録</b>
+    <button>保存する</button>
   </div>
 `));
     const formSol = V(F(`
 import { bus } from '@/lib/eventBus'
 
 function save(): void {
-  bus.emit('saved', { id: 7 })
-}
-
-function reserve(): void {
-  bus.emit('toast', { message: '予約を受け付けました' })
+  bus.emit('case:saved', { id: 7 })
 }
 `), F(`
   <div class="card">
-    <b>予約フォーム</b>
-    <button @click="reserve">予約する</button>
+    <b>案件の新規登録</b>
     <button @click="save">保存する</button>
   </div>
 `));
-    const toastStart = V(F(`
-import { ref } from 'vue'
+    const editStart = V(F(`
 import { bus } from '@/lib/eventBus'
 
-const message = ref<string>('（まだ届いていません）')
-
-// ② bus.on('toast', show) で聞いて、message に e.message を入れる
-// ⑤ bus.on('saved', …) でも聞いて、message を「案件 #◯ を保存しました」にする
-`), F(`
-  <p class="toast">{{ message }}</p>
-`));
-    const toastSol = V(F(`
-import { ref } from 'vue'
-import { bus } from '@/lib/eventBus'
-
-const message = ref<string>('（まだ届いていません）')
-
-function show(e: { message: string }): void {
-  message.value = e.message
+function close(): void {
+  bus.emit('modal:closed', { name: 'edit' })
 }
 
-bus.on('toast', show)
-bus.on('saved', (e) => {
-  message.value = \`案件 #\${e.id} を保存しました\`
+// ③ 「更新する」を押したら、bus.emit('case:saved', { id: 7 }) を送る
+`), F(`
+  <div class="card">
+    <b>案件の編集ダイアログ</b>
+    <button>更新する</button>
+    <button @click="close">閉じる</button>
+  </div>
+`));
+    const editSol = V(F(`
+import { bus } from '@/lib/eventBus'
+
+function close(): void {
+  bus.emit('modal:closed', { name: 'edit' })
+}
+
+function update(): void {
+  bus.emit('case:saved', { id: 7 })
+}
+`), F(`
+  <div class="card">
+    <b>案件の編集ダイアログ</b>
+    <button @click="update">更新する</button>
+    <button @click="close">閉じる</button>
+  </div>
+`));
+    const listStart = V(F(`
+import { ref } from 'vue'
+import { bus } from '@/lib/eventBus'
+
+const reloads = ref<number>(0)
+const lastClosed = ref<string>('（なし）')
+
+// ② bus.on('case:saved', reload) で聞いて、reload の中で reloads を 1 増やす
+// ⑤ bus.on('modal:closed', …) でも聞いて、lastClosed を e.name にする
+`), F(`
+  <p class="reloads">案件一覧：再読み込み {{ reloads }} 回 ／ 最後に閉じた：{{ lastClosed }}</p>
+`));
+    const listSol = V(F(`
+import { ref } from 'vue'
+import { bus } from '@/lib/eventBus'
+
+const reloads = ref<number>(0)
+const lastClosed = ref<string>('（なし）')
+
+function reload(): void {
+  reloads.value++
+}
+
+bus.on('case:saved', reload)
+bus.on('modal:closed', (e) => {
+  lastClosed.value = e.name
 })
 `), F(`
-  <p class="toast">{{ message }}</p>
+  <p class="reloads">案件一覧：再読み込み {{ reloads }} 回 ／ 最後に閉じた：{{ lastClosed }}</p>
 `));
     const badgeStart = V(F(`
 import { ref } from 'vue'
@@ -402,7 +404,7 @@ import { bus } from '@/lib/eventBus'
 
 const count = ref<number>(0)
 
-// ⑥ bus.on('saved', …) で聞いて、count を 1 増やす（聞く部品は何個あってもよい）
+// ⑥ bus.on('case:saved', …) で聞いて、count を 1 増やす（聞く部品は何個あってもよい）
 `), F(`
   <span class="badge">保存 {{ count }} 件</span>
 `));
@@ -412,45 +414,45 @@ import { bus } from '@/lib/eventBus'
 
 const count = ref<number>(0)
 
-bus.on('saved', () => {
+bus.on('case:saved', () => {
   count.value++
 })
 `), F(`
   <span class="badge">保存 {{ count }} 件</span>
 `));
     D[ID]['eventBus：離れた部品に、合図だけ送る'] = mk('CaseBoardPage.vue',
-      { 'App.vue': page, 'CaseCard.vue': cardStart, 'BookingForm.vue': formStart, 'ToastArea.vue': toastStart, 'NoticeBadge.vue': badgeStart, 'eventBus.ts': busStart },
-      { 'App.vue': page, 'CaseCard.vue': cardSol, 'BookingForm.vue': formSol, 'ToastArea.vue': toastSol, 'NoticeBadge.vue': badgeSol, 'eventBus.ts': busSol },
-      { 'App.vue': 'src/pages/CaseBoardPage.vue', 'CaseCard.vue': 'src/components/CaseCard.vue', 'BookingForm.vue': 'src/components/BookingForm.vue', 'ToastArea.vue': 'src/components/ToastArea.vue', 'NoticeBadge.vue': 'src/components/NoticeBadge.vue', 'eventBus.ts': 'src/lib/eventBus.ts' },
-      { 'App.vue': 'ページ：部品を並べるだけ（互いを知らない）', 'CaseCard.vue': '送る側：承諾したら toast の合図', 'BookingForm.vue': '送る側：予約したら toast、保存したら saved', 'ToastArea.vue': '聞く側：合図が来たらメッセージを出す', 'NoticeBadge.vue': '聞く側：saved を数える', 'eventBus.ts': 'bus：mitt と同じ使い方の手書き版（on / off / emit）' },
+      { 'App.vue': page, 'CaseForm.vue': formStart, 'CaseEdit.vue': editStart, 'CaseList.vue': listStart, 'SavedBadge.vue': badgeStart, 'eventBus.ts': busStart },
+      { 'App.vue': page, 'CaseForm.vue': formSol, 'CaseEdit.vue': editSol, 'CaseList.vue': listSol, 'SavedBadge.vue': badgeSol, 'eventBus.ts': busSol },
+      { 'App.vue': 'src/pages/CaseBoardPage.vue', 'CaseForm.vue': 'src/components/CaseForm.vue', 'CaseEdit.vue': 'src/components/CaseEdit.vue', 'CaseList.vue': 'src/components/CaseList.vue', 'SavedBadge.vue': 'src/components/SavedBadge.vue', 'eventBus.ts': 'src/lib/eventBus.ts' },
+      { 'App.vue': 'ページ：部品を並べるだけ（互いを知らない）', 'CaseForm.vue': '送る側：保存したら case:saved の合図', 'CaseEdit.vue': '送る側：閉じたら modal:closed、更新したら case:saved', 'CaseList.vue': '聞く側：合図が来たら再読み込み', 'SavedBadge.vue': '聞く側：case:saved を数える', 'eventBus.ts': 'bus：共有の連絡係（on / off / emit の手書き版）' },
       (w, c) => {
-        const Cd = w['CaseCard.vue'], Fm = w['BookingForm.vue'], Ts = w['ToastArea.vue'], Nb = w['NoticeBadge.vue'], Bs = w['eventBus.ts'];
+        const Fm = w['CaseForm.vue'], Ed = w['CaseEdit.vue'], Ls = w['CaseList.vue'], Nb = w['SavedBadge.vue'], Bs = w['eventBus.ts'];
         return [
-          T("① CaseCard.vue で、「承諾する」を押したら bus.emit('toast', { message: '承諾しました' }) を送る", 1,
-            re(/bus\.emit\s*\(\s*['"]toast['"]\s*,\s*\{\s*message\s*:\s*['"][^'"]*承諾[^'"]*['"]\s*\}\s*\)/, Cd) && re(/<button[^>]*@click\s*=/, Cd),
-            ['送る側は、誰が聞いているかを知らなくてよい。', C("function accept(): void {\n  bus.emit('toast', { message: '承諾しました' })\n}", 'ts'), 'ボタンに @click="accept" をつなぐ。'], A('CaseCard.vue', '① ')),
-          T("② ToastArea.vue で、bus.on('toast', show) で聞いて、message に e.message を入れる", 1,
-            re(/bus\.on\s*\(\s*['"]toast['"]\s*,\s*\w+\s*\)/, Ts) && re(/message\.value\s*=\s*\w+\.message/, Ts),
-            ['聞く側は、合図が来たときに動く関数を on で登録する。', C("function show(e: { message: string }): void {\n  message.value = e.message\n}\n\nbus.on('toast', show)", 'ts')], A('ToastArea.vue', '② ')),
-          T("③ BookingForm.vue で、「予約する」を押したら bus.emit('toast', { message: '予約を受け付けました' }) を送る", 1,
-            re(/bus\.emit\s*\(\s*['"]toast['"]\s*,\s*\{\s*message\s*:\s*['"][^'"]*予約[^'"]*['"]\s*\}\s*\)/, Fm) && re(/<button[^>]*@click\s*=\s*["'](?!save)[^"']+["'][^>]*>\s*予約する/, Fm),
-            ['送る側は何個あってもよい。ToastArea は、どこからの合図かを気にしない。', C("function reserve(): void {\n  bus.emit('toast', { message: '予約を受け付けました' })\n}", 'ts'), '「予約する」のボタンに @click="reserve"。'], A('BookingForm.vue', '③ ')),
-          T('④ eventBus.ts で、Events 型に saved: { id: number } を足す（合図の名前と中身の型）', 2,
-            re(/type\s+Events\s*=\s*\{[^}]*\btoast\s*:\s*\{\s*message\s*:\s*string\s*\}[^}]*\bsaved\s*:\s*\{\s*id\s*:\s*number\s*\}/, Bs),
-            ['Events 型に書いた名前だけが、emit / on で使える。名前のタイプミスを防ぐ。', C('type Events = {\n  toast: { message: string }\n  saved: { id: number }\n}', 'ts')], A('eventBus.ts', '④ ')),
-          T("⑤ ToastArea.vue で、bus.on('saved', …) でも聞いて、message を「案件 #◯ を保存しました」にする", 2,
-            re(/bus\.on\s*\(\s*['"]saved['"]\s*,[\s\S]*?message\.value\s*=\s*[^\n]*\.id/, Ts),
-            ['合図ごとに、聞く関数を分ける。中身（payload）の id が使える。', C("bus.on('saved', (e) => {\n  message.value = `案件 #${e.id} を保存しました`\n})", 'ts')], A('ToastArea.vue', '⑤ ')),
-          T("⑥ NoticeBadge.vue で、bus.on('saved', …) で聞いて、count を 1 増やす（画面の保存 0 件が、保存で増える）", 3,
-            re(/bus\.on\s*\(\s*['"]saved['"]\s*,[\s\S]*?count\.value\s*(\+\+|\+=\s*1)/, Nb),
-            ['同じ合図を、別の部品も聞ける（送る側は何も変えなくてよい）。', C("bus.on('saved', () => {\n  count.value++\n})", 'ts')], A('NoticeBadge.vue', '⑥ ')),
+          T("① CaseForm.vue で、「保存する」を押したら bus.emit('case:saved', { id: 7 }) を送る", 1,
+            re(/bus\.emit\s*\(\s*['"]case:saved['"]\s*,\s*\{\s*id\s*:\s*7\s*\}\s*\)/, Fm) && re(/<button[^>]*@click\s*=/, Fm),
+            ['送る側は、誰が聞いているかを知らなくてよい。', C("function save(): void {\n  bus.emit('case:saved', { id: 7 })\n}", 'ts'), 'ボタンに @click="save" をつなぐ。'], A('CaseForm.vue', '① ')),
+          T("② CaseList.vue で、bus.on('case:saved', reload) で聞いて、reload の中で reloads を 1 増やす", 1,
+            re(/bus\.on\s*\(\s*['"]case:saved['"]\s*,\s*reload\s*\)/, Ls) && re(/function\s+reload\s*\(\s*\)[^{]*\{[^}]*reloads\.value\s*(\+\+|\+=\s*1)/, Ls),
+            ['聞く側は、合図が来たときに動く関数を on で登録する。', C("function reload(): void {\n  reloads.value++\n}\n\nbus.on('case:saved', reload)", 'ts')], A('CaseList.vue', '② ')),
+          T("③ CaseEdit.vue で、「更新する」を押したら bus.emit('case:saved', { id: 7 }) を送る", 1,
+            re(/bus\.emit\s*\(\s*['"]case:saved['"]\s*,\s*\{\s*id\s*:\s*7\s*\}\s*\)/, Ed) && re(/<button[^>]*@click\s*=\s*["'](?!close)[^"']+["'][^>]*>\s*更新する/, Ed),
+            ['送る側は何個あってもよい。CaseList は、どこからの合図かを気にしない。', C("function update(): void {\n  bus.emit('case:saved', { id: 7 })\n}", 'ts'), '「更新する」のボタンに @click="update"。'], A('CaseEdit.vue', '③ ')),
+          T("④ eventBus.ts で、Events 型に 'modal:closed': { name: string } を足す（合図の名前と中身の型）", 2,
+            re(/type\s+Events\s*=\s*\{[^}]*['"]case:saved['"]\s*:\s*\{\s*id\s*:\s*number\s*\}[^}]*['"]modal:closed['"]\s*:\s*\{\s*name\s*:\s*string\s*\}/, Bs),
+            ['Events 型に書いた名前だけが、emit / on で使える。名前のタイプミスを防ぐ。', C("type Events = {\n  'case:saved': { id: number }\n  'modal:closed': { name: string }\n}", 'ts')], A('eventBus.ts', '④ ')),
+          T("⑤ CaseList.vue で、bus.on('modal:closed', …) でも聞いて、lastClosed を e.name にする", 2,
+            re(/bus\.on\s*\(\s*['"]modal:closed['"]\s*,[\s\S]*?lastClosed\.value\s*=\s*\w+\.name/, Ls),
+            ['合図ごとに、聞く関数を分ける。中身（payload）の name が使える。', C("bus.on('modal:closed', (e) => {\n  lastClosed.value = e.name\n})", 'ts')], A('CaseList.vue', '⑤ ')),
+          T("⑥ SavedBadge.vue で、bus.on('case:saved', …) で聞いて、count を 1 増やす（画面の保存 0 件が、保存で増える）", 3,
+            re(/bus\.on\s*\(\s*['"]case:saved['"]\s*,[\s\S]*?count\.value\s*(\+\+|\+=\s*1)/, Nb),
+            ['同じ合図を、別の部品も聞ける（送る側は何も変えなくてよい）。', C("bus.on('case:saved', () => {\n  count.value++\n})", 'ts')], A('SavedBadge.vue', '⑥ ')),
         ];
       }, 340);
   }
 
   /* ============ 5. バスの落とし穴：解除し忘れ ============ */
   {
-    const BUS5 = BUS('  toast: { message: string }');
+    const BUS5 = BUS("  'case:saved': { id: number }");
     const CART = F(`
 import { ref, computed, reactive } from 'vue'
 
@@ -481,21 +483,21 @@ export function useSearchStore() {
 import { ref } from 'vue'
 import { bus } from '@/lib/eventBus'
 import { useCartStore } from '@/stores/cartStore'
-import ToastArea from '@/components/ToastArea.vue'
+import CaseList from '@/components/CaseList.vue'
 import CartBadge from '@/components/CartBadge.vue'
 import SearchBox from '@/components/SearchBox.vue'
 
-const showToast = ref<boolean>(true)
+const showList = ref<boolean>(true)
 
 function save(): void {
-  bus.emit('tost', { message: '保存しました' })
+  bus.emit('case:svaed', { id: 7 })
 }
 
 function addToCart(): void {
   bus.emit('cart:add', { id: 103 })
 }
 
-// ③ 上の save の bus.emit の名前を、Events にある 'toast' に直す
+// ③ 上の save の bus.emit の名前を、Events にある 'case:saved' に直す
 // ⑤ useCartStore() を呼んで cart に入れ、addToCart では bus ではなく cart.add(103) を呼ぶ
 `), F(`
   <h3>案件ページ</h3>
@@ -503,22 +505,22 @@ function addToCart(): void {
   <SearchBox />
   <button @click="save">保存する</button>
   <button @click="addToCart">カートに入れる</button>
-  <label><input v-model="showToast" type="checkbox" /> トースト表示</label>
-  <ToastArea v-if="showToast" />
+  <label><input v-model="showList" type="checkbox" /> 案件一覧を表示</label>
+  <CaseList v-if="showList" />
 `));
     const pageSol = V(F(`
 import { ref } from 'vue'
 import { bus } from '@/lib/eventBus'
 import { useCartStore } from '@/stores/cartStore'
-import ToastArea from '@/components/ToastArea.vue'
+import CaseList from '@/components/CaseList.vue'
 import CartBadge from '@/components/CartBadge.vue'
 import SearchBox from '@/components/SearchBox.vue'
 
-const showToast = ref<boolean>(true)
+const showList = ref<boolean>(true)
 const cart = useCartStore()
 
 function save(): void {
-  bus.emit('toast', { message: '保存しました' })
+  bus.emit('case:saved', { id: 7 })
 }
 
 function addToCart(): void {
@@ -530,45 +532,45 @@ function addToCart(): void {
   <SearchBox />
   <button @click="save">保存する</button>
   <button @click="addToCart">カートに入れる</button>
-  <label><input v-model="showToast" type="checkbox" /> トースト表示</label>
-  <ToastArea v-if="showToast" />
+  <label><input v-model="showList" type="checkbox" /> 案件一覧を表示</label>
+  <CaseList v-if="showList" />
 `));
-    const toastStart = V(F(`
+    const listStart5 = V(F(`
 import { ref } from 'vue'
 import { bus } from '@/lib/eventBus'
 
-const message = ref<string>('')
+const reloads = ref<number>(0)
 
-function show(e: { message: string }): void {
-  message.value = e.message
+function reload(): void {
+  reloads.value++
 }
 
-bus.on('toast', show)
+bus.on('case:saved', reload)
 
 // ① bus.on を onMounted の中に入れる（表示されたときに登録する）
-// ② onUnmounted の中で bus.off('toast', show) を呼ぶ（消えるときに解除する）
+// ② onUnmounted の中で bus.off('case:saved', reload) を呼ぶ（消えるときに解除する）
 `), F(`
-  <p class="toast">{{ message }}</p>
+  <p class="reloads">案件一覧：再読み込み {{ reloads }} 回</p>
 `));
-    const toastSol = V(F(`
+    const listSol5 = V(F(`
 import { ref, onMounted, onUnmounted } from 'vue'
 import { bus } from '@/lib/eventBus'
 
-const message = ref<string>('')
+const reloads = ref<number>(0)
 
-function show(e: { message: string }): void {
-  message.value = e.message
+function reload(): void {
+  reloads.value++
 }
 
 onMounted(() => {
-  bus.on('toast', show)
+  bus.on('case:saved', reload)
 })
 
 onUnmounted(() => {
-  bus.off('toast', show)
+  bus.off('case:saved', reload)
 })
 `), F(`
-  <p class="toast">{{ message }}</p>
+  <p class="reloads">案件一覧：再読み込み {{ reloads }} 回</p>
 `));
     const cartStart = V(F(`
 import { ref } from 'vue'
@@ -603,22 +605,22 @@ const keyword = ref<string>('')
   <input v-model="keyword" placeholder="相談の件名" />
 `));
     D[ID]['バスの落とし穴：解除し忘れ'] = mk('CaseListPage.vue',
-      { 'App.vue': pageStart, 'ToastArea.vue': toastStart, 'CartBadge.vue': cartStart, 'SearchBox.vue': searchStart, 'eventBus.ts': BUS5, 'cartStore.ts': CART, 'searchStore.ts': SEARCH },
-      { 'App.vue': pageSol, 'ToastArea.vue': toastSol, 'CartBadge.vue': cartSol, 'SearchBox.vue': searchSol, 'eventBus.ts': BUS5, 'cartStore.ts': CART, 'searchStore.ts': SEARCH },
-      { 'App.vue': 'src/pages/CaseListPage.vue', 'ToastArea.vue': 'src/components/ToastArea.vue', 'CartBadge.vue': 'src/components/CartBadge.vue', 'SearchBox.vue': 'src/components/SearchBox.vue', 'eventBus.ts': 'src/lib/eventBus.ts', 'cartStore.ts': 'src/stores/cartStore.ts', 'searchStore.ts': 'src/stores/searchStore.ts' },
-      { 'App.vue': 'ページ：チェックを外すと ToastArea が消える', 'ToastArea.vue': '聞く側：消えるときに解除する', 'CartBadge.vue': 'カート数：状態なので store から読む', 'SearchBox.vue': '入力欄：その部品の中だけの値', 'eventBus.ts': 'bus：on / off / emit（手書き版）', 'cartStore.ts': 'store：カート（状態の置き場）', 'searchStore.ts': 'store：入れすぎの例（あとで使わなくなる）' },
+      { 'App.vue': pageStart, 'CaseList.vue': listStart5, 'CartBadge.vue': cartStart, 'SearchBox.vue': searchStart, 'eventBus.ts': BUS5, 'cartStore.ts': CART, 'searchStore.ts': SEARCH },
+      { 'App.vue': pageSol, 'CaseList.vue': listSol5, 'CartBadge.vue': cartSol, 'SearchBox.vue': searchSol, 'eventBus.ts': BUS5, 'cartStore.ts': CART, 'searchStore.ts': SEARCH },
+      { 'App.vue': 'src/pages/CaseListPage.vue', 'CaseList.vue': 'src/components/CaseList.vue', 'CartBadge.vue': 'src/components/CartBadge.vue', 'SearchBox.vue': 'src/components/SearchBox.vue', 'eventBus.ts': 'src/lib/eventBus.ts', 'cartStore.ts': 'src/stores/cartStore.ts', 'searchStore.ts': 'src/stores/searchStore.ts' },
+      { 'App.vue': 'ページ：チェックを外すと CaseList が消える', 'CaseList.vue': '聞く側：消えるときに解除する', 'CartBadge.vue': 'カート数：状態なので store から読む', 'SearchBox.vue': '入力欄：その部品の中だけの値', 'eventBus.ts': 'bus：on / off / emit（手書き版）', 'cartStore.ts': 'store：カート（状態の置き場）', 'searchStore.ts': 'store：入れすぎの例（あとで使わなくなる）' },
       (w, c, raw) => {
-        const P = w['App.vue'], Ts = w['ToastArea.vue'], Cb = w['CartBadge.vue'], Sb = w['SearchBox.vue'];
+        const P = w['App.vue'], Ts = w['CaseList.vue'], Cb = w['CartBadge.vue'], Sb = w['SearchBox.vue'];
         return [
-          T("① ToastArea.vue で、bus.on('toast', show) を onMounted の中に入れる（表示されたときに登録）", 1,
-            re(/onMounted\s*\(\s*\(\s*\)\s*=>\s*\{?[^}]*bus\.on\s*\(\s*['"]toast['"]\s*,\s*show\s*\)/, Ts),
-            ['登録する時と消える時を、ペアで考える。表示されたときは onMounted（vue-life で習う）。', C("onMounted(() => {\n  bus.on('toast', show)\n})", 'ts')], A('ToastArea.vue', '① ')),
-          T("② ToastArea.vue で、onUnmounted の中で bus.off('toast', show) を呼ぶ（消えるときに解除）", 1,
-            re(/onUnmounted\s*\(\s*\(\s*\)\s*=>\s*\{?[^}]*bus\.off\s*\(\s*['"]toast['"]\s*,\s*show\s*\)/, Ts) && re(/bus\.on\s*\(\s*['"]toast['"]\s*,\s*show\s*\)/, Ts),
-            ['解除しないと、画面から消えた後も、ハンドラが残る。戻るたびに増えて、トーストが何回も出る。', 'off には、on と同じ関数（show）を渡す。', C("onUnmounted(() => {\n  bus.off('toast', show)\n})", 'ts')], A('ToastArea.vue', '② ')),
-          T("③ CaseListPage.vue で、bus.emit('tost', …) の名前を、Events にある 'toast' に直す", 1,
-            re(/bus\.emit\s*\(\s*['"]toast['"]\s*,/, P) && !re(/['"]tost['"]/, P),
-            ['名前が文字列のままだと、1 文字違っても気づけない。Events 型に書いた名前だけを使う。', C("bus.emit('toast', { message: '保存しました' })", 'ts')], A('App.vue', '③ ')),
+          T("① CaseList.vue で、bus.on('case:saved', reload) を onMounted の中に入れる（表示されたときに登録）", 1,
+            re(/onMounted\s*\(\s*\(\s*\)\s*=>\s*\{?[^}]*bus\.on\s*\(\s*['"]case:saved['"]\s*,\s*reload\s*\)/, Ts),
+            ['登録する時と消える時を、ペアで考える。表示されたときは onMounted（vue-life で習う）。', C("onMounted(() => {\n  bus.on('case:saved', reload)\n})", 'ts')], A('CaseList.vue', '① ')),
+          T("② CaseList.vue で、onUnmounted の中で bus.off('case:saved', reload) を呼ぶ（消えるときに解除）", 1,
+            re(/onUnmounted\s*\(\s*\(\s*\)\s*=>\s*\{?[^}]*bus\.off\s*\(\s*['"]case:saved['"]\s*,\s*reload\s*\)/, Ts) && re(/bus\.on\s*\(\s*['"]case:saved['"]\s*,\s*reload\s*\)/, Ts),
+            ['解除しないと、画面から消えた後も、ハンドラが残る。戻るたびに増えて、一覧が何回も再読み込みされる。', 'off には、on と同じ関数（reload）を渡す。', C("onUnmounted(() => {\n  bus.off('case:saved', reload)\n})", 'ts')], A('CaseList.vue', '② ')),
+          T("③ CaseListPage.vue で、bus.emit('case:svaed', …) の名前を、Events にある 'case:saved' に直す", 1,
+            re(/bus\.emit\s*\(\s*['"]case:saved['"]\s*,/, P) && !re(/['"]case:svaed['"]/, P),
+            ['名前が文字列のままだと、1 文字違っても気づけない。Events 型に書いた名前だけを使う。', C("bus.emit('case:saved', { id: 7 })", 'ts')], A('App.vue', '③ ')),
           T('④ CartBadge.vue で、bus ではなく useCartStore() の cart.count を表示する（画面：カート 2 個）', 2,
             re(/const\s+cart\s*=\s*useCartStore\s*\(\s*\)/, Cb) && re(/\{\{\s*cart\.count\s*\}\}/, Cb) && /カート\s*2\s*個/.test(appText(c)),
             ['カートの数は「状態」。bus は合図を覚えないので、開く前の合図は取りこぼす。', C('const cart = useCartStore()\n\n<span class="badge">カート {{ cart.count }} 個</span>')], A('CartBadge.vue', '④ ')),

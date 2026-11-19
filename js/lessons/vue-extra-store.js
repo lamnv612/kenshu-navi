@@ -1,7 +1,7 @@
 /* 補足 Vue：store と eventBus（x-vue-store）
    x-vue-state「誰が誰に話しかける？」の続き。あちらは「3方式の比較」、こちらは store と eventBus を 1 つずつ深く。
    1) 離れた部品どうし、どう話す？（ツリー＋パケット＋ホップ数）  2) store：みんなで共有する置き場（K.tsAnatBuild ＋ ライブデモ）
-   3) store を使うときのコード（K.vs.versus）  4) eventBus：離れた部品に、合図だけ送る（K.tsAnatBuild ＋ デモ）
+   3) store を使うときのコード（K.vs.versus）  4) eventBus：離れた部品に、合図だけ送る（連絡係の図 → 自作の型付き bus ＋ デモ。mitt は小さな注記のみ）
    5) バスの落とし穴（✖/✓ タブ）  6) store と eventBus、どっち？（仕分け） */
 (function () {
   'use strict';
@@ -112,9 +112,17 @@
   .vxS-btn:hover{background:#dbe5ff}.vxS-btn[disabled]{opacity:.5;cursor:default}
   .vxS-bus{display:flex;flex-direction:column;gap:8px;align-items:center;justify-content:center;border:3px dashed #ffb454;border-radius:14px;background:#fff7e6;padding:10px}
   .vxS-bus>b{font:900 .9rem var(--mono);color:#b86a00}
-  .vxS-toast{min-height:2.6em;display:flex;align-items:center;padding:.4em .9em;border-radius:10px;background:#1f2a44;color:#fff;font:800 .85rem var(--font);transition:.3s}
-  .vxS-toast.off{background:#e9edf8;color:#9aa4c4}
+  .vxS-recv{min-height:2.6em;display:flex;align-items:center;padding:.4em .9em;border-radius:10px;background:#1f2a44;color:#fff;font:800 .85rem var(--font);transition:.3s}
+  .vxS-recv.off{background:#e9edf8;color:#9aa4c4}
   .vxS-sw{display:inline-flex;gap:6px;align-items:center;font:800 .8rem var(--font);color:#1f2a44;cursor:pointer}
+  .vxS-map{align-items:stretch;justify-content:flex-start;gap:8px}
+  .vxS-mrow{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:10px;background:#fff;border:2px solid #f0d9a8;min-height:3em;transition:.3s}
+  .vxS-chips{display:flex;gap:6px;flex-wrap:wrap;align-items:center}.vxS-chips small{font:800 .8rem var(--font);color:#9aa4c4}
+  .vxS-arr{font:900 1rem var(--mono);color:#b86a00}
+  .vxS-meth{border:2px solid var(--line);border-radius:12px;padding:8px 12px;background:var(--card);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .vxS-meth code{font:900 .9rem var(--mono);color:var(--c)}.vxS-meth b{font:800 .85rem var(--font)}
+  .vxS-contract{font:800 .85rem var(--font);color:var(--mute)}
+  .vxS-ref{display:inline-block;font:800 .85rem var(--font);color:var(--vue);text-decoration:underline}
   .vxS-four{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;align-items:stretch}
   .vxS-four>pre.code{margin:0;font-size:.85rem}
   @media(max-width:980px){.vxS-four{grid-template-columns:1fr}}
@@ -124,9 +132,9 @@
   .vxS-nav{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
   .vxS-page{border:3px solid #b9c4e2;border-radius:12px;background:#fff;padding:10px;display:flex;flex-direction:column;gap:8px;min-height:7em}
   .vxS-page>b{font:900 .85rem var(--mono);color:#2f6df0}
-  .vxS-toasts{display:flex;flex-direction:column;gap:6px;min-height:5.2em}
-  .vxS-tst{padding:.3em .8em;border-radius:9px;background:#1f2a44;color:#fff;font:800 .8rem var(--font);width:fit-content;animation:vxSin .35s}
-  .vxS-tst.ghost{background:#fff;color:#e5484d;border:2px dashed #e5484d}
+  .vxS-logs{display:flex;flex-direction:column;gap:6px;min-height:5.2em}
+  .vxS-lg{padding:.3em .8em;border-radius:9px;background:#1f2a44;color:#fff;font:800 .8rem var(--font);width:fit-content;animation:vxSin .35s}
+  .vxS-lg.ghost{background:#fff;color:#e5484d;border:2px dashed #e5484d}
   @keyframes vxSin{from{opacity:0;transform:translateY(8px)}}
   .vxS-verdict{width:fit-content;padding:.2em 1em;border-radius:99px;font:900 .9rem var(--font);color:#06101f}
   .vxS-verdict.bad{background:#ff8a96}.vxS-verdict.ok{background:#2fd4a4}
@@ -208,9 +216,9 @@
   }
 
   /* ================= 1. 離れた部品どうし、どう話す？ ================= */
-  const POS = { App: [50, 9], Layout: [50, 29], Header: [16, 29], ToastArea: [87, 29], Sidebar: [34, 51], Main: [66, 51], CaseList: [66, 70], CaseCard: [66, 89], HUB: [28, 82] };
-  const FILE = { App: 'src/App.vue', Layout: 'src/layouts/Layout.vue', Header: 'src/components/Header.vue', ToastArea: 'src/components/ToastArea.vue', Sidebar: 'src/components/Sidebar.vue', Main: 'src/components/Main.vue', CaseList: 'src/components/CaseList.vue', CaseCard: 'src/components/CaseCard.vue' };
-  const PARENT = { Layout: 'App', Header: 'App', ToastArea: 'App', Sidebar: 'Layout', Main: 'Layout', CaseList: 'Main', CaseCard: 'CaseList' };
+  const POS = { App: [50, 9], Layout: [50, 29], Header: [16, 29], StatusBar: [83, 29], Sidebar: [34, 51], Main: [66, 51], CaseList: [66, 70], CaseCard: [66, 89], HUB: [28, 82] };
+  const FILE = { App: 'src/App.vue', Layout: 'src/layouts/Layout.vue', Header: 'src/components/Header.vue', StatusBar: 'src/components/StatusBar.vue', Sidebar: 'src/components/Sidebar.vue', Main: 'src/components/Main.vue', CaseList: 'src/components/CaseList.vue', CaseCard: 'src/components/CaseCard.vue' };
+  const PARENT = { Layout: 'App', Header: 'App', StatusBar: 'App', Sidebar: 'Layout', Main: 'Layout', CaseList: 'Main', CaseCard: 'CaseList' };
   const WAY = {
     props: { label: 'props / emit', col: BLUE, hub: null },
     store: { label: 'store（Pinia）', col: GREEN, hub: { n: 'Store', file: 'src/stores/notice.ts' } },
@@ -221,12 +229,12 @@
   function codeOf(way, t) {
     const hd = t === 'Header';
     if (way === 'props') {
-      return { lines: ['// CaseCard.vue', "emit('accepted')", '// CaseList.vue（中継）', '<CaseCard @accepted="emit(\'accepted\')" />', '// Main.vue（中継）', '<CaseList @accepted="emit(\'accepted\')" />', '// Layout.vue（中継）', '<Main @accepted="emit(\'accepted\')" />', '// App.vue', hd ? '<Layout @accepted="unread++" />' : '<Layout @accepted="message = \'承諾しました\'" />', hd ? '<Header :unread="unread" />' : '<ToastArea :message="message" />', '// ' + t + '.vue', hd ? 'defineProps<{ unread: number }>()' : 'defineProps<{ message: string }>()'], map: { CaseCard: [2], CaseList: [4], Main: [6], Layout: [8], App: [10, 11], [t]: [13] } };
+      return { lines: ['// CaseCard.vue', "emit('accepted')", '// CaseList.vue（中継）', '<CaseCard @accepted="emit(\'accepted\')" />', '// Main.vue（中継）', '<CaseList @accepted="emit(\'accepted\')" />', '// Layout.vue（中継）', '<Main @accepted="emit(\'accepted\')" />', '// App.vue', hd ? '<Layout @accepted="unread++" />' : '<Layout @accepted="done++" />', hd ? '<Header :unread="unread" />' : '<StatusBar :done="done" />', '// ' + t + '.vue', hd ? 'defineProps<{ unread: number }>()' : 'defineProps<{ done: number }>()'], map: { CaseCard: [2], CaseList: [4], Main: [6], Layout: [8], App: [10, 11], [t]: [13] } };
     }
     if (way === 'store') {
-      return { lines: ['// CaseCard.vue', 'const notice = useNoticeStore()', "notice.push('承諾しました')", '// ' + t + '.vue', 'const notice = useNoticeStore()', hd ? '<span>{{ notice.unread }}</span>' : '<p>{{ notice.latest }}</p>'], map: { CaseCard: [2, 3], [t]: [5, 6] } };
+      return { lines: ['// CaseCard.vue', 'const notice = useNoticeStore()', "notice.push('承諾しました')", '// ' + t + '.vue', 'const notice = useNoticeStore()', hd ? '<span>{{ notice.unread }}</span>' : '<p>承諾 {{ notice.done }} 件</p>'], map: { CaseCard: [2, 3], [t]: [5, 6] } };
     }
-    return { lines: ['// CaseCard.vue', hd ? "bus.emit('accepted', { id: 1 })" : "bus.emit('toast', { message: '承諾しました' })", '// ' + t + '.vue', hd ? "bus.on('accepted', () => { unread.value++ })" : "bus.on('toast', (e) => { message.value = e.message })"], map: { CaseCard: [2], [t]: [4] } };
+    return { lines: ['// CaseCard.vue', "bus.emit('case:accepted', { id: 1 })", '// ' + t + '.vue', hd ? "bus.on('case:accepted', () => { unread.value++ })" : "bus.on('case:accepted', () => { done.value++ })"], map: { CaseCard: [2], [t]: [4] } };
   }
   function scene1(el) {
     let hubFile = '';
@@ -236,9 +244,9 @@
     const path = h('div', { class: 'vxS-path' });
     const svg = h('div');
     const badge = h('span', { class: 'vxS-chip' }, '通知 0');
-    const toast = h('span', { class: 'vxS-chip' }, '—');
+    const done = h('span', { class: 'vxS-chip' }, '承諾 0');
     const mkNode = (n, extra) => { const e = h('div', { class: 'vxS-nd', 'data-k': n, style: { left: POS[n][0] + '%', top: POS[n][1] + '%' }, title: FILE[n] || '' }, n, extra || null); nodes[n] = e; stage.append(e); return e; };
-    Object.keys(FILE).forEach((n) => mkNode(n, n === 'Header' ? badge : n === 'ToastArea' ? toast : null));
+    Object.keys(FILE).forEach((n) => mkNode(n, n === 'Header' ? badge : n === 'StatusBar' ? done : null));
     const hub = mkNode('HUB'); hub.classList.add('hub');
     const edges = Object.keys(PARENT).map((c) => `<line x1="${POS[PARENT[c]][0]}" y1="${POS[PARENT[c]][1]}" x2="${POS[c][0]}" y2="${POS[c][1]}"/>`).join('');
     const drawSvg = () => { const w = WAY[st.way], p = pathOf(st.way, st.target).map((n) => POS[n].join(',')).join(' '); svg.innerHTML = `<svg viewBox="0 0 100 100" preserveAspectRatio="none"><g>${edges}</g><polyline points="${p}" stroke="${w.col}"/></svg>`; stage.querySelectorAll('svg').forEach((s) => s.remove()); stage.prepend(svg.firstChild); };
@@ -272,12 +280,12 @@
         nodes[p[i]].classList.add('hit'); setTimeout(() => nodes[p[i]] && nodes[p[i]].classList.remove('hit'), 450);
         hop.textContent = String(++st.hops); bump(hop);
       }
-      if (st.target === 'Header') { badge.textContent = '通知 ' + (++st.n1); bump(badge); } else { toast.textContent = '承諾しました'; bump(toast); }
+      if (st.target === 'Header') { badge.textContent = '通知 ' + (++st.n1); bump(badge); } else { done.textContent = '承諾 ' + (++st.n2); bump(done); }
       st.running = false;
     }
     const wayTabs = Object.keys(WAY).map((k) => tabBtn(WAY[k].label, k === st.way, () => { if (st.running) return; st.way = k; wayTabs.forEach((b, i) => b.classList.toggle('on', Object.keys(WAY)[i] === k)); draw(); }, '', WAY[k].col));
-    const tgTabs = [['Header', '🔔 Header のバッジ'], ['ToastArea', '🍞 ToastArea']].map(([k, l]) => tabBtn(l, k === st.target, () => { if (st.running) return; st.target = k; tgTabs.forEach((b, i) => b.classList.toggle('on', i === (k === 'Header' ? 0 : 1))); draw(); }, '', VIOLET));
-    st.n1 = 0;
+    const tgTabs = [['Header', '🔔 Header のバッジ'], ['StatusBar', '📊 StatusBar の件数']].map(([k, l]) => tabBtn(l, k === st.target, () => { if (st.running) return; st.target = k; tgTabs.forEach((b, i) => b.classList.toggle('on', i === (k === 'Header' ? 0 : 1))); draw(); }, '', VIOLET));
+    st.n1 = 0; st.n2 = 0;
     Object.keys(nodes).forEach((n) => nodes[n].addEventListener('mouseenter', () => { fileBar.textContent = '📄 ' + (n === 'HUB' ? hubFile : FILE[n]); }));
     const go = h('button', { class: 'btn primary', style: { '--c': 'var(--vue)' }, onclick: run }, '▶ CaseCard の「承諾する」を押す');
     el.append(h('div', { class: 'vxS' },
@@ -427,63 +435,110 @@
   }
 
   /* ================= 4. eventBus：離れた部品に、合図だけ送る ================= */
+  const REF_URL = 'https://v3-migration.vuejs.org/ja/breaking-changes/events-api';
+  const refLink = () => h('a', { class: 'vxS-ref', href: REF_URL, target: '_blank', rel: 'noopener' }, '📖 参考：Vue 3 移行ガイド「イベント API（$on / $off / $once の削除）」 ↗');
   function scene4(el) {
     const T = (t, k) => [t, k ? [k] : []];
-    const parts1 = {
-      imp: ['import mitt', GOLD, '小さなイベントバスのライブラリ。Vue 3 は $on / $off をやめたので、これを使う。'],
-      events: ['Events 型', VIOLET, '「どんな合図があるか」と「運ぶ中身の型」を 1 か所に書く。'],
-      bus: ['bus', BLUE, 'アプリ全体で 1 つだけ作る。全員が、これを import して使う。'],
-      emit: ['emit：送る', PINK, '合図を出す。誰が聞いているかは知らない。'],
-      on: ['on：聞く', GREEN, '合図が来たときに動く関数を登録する（購読）。'],
-      off: ['off：やめる', ORANGE, '登録した関数を外す（解除）。同じ関数を渡す。'],
-    };
-    const parts2 = {
-      handlers: ['handlers', VIOLET, '聞いている関数の名簿（Set）。これが bus の正体。'],
-      on: ['on', GREEN, '名簿に足す。'],
-      off: ['off', ORANGE, '名簿から外す。'],
-      emit: ['emit', PINK, '名簿の全員を呼ぶ。'],
-    };
+    /* ---- 1) 考え方の図：bus ＝ Map（イベント名 → ハンドラの名簿） ---- */
+    const NAMES = ['case:saved', 'modal:closed'];
+    const M = { 'case:saved': [], 'modal:closed': [] };
+    const busy = { v: false }, alive = { v: true };
+    const log = h('div', { class: 'vxS-err' }, h('span', { class: 'mute' }, '下のボタンを押すと、ここに結果が出る'));
+    const say = (txt, ok) => { log.className = 'vxS-err' + (ok ? ' ok' : ''); log.replaceChildren(...[].concat(txt).map((x) => (typeof x === 'string' ? document.createTextNode(x) : x))); };
+    const rowEls = {};
+    const rows = NAMES.map((n) => { const chips = h('div', { class: 'vxS-chips' }); const r = h('div', { class: 'vxS-mrow' }, h('span', { class: 'vxS-chip hot' }, "'" + n + "'"), h('span', { class: 'vxS-arr' }, '→'), chips); rowEls[n] = { chips, row: r }; return r; });
+    const chipEl = (n, f) => rowEls[n].chips.querySelector('[data-f="' + f + '"]');
+    const paintRow = (n) => { const c = rowEls[n].chips; c.replaceChildren(...M[n].map((f) => h('span', { class: 'vxS-chip', 'data-f': f }, f))); if (!M[n].length) c.append(h('small', '（誰も聞いていない）')); };
+    NAMES.forEach(paintRow);
+    const table = h('div', { class: 'vxS-bus vxS-map', 'data-k': 'handlers' }, h('b', 'bus'), h('small', 'Map：イベント名 → ハンドラの名簿（Set）'), ...rows);
+    const stageC = h('div', { class: 'vxS-stage' }, table);
+    const doOn = (n, f) => { if (busy.v) return; if (!M[n].includes(f)) M[n].push(f); paintRow(n); bump(chipEl(n, f)); say(['on(', "'" + n + "', " + f + ') → 名簿に足した（聞き始め）'], true); };
+    const doOff = (n, f) => { if (busy.v) return; const had = M[n].includes(f); M[n] = M[n].filter((x) => x !== f); paintRow(n); bump(rowEls[n].row); say(had ? ['off(', "'" + n + "', " + f + ') → 名簿から外した（聞くのをやめた）'] : ['名簿に ' + f + ' は無い（何も起きない）']); };
+    async function doEmit(n, btn, payload) {
+      if (busy.v) return; busy.v = true;
+      const fs = M[n].slice(); const out = [];
+      await fly(stageC, btn, rowEls[n].row, "emit('" + n + "')", PINK, 450); if (!alive.v) return;
+      bump(rowEls[n].row);
+      if (!fs.length) say('✖ 名簿が空：誰も呼ばれない。エラーにもならない。'); else {
+        for (const f of fs) { const c = chipEl(n, f); if (!c) continue; await fly(stageC, rowEls[n].row.firstChild, c, 'call', GREEN, 350); if (!alive.v) return; bump(c); out.push(f + '(' + payload + ')'); }
+        say(['送り手は誰が聞くか知らない → ', ...out.map((x, i) => h('div', { key: i }, '✓ ' + x + ' が呼ばれた'))], true);
+      }
+      busy.v = false;
+    }
+    const mb = (txt, col, fn) => { const b = tabBtn(txt, false, () => fn(b), '', col); b.style.fontFamily = 'var(--mono)'; b.style.fontSize = '.8rem'; return b; };
+    const ctl = h('div', { class: 'vxS-bar' },
+      mb("on('case:saved', reloadList)", GREEN, () => doOn('case:saved', 'reloadList')),
+      mb("on('case:saved', updateBadge)", GREEN, () => doOn('case:saved', 'updateBadge')),
+      mb("emit('case:saved', { id: 1 })", PINK, (b) => doEmit('case:saved', b, '{ id: 1 }')),
+      mb("emit('modal:closed', …)", PINK, (b) => doEmit('modal:closed', b, '…')),
+      mb("off('case:saved', reloadList)", ORANGE, () => doOff('case:saved', 'reloadList')),
+      mb('⟲', VIOLET, () => { if (busy.v) return; NAMES.forEach((n) => { M[n] = []; paintRow(n); }); say('名簿を空にした'); }));
+    const mcard = (k, sig, ja, col) => h('div', { class: 'vxS-meth', 'data-k': k, style: { '--c': col } }, h('code', sig), h('b', ja));
+    const methods = h('div', { class: 'vxS-col' },
+      mcard('on', 'on(name, handler)', '登録＝聞く', GREEN), mcard('off', 'off(name, handler)', '解除＝聞くのをやめる', ORANGE), mcard('emit', 'emit(name, payload)', '送る（誰が聞くかは知らない）', PINK),
+      h('small', { class: 'vxS-contract' }, '約束は ', h('b', 'イベント名'), ' ＋ ', h('b', 'ペイロード'), '（運ぶ中身）だけ。'), log);
+    const concept = h('div', { class: 'vxS' },
+      h('div', { class: 'vxS-tt' }, '💡 考え方：bus の中は「イベント名 → ハンドラの名簿」だけ'),
+      h('div', { class: 'vxS-two' }, h('div', { class: 'vxS-box' }, stageC, ctl), h('div', { class: 'vxS-box' }, methods)));
+    /* ---- 2) 自作の型付き bus（解剖） ---- */
     const anat = K.tsAnatBuild({
-      tab: 'mitt を使う', split: true, lang: 'ts', title: '🔍 bus の部品（カーソルを乗せる）',
-      tokens: [T("import mitt from 'mitt'", 'imp'), T('\n\n'), T('type Events = { toast: { message: string } }', 'events'), T('\n\nexport const '), T('bus', 'bus'), T(' = '), T('mitt<Events>()', 'bus'), T('\n\n'), T("bus.emit('toast', { message: '保存しました' })", 'emit'), T('\n'), T("bus.on('toast', show)", 'on'), T('\n'), T("bus.off('toast', show)", 'off')],
-      parts: parts1,
+      tab: '自作する（約 18 行）', split: true, lang: 'ts', title: '🔍 自作の bus（これが eventBus の中身）',
+      tokens: [
+        T("type Events = {\n  'case:saved': { id: number }\n  'modal:closed': { name: string }\n}", 'events'), T("\ntype Fn<P> = (p: P) => void\n\nfunction createBus<E extends Record<string, unknown>>() {\n  "),
+        T('const map = new Map<keyof E, Set<Fn<any>>>()', 'handlers'), T('\n  return {\n    '),
+        T("on<K extends keyof E>(name: K, fn: Fn<E[K]>) {\n      if (!map.has(name)) map.set(name, new Set())\n      map.get(name)!.add(fn)\n    }", 'on'), T(',\n    '),
+        T('off<K extends keyof E>(name: K, fn: Fn<E[K]>) {\n      map.get(name)?.delete(fn)\n    }', 'off'), T(',\n    '),
+        T('emit<K extends keyof E>(name: K, payload: E[K]) {\n      map.get(name)?.forEach((fn) => fn(payload))\n    }', 'emit'), T(',\n  }\n}\n\nexport const '), T('bus = createBus<Events>()', 'bus'),
+      ],
+      parts: {
+        events: ['Events 型', VIOLET, '合図の名前と、運ぶ中身の型。送り手と聞き手の約束を 1 か所に書く。'],
+        handlers: ['map（名簿）', BLUE, 'イベント名 → ハンドラの Set。これが bus の正体。'],
+        on: ['on：聞く', GREEN, '名簿に関数を足す（登録・購読）。'],
+        off: ['off：やめる', ORANGE, '名簿から同じ関数を外す（解除）。'],
+        emit: ['emit：送る', PINK, '名簿の全員を、ペイロードつきで呼ぶ。'],
+        bus: ['bus', GOLD, 'アプリ全体で 1 つだけ作る。全員が import して使う。'],
+      },
       more: [{
-        tab: '自作する（10 行）', split: true, lang: 'ts', title: '🔍 自作の bus（種類が 1 つの最小版）',
-        tokens: [T("type Handler = (e: { message: string }) => void\n\nconst handlers = new Set<Handler>()", 'handlers'), T('\n\nexport const bus = {\n  '), T('on: (fn: Handler): void => { handlers.add(fn) }', 'on'), T(',\n  '), T('off: (fn: Handler): void => { handlers.delete(fn) }', 'off'), T(',\n  '), T('emit: (e: { message: string }): void => handlers.forEach((fn) => fn(e))', 'emit'), T(',\n}')],
-        parts: parts2,
+        tab: 'ready-made: mitt', split: true, lang: 'ts', title: '🔍 ready-made: mitt — 同じ on / off / emit の使い方（実務ではこれを使うことが多い。Vue 3 では $on/$off が無くなったため）',
+        tokens: [T("import mitt from 'mitt'", 'imp'), T('\n\nexport const '), T('bus = mitt<Events>()', 'bus'), T('\n'), T("bus.on('case:saved', reload)   // off / emit も同じ", 'on')],
+        parts: { imp: ['mitt', GOLD, '既製の小さなイベントバス。Vue 3 移行ガイドも、外部ライブラリとして挙げている。'], bus: ['mitt<Events>()', BLUE, '自作の createBus<Events>() と同じ役。'], on: ['on / off / emit', GREEN, '使い方は自作と同じ。'] },
       }],
     });
-    const note = h('div', { class: 'vxS-note' }, '⚠ Vue 2 の this.$on / $off / $once は、Vue 3 で削除された。→ ', h('code', 'mitt'), ' などを使うか、上の自作版を書く。');
-    /* ---- デモ ---- */
-    const S = { handlers: 1, alive: true, busy: false };
+    /* ---- 3) Vue 2 → Vue 3 ---- */
+    const v2 = h('div', { class: 'vxS-srp' },
+      h('div', { class: 'x' }, h('b', '✖ Vue 2：new Vue() を bus に（Vue 3 で削除）'), mkPre(["const eventBus = new Vue()", "eventBus.$on('case:saved', reload)", "eventBus.$emit('case:saved', { id: 1 })"], 'js', '古いコード', BAD)),
+      h('div', { class: 'o' }, h('b', '✓ Vue 3：自作の bus か、mitt / tiny-emitter'), mkPre(["// $on / $off / $once は無くなった（$emit は親子の @event 用に残る）", "import { bus } from '@/lib/eventBus'", "bus.on('case:saved', reload)"], 'ts', '今のコード', OK)));
+    const note = h('div', { class: 'vxS-note' }, h('b', 'Vue 2 の古いコードを読むときのために'), '　', v2, h('div', { style: { marginTop: '8px' } }, refLink()));
+    /* ---- 4) デモ ---- */
+    const S = { handlers: 1, reloads: 0, alive: true, busy: false };
     const cnt = h('span', { class: 'vxS-chip hot', 'data-k': 'handlers' }, '聞いている部品：1');
-    const toast = h('div', { class: 'vxS-toast off' }, '（まだ届いていない）');
-    const sw = h('input', { type: 'checkbox', checked: true, onchange: () => { S.handlers = sw.checked ? 1 : 0; cnt.textContent = '聞いている部品：' + S.handlers; bump(cnt); toast.classList.toggle('off', true); toast.textContent = sw.checked ? '（まだ届いていない）' : '（ToastArea が無い）'; } });
-    const swl = h('label', { class: 'vxS-sw', 'data-k': 'off' }, sw, 'ToastArea を表示する');
-    const cToast = h('div', { class: 'vxS-comp', 'data-k': 'on' }, h('b', 'ToastArea.vue'), toast, swl);
-    const hub = h('div', { class: 'vxS-bus', 'data-k': 'bus' }, h('b', 'bus'), cnt, h('small', 'type Events = { toast }'));
-    const mkSend = (name, msg) => { const b = h('button', { class: 'vxS-btn', type: 'button', onclick: () => send(b, msg) }, name === 'CaseCard' ? '承諾する' : '予約する'); return h('div', { class: 'vxS-comp', 'data-k': 'emit' }, h('b', name + '.vue'), b); };
-    const stage = h('div', { class: 'vxS-stage vxS-s4' }, h('div', { class: 'vxS-send' }, mkSend('CaseCard', '承諾しました'), mkSend('BookingForm', '予約を受け付けました')), hub, cToast);
-    async function send(btn, msg) {
+    const rcv = h('div', { class: 'vxS-recv off' }, '一覧 3 件 ／ 再読み込み 0 回');
+    const sw = h('input', { type: 'checkbox', checked: true, onchange: () => { S.handlers = sw.checked ? 1 : 0; cnt.textContent = '聞いている部品：' + S.handlers; bump(cnt); rcv.classList.add('off'); rcv.textContent = sw.checked ? '一覧 ' + (3 + S.reloads) + ' 件 ／ 再読み込み ' + S.reloads + ' 回' : '（CaseList が無い）'; } });
+    const swl = h('label', { class: 'vxS-sw', 'data-k': 'off' }, sw, 'CaseList を表示する');
+    const cList = h('div', { class: 'vxS-comp', 'data-k': 'on' }, h('b', 'CaseList.vue'), rcv, swl);
+    const hub = h('div', { class: 'vxS-bus', 'data-k': 'bus' }, h('b', 'bus'), cnt, h('small', "'case:saved'"));
+    const mkSend = (name, label) => { const b = h('button', { class: 'vxS-btn', type: 'button', onclick: () => send(b) }, label); return h('div', { class: 'vxS-comp', 'data-k': 'emit' }, h('b', name + '.vue'), b); };
+    const stage = h('div', { class: 'vxS-stage vxS-s4' }, h('div', { class: 'vxS-send' }, mkSend('CaseForm', '保存する'), mkSend('CaseEdit', '更新する')), hub, cList);
+    async function send(btn) {
       if (S.busy) return; S.busy = true;
-      await fly(stage, btn, hub, "emit('toast')", PINK, 520); if (!S.alive) return;
+      await fly(stage, btn, hub, "emit('case:saved')", PINK, 520); if (!S.alive) return;
       bump(hub);
-      if (S.handlers > 0) { await fly(stage, hub, toast, 'on', GREEN, 520); if (!S.alive) return; toast.classList.remove('off'); toast.textContent = '🍞 ' + msg; bump(toast); }
+      if (S.handlers > 0) { await fly(stage, hub, rcv, 'on', GREEN, 520); if (!S.alive) return; S.reloads++; rcv.classList.remove('off'); rcv.textContent = '🔄 一覧 ' + (3 + S.reloads) + ' 件 ／ 再読み込み ' + S.reloads + ' 回'; bump(rcv); }
       else { const x = h('span', { class: 'vxS-pkt', style: { background: '#ff8a96' } }, '✖ 誰も聞いていない'); stage.append(x); const r = hub.getBoundingClientRect(), hr = stage.getBoundingClientRect(); x.style.transform = `translate(${r.left - hr.left}px,${r.top - hr.top - 24}px)`; await sleep(900); x.remove(); }
       S.busy = false;
     }
-    const pBus = mkPre(["import mitt from 'mitt'", '', 'type Events = { toast: { message: string } }', '', 'export const bus = mitt<Events>()'], 'ts', 'lib/eventBus.ts', GOLD);
-    const pSend = mkPre(["import { bus } from '@/lib/eventBus'", '', "bus.emit('toast', { message: '承諾しました' })"], 'ts', 'CaseCard.vue', PINK);
-    const pLis = mkPre(["const show = (e: Events['toast']): void => { message.value = e.message }", '', "bus.on('toast', show)", "onUnmounted(() => bus.off('toast', show))"], 'ts', 'ToastArea.vue', GREEN);
+    const pBus = mkPre(["type Events = { 'case:saved': { id: number } }", '', '// createBus は上の実装', '', 'export const bus = createBus<Events>()'], 'ts', 'lib/eventBus.ts', GOLD);
+    const pSend = mkPre(["import { bus } from '@/lib/eventBus'", '', "bus.emit('case:saved', { id: 7 })"], 'ts', 'CaseForm.vue', PINK);
+    const pLis = mkPre(['function reload(): void { loadCases() }', '', "bus.on('case:saved', reload)", "onUnmounted(() => bus.off('case:saved', reload))"], 'ts', 'CaseList.vue', GREEN);
     const L = linker(el);
     L.set([pBus, pSend, pLis], { bus: [[5], [], []], emit: [[], [3], []], on: [[], [], [1, 3]], off: [[], [], [4]], handlers: [[5], [], [3]] });
-    const treeBox = h('div', { class: 'vxS-col' }, h('div', { class: 'vxS-tt' }, '📂 フォルダ'), tree([{ d: 0, n: 'src/' }, { d: 1, n: 'lib/' }, { d: 2, n: 'eventBus.ts', f: 1, hit: 1, note: 'bus はここ 1 か所' }, { d: 1, n: 'components/' }, { d: 2, n: 'CaseCard.vue', f: 1 }, { d: 2, n: 'BookingForm.vue', f: 1 }, { d: 2, n: 'ToastArea.vue', f: 1 }]));
+    const treeBox = h('div', { class: 'vxS-col' }, h('div', { class: 'vxS-tt' }, '📂 フォルダ'), tree([{ d: 0, n: 'src/' }, { d: 1, n: 'lib/' }, { d: 2, n: 'eventBus.ts', f: 1, hit: 1, note: 'bus はここ 1 か所' }, { d: 1, n: 'components/' }, { d: 2, n: 'CaseForm.vue', f: 1 }, { d: 2, n: 'CaseEdit.vue', f: 1 }, { d: 2, n: 'CaseList.vue', f: 1 }]));
     const demo = h('div', { class: 'vxS' },
       h('div', { class: 'vxS-box' }, h('div', { class: 'vxS-tt' }, '▶ どこからでも送れる ／ 聞いている部品にだけ届く'), stage),
       h('div', { class: 'vxS-four' }, treeBox, pBus, pSend, pLis));
-    bridge(anat, demo);
-    el.append(h('div', { class: 'vxS' }, note, anat, demo));
-    return () => { S.alive = false; };
+    bridge(anat, demo); bridge(anat, concept);
+    el.append(h('div', { class: 'vxS' }, concept, anat, demo, note));
+    return () => { S.alive = false; alive.v = false; };
   }
 
   /* ================= 5. バスの落とし穴 ================= */
@@ -501,29 +556,29 @@
 
     /* ① 解除し忘れ */
     function drawLeak() {
-      const st = { page: 'list', n: 1, toasts: [] };
+      const st = { page: 'list', n: 1 };
       const cnt = h('span', { class: 'vxS-cnt', 'data-k': 'count' }, '1');
-      const toasts = h('div', { class: 'vxS-toasts', 'data-k': 'toast' });
+      const logs = h('div', { class: 'vxS-logs', 'data-k': 'reload' });
       const page = h('div', { class: 'vxS-page' });
       const goB = h('button', { class: 'vxS-btn', type: 'button', onclick: () => leave() }, '⚙ 設定ページへ');
       const backB = h('button', { class: 'vxS-btn', type: 'button', onclick: () => back() }, '📋 一覧へ戻る');
       const auto = h('button', { class: 'vxS-btn', type: 'button', onclick: async () => { for (let i = 0; i < 2 && S.alive; i++) { leave(); await sleep(350); back(); await sleep(350); } } }, '▶ 行って戻るを 2 回');
-      const okBtn = h('button', { class: 'vxS-btn', type: 'button', onclick: () => accept() }, '承諾する');
+      const okBtn = h('button', { class: 'vxS-btn', type: 'button', onclick: () => accept() }, '保存する');
       const verdict = h('div', { class: 'vxS-verdict ok' }, '');
       const paint = () => {
         cnt.textContent = st.n;
-        page.replaceChildren(h('b', st.page === 'list' ? 'CaseListPage.vue（ToastArea がいる）' : 'SettingsPage.vue（ToastArea は消えた）'), st.page === 'list' ? h('div', { style: { display: 'flex', gap: '8px' } }, okBtn, h('small', '承諾 → toast が出る')) : h('small', '設定ページ'), toasts);
+        page.replaceChildren(h('b', st.page === 'list' ? 'CaseListPage.vue（CaseList がいる）' : 'SettingsPage.vue（CaseList は消えた）'), st.page === 'list' ? h('div', { style: { display: 'flex', gap: '8px' } }, okBtn, h('small', '保存 → 一覧を再読み込み')) : h('small', '設定ページ'), logs);
         goB.disabled = st.page !== 'list'; backB.disabled = st.page === 'list';
         verdict.className = 'vxS-verdict ' + (st.n > 1 ? 'bad' : 'ok'); verdict.textContent = st.n > 1 ? '✖ ' + st.n + ' 個のハンドラが生きている' : '✓ ハンドラは 1 個だけ';
       };
-      const leave = () => { if (st.page !== 'list') return; st.page = 'settings'; if (S.ok) st.n = Math.max(0, st.n - 1); toasts.replaceChildren(); paint(); };
-      const back = () => { if (st.page === 'list') return; st.page = 'list'; st.n++; toasts.replaceChildren(); paint(); };
-      const accept = () => { toasts.replaceChildren(...Array.from({ length: st.n }, (_, i) => h('div', { class: 'vxS-tst' + (i > 0 ? ' ghost' : '') }, i === 0 ? '🍞 承諾しました' : '💀 消えた部品の分：承諾しました'))); bump(toasts); };
+      const leave = () => { if (st.page !== 'list') return; st.page = 'settings'; if (S.ok) st.n = Math.max(0, st.n - 1); logs.replaceChildren(); paint(); };
+      const back = () => { if (st.page === 'list') return; st.page = 'list'; st.n++; logs.replaceChildren(); paint(); };
+      const accept = () => { logs.replaceChildren(h('div', { class: 'vxS-lg' }, '保存 1 回 → 再読み込み ' + st.n + ' 回'), ...Array.from({ length: st.n }, (_, i) => h('div', { class: 'vxS-lg' + (i > 0 ? ' ghost' : '') }, i === 0 ? '🔄 CaseList を再読み込み' : '💀 消えた部品の分も再読み込み'))); bump(logs); };
       paint();
       const stage = h('div', { class: 'vxS-stage' }, h('div', { class: 'vxS-nav' }, goB, backB, auto), page, h('div', { class: 'vxS-bar', style: { alignItems: 'center' } }, h('span', 'bus の on 登録数：'), cnt, verdict));
-      pre = mkPre(S.ok ? ["function show(e: Events['toast']): void {", '  message.value = e.message', '}', "onMounted(() => bus.on('toast', show))", "onUnmounted(() => bus.off('toast', show))"] : ["function show(e: Events['toast']): void {", '  message.value = e.message', '}', "onMounted(() => bus.on('toast', show))"], 'ts', 'ToastArea.vue', S.ok ? OK : BAD);
+      pre = mkPre(S.ok ? ['function reload(): void {', '  loadCases()', '}', "onMounted(() => bus.on('case:saved', reload))", "onUnmounted(() => bus.off('case:saved', reload))"] : ['function reload(): void {', '  loadCases()', '}', "onMounted(() => bus.on('case:saved', reload))"], 'ts', 'CaseList.vue', S.ok ? OK : BAD);
       if (!S.ok) pre.setHi([4], 'err'); else pre.setHi([5], 'on');
-      L.set([pre], { count: S.ok ? [5] : [4], toast: [1, 2, 3] });
+      L.set([pre], { count: S.ok ? [5] : [4], reload: [1, 2, 3] });
       say.className = 'vxS-say ' + (S.ok ? 'ok' : 'bad'); sayIt(S.ok ? ['戻るたびに ', h('code', 'off'), ' で外すので、いつも 1 個。'] : ['一覧に戻るたびに ', h('code', 'on'), ' が増える。消えた部品の関数も、まだ動く。']);
       return [stage, pre, soon];
     }
@@ -555,16 +610,16 @@
     /* ③ 名前が文字列 */
     function drawMagic() {
       const out = h('div', { class: 'vxS-err' }, h('span', { class: 'mute' }, '下のボタンを押す'));
-      const toastEl = h('div', { class: 'vxS-toast off', 'data-k': 'listener' }, '（ToastArea）');
-      const mk = (name) => h('button', { class: 'vxS-btn', type: 'button', 'data-k': name === 'tost' ? 'typo' : 'good', onclick: () => fire(name) }, "bus.emit('" + name + "', …)");
+      const listEl = h('div', { class: 'vxS-recv off', 'data-k': 'listener' }, '（CaseList）');
+      const mk = (name) => h('button', { class: 'vxS-btn', type: 'button', 'data-k': name === 'case:svaed' ? 'typo' : 'good', onclick: () => fire(name) }, "bus.emit('" + name + "', …)");
       const fire = (name) => {
-        toastEl.classList.add('off'); toastEl.textContent = '（ToastArea）';
-        if (name === 'toast') { toastEl.classList.remove('off'); toastEl.textContent = '🍞 保存しました'; out.className = 'vxS-err ok'; out.textContent = '✓ 届いた'; bump(toastEl); }
-        else if (S.ok) { out.className = 'vxS-err'; out.innerHTML = '✖ <span>Argument of type \'"tost"\' is not assignable to parameter of type \'keyof Events\'.</span><br><span class="mute">→ 実行する前に、エディタが赤線で教えてくれる</span>'; if (pre) pre.setHi([3], 'err'); }
-        else { out.className = 'vxS-err'; out.innerHTML = '✖ 何も起きない（トーストが出ない）<br><span class="mute">→ エラーも出ない。タイプミスに気づけない</span>'; bump(out); }
+        listEl.classList.add('off'); listEl.textContent = '（CaseList）';
+        if (name === 'case:saved') { listEl.classList.remove('off'); listEl.textContent = '🔄 一覧を再読み込みした'; out.className = 'vxS-err ok'; out.textContent = '✓ 届いた'; bump(listEl); }
+        else if (S.ok) { out.className = 'vxS-err'; out.innerHTML = '✖ <span>Argument of type \'"case:svaed"\' is not assignable to parameter of type \'keyof Events\'.</span><br><span class="mute">→ 実行する前に、エディタが赤線で教えてくれる</span>'; if (pre) pre.setHi([3], 'err'); }
+        else { out.className = 'vxS-err'; out.innerHTML = '✖ 何も起きない（一覧が更新されない）<br><span class="mute">→ エラーも出ない。タイプミスに気づけない</span>'; bump(out); }
       };
-      const stage = h('div', { class: 'vxS-stage' }, h('div', { class: 'vxS-nav' }, mk('toast'), mk('tost')), toastEl, out);
-      pre = mkPre(S.ok ? ["type Events = { toast: { message: string } }", "const bus = mitt<Events>()", "bus.emit('tost', { message: '保存しました' })"] : ["const bus = mitt()", "bus.on('toast', show)", "bus.emit('tost', { message: '保存しました' })"], 'ts', 'CaseCard.vue', S.ok ? OK : BAD);
+      const stage = h('div', { class: 'vxS-stage' }, h('div', { class: 'vxS-nav' }, mk('case:saved'), mk('case:svaed')), listEl, out);
+      pre = mkPre(S.ok ? ["type Events = { 'case:saved': { id: number } }", 'const bus = createBus<Events>()', "bus.emit('case:svaed', { id: 1 })"] : ['const bus = createBus<Record<string, unknown>>()', "bus.on('case:saved', reload)", "bus.emit('case:svaed', { id: 1 })"], 'ts', 'CaseForm.vue', S.ok ? OK : BAD);
       pre.setHi(S.ok ? [1, 2] : [3], S.ok ? 'on' : 'err');
       L.set([pre], S.ok ? { good: [1, 2], typo: [3] } : { good: [2], typo: [3], listener: [2] });
       say.className = 'vxS-say ' + (S.ok ? 'ok' : 'bad'); sayIt(S.ok ? ['名前と中身の型を ', h('code', 'Events'), ' に書く。タイプミスは、書いた時に分かる。'] : ['名前が ', h('b', '文字列'), 'のまま。1 文字違っても、誰も教えてくれない。']);
@@ -596,7 +651,7 @@
     }
     PIT.forEach((p, i) => pits.append(tabBtn(p.tab, i === 0, () => { S.pit = i; draw(); }, '', COLS[i])));
     mode.append(tabBtn('✖ こう書くと', true, () => { S.ok = false; draw(); }, 'x'), tabBtn('✓ こう直す', false, () => { S.ok = true; draw(); }));
-    el.append(h('div', { class: 'vxS' }, h('div', { class: 'vxS-bar' }, pits, h('span', { class: 'vxS-sep' }), mode), say, body));
+    el.append(h('div', { class: 'vxS' }, h('div', { class: 'vxS-bar' }, pits, h('span', { class: 'vxS-sep' }), mode), say, body, h('div', null, refLink())));
     draw();
     return () => { S.alive = false; };
   }
@@ -607,16 +662,16 @@
     const Q = [
       { q: 'ログイン中のユーザー情報', a: 'store', r: '多くの部品がずっと読む「状態」。store に置く。' },
       { q: '未読件数（ヘッダーと一覧が見る）', a: 'store', r: '離れた部品が同じ値を読む。computed で作って store に。' },
-      { q: '保存が終わったトースト通知', a: 'bus', r: '一度きりの「合図」。あとに残す状態はない。' },
+      { q: '保存が終わったので、離れた一覧を更新して', a: 'bus', r: '「保存したよ」という一度きりの合図。（一覧が store を持つなら、その action でも可）' },
       { q: '絞り込み条件（サイドバーと一覧で共有）', a: 'store', r: '離れた 2 か所が同じ値を使う。store が素直。' },
-      { q: 'モーダルを閉じて、離れた一覧を更新して', a: 'bus', r: '「閉じたよ」という一度きりの合図。（一覧が store を持つなら、その action でも可）' },
+      { q: 'モーダルが閉じたと、離れた部品に知らせたい', a: 'bus', r: '「閉じたよ」という一度きりの合図。あとに残す状態はない。' },
       { q: 'カートの中身', a: 'store', r: 'いつ開いても同じでないと困る「状態」。' },
       { q: '親子の 1 つの入力欄', a: 'props', r: '近い親子は props / emit（defineModel）で十分。' },
       { q: 'フォームの入力途中の値', a: 'props', r: 'その画面の中だけ。部品の ref と props / emit で。store には入れない。' },
     ];
     const S = { done: 0, ok: 0, picked: {} };
     const score = h('div', { class: 'vxS-score' }, '正解 ', h('em', '0'), ' / ' + Q.length);
-    const steps = WAYS.map(([k, n, c], i) => h('div', { class: 'vxS-step', 'data-w': k, style: { '--c': c } }, h('b', h('i', i + 1), ['まず props / emit', '共有が必要なら store', '一度きりの合図だけ eventBus（最後の手段）'][i]), h('small', ["emit('accepted')", 'useNoticeStore()', "bus.emit('toast', …)"][i])));
+    const steps = WAYS.map(([k, n, c], i) => h('div', { class: 'vxS-step', 'data-w': k, style: { '--c': c } }, h('b', h('i', i + 1), ['まず props / emit', '共有が必要なら store（provide / inject も手段）', '一度きりの合図だけ eventBus（最後の手段）'][i]), h('small', ["emit('accepted')", 'useNoticeStore()', "bus.emit('case:saved', …)"][i])));
     const cards = Q.map((x, qi) => {
       const rs = h('div', { class: 'vxS-rs' });
       const btns = WAYS.map(([k, n, c]) => h('button', { type: 'button', onclick: () => pick(qi, k, btns, rs, card) }, n));
@@ -642,7 +697,7 @@
       { t: '離れた部品どうし、どう話す？', tag: 'ROUTES', lead: '遠い部品に届ける道は 3 つ。<b>props / emit</b> は全員が中継、<b>store</b> と <b>eventBus</b> は真ん中を通すだけ。', render: scene1 },
       { t: 'store：みんなで共有する置き場', tag: 'PINIA', lead: '<b>store</b> は、離れた部品が<b>同じデータ</b>を読み書きする共有の置き場（Pinia）。', render: scene2 },
       { t: 'store を使うときのコード', tag: 'USE STORE', lead: '部品は <b>useNoticeStore()</b> を呼ぶだけ。<b>中継する部品</b>が要らなくなる。', render: scene3 },
-      { t: 'eventBus：離れた部品に、合図だけ送る', tag: 'EVENT BUS', lead: '<b>eventBus</b> は、データではなく<b>「起きたよ」という合図</b>を、聞いている部品へ届ける掲示板。', render: scene4 },
+      { t: 'eventBus：離れた部品に、合図だけ送る', tag: 'EVENT BUS', lead: '<b>eventBus</b> ＝ <b>共有の連絡係</b>。<b>on</b>（聞く）・<b>off</b>（やめる）・<b>emit</b>（送る）の 3 つだけ。', render: scene4 },
       { t: 'バスの落とし穴：解除し忘れ', tag: 'PITFALLS', lead: 'bus は便利だが、<b>off し忘れ</b>・<b>状態を持たせる</b>・<b>文字列の名前</b>で、すぐ追えなくなる。', render: scene5 },
       { t: 'store と eventBus、どっち？', tag: 'CHOOSE', lead: '<b>まず props / emit</b> → 共有が必要なら <b>store</b> → 一度きりの合図だけ <b>eventBus</b>（最後の手段）。', render: scene6 },
     ],

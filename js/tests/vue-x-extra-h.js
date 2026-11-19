@@ -1,7 +1,7 @@
 /* 補足 Vue「store と eventBus」（x-vue-store）のレッスン最終テスト。K.vueTestTools.web で作る。
-   x-vue-state（お知らせ・既読）とは別の題材：相談メニューのカート ＋ トースト。
-   ファイル：ConsultCartPage（ページ）＋ ConsultMenu / CartBadge / ToastArea ＋ cartStore.ts / eventBus.ts / types.ts
-   本物の Pinia / mitt はプレビューに入っていないので、同じ使い方の手書き版（関数の外の ref / reactive、Map と Set）を使う。
+   x-vue-state（お知らせ・既読）とは別の題材：相談メニューのカート ＋ cart:added の合図（追加ログ）。
+   ファイル：ConsultCartPage（ページ）＋ ConsultMenu / CartBadge / CartLog ＋ cartStore.ts / eventBus.ts / types.ts
+   本物の Pinia はプレビューに入っていないので、同じ使い方の手書き版（関数の外の ref / reactive、Map と Set）を使う。
    初級×3（store から読む・store を呼ぶ・bus で聞く）・中級×2（bus で送る・storeToRefs）・上級×1（onUnmounted で解除）。 */
 (function () {
   const K = window.KENSHU;
@@ -17,9 +17,9 @@ export interface MenuItem {
 }
 `;
 
-  const BUS = `// 部品どうしを直接つながずに、合図だけを送る「掲示板」（mitt と同じ使い方：on / off / emit）
+  const BUS = `// 部品どうしを直接つながずに、合図だけを送る「共有の連絡係」（on / off / emit の 3 つ。count はテスト用）
 type Events = {
-  toast: { message: string }
+  'cart:added': { name: string }
 }
 
 type Handler<K extends keyof Events> = (payload: Events[K]) => void
@@ -73,26 +73,26 @@ export function storeToRefs<T extends object>(source: T) {
 import { ref } from 'vue'
 import CartBadge from './CartBadge.vue'
 import ConsultMenu from './ConsultMenu.vue'
-import ToastArea from './ToastArea.vue'
+import CartLog from './CartLog.vue'
 
 // props を 1 つも渡していない：3 つの部品は、store と bus を通して話す
-const showToast = ref<boolean>(true)
+const showLog = ref<boolean>(true)
 </script>
 
 <template>
   <h3>相談メニュー</h3>
   <CartBadge />
   <ConsultMenu />
-  <label class="toast-switch">
-    <input v-model="showToast" type="checkbox" />
-    トースト表示
+  <label class="log-switch">
+    <input v-model="showLog" type="checkbox" />
+    追加ログを表示
   </label>
-  <ToastArea v-if="showToast" />
+  <CartLog v-if="showLog" />
 </template>
 
 <style scoped>
 .badge { background: #e6f4ea; border-radius: 10px; padding: 0 10px; font-size: 13px; }
-.toast { background: #1f2a44; color: #fff; border-radius: 8px; padding: 4px 12px; min-height: 1.6em; }
+.log { background: #eef2ff; color: #1f2a44; border-radius: 8px; padding: 4px 12px; min-height: 1.6em; }
 li { margin: 4px 0; }
 button { margin-left: 8px; }
 </style>
@@ -114,7 +114,7 @@ const menu = ref<MenuItem[]>([
 
 function addToCart(item: MenuItem): void {
   // ① add(item) を呼んで、カートに入れる
-  // ④ bus.emit('toast', { message: \`\${item.name}をカートに入れました\` }) も送る
+  // ④ bus.emit('cart:added', { name: item.name }) も送る
 }
 </script>
 
@@ -140,18 +140,18 @@ import { useCartStore, storeToRefs } from './cartStore'
 </template>
 `;
 
-  const TOAST = `<script setup lang="ts">
+  const LOGC = `<script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import { bus } from './eventBus'
 
-const message = ref<string>('')
+const last = ref<string>('（まだなし）')
 
-// ③ bus.on('toast', show) で聞いて、message に e.message を入れる
-// ⑥ 画面から消えるとき（onUnmounted）に、bus.off('toast', show) で解除する
+// ③ bus.on('cart:added', show) で聞いて、last に e.name を入れる
+// ⑥ 画面から消えるとき（onUnmounted）に、bus.off('cart:added', show) で解除する
 </script>
 
 <template>
-  <p class="toast">{{ message }}</p>
+  <p class="log">最後に追加：{{ last }}</p>
 </template>
 `;
 
@@ -162,7 +162,7 @@ const message = ref<string>('')
       'App.vue': 'src/pages/ConsultCartPage.vue',
       'CartBadge.vue': 'src/components/CartBadge.vue',
       'ConsultMenu.vue': 'src/components/ConsultMenu.vue',
-      'ToastArea.vue': 'src/components/ToastArea.vue',
+      'CartLog.vue': 'src/components/CartLog.vue',
       'cartStore.ts': 'src/stores/cartStore.ts',
       'eventBus.ts': 'src/lib/eventBus.ts',
       'types.ts': 'src/types.ts',
@@ -171,12 +171,12 @@ const message = ref<string>('')
       'App.vue': 'ページ：3 つの部品を並べるだけ（データは渡さない）',
       'CartBadge.vue': '部品：カートの個数と合計（store を読む）',
       'ConsultMenu.vue': '部品：メニュー一覧。追加で store を書き換え、bus で合図を送る',
-      'ToastArea.vue': '部品：bus の合図を聞いて、メッセージを出す',
+      'CartLog.vue': '部品：bus の合図を聞いて、最後に追加した名前を出す',
       'cartStore.ts': 'store：カートの置き場（Pinia と同じ使い方の手書き版）',
-      'eventBus.ts': 'bus：合図の掲示板（mitt と同じ使い方の手書き版）',
+      'eventBus.ts': 'bus：共有の連絡係（on / off / emit の手書き版）',
       'types.ts': '型：MenuItem',
     },
-    starter: { 'App.vue': APP, 'CartBadge.vue': BADGE, 'ConsultMenu.vue': MENU, 'ToastArea.vue': TOAST, 'cartStore.ts': STORE, 'eventBus.ts': BUS, 'types.ts': TYPES },
+    starter: { 'App.vue': APP, 'CartBadge.vue': BADGE, 'ConsultMenu.vue': MENU, 'CartLog.vue': LOGC, 'cartStore.ts': STORE, 'eventBus.ts': BUS, 'types.ts': TYPES },
     steps: [
       {
         key: 'm1', level: 1, file: 'ConsultMenu.vue',
@@ -194,16 +194,16 @@ const message = ref<string>('')
         edits: [['// ② useCartStore() から count と total を取り出す\n', 'const { count, total } = useCartStore()\n']],
       },
       {
-        key: 'm3', level: 1, file: 'ToastArea.vue',
-        label: 'ToastArea.vue で、bus.on で toast を聞いて、メッセージを出す（画面：合図が来るとトーストが変わる）',
-        hint: ['聞く側は、合図が来たときに動く関数を <code>bus.on</code> で登録する。', "<code>function show(e: { message: string }): void { message.value = e.message }</code> を作り、<code>bus.on('toast', show)</code>。"],
-        edits: [['// ③ bus.on(\'toast\', show) で聞いて、message に e.message を入れる\n', "function show(e: { message: string }): void {\n  message.value = e.message\n}\n\nbus.on('toast', show)\n"]],
+        key: 'm3', level: 1, file: 'CartLog.vue',
+        label: 'CartLog.vue で、bus.on で cart:added を聞いて、名前を出す（画面：合図が来ると「最後に追加」が変わる）',
+        hint: ['聞く側は、合図が来たときに動く関数を <code>bus.on</code> で登録する。', "<code>function show(e: { name: string }): void { last.value = e.name }</code> を作り、<code>bus.on('cart:added', show)</code>。"],
+        edits: [['// ③ bus.on(\'cart:added\', show) で聞いて、last に e.name を入れる\n', "function show(e: { name: string }): void {\n  last.value = e.name\n}\n\nbus.on('cart:added', show)\n"]],
       },
       {
         key: 'm4', level: 2, file: 'ConsultMenu.vue',
-        label: 'ConsultMenu.vue で、追加したら bus.emit で toast の合図を送る（「初回相談をカートに入れました」）',
-        hint: ['送る側は、誰が聞いているかを知らなくてよい。', "<code>bus.emit('toast', { message: `${item.name}をカートに入れました` })</code>。<code>addToCart</code> の中に書く。"],
-        edits: [['  // ④ bus.emit(\'toast\', { message: `${item.name}をカートに入れました` }) も送る\n', "  bus.emit('toast', { message: `${item.name}をカートに入れました` })\n"]],
+        label: 'ConsultMenu.vue で、追加したら bus.emit で cart:added の合図を送る（ログに「初回相談」が出る）',
+        hint: ['送る側は、誰が聞いているかを知らなくてよい。', "<code>bus.emit('cart:added', { name: item.name })</code>。<code>addToCart</code> の中に書く。"],
+        edits: [['  // ④ bus.emit(\'cart:added\', { name: item.name }) も送る\n', "  bus.emit('cart:added', { name: item.name })\n"]],
       },
       {
         key: 'm5', level: 2, file: 'CartBadge.vue',
@@ -212,40 +212,40 @@ const message = ref<string>('')
         edits: [['const { count, total } = useCartStore()\n// ⑤ ② の取り出し方を、カートが増えたら画面も変わる形に直す（storeToRefs）\n', 'const { count, total } = storeToRefs(useCartStore())\n']],
       },
       {
-        key: 'm6', level: 3, file: 'ToastArea.vue',
-        label: 'ToastArea.vue で、onMounted で登録し、onUnmounted で bus.off して解除する（チェックを外すと聞く人が 0）',
-        hint: ['表示されたとき（<code>onMounted</code>）に <code>bus.on</code>、消えるとき（<code>onUnmounted</code>）に <code>bus.off</code>。', 'on と off には、同じ関数（<code>show</code>）を渡す。外し忘れると、消えた部品にも合図が届き続ける。', "<code>onMounted(() =&gt; { bus.on('toast', show) })</code> と <code>onUnmounted(() =&gt; { bus.off('toast', show) })</code>。"],
-        edits: [["bus.on('toast', show)\n// ⑥ 画面から消えるとき（onUnmounted）に、bus.off('toast', show) で解除する\n", "onMounted(() => {\n  bus.on('toast', show)\n})\n\nonUnmounted(() => {\n  bus.off('toast', show)\n})\n"]],
+        key: 'm6', level: 3, file: 'CartLog.vue',
+        label: 'CartLog.vue で、onMounted で登録し、onUnmounted で bus.off して解除する（チェックを外すと聞く人が 0）',
+        hint: ['表示されたとき（<code>onMounted</code>）に <code>bus.on</code>、消えるとき（<code>onUnmounted</code>）に <code>bus.off</code>。', 'on と off には、同じ関数（<code>show</code>）を渡す。外し忘れると、消えた部品にも合図が届き続ける。', "<code>onMounted(() =&gt; { bus.on('cart:added', show) })</code> と <code>onUnmounted(() =&gt; { bus.off('cart:added', show) })</code>。"],
+        edits: [["bus.on('cart:added', show)\n// ⑥ 画面から消えるとき（onUnmounted）に、bus.off('cart:added', show) で解除する\n", "onMounted(() => {\n  bus.on('cart:added', show)\n})\n\nonUnmounted(() => {\n  bus.off('cart:added', show)\n})\n"]],
       },
     ],
-    /* 順番：最初のバッジ → toast を送る → メニューを押す（store と bus）→ store を直接増やす（バッジの更新）→ チェックを外す（解除） */
+    /* 順番：最初のバッジ → cart:added を送る → メニューを押す（store と bus）→ store を直接増やす（バッジの更新）→ チェックを外す（解除） */
     probe: async (win, doc) => {
       const out = {};
       const txt = (s) => { const e = doc.querySelector(s); return e ? e.textContent.replace(/\s+/g, ' ').trim() : ''; };
       let store = null, bus = null;
       try { store = win.eval('useCartStore()'); bus = win.eval('bus'); } catch (e) { store = null; bus = null; }
       out.m2 = /カート\s*0\s*個/.test(txt('.badge')) && /合計\s*0\s*円/.test(txt('.badge'));
-      if (bus) { try { bus.emit('toast', { message: 'テスト通知' }); } catch (e) { /* 聞く人がいなくてよい */ } await nt(win); }
-      out.m3 = txt('.toast').includes('テスト通知');
+      if (bus) { try { bus.emit('cart:added', { name: 'テスト通知' }); } catch (e) { /* 聞く人がいなくてよい */ } await nt(win); }
+      out.m3 = txt('.log').includes('テスト通知');
       const got = [];
-      const spy = (e) => { got.push(e.message); };
-      if (bus) bus.on('toast', spy);
+      const spy = (e) => { got.push(e.name); };
+      if (bus) bus.on('cart:added', spy);
       const btn = doc.querySelector('li button');
       if (btn) { try { btn.click(); } catch (e) { /* 未実装でもよい */ } await nt(win); }
-      if (bus) bus.off('toast', spy);
+      if (bus) bus.off('cart:added', spy);
       out.m1 = !!store && store.items.length === 1;
-      out.m4 = got.some((m) => /初回相談/.test(m) && /カートに入れました/.test(m));
+      out.m4 = got.some((m) => /初回相談/.test(m));
       if (store) { try { store.add({ id: 9, name: '電話相談', price: 3300 }); } catch (e) { /* 何もしない */ } await nt(win); }
       const n = store ? store.items.length : -1;
       out.m5 = n >= 1 && new RegExp('カート\\s*' + n + '\\s*個').test(txt('.badge')) && /合計\s*[\d,]*[1-9][\d,]*\s*円/.test(txt('.badge'));
-      const sw = doc.querySelector('.toast-switch input');
+      const sw = doc.querySelector('.log-switch input');
       let onN = -1, offN = -1;
       if (sw && bus) {
-        try { onN = bus.count('toast'); } catch (e) { onN = -1; }
+        try { onN = bus.count('cart:added'); } catch (e) { onN = -1; }
         sw.click(); await nt(win);
-        try { offN = bus.count('toast'); } catch (e) { offN = -1; }
+        try { offN = bus.count('cart:added'); } catch (e) { offN = -1; }
         sw.click(); await nt(win);
-        let again = -1; try { again = bus.count('toast'); } catch (e) { again = -1; }
+        let again = -1; try { again = bus.count('cart:added'); } catch (e) { again = -1; }
         out.m6 = onN === 1 && offN === 0 && again === 1;
       } else out.m6 = false;
       return out;
