@@ -31,6 +31,8 @@
   .vs-side.no{border-color:color-mix(in srgb,var(--bad) 55%,var(--line))}.vs-side.yes{border-color:color-mix(in srgb,var(--ok) 55%,var(--line))}
   .vs-tt{display:flex;align-items:center;gap:8px;font:900 1rem var(--font)}
   .vs-side.no .vs-tt{color:var(--bad)}.vs-side.yes .vs-tt{color:var(--ok)}
+  .vs-side.vue{border-color:color-mix(in srgb,var(--vue) 60%,var(--line))}.vs-side.vue .vs-tt{color:var(--vue)}
+  .vs-side.react{border-color:color-mix(in srgb,#61dafb 60%,var(--line))}.vs-side.react .vs-tt{color:#61dafb}
   .vs-ui{position:relative;border-radius:12px;background:#f4f6fb;color:#1f2a44;padding:14px;min-height:190px;display:grid;gap:8px;align-content:start;min-width:0}
   .vs-ui [data-k]{border-radius:8px;outline:2px solid transparent;outline-offset:2px;transition:outline-color .15s,background .15s;cursor:default}
   .vs-ui [data-k].vs-hot{outline-color:var(--c,#2f7bff)}
@@ -72,7 +74,7 @@
     versus(o) {
       const ctx = { pre: {}, ui: {}, keys: {}, srcs: {} };
       const side = (name, cfg, cls) => {
-        const pre = code(cfg.src, cfg.lang || 'vue', { color: cls === 'no' ? 'var(--bad)' : 'var(--ok)', file: cfg.file, dim: true, edit: false });
+        const pre = code(cfg.src, cfg.lang || 'vue', { color: cls === 'no' ? 'var(--bad)' : cls === 'vue' ? 'var(--vue)' : cls === 'react' ? '#61dafb' : 'var(--ok)', file: cfg.file, dim: true, edit: false });
         ctx.pre[name] = pre; ctx.srcs[name] = cfg.src; ctx.keys[name] = cfg.keys || {};
         const u = cfg.ui(ctx) || {}; ctx.ui[name] = u;
         const uiBox = h('div', { class: 'vs-ui' }, u.el);
@@ -97,7 +99,7 @@
         };
         tg.onclick = () => { folded = !folded; applyFold(); };
         if (canFold) applyFold();
-        return h('div', { class: 'vs-side ' + cls }, h('div', { class: 'vs-tt' }, (cls === 'no' ? '✖ ' : '✓ ') + cfg.title, canFold ? tg : null), uiBox, h('div', { class: 'vs-code' }, pre));
+        return h('div', { class: 'vs-side ' + cls }, h('div', { class: 'vs-tt' }, (cls === 'no' ? '✖ ' : cls === 'yes' ? '✓ ' : (cfg.icon ? cfg.icon + ' ' : '')) + cfg.title, canFold ? tg : null), uiBox, h('div', { class: 'vs-code' }, pre));
       };
       ctx.hi = (name, key) => {
         const pre = ctx.pre[name], box = pre && pre.closest('.vs-side'); if (!pre) return;
@@ -120,7 +122,7 @@
         el.remove();
       };
       ctx.reset = () => { ['without', 'with'].forEach((n) => { ctx.ui[n] && ctx.ui[n].reset && ctx.ui[n].reset(); ctx.hi(n, null); }); ctx.banner(o.banner || '', ''); };
-      const left = side('without', o.without, 'no'), right = side('with', o.with, 'yes');
+      const left = side('without', o.without, o.neutral ? (o.without.tone || 'vue') : 'no'), right = side('with', o.with, o.neutral ? (o.with.tone || 'react') : 'yes');
       const bar = h('div', { class: 'vs-bar' }, ...(o.bar || []).map((b) => h('button', { class: 'btn' + (b.primary ? ' primary' : (b.ghost ? ' ghost' : '')), style: b.primary ? { '--c': 'var(--vue)' } : {}, onclick: () => b.onclick(ctx) }, b.label)), banner);
       const root = h('div', { class: 'vs' }, bar, h('div', { class: 'vs-cols' }, left, right));
       ctx.root = root;
