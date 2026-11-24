@@ -410,4 +410,8 @@
         (c, b) => E(c, '⑥', (x) => hasE(x, (e) => e.m === 'toHaveBeenCalledWith' && JSON.stringify(e.exp) === '["10:00"]')) && /onSelect\s*=\s*vi\.fn/.test(b) && /await[^\n]*trigger/.test(b)),
     ],
   });
+  /* 補足レッスンへ移した 2 つ（描く・にせもの）の練習は、補足側のキーへ付け替える */
+  ['描く：mount と shallowMount', 'にせものを使う：vi.fn と vi.mock'].forEach((title) => {
+    if (D[ID] && D[ID][title]) { D['x-vue-test-cmd'] = D['x-vue-test-cmd'] || {}; D['x-vue-test-cmd'][title] = D[ID][title]; delete D[ID][title]; }
+  });
 })();

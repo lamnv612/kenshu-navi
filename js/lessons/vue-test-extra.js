@@ -534,11 +534,21 @@
       { t: 'テストの骨組み：describe と it', tag: 'FILE', lead: '<b>describe</b> の中に <b>it</b>、その中に <b>expect</b>。<b>vitest</b> で動かす。', render: sceneFile },
       { t: '実践：1本のテストを組み立てる', tag: 'PRACTICE', lead: '<b>Arrange → Act → Assert</b> の順にカードを押して、緑のテストを完成させる。', render: scenePractice, ref: REFPANEL },
   ];
+  /* メイン教材（vue-test の 2 番目から）：探す / 操作する / 確かめる / 実践。
+     描く・にせもの・骨組みの 3 つは、補足レッスン x-vue-test-cmd に入れる */
+  const EXTRA_TITLES = ['描く：mount と shallowMount', 'にせものを使う：vi.fn と vi.mock', 'テストの骨組み：describe と it'];
+  const MAIN = NEWSCENES.filter((x) => !EXTRA_TITLES.includes(x.t));
+  const EXTRA = EXTRA_TITLES.map((t) => NEWSCENES.find((x) => x.t === t)).filter(Boolean);
   (function wait(n) {
     const L = K.lessons && K.lessons['vue-test'];
     if (!L) { if (n < 200) setTimeout(() => wait(n + 1), 50); return; }
     if (L.__cmdIns) return; L.__cmdIns = 1;
     const at = Math.max(1, L.scenes.findIndex((x) => x.t === 'mount → find → trigger → expect') + 1);
-    L.scenes.splice(at, 0, ...NEWSCENES);
+    L.scenes.splice(at, 0, ...MAIN);
   })(0);
+  if (K.reg) K.reg({
+    track: 'extra', id: 'x-vue-test-cmd', title: 'Vue 単体テスト：コマンド詳細（描く・モック・骨組み）', sub: 'mount の使い方・vi.fn・テストファイルの書き方', emoji: '🧪',
+    meta: { cat: 'vue', day: '5日目', when: 'Vue 単体テストの基本（探す・操作する・確かめる）のあと、mount のオプション・モック・ファイルの書き方を知りたいとき', mins: 15, order: 40, level: '基礎', after: 'vue-test', why: 'mount のオプション、にせもの（モック）、テストファイルの骨組みを、コマンド一覧で覚える' },
+    scenes: EXTRA,
+  });
 })();
