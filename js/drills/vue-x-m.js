@@ -1,4 +1,4 @@
-/* 練習：補足 x-vue-test-cmd「Vue 単体テスト：コマンドの使い方」（描く / 探す / 操作する / 確かめる / にせものを使う）。
+/* 練習：vue-test（メイン教材）「Vue 単体テスト：コマンドの使い方」（描く / 探す / 操作する / 確かめる / にせものを使う）。
    部品（.vue）と、テスト（.test.ts）の 2 種類のファイルで出す。テストはブラウザの中の簡易ランナー（vitest ＋ @vue/test-utils の小さな互換）で本当に動かす。
    ・ランナーは vue-x-d.js の ktShim と同じ考え方（このファイルに写して、find / get / findComponent / shallowMount / slots / global.stubs / vi.fn などを足した）。
    ・vi.mock（モジュールごとの差し替え）はブラウザでは動かせないので、「関数を props で渡す」形で vi.fn を練習する。
@@ -8,7 +8,7 @@
   if (!K || !K.vueDrillTools) return;
   const D = (K.drills = K.drills || {});
   const { multi, T, VUE } = K.vueDrillTools;
-  const ID = 'x-vue-test-cmd';
+  const ID = 'vue-test';
   D[ID] = D[ID] || {};
 
   /* starter の文字列に（1回だけ現れる）置換を当てて solution を作る */

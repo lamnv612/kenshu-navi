@@ -1,4 +1,4 @@
-/* 補足レッスン「Vue 単体テスト：コマンドの使い方」（x-vue-test-cmd）の用語。
+/* 「Vue 単体テスト」のコマンド紹介シーン（vue-test の一部）の用語。
    [用語, 読み, ひとこと説明, 現場では] */
 (function () {
   var K = window.KENSHU;

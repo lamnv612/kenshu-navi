@@ -1,4 +1,4 @@
-/* 補足 Vue「Vue 単体テスト：コマンドの使い方」（x-vue-test-cmd）
+/* Vue 単体テスト：コマンドの使い方（メイン教材 vue-test の一部。2番目に入る）
    Vim レッスンと同じ見せ方：コマンドを「キーカード」にして並べ、押すと、ライブの砂場（にせものの部品 ＋ テストファイル ＋ 実行結果）で動く。
    砂場の wrapper は、このファイルの中の手書きの「にせもの」（VTU 2 / Vitest と同じ API 名）。実物のテストは動かさない。
    シーン：描く / 探す / 操作する / 確かめる / にせものを使う / 骨組み / 実践 */
@@ -524,10 +524,8 @@
   }
   const REFPANEL = [{ title: '公式の参考リンク', icon: 'book-open', html: '<div style="display:grid;gap:8px"><a href="https://test-utils.vuejs.org/" target="_blank" rel="noopener"><b>Vue Test Utils</b></a><span style="font-size:.85rem;opacity:.8">公式ガイド</span><a href="https://test-utils.vuejs.org/api/" target="_blank" rel="noopener"><b>VTU API</b></a><span style="font-size:.85rem;opacity:.8">wrapper のメソッド一覧</span><a href="https://vitest.dev/guide/" target="_blank" rel="noopener"><b>Vitest ガイド</b></a><span style="font-size:.85rem;opacity:.8">テストランナー</span></div>' }];
 
-  reg({
-    id: 'x-vue-test-cmd', title: 'Vue 単体テスト：コマンドの使い方', sub: 'mount・find・trigger・expect を、キーのように覚える', emoji: '🧪',
-    meta: { cat: 'vue', day: '5日目', when: 'テストの書き方で、どのコマンドを使うか迷ったとき', mins: 20, order: 40, level: '基礎', after: 'vue-test', why: 'コマンドの名前と使い分けを、先に一覧で覚える' },
-    scenes: [
+  /* メイン教材の一部として、vue-test の 2 番目（「mount → find → trigger → expect」の次）へ入れる */
+  const NEWSCENES = [
       { t: '描く：mount と shallowMount', tag: 'MOUNT', lead: '<b>mount</b> で部品を画面に出し、<b>オプション</b>で状態を決める。', render: sceneMount },
       { t: '探す：find と get', tag: 'FIND', lead: '<b>find</b> は無くても止まらず、<b>get</b> は無いと<b>例外</b>。', render: sceneFind },
       { t: '操作する：trigger と setValue', tag: 'ACT', lead: '<b>trigger</b> や <b>setValue</b> で操作し、更新は <b>await</b> で待つ。', render: sceneAct },
@@ -535,6 +533,12 @@
       { t: 'にせものを使う：vi.fn と vi.mock', tag: 'MOCK', lead: '<b>vi.fn</b> と <b>vi.mock</b> で通信を<b>にせもの</b>に替え、速く・毎回同じ結果にする。', render: sceneMock },
       { t: 'テストの骨組み：describe と it', tag: 'FILE', lead: '<b>describe</b> の中に <b>it</b>、その中に <b>expect</b>。<b>vitest</b> で動かす。', render: sceneFile },
       { t: '実践：1本のテストを組み立てる', tag: 'PRACTICE', lead: '<b>Arrange → Act → Assert</b> の順にカードを押して、緑のテストを完成させる。', render: scenePractice, ref: REFPANEL },
-    ],
-  });
+  ];
+  (function wait(n) {
+    const L = K.lessons && K.lessons['vue-test'];
+    if (!L) { if (n < 200) setTimeout(() => wait(n + 1), 50); return; }
+    if (L.__cmdIns) return; L.__cmdIns = 1;
+    const at = Math.max(1, L.scenes.findIndex((x) => x.t === 'mount → find → trigger → expect') + 1);
+    L.scenes.splice(at, 0, ...NEWSCENES);
+  })(0);
 })();
